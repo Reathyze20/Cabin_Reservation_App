@@ -1,0 +1,565 @@
+/* style.css */
+
+/* Základní reset a nastavení */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body,
+button,
+input,
+textarea,
+select {
+  font-family: "Inter", sans-serif; /* Nebo tvůj vybraný font */
+}
+
+body {
+  font-family: "Inter", sans-serif; /* Použití načteného fontu */
+  background: linear-gradient(135deg, #fde68a, #fca5a5);
+  min-height: 100vh;
+  /* --- Klíčové pro centrování --- */
+  display: flex;
+  justify-content: center; /* Horizontální centrování */
+  align-items: center; /* Vertikální centrování */
+  /* ----------------------------- */
+  padding: 20px;
+  color: #374151; /* Mírně tmavší text - Tailwind gray-700 */
+  line-height: 1.6;
+}
+
+/* Obalovač pro hlavní obsah */
+.app-wrapper {
+  width: 100%;
+  max-width: 550px; /* Mírně širší než předtím, zkus experimentovat */
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Centruje obsah UVNITŘ wrapperu (login/app sekci) */
+  gap: 20px; /* Mezera mezi login/app a případně dalšími prvky */
+
+  /* Volitelné: Přidání margin auto pro jistotu, pokud by flex na body selhal */
+  /* margin-left: auto; */
+  /* margin-right: auto; */
+}
+
+/* Kontejner pro přihlášení */
+.login-container {
+  width: 100%;
+  max-width: 400px; /* Užší pro login */
+  margin-bottom: 20px; /* Odsazení, pokud by bylo něco pod tím */
+}
+
+/* Kontejner pro hlavní aplikaci */
+.app-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px; /* Mezera mezi kartou a seznamem rezervací */
+}
+
+/* Společný styl pro "karty" */
+.card {
+  background-color: white;
+  border-radius: 16px; /* Zaoblení rohů */
+  padding: 24px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); /* Stín */
+  width: 100%;
+}
+
+/* Horní lišta pro datumy */
+.date-display-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid #eee; /* Jemný okraj */
+  border-radius: 12px; /* Zaoblení */
+  padding: 12px 16px;
+  margin-bottom: 20px; /* Odsazení od kalendáře */
+}
+
+.date-part {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* Mezera mezi ikonou a textem */
+}
+
+.date-part .icon {
+  font-size: 1.5em; /* Velikost ikony */
+  color: #fbbf24; /* Tailwind Amber 400 */
+}
+
+.date-part .label {
+  display: block;
+  font-size: 0.8em;
+  color: #666;
+}
+
+.date-part .date-value {
+  font-weight: 600;
+  font-size: 1em;
+  color: #333;
+}
+
+.date-separator {
+  color: #999;
+  font-size: 0.9em;
+}
+
+.icon-arrow {
+  font-size: 1.2em;
+  color: #999;
+  cursor: pointer; /* Naznačuje interaktivitu */
+}
+
+/* Kontejner pro kalendář - zde bude Flatpickr */
+.calendar-container {
+  margin-bottom: 20px;
+}
+
+/* Tlačítka */
+button {
+  padding: 10px 15px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s ease;
+}
+
+button[type="submit"] {
+  background-color: #fbbf24; /* Hlavní barva */
+  color: white;
+}
+button[type="submit"]:hover {
+  background-color: #f59e0b; /* Tmavší při najetí */
+}
+
+.button-primary {
+  /* Specifické tlačítko pro rezervaci */
+  background-color: #f87171; /* Červeno-oranžová */
+  color: white;
+  width: 100%; /* Plná šířka */
+  padding: 12px;
+  font-size: 1em;
+}
+.button-primary:hover {
+  background-color: #ef4444; /* Tmavší červená */
+}
+
+/* Formulářové prvky */
+input[type="text"],
+input[type="password"] {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-top: 4px;
+}
+
+/* Info o uživateli a odhlášení */
+.user-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding: 0 10px; /* Lehké odsazení */
+  font-size: 0.9em;
+  color: #fff; /* Bílý text na gradientu */
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2); /* Lehký stín pro čitelnost */
+}
+.user-info strong {
+  font-weight: 700;
+}
+
+.button-logout {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 0.9em;
+  cursor: pointer;
+  opacity: 0.9;
+}
+.button-logout:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+.button-logout i {
+  margin-right: 5px;
+}
+
+/* Seznam rezervací */
+.reservations-list-container {
+  /*
+     Základní vzhled karty (pozadí, zaoblení, stín, padding)
+     je zděděn z třídy .card, kterou má tento prvek také v HTML.
+     Můžeme zde přidat specifické úpravy pro tento kontejner,
+     např. margin-top, pokud by byl příliš blízko předchozí kartě.
+  */
+  /* background-color: white; /* Zděděno z .card */
+  /* border-radius: 16px; /* Zděděno z .card */
+  /* padding: 24px; /* Zděděno z .card */
+  /* box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); /* Zděděno z .card */
+  width: 100%; /* Zděděno z .card */
+
+  /* Můžeme přidat horní odsazení, pokud je potřeba */
+  /* margin-top: 20px; */ /* Odkomentuj, pokud chceš větší mezeru nad seznamem */
+}
+
+.reservations-list-container h2 {
+  margin-bottom: 15px; /* Větší mezera pod nadpisem */
+  padding-bottom: 10px; /* Mezera pod čarou */
+  border-bottom: 1px solid #eee; /* Oddělovací čára pod nadpisem */
+  font-size: 1.1em; /* Trochu menší nadpis než hlavní */
+  font-weight: 600;
+  color: #555; /* Mírně tmavší šedá */
+}
+
+#reservations-list {
+  /* Kontejner pro samotný seznam */
+  max-height: 200px; /* Omezíme výšku a přidáme scrollbar, pokud je seznam dlouhý */
+  overflow-y: auto; /* Povolit vertikální scrollbar */
+}
+
+#reservations-list ul {
+  list-style: none; /* Odstranit odrážky */
+  padding: 0;
+  margin: 0; /* Odstranit výchozí margin pro ul */
+}
+
+#reservations-list li {
+  padding: 10px 5px; /* Vertikální i malé horizontální odsazení */
+  border-bottom: 1px dashed #eee; /* Jemný oddělovač mezi položkami */
+  font-size: 0.9em; /* O něco menší písmo */
+  color: #444;
+  display: flex; /* Pro lepší zarovnání jména a datumu, pokud bychom chtěli */
+  justify-content: space-between; /* Pokud bychom chtěli jméno vlevo, datum vpravo */
+  flex-wrap: wrap; /* Zalamování na menších obrazovkách */
+}
+
+#reservations-list li:last-child {
+  border-bottom: none; /* Poslední položka bez oddělovače */
+}
+
+#reservations-list .reservation-user {
+  font-weight: 600; /* Zvýrazníme jméno */
+  margin-right: 10px; /* Mezera mezi jménem a daty */
+}
+
+#reservations-list .reservation-dates {
+  color: #666; /* Mírně světlejší barva pro data */
+  white-space: nowrap; /* Zabráníme zalamování datumu */
+}
+
+/* Styl pro případ, že nejsou žádné rezervace */
+#reservations-list:empty::before {
+  content: "Žádné rezervace zatím nebyly vytvořeny.";
+  display: block;
+  text-align: center;
+  color: #888;
+  font-style: italic;
+  padding: 20px 0;
+}
+/* Nebo pokud JS vkládá text přímo: */
+#reservations-list.no-reservations {
+  text-align: center;
+  color: #888;
+  font-style: italic;
+  padding: 20px 0;
+}
+.reservations-list-container h2 {
+  margin-bottom: 10px;
+  font-size: 1.2em;
+  color: #444;
+}
+#reservations-list ul {
+  list-style: none; /* Odstranit odrážky */
+  padding: 0;
+}
+#reservations-list li {
+  padding: 8px 0;
+  border-bottom: 1px dashed #eee; /* Oddělovač */
+  font-size: 0.95em;
+}
+#reservations-list li:last-child {
+  border-bottom: none;
+}
+
+/* Chybové zprávy */
+.error-message {
+  color: red;
+  font-size: 0.9em;
+  margin-top: 5px;
+}
+
+/* Zprávy z rezervace */
+#booking-message {
+  margin-top: 15px;
+  font-weight: 600;
+}
+
+/* style.css - PŘIDAT NEBO UPRAVIT NÁSLEDUJÍCÍ PRAVIDLA */
+
+/* --- Styly pro Flatpickr --- */
+
+/* Obalovač kalendáře generovaný Flatpickrem */
+.flatpickr-calendar {
+  background-color: white; /* Mělo by být zděděno z .card, ale pro jistotu */
+  border-radius: 16px; /* Zaoblení, pokud není inline */
+  box-shadow: none; /* Stín už má .card */
+  width: 100% !important; /* Zajistí plnou šířku v kontejneru */
+  font-family: inherit; /* Použít font z body */
+}
+
+/* Navigace měsíců */
+.flatpickr-months {
+  background-color: transparent; /* Bez pozadí */
+  padding: 10px 0;
+  border-bottom: 1px solid #eee; /* Oddělovač */
+  margin-bottom: 10px;
+}
+
+.flatpickr-months .flatpickr-prev-month,
+.flatpickr-months .flatpickr-next-month {
+  /* Stylování šipek - oranžové kolečko */
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background-color: #fff7ed; /* Velmi světlá oranžová (Tailwind Orange 50) */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0; /* Resetovat padding */
+  top: 8px; /* Upravit pozici vertikálně */
+}
+.flatpickr-months .flatpickr-prev-month:hover,
+.flatpickr-months .flatpickr-next-month:hover {
+  background-color: #ffedd5; /* Trochu tmavší oranžová (Tailwind Orange 100) */
+}
+
+/* Samotná SVG ikona šipky */
+.flatpickr-months .flatpickr-prev-month svg,
+.flatpickr-months .flatpickr-next-month svg {
+  width: 14px;
+  height: 14px;
+  fill: #fb923c; /* Oranžová barva (Tailwind Orange 400) */
+}
+
+/* Název měsíce a roku */
+.flatpickr-current-month {
+  font-size: 1.1em;
+  font-weight: 600;
+  color: #333;
+  padding-top: 5px; /* Malé odsazení shora */
+}
+.flatpickr-current-month .flatpickr-monthDropdown-months,
+.flatpickr-current-month .numInputWrapper {
+  font-weight: 600; /* Zachovat tučnost */
+}
+.flatpickr-current-month input.cur-year {
+  /* Input pro rok */
+  font-weight: 600;
+}
+
+/* Dny v týdnu (S, M, T...) */
+.flatpickr-weekdays {
+  background-color: transparent;
+}
+span.flatpickr-weekday {
+  color: #f97316; /* Výraznější oranžová (Tailwind Orange 500) */
+  font-weight: 600;
+  font-size: 0.8em;
+  text-transform: uppercase; /* Velká písmena */
+}
+
+/* Kontejner pro dny */
+
+/* Jednotlivé dny */
+.flatpickr-day {
+  border: none; /* Odstranit výchozí okraj */
+  font-weight: 500;
+  color: #555;
+  max-width: 38px; /* Mírně zvětšit pro lepší vzhled */
+  height: 38px;
+  line-height: 38px;
+  border-radius: 50%; /* Kulaté dny */
+  margin: 1px; /* Mezera mezi dny */
+}
+.flatpickr-day:hover {
+  background-color: #f3f4f6; /* Světle šedá (Tailwind Gray 100) */
+}
+
+/* Dny mimo aktuální měsíc */
+.flatpickr-day.prevMonthDay,
+.flatpickr-day.nextMonthDay {
+  color: #ccc; /* Hodně světlá šedá */
+  opacity: 0.7;
+}
+
+/* Dnešní den */
+.flatpickr-day.today {
+  border-color: #fbbf24; /* Oranžový okraj (Tailwind Amber 400) */
+  border: 1px solid #fbbf24;
+  color: #d97706; /* Tmavší oranžová (Tailwind Amber 600) */
+}
+.flatpickr-day.today:hover {
+  background-color: #fef3c7; /* Velmi světlá žlutá (Tailwind Amber 100) */
+}
+
+.flatpickr-innerContainer {
+  justify-content: center; /* Centrovat obsah uvnitř */
+  margin-bottom: 15px;
+}
+
+/* --- Vybraný rozsah --- */
+.flatpickr-day.selected,
+.flatpickr-day.startRange,
+.flatpickr-day.endRange,
+.flatpickr-day.selected.inRange,
+.flatpickr-day.startRange.inRange,
+.flatpickr-day.endRange.inRange {
+  /* Základní barva pozadí pro rozsah - světlá oranžová */
+  background: #fff7ed; /* Tailwind Orange 50 */
+  border-color: #fff7ed;
+  color: #c2410c; /* Tmavá oranžová (Tailwind Orange 700) */
+  box-shadow: none; /* Odstranit výchozí stín, pokud je */
+}
+.flatpickr-day.selected:hover,
+.flatpickr-day.startRange:hover,
+.flatpickr-day.endRange:hover {
+  background: #ffedd5; /* Trochu tmavší (Tailwind Orange 100) */
+  border-color: #ffedd5;
+}
+
+/* Začátek a konec rozsahu - výraznější */
+.flatpickr-day.startRange,
+.flatpickr-day.endRange {
+  background: #fdba74; /* Střední oranžová (Tailwind Orange 300) */
+  border-color: #fdba74;
+  color: #a16207; /* Hnědo-oranžová (Tailwind Yellow 700 - zkus experimentovat) */
+  font-weight: 700;
+}
+
+/* Gradient pro rozsah - tohle je trik! */
+/* Flatpickr přímo nepodporuje gradient pro rozsah. Můžeme ho napodobit
+ nastavením mírně odlišných barev pro .startRange, .inRange, .endRange,
+ nebo použít složitější techniky s pseudo-elementy, což je nad rámec jednoduchého CSS.
+ Zkusme mírné odlišení: */
+
+.flatpickr-day.inRange {
+  background: #fed7aa; /* Světlejší střed (Tailwind Orange 200) */
+  border-color: #fed7aa;
+  border-radius: 0; /* Odstranit zaoblení pro dny uprostřed */
+  color: #b45309; /* Tmavší oranžová */
+  box-shadow: -5px 0 0 #fed7aa, 5px 0 0 #fed7aa; /* Opticky spojí dny */
+}
+/* Speciální úprava pro začátek a konec, aby se správně napojily */
+.flatpickr-day.startRange {
+  border-top-left-radius: 50%;
+  border-bottom-left-radius: 50%;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.flatpickr-day.endRange {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-top-right-radius: 50%;
+  border-bottom-right-radius: 50%;
+}
+
+/* Pokud je vybrán jen jeden den (ne rozsah) */
+.flatpickr-day.selected:not(.inRange) {
+  background: #fdba74;
+  border-color: #fdba74;
+  color: #a16207;
+}
+
+/* Zablokované dny */
+.flatpickr-day.disabled,
+.flatpickr-day.disabled:hover {
+  background: none;
+  color: #d1d5db; /* Světle šedá (Tailwind Gray 300) */
+  cursor: default;
+  text-decoration: line-through; /* Přeškrtnutí */
+  opacity: 0.7;
+}
+
+/* style.css */
+.flatpickr-day.disabled,
+.flatpickr-day.disabled:hover {
+  background: #f8f9fa !important; /* Velmi světle šedé pozadí - může být potřeba !important */
+  color: #d1d5db !important; /* Světle šedá (Tailwind Gray 300) */
+  cursor: default !important;
+  text-decoration: none !important; /* Odstraníme přeškrtnutí, spoléháme na barvu/tooltip */
+  opacity: 0.8 !important;
+  /* Nepřidáváme zde přeškrtnutí, to uděláme jen pro 'booked-day.disabled' níže */
+}
+
+/* REZERVOVANÉ DNY (Mají barvu podle uživatele) */
+.flatpickr-day.booked-day,
+.flatpickr-day.booked-day:hover {
+  /* Barva pozadí se nastavuje inline JS, ale můžeme nastavit jiné vlastnosti */
+  font-weight: 600; /* Mírně tučnější */
+  cursor: not-allowed !important; /* Kurzorem naznačíme, že je obsazeno */
+  opacity: 1 !important; /* Plná opacita */
+  text-decoration: none !important; /* Žádné přeškrtnutí */
+  color: #1f2937 !important; /* Tmavý text pro kontrast, přebije barvu .disabled */
+  /* !important zde pomáhá přebít výchozí styly .disabled */
+}
+
+.flatpickr-day.booked-day.disabled,
+.flatpickr-day.booked-day.disabled:hover {
+  /* Přepsání barev pro výběr, pokud je den zároveň rezervovaný (méně důležité, disable by měl bránit výběru) */
+  .flatpickr-day.booked-day.selected,
+  .flatpickr-day.booked-day.startRange,
+  .flatpickr-day.booked-day.endRange,
+  .flatpickr-day.booked-day.inRange {
+    box-shadow: none;
+  }
+}
+.flatpickr-day.flatpickr-disabled:not(.booked-day),
+  .flatpickr-day.flatpickr-disabled:not(.booked-day):hover {
+    background: none !important; /* Žádné specifické pozadí */
+    color: #d1d5db !important; /* Světle šedá (Tailwind Gray 300) */
+    cursor: default !important;
+    text-decoration: line-through; /* Ponecháme přeškrtnutí pro obecně disabled */
+    opacity: 0.7 !important;
+    font-weight: normal !important; /* Resetovat váhu písma */
+    border-radius: 50% !important; /* Zachovat kulatý tvar, pokud ho mají ostatní dny */
+    border: 1px solid transparent !important; /* Zajistit stejnou velikost jako ostatní dny */
+  }
+
+  /* ---- OBECNÝ VZHLED REZERVOVANÝCH DNŮ (Mají 'booked-day' a jsou 'disabled') ---- */
+  /* Toto pravidlo nastaví základní vzhled pro VŠECHNY rezervované dny,
+   přebije výchozí '.flatpickr-disabled' a připraví půdu pro specifické barvy. */
+  .flatpickr-day.flatpickr-disabled.booked-day,
+  .flatpickr-day.flatpickr-disabled.booked-day:hover {
+    text-decoration: none !important; /* ŽÁDNÉ přeškrtnutí pro rezervované */
+    opacity: 1 !important; /* Plná viditelnost */
+    cursor: not-allowed !important; /* Kurzorem naznačit obsazenost */
+    font-weight: bold !important; /* Zvýraznit */
+    border-radius: 50% !important; /* Zajistit kulatý tvar */
+    border: 1px solid transparent !important; /* Může předejít poskočení velikosti */
+    /* Pozadí a barva textu budou definovány níže specificky pro uživatele */
+    /* Fallback barvy, pokud specifická třída user-X chybí nebo nemá definici */
+    background-color: #e9ecef !important; /* Neutrální fallback pozadí */
+    color: #495057 !important; /* Tmavší šedý fallback text */
+  }
+
+  /* ---- SPECIFICKÉ BARVY REZERVOVANÝCH DNŮ PODLE UŽIVATELE ---- */
+  /* Tato pravidla přepíší fallback barvy výše. Použij user-X s pomlčkou. */
+
+  /* Uživatel 1 (nahraďte '1' skutečným userId a barvy podle vaší mapy userColors) */
+  .flatpickr-day.flatpickr-disabled.booked-day.user-user1,
+  .flatpickr-day.flatpickr-disabled.booked-day.user-user1:hover {
+    background-color: #FFD700 !important; /* Příklad: Žlutá */
+  color: #333 !important; /* Příklad: Tmavý text */
+  border-radius: 50% !important; /* Jen pro jistotu, pokud by to přepsal jiný styl *//
+  }
+
+  /* Uživatel 2 (nahraďte '2' skutečným userId a barvy podle vaší mapy userColors) */
+  .flatpickr-day.flatpickr-disabled.booked-day.user-user2,
+  .flatpickr-day.flatpickr-disabled.booked-day.user-user2:hover {
+    background-color: #b4852f !important; /* Příklad: Oranžová */
+    color: white !important; /* Příklad: Bílý text */
+  }

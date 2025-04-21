@@ -1,0 +1,12 @@
+[
+  {
+    "id": "user1",
+    "username": "KatkaVelka",
+    "passwordHash": "$2b$10$p2ItJ6RsLLPsHynrIzvbIOuErMZxhJyZTODgb04ehroYmJj5voXAW"
+  },
+  {
+    "id": "user2",
+    "username": "KatkaMala",
+    "passwordHash": "$2b$10$xpfsIxP7DplSiCvTAGmeLetanc1tV6W15evGiLA6E4.RLXDyh3VDu"
+  }
+]

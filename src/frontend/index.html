@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="cs">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rezervace Chaty</title>
+
+    <!-- Google Fonts (Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Flatpickr CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
+    />
+
+    <!-- Font Awesome pro ikony -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+
+    <!-- Náš vlastní CSS -->
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- Obalující prvek pro centrování a gradient (volitelný, ale pomáhá s layoutem) -->
+    <div class="app-wrapper">
+      <!-- Sekce pro přihlášení -->
+      <div id="login-section" class="login-container card">
+        <h1>Přihlášení</h1>
+        <form id="login-form">
+          <div>
+            <label for="username">Uživatelské jméno:</label><br />
+            <input type="text" id="username" name="username" required />
+          </div>
+          <br />
+          <div>
+            <label for="password">Heslo:</label><br />
+            <input type="password" id="password" name="password" required />
+          </div>
+          <br />
+          <button type="submit">Přihlásit se</button>
+          <p id="login-error" class="error-message"></p>
+        </form>
+      </div>
+
+      <!-- Hlavní sekce aplikace -->
+      <!-- style="display: none;" byl odstraněn, řídí to JS -->
+      <div id="app-section" class="app-container">
+        <!-- Informace o uživateli a odhlášení -->
+        <div class="user-info">
+          <span>Přihlášen jako: <strong id="logged-in-username"></strong></span>
+          <button id="logout-button" class="button-logout">
+            <i class="fas fa-sign-out-alt"></i> Odhlásit se
+          </button>
+        </div>
+
+        <!-- Hlavní karta s kalendářem -->
+        <div class="card">
+          <!-- Horní lišta pro výběr datumu -->
+          <div class="date-display-bar">
+            <div class="date-part">
+              <i class="far fa-calendar-alt icon"></i>
+              <div>
+                <span class="label">Doba příjezdu</span>
+                <span class="date-value" id="check-in-date-display"
+                  >- Vyberte -</span
+                >
+              </div>
+            </div>
+            <span class="date-separator">do</span>
+            <div class="date-part">
+              <div>
+                <span class="label">Doba odjezdu</span>
+                <span class="date-value" id="check-out-date-display"
+                  >- Vyberte -</span
+                >
+              </div>
+            </div>
+            <i class="fas fa-chevron-up icon-arrow"></i>
+            <!-- Ikona šipky (zatím bez funkce) -->
+          </div>
+
+          <!-- Kontejner, kam JS vloží inline Flatpickr -->
+          <div class="calendar-container">
+            <!-- Flatpickr se připojí sem pomocí JS -->
+          </div>
+
+          <!-- Skrytý input pro Flatpickr (může být potřeba pro některé funkce) -->
+          <input type="hidden" id="date-picker" />
+
+          <!-- Sekce pro potvrzení rezervace / tlačítko -->
+          <!-- Umístěno ZDE, uvnitř .card a uvnitř #app-section -->
+          <form id="booking-form" class="booking-controls">
+            <button type="submit" class="button-primary">
+              Rezervovat vybraný termín
+            </button>
+            <p id="booking-message"></p>
+            <!-- Místo pro zprávy (úspěch/chyba) -->
+          </form>
+        </div>
+        <!-- Konec .card -->
+
+        <!-- Seznam rezervací (mimo hlavní kartu, ale stále v app-section) -->
+        <div class="reservations-list-container card">
+          <h2>Přehled rezervací</h2>
+          <div id="reservations-list">Načítám rezervace...</div>
+        </div>
+      </div>
+      <!-- Konec #app-section -->
+    </div>
+    <!-- Konec .app-wrapper -->
+
+    <!-- JS Knihovny a náš skript -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <!-- Přidání češtiny pro Flatpickr -->
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/cs.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
