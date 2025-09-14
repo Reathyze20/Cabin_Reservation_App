@@ -2,10 +2,10 @@ import fs from "fs";
 import path from "path";
 import { Reservation, User } from "../types";
 
-const usersFilePath = path.join(__dirname, "../backend/data/users.json");
+const usersFilePath = path.join(__dirname, "../../data/users.json");
 const reservationsFilePath = path.join(
   __dirname,
-  "../backend/data/reservations.json"
+  "../../data/reservations.json"
 );
 
 export async function loadUsers(): Promise<User[]> {

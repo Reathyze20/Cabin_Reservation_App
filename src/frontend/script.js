@@ -558,6 +558,8 @@ document.addEventListener("DOMContentLoaded", () => {
   confirmDeleteBtn.addEventListener('click', async () => {
     if (!reservationIdToDelete) return;
 
+    console.log(`[DELETE] Pokus o smazání rezervace s ID: ${reservationIdToDelete}`);
+
     const token = getToken();
     if (!token) {
         alert("Vaše přihlášení vypršelo. Přihlaste se prosím znovu.");
@@ -572,17 +574,25 @@ document.addEventListener("DOMContentLoaded", () => {
                 'Authorization': `Bearer ${token}`
             }
         });
-
+        
+        console.log('[DELETE] Odpověď ze serveru:', response.status, response.statusText);
         const result = await response.json();
+        console.log('[DELETE] Data odpovědi:', result);
+
         if (!response.ok) throw new Error(result.message || `Chyba ${response.status}`);
         
         closeConfirmDeleteModal();
+        
+        console.log('[DELETE] Úspěšně smazáno na serveru. Aktualizuji frontend.');
         
         // Místo znovunačtení všeho (což způsobovalo problém),
         // smažeme rezervaci z lokálního pole a překreslíme komponenty.
         const index = window.currentReservations.findIndex(r => r.id === reservationIdToDelete);
         if (index > -1) {
             window.currentReservations.splice(index, 1);
+            console.log('[DELETE] Rezervace odstraněna z lokálního pole. Překresluji UI.');
+        } else {
+            console.warn('[DELETE] Rezervace k smazání nebyla nalezena v lokálním poli.');
         }
         
         // Aktualizujeme kalendář a seznam

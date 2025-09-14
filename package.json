@@ -4,8 +4,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "npx ts-node-dev --respawn --transpile-only src/backend/server.ts",
-    "copy-data": "copyfiles -u 3 src/backend/data/*.json dist/backend/data",
-    "build": "tsc && npm run copy-data",
+    "build": "tsc",
     "start": "npm run build && node dist/backend/server.js"
   },
   "keywords": [],
@@ -33,4 +32,3 @@
     "typescript": "^5.1.6"
   }
 }
-
