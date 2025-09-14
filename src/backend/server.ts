@@ -199,12 +199,53 @@ app.post("/api/reservations", protect, async (req: Request, res: Response) => {
     console.log(
       `[POST /api/rezervace] Uživatel ${username} (ID: ${userId}) vytvořil rezervaci: ${from} - ${reservationTo}`
     );
-    res.status(201).json(newReservation);
+       res.status(201).json(newReservation);
   } catch (error) {
     console.error("Chyba při vytváření rezervace (POST):", error);
     res.status(500).json({ message: "Chyba při vytváření rezervace." });
   }
 });
+
+// PUT /api/reservations/:id - Aktualizace existující rezervace (chráněno)
+app.put("/api/reservations/:id", protect, async (req: Request, res: Response) => {
+    if (!req.user) {
+        return res.status(401).json({ message: "Neautorizováno." });
+    }
+
+    const { id } = req.params;
+    const { purpose, notes } = req.body;
+    const { userId } = req.user;
+
+    try {
+        const allReservations = await loadReservations();
+        const reservationIndex = allReservations.findIndex(r => r.id === id);
+
+        if (reservationIndex === -1) {
+            return res.status(404).json({ message: "Rezervace nenalezena." });
+        }
+
+        const reservation = allReservations[reservationIndex];
+
+        // Ověření, zda uživatel může editovat tuto rezervaci
+        if (reservation.userId !== userId) {
+            return res.status(403).json({ message: "Nemáte oprávnění upravit tuto rezervaci." });
+        }
+
+        // Aktualizace dat
+        reservation.purpose = purpose;
+        reservation.notes = notes;
+
+        await saveReservation(allReservations);
+
+        console.log(`[PUT /api/reservations/${id}] Uživatel ${req.user.username} aktualizoval rezervaci.`);
+        res.status(200).json(reservation);
+
+    } catch (error) {
+        console.error(`Chyba při aktualizaci rezervace (PUT /api/reservations/${id}):`, error);
+        res.status(500).json({ message: "Chyba při aktualizaci rezervace." });
+    }
+});
+
 
 // --- Start serveru ---
 app.listen(port, () => {

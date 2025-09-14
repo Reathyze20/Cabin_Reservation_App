@@ -72,5 +72,14 @@
     "to": "2025-10-02",
     "purpose": "Relax",
     "notes": "test"
+  },
+  {
+    "id": "ced9745f-22f6-4fb6-9eb3-4fd3b055c720",
+    "userId": "user1",
+    "username": "KatkaVelka",
+    "from": "2025-10-06",
+    "to": "2025-10-13",
+    "purpose": "Relax",
+    "notes": "Vymalovat pokoj"
   }
 ]
