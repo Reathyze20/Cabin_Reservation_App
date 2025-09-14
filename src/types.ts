@@ -10,6 +10,8 @@ export interface Reservation {
   username: string;
   from: string;
   to: string;
+  purpose?: string; // Účel návštěvy (nepovinné)
+  notes?: string;   // Poznámky (nepovinné)
 }
 
 export interface JwtPayload {

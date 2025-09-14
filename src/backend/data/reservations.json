@@ -54,5 +54,23 @@
     "username": "Tomáš Rambousek",
     "from": "2025-09-24",
     "to": "2025-09-30"
+  },
+  {
+    "id": "94a3f142-b9ec-4f0b-a07a-96505a8592a3",
+    "userId": "user1",
+    "username": "KatkaVelka",
+    "from": "2025-10-04",
+    "to": "2025-10-05",
+    "purpose": "Údržba chaty",
+    "notes": ""
+  },
+  {
+    "id": "203267bb-cb3c-44f7-8cf3-a5eb38080a98",
+    "userId": "user1",
+    "username": "KatkaVelka",
+    "from": "2025-10-02",
+    "to": "2025-10-02",
+    "purpose": "Relax",
+    "notes": "test"
   }
 ]

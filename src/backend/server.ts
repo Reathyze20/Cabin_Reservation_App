@@ -129,17 +129,9 @@ app.post("/api/register", async (req: Request, res: Response) => {
 // GET /api/rezervace - Získání všech rezervací
 app.get("/api/reservations", protect, async (req, res) => {
   try {
-    const reservation = await loadReservations();
-    const publicReservations = reservation.map(
-      ({ id, userId, username, from, to: rezervaceTo }) => ({
-        id,
-        userId,
-        username,
-        from,
-        to: rezervaceTo,
-      })
-    );
-    res.json(publicReservations);
+    const reservations = await loadReservations();
+    // Vracíme všechna data, včetně nových polí purpose a notes
+    res.json(reservations);
   } catch (error) {
     console.error("Chyba při načítání rezervací (GET):", error);
     res.status(500).json({ message: "Chyba při načítání rezervací." });
@@ -154,7 +146,7 @@ app.post("/api/reservations", protect, async (req: Request, res: Response) => {
       .json({ message: "Neautorizováno (chybí uživatelská data)." });
   }
 
-  const { from, to: reservationTo } = req.body;
+  const { from, to: reservationTo, purpose, notes } = req.body;
   const { userId, username } = req.user;
 
   if (!from || !reservationTo) {
@@ -197,6 +189,8 @@ app.post("/api/reservations", protect, async (req: Request, res: Response) => {
       username: username,
       from,
       to: reservationTo,
+      purpose, // Uložíme účel
+      notes,   // Uložíme poznámky
     };
 
     allReservations.push(newReservation);

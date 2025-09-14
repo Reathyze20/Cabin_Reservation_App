@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
     user2: "#FFA500",
   };
 
-  // Odkazy na HTML elementy (zkráceno pro přehlednost)
+  // Odkazy na HTML elementy
   const loginSection = document.getElementById("login-section");
   const appSection = document.getElementById("app-section");
   const loginForm = document.getElementById("login-form");
@@ -21,14 +21,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const loggedInUsernameSpan = document.getElementById("logged-in-username");
   const logoutButton = document.getElementById("logout-button");
+  const reservationsListDiv = document.getElementById("reservations-list");
+  const calendarContainer = document.querySelector(".calendar-container");
+  const reservationsContainerTitle = document.querySelector(".reservations-list-container h2");
+  
+  // Prvky pro modální okno
+  const bookingModal = document.getElementById("booking-modal");
+  const closeModalButton = document.querySelector(".modal-close-button");
+  const openModalButton = document.getElementById("open-booking-modal-button");
   const bookingForm = document.getElementById("booking-form");
   const bookingMessage = document.getElementById("booking-message");
-  const reservationsListDiv = document.getElementById("reservations-list");
-  const calendarContainer = document.querySelector(".calendar-container"); // Uložíme si ho jednou
+  const modalDateRangeSpan = document.getElementById("modal-date-range");
+  const purposeSelect = document.getElementById("purpose-select");
+  const otherPurposeGroup = document.getElementById("other-purpose-group");
+  const otherPurposeInput = document.getElementById("other-purpose-input");
+  const notesTextarea = document.getElementById("notes-textarea");
+
 
   // Globální proměnné
-  let flatpickrInstance = null; // Proměnná pro instanci Flatpickr
-  window.currentReservations = []; // Pole pro načtené rezervace
+  let flatpickrInstance = null;
+  window.currentReservations = [];
   const backendUrl = "http://localhost:3000";
 
   // --- Funkce pro zobrazení/skrytí sekcí ---
@@ -51,7 +63,6 @@ document.addEventListener("DOMContentLoaded", () => {
     registerSection.style.display = "none";
     appSection.style.display = "flex";
     loggedInUsernameSpan.textContent = username;
-    // ZAVOLÁME POUZE loadReservations, KTERÝ SE POSTARÁ O ZBYTEK
     loadReservations();
   }
 
@@ -79,14 +90,11 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       const response = await fetch(`${backendUrl}/api/login`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
       const data = await response.json();
-      if (!response.ok)
-        throw new Error(data.message || `Chyba ${response.status}`);
+      if (!response.ok) throw new Error(data.message || `Chyba ${response.status}`);
       localStorage.setItem("authToken", data.token);
       localStorage.setItem("username", data.username);
       showApp(data.username);
@@ -118,26 +126,18 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       const response = await fetch(`${backendUrl}/api/register`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
 
       const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || `Chyba ${response.status}`);
-      }
-
+      if (!response.ok) throw new Error(data.message || `Chyba ${response.status}`);
+      
       registerMessage.textContent = data.message;
       registerMessage.style.color = "green";
       registerForm.reset();
       
-      // Po úspěšné registraci přepne zpět na přihlášení
-      setTimeout(() => {
-        showLogin();
-      }, 2000);
+      setTimeout(() => { showLogin(); }, 2000);
     } catch (error) {
       console.error("Chyba při registraci:", error);
       registerMessage.textContent = error.message || "Nepodařilo se zaregistrovat.";
@@ -153,27 +153,50 @@ document.addEventListener("DOMContentLoaded", () => {
       flatpickrInstance.destroy();
       flatpickrInstance = null;
     }
-    window.currentReservations = []; // Vyčistit i data rezervací
+    window.currentReservations = [];
     showLogin();
   });
+  
+  // --- MODÁLNÍ OKNO LOGIKA ---
+  function openBookingModal() {
+      if (flatpickrInstance && flatpickrInstance.selectedDates.length === 2) {
+          const from = flatpickrInstance.selectedDates[0];
+          const to = flatpickrInstance.selectedDates[1];
+          modalDateRangeSpan.textContent = `${formatDateForDisplay(from)} - ${formatDateForDisplay(to)}`;
+          bookingModal.style.display = "flex";
+      }
+  }
+
+  function closeBookingModal() {
+      bookingModal.style.display = "none";
+      // Reset formuláře v modalu
+      bookingForm.reset();
+      otherPurposeGroup.style.display = 'none';
+  }
+
+  openModalButton.addEventListener('click', openBookingModal);
+  closeModalButton.addEventListener('click', closeBookingModal);
+  window.addEventListener('click', (event) => {
+      if (event.target === bookingModal) {
+          closeBookingModal();
+      }
+  });
+  
+  purposeSelect.addEventListener('change', () => {
+      if (purposeSelect.value === 'Jiný') {
+          otherPurposeGroup.style.display = 'block';
+      } else {
+          otherPurposeGroup.style.display = 'none';
+      }
+  });
+
 
   // --- Inicializace Aplikace ---
-
   function getToken() {
     return localStorage.getItem("authToken");
   }
 
-  // Inicializace Flatpickr
   function initializeDatePicker(disabledDates = []) {
-    console.log("--- initializeDatePicker START ---");
-
-    if (!calendarContainer) {
-      console.error(
-        "   -> KRITICKÁ CHYBA: Element .calendar-container nebyl nalezen!"
-      );
-      return;
-    }
-
     const flatpickrConfig = {
       mode: "range",
       dateFormat: "Y-m-d",
@@ -181,134 +204,74 @@ document.addEventListener("DOMContentLoaded", () => {
       disable: disabledDates,
       minDate: "today",
       locale: "cs",
-      onReady: function (selectedDates, dateStr, instance) {
-        console.log("   -> Flatpickr onReady: Kalendář je připraven.");
-      },
-      onMonthChange: function (selectedDates, dateStr, instance) {
-        console.log("   -> Flatpickr onMonthChange.");
-        renderReservationsOverview(instance.currentMonth, instance.currentYear);
-      },
-      onYearChange: function (selectedDates, dateStr, instance) {
-        console.log("   -> Flatpickr onYearChange.");
-        renderReservationsOverview(instance.currentMonth, instance.currentYear);
-      },
       onDayCreate: function (dObj, dStr, fp, dayElem) {
         const date = dayElem.dateObj;
-        const currentDate = new Date(
-          date.getFullYear(),
-          date.getMonth(),
-          date.getDate()
-        );
+        const currentDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
         currentDate.setHours(0, 0, 0, 0);
         const currentTimestamp = currentDate.getTime();
 
-        if (
-          !window.currentReservations ||
-          window.currentReservations.length === 0
-        )
-          return;
+        if (!window.currentReservations || window.currentReservations.length === 0) return;
 
-        const matchingReservations = window.currentReservations.filter((r) => {
+        const matchingReservation = window.currentReservations.find((r) => {
           try {
-            const fromParts = r.from.split("-").map(Number);
-            const toParts = r.to.split("-").map(Number);
-            if (
-              fromParts.length !== 3 ||
-              toParts.length !== 3 ||
-              fromParts.some(isNaN) ||
-              toParts.some(isNaN)
-            )
-              return false;
-            const resStart = new Date(
-              fromParts[0],
-              fromParts[1] - 1,
-              fromParts[2]
-            );
-            const resEnd = new Date(toParts[0], toParts[1] - 1, toParts[2]);
+            const resStart = new Date(r.from);
+            const resEnd = new Date(r.to);
             resStart.setHours(0, 0, 0, 0);
             resEnd.setHours(0, 0, 0, 0);
-            return (
-              currentTimestamp >= resStart.getTime() &&
-              currentTimestamp <= resEnd.getTime()
-            );
+            return currentTimestamp >= resStart.getTime() && currentTimestamp <= resEnd.getTime();
           } catch (e) {
             return false;
           }
         });
 
-        if (matchingReservations.length > 0) {
-          const reservation = matchingReservations[0];
-          if (!reservation.userId || !reservation.username) return;
-
-          const userColor = userColors[reservation.userId];
-          dayElem.title = `Rezervováno: ${reservation.username}`;
+        if (matchingReservation) {
+          dayElem.title = `Rezervováno: ${matchingReservation.username}`;
           dayElem.classList.add("booked-day");
-
-          if (userColor) {
-            dayElem.classList.add(`user-${reservation.userId}`);
+          const userColorClass = `user-${matchingReservation.userId}`;
+          if(userColors[matchingReservation.userId]) {
+              dayElem.classList.add(userColorClass);
           } else {
-            dayElem.classList.add("booked-unknown-user");
+              dayElem.classList.add("booked-unknown-user");
           }
         }
       },
       onChange: function (selectedDates, dateStr, instance) {
-        const checkInDateDisplay = document.getElementById(
-          "check-in-date-display"
-        );
-        const checkOutDateDisplay = document.getElementById(
-          "check-out-date-display"
-        );
-        if (!checkInDateDisplay || !checkOutDateDisplay) return;
+        const checkInDateDisplay = document.getElementById("check-in-date-display");
+        const checkOutDateDisplay = document.getElementById("check-out-date-display");
+
         if (selectedDates.length >= 1) {
-          checkInDateDisplay.textContent = instance.formatDate(
-            selectedDates[0],
-            "d. M Y"
-          );
+          checkInDateDisplay.textContent = instance.formatDate(selectedDates[0], "d. M Y");
           if (selectedDates.length === 2) {
-            checkOutDateDisplay.textContent = instance.formatDate(
-              selectedDates[1],
-              "d. M Y"
-            );
+            checkOutDateDisplay.textContent = instance.formatDate(selectedDates[1], "d. M Y");
+            openModalButton.style.display = 'block'; // Zobrazit tlačítko
           } else {
             checkOutDateDisplay.textContent = "- Vyberte -";
+            openModalButton.style.display = 'none'; // Skrýt tlačítko
           }
         } else {
           checkInDateDisplay.textContent = "- Vyberte -";
           checkOutDateDisplay.textContent = "- Vyberte -";
+          openModalButton.style.display = 'none';
+        }
+        
+        if (selectedDates.length === 2) {
+            renderReservationsForSelection(selectedDates);
+        } else {
+            renderReservationsOverview(instance.currentMonth, instance.currentYear);
         }
       },
     };
 
-    console.log(
-      "   -> Volám flatpickr('.calendar-container', flatpickrConfig)..."
-    );
     try {
       flatpickrInstance = flatpickr(calendarContainer, flatpickrConfig);
-      console.log("   -> Flatpickr instance vytvořena:", flatpickrInstance);
-      if (!flatpickrInstance) {
-        console.error(
-          "   -> !!! CHYBA: flatpickr() vrátil null nebo undefined!"
-        );
-      }
     } catch (e) {
-      console.error(
-        "   -> !!! KRITICKÁ CHYBA při volání flatpickr() inicializace:",
-        e
-      );
-      flatpickrInstance = null;
+      console.error("KRITICKÁ CHYBA při inicializaci flatpickr():", e);
     }
-    console.log("--- initializeDatePicker END ---");
   }
 
-  // Načtení a zobrazení rezervací
   async function loadReservations() {
-    if (reservationsListDiv)
-      reservationsListDiv.innerHTML = "<p><i>Aktualizuji rezervace...</i></p>";
-    else
-      console.warn(
-        "Element reservationsListDiv nenalezen pro zobrazení stavu načítání."
-      );
-
+    if (reservationsListDiv) reservationsListDiv.innerHTML = "<p><i>Aktualizuji rezervace...</i></p>";
+    
     const token = getToken();
     if (!token) {
       showLogin();
@@ -321,72 +284,46 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       if (response.status === 401 || response.status === 403) {
-        console.warn("Neautorizovaný přístup k rezervacím, odhlašuji.");
         logoutButton.click();
         return;
       }
       if (!response.ok) {
-        const errorData = await response
-          .json()
-          .catch(() => ({ message: `Chyba ${response.status}` }));
-        throw new Error(
-          errorData.message ||
-            `Chyba při načítání rezervací: ${response.status}`
-        );
+        const errorData = await response.json().catch(() => ({ message: `Chyba ${response.status}` }));
+        throw new Error(errorData.message || `Chyba při načítání rezervací: ${response.status}`);
       }
 
       const rezervace = await response.json();
       window.currentReservations = rezervace;
-      console.log(
-        "Aktuální rezervace načteny/aktualizovány:",
-        window.currentReservations
-      );
-
+      
       const disabledRanges = rezervace.map((r) => ({ from: r.from, to: r.to }));
 
       if (flatpickrInstance) {
-        console.log(">>> Aktualizuji existující Flatpickr instanci.");
         flatpickrInstance.set("disable", disabledRanges);
-        console.log(
-          ">>> Volám renderReservationsOverview po aktualizaci instance."
-        );
-        renderReservationsOverview(
-          flatpickrInstance.currentMonth,
-          flatpickrInstance.currentYear
-        );
+        renderReservationsOverview(flatpickrInstance.currentMonth, flatpickrInstance.currentYear);
       } else {
-        console.log(">>> Inicializuji novou Flatpickr instanci.");
         initializeDatePicker(disabledRanges);
-
         setTimeout(() => {
           if (flatpickrInstance) {
-            console.log(
-              ">>> Ruční první render přehledu po nové inicializaci."
-            );
-            renderReservationsOverview(
-              flatpickrInstance.currentMonth,
-              flatpickrInstance.currentYear
-            );
-          } else {
-            console.error(
-              "!!! Instance Flatpickr není dostupná ani po nové inicializaci!"
-            );
+            renderReservationsOverview(flatpickrInstance.currentMonth, flatpickrInstance.currentYear);
           }
         }, 50);
       }
     } catch (error) {
       console.error("Chyba při načítání/aktualizaci rezervací:", error);
-      if (reservationsListDiv)
-        reservationsListDiv.innerHTML = `<p style="color: red;">Nepodařilo se aktualizovat rezervace.</p>`;
+      if (reservationsListDiv) reservationsListDiv.innerHTML = `<p style="color: red;">Nepodařilo se aktualizovat rezervace.</p>`;
     }
   }
 
-  function formatDateForDisplay(dateString) {
-    if (!dateString || typeof dateString !== "string") return "";
-    const parts = dateString.split("-");
-    if (parts.length !== 3) return dateString;
-    const [year, month, day] = parts;
-    return `${day}.${month}.${year}`;
+  function formatDateForDisplay(date) {
+    if(!date) return "";
+    if (typeof date === 'string') {
+        const parts = date.split("-");
+        if (parts.length !== 3) return date;
+        const [year, month, day] = parts;
+        return `${day}.${month}.${year}`;
+    }
+    // if it's a Date object
+    return `${date.getDate()}.${date.getMonth() + 1}.${date.getFullYear()}`;
   }
 
   bookingForm.addEventListener("submit", async (event) => {
@@ -395,46 +332,28 @@ document.addEventListener("DOMContentLoaded", () => {
     bookingMessage.style.color = "";
 
     const token = getToken();
-    console.log("Submit handler: Token nalezen?", !!token);
-
-    console.log("Submit handler: Instance FP existuje?", !!flatpickrInstance);
-    if (flatpickrInstance) {
-      console.log(
-        "Submit handler: Počet vybraných dat:",
-        flatpickrInstance.selectedDates.length
-      );
-    }
-
-    if (!flatpickrInstance || flatpickrInstance.selectedDates.length !== 2) {
-      console.log(
-        "Submit handler: KONEC - Instance neexistuje nebo nejsou vybrány 2 datumy."
-      );
-      bookingMessage.textContent = "Prosím, vyberte platný termín (od - do).";
+    if (!token || !flatpickrInstance || flatpickrInstance.selectedDates.length !== 2) {
+      bookingMessage.textContent = "Chyba: Vypršelo přihlášení nebo chybí výběr datumu.";
       bookingMessage.style.color = "red";
       return;
     }
-
-    if (!token) {
-      console.log("Submit handler: KONEC - Token nenalezen (druhá kontrola).");
-      bookingMessage.textContent = "Chyba: Nejste přihlášeni.";
-      bookingMessage.style.color = "red";
-      logoutButton.click();
-      return;
+    
+    let purpose = purposeSelect.value;
+    if (purpose === 'Jiný') {
+        purpose = otherPurposeInput.value.trim();
+        if (!purpose) {
+            alert('Prosím, specifikujte jiný účel návštěvy.');
+            return;
+        }
     }
 
     const rezervaceData = {
-      from: flatpickrInstance.formatDate(
-        flatpickrInstance.selectedDates[0],
-        "Y-m-d"
-      ),
-      to: flatpickrInstance.formatDate(
-        flatpickrInstance.selectedDates[1],
-        "Y-m-d"
-      ),
+      from: flatpickrInstance.formatDate(flatpickrInstance.selectedDates[0], "Y-m-d"),
+      to: flatpickrInstance.formatDate(flatpickrInstance.selectedDates[1], "Y-m-d"),
+      purpose: purpose,
+      notes: notesTextarea.value.trim(),
     };
-    console.log("Submit handler: Data pro odeslání připravena:", rezervaceData);
 
-    console.log("Submit handler: Pokouším se volat fetch POST...");
     try {
       const response = await fetch(`${backendUrl}/api/reservations`, {
         method: "POST",
@@ -444,97 +363,95 @@ document.addEventListener("DOMContentLoaded", () => {
         },
         body: JSON.stringify(rezervaceData),
       });
-      console.log(
-        "Submit handler: Fetch POST dokončen, status:",
-        response.status
-      );
 
       const result = await response.json();
       if (!response.ok) {
         throw new Error(result.message || `Chyba ${response.status}`);
       }
+      
+      closeBookingModal();
       bookingMessage.textContent = `Rezervace úspěšně vytvořena!`;
       bookingMessage.style.color = "green";
+      
       flatpickrInstance.clear();
-      document.getElementById("check-in-date-display").textContent =
-        "- Vyberte -";
-      document.getElementById("check-out-date-display").textContent =
-        "- Vyberte -";
+      document.getElementById("check-in-date-display").textContent = "- Vyberte -";
+      document.getElementById("check-out-date-display").textContent = "- Vyberte -";
+      openModalButton.style.display = 'none';
+
       loadReservations();
     } catch (error) {
-      console.error("Submit handler: Chyba v try bloku:", error);
-      bookingMessage.textContent = `Chyba: ${error.message}`;
-      bookingMessage.style.color = "red";
-    } finally {
-      console.log("Submit handler: Konec zpracování (finally).");
+      console.error("Chyba při odeslání rezervace:", error);
+      alert(`Chyba: ${error.message}`); // Použijeme alert v modalu
     }
   });
 
   function renderReservationsOverview(month, year) {
-    const reservationsContainer = document.getElementById("reservations-list");
-    if (!reservationsContainer) return;
-    if (!window.currentReservations) {
-      reservationsContainer.innerHTML = "<p><i>Rezervace nenalezeny.</i></p>";
-      return;
+    if (!reservationsListDiv) return;
+    if(reservationsContainerTitle) {
+        reservationsContainerTitle.textContent = "Přehled rezervací v tomto měsíci";
     }
+
     const monthStart = new Date(year, month, 1);
-    monthStart.setHours(0, 0, 0, 0);
     const monthEnd = new Date(year, month + 1, 0);
-    monthEnd.setHours(0, 0, 0, 0);
-    console.log(`>>> Renderuji přehled pro ${month + 1}/${year}`);
 
     const filteredReservations = window.currentReservations.filter((r) => {
       try {
-        const fromParts = r.from.split("-").map(Number);
-        const toParts = r.to.split("-").map(Number);
-        if (
-          fromParts.length !== 3 ||
-          toParts.length !== 3 ||
-          fromParts.some(isNaN) ||
-          toParts.some(isNaN)
-        )
-          return false;
-        const resStart = new Date(fromParts[0], fromParts[1] - 1, fromParts[2]);
-        resStart.setHours(0, 0, 0, 0);
-        const resEnd = new Date(toParts[0], toParts[1] - 1, toParts[2]);
-        resEnd.setHours(0, 0, 0, 0);
+        const resStart = new Date(r.from);
+        const resEnd = new Date(r.to);
         return resStart <= monthEnd && resEnd >= monthStart;
-      } catch (e) {
-        return false;
-      }
+      } catch (e) { return false; }
     });
 
-    reservationsContainer.innerHTML = "";
-    if (filteredReservations.length === 0) {
-      reservationsContainer.innerHTML =
-        "<p><i>Pro tento měsíc nejsou žádné rezervace.</i></p>";
-    } else {
-      filteredReservations.sort((a, b) => new Date(a.from) - new Date(b.from));
-      const list = document.createElement("ul");
-      filteredReservations.forEach((r) => {
-        const listItem = document.createElement("li");
-        listItem.textContent = `${r.username}: ${formatDateForDisplay(
-          r.from
-        )} - ${formatDateForDisplay(r.to)}`;
-        list.appendChild(listItem);
-      });
-      reservationsContainer.appendChild(list);
+    renderReservationList(filteredReservations, "Pro tento měsíc nejsou žádné rezervace.");
+  }
+  
+  function renderReservationsForSelection(selectedDates) {
+    if (!reservationsListDiv || selectedDates.length !== 2) return;
+    
+    if(reservationsContainerTitle) {
+        reservationsContainerTitle.textContent = "Přehled rezervací pro Váš výběr";
     }
+
+    const selectionStart = selectedDates[0];
+    const selectionEnd = selectedDates[1];
+
+    const overlappingReservations = window.currentReservations.filter(r => {
+        try {
+            const resStart = new Date(r.from);
+            const resEnd = new Date(r.to);
+            return resStart <= selectionEnd && resEnd >= selectionStart;
+        } catch(e) { return false; }
+    });
+
+    renderReservationList(overlappingReservations, "Ve vybraném termínu nejsou žádné jiné rezervace.");
+  }
+  
+  function renderReservationList(reservations, emptyMessage) {
+      reservationsListDiv.innerHTML = "";
+      if (reservations.length === 0) {
+          reservationsListDiv.innerHTML = `<p><i>${emptyMessage}</i></p>`;
+      } else {
+          reservations.sort((a, b) => new Date(a.from) - new Date(b.from));
+          const list = document.createElement("ul");
+          reservations.forEach((r) => {
+              const listItem = document.createElement("li");
+              let text = `<strong>${r.username}:</strong> ${formatDateForDisplay(r.from)} - ${formatDateForDisplay(r.to)}`;
+              if (r.purpose) {
+                  text += ` (Účel: ${r.purpose})`;
+              }
+              listItem.innerHTML = text;
+              list.appendChild(listItem);
+          });
+          reservationsListDiv.appendChild(list);
+      }
   }
 
   // --- Spuštění při načtení stránky ---
   const initialToken = getToken();
   const initialUsername = localStorage.getItem("username");
   if (initialToken && initialUsername) {
-    console.log("Nalezen token a username, volám showApp.");
     showApp(initialUsername);
   } else {
-    console.log("Token nebo username nenalezeno, volám showLogin.");
     showLogin();
   }
 });
-
-// --- END OF FILE script.js ---
-
-
-
