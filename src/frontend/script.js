@@ -53,7 +53,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     try {
       const response = await fetch(`${backendUrl}/api/login`, {
-        /* ... */
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
       });
       const data = await response.json();
       if (!response.ok)
@@ -90,18 +94,12 @@ document.addEventListener("DOMContentLoaded", () => {
   function initializeDatePicker(disabledDates = []) {
     console.log("--- initializeDatePicker START ---");
 
-    // Zničení předchozí instance, pokud existuje
-
     if (!calendarContainer) {
       console.error(
         "   -> KRITICKÁ CHYBA: Element .calendar-container nebyl nalezen!"
       );
       return;
     }
-    // Není potřeba čistit a vytvářet nový element, Flatpickr si to spraví sám
-    // calendarContainer.innerHTML = "";
-    // const calendarElement = document.createElement("div");
-    // calendarContainer.appendChild(calendarElement);
 
     const flatpickrConfig = {
       mode: "range",
@@ -110,14 +108,9 @@ document.addEventListener("DOMContentLoaded", () => {
       disable: disabledDates,
       minDate: "today",
       locale: "cs",
-      // defaultDate: "2025-04-20", // Můžete nastavit výchozí datum/měsíc
-
-      // ODSTRANÍME VOLÁNÍ Z onReady
       onReady: function (selectedDates, dateStr, instance) {
         console.log("   -> Flatpickr onReady: Kalendář je připraven.");
-        // renderReservationsOverview(instance.currentMonth, instance.currentYear); // <<< TOTO JE ODSTRANĚNO
       },
-      // Ponecháme pro aktualizace
       onMonthChange: function (selectedDates, dateStr, instance) {
         console.log("   -> Flatpickr onMonthChange.");
         renderReservationsOverview(instance.currentMonth, instance.currentYear);
@@ -127,8 +120,6 @@ document.addEventListener("DOMContentLoaded", () => {
         renderReservationsOverview(instance.currentMonth, instance.currentYear);
       },
       onDayCreate: function (dObj, dStr, fp, dayElem) {
-        // Váš stávající kód pro onDayCreate (obarvení dnů)...
-        // (zkráceno pro přehlednost)
         const date = dayElem.dateObj;
         const currentDate = new Date(
           date.getFullYear(),
@@ -145,7 +136,6 @@ document.addEventListener("DOMContentLoaded", () => {
           return;
 
         const matchingReservations = window.currentReservations.filter((r) => {
-          // ... vaše logika pro filtrování rezervací pro daný den ...
           try {
             const fromParts = r.from.split("-").map(Number);
             const toParts = r.to.split("-").map(Number);
@@ -189,8 +179,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       },
       onChange: function (selectedDates, dateStr, instance) {
-        // Váš stávající kód pro onChange (aktualizace zobrazení vybraných dat)...
-        // (zkráceno pro přehlednost)
         const checkInDateDisplay = document.getElementById(
           "check-in-date-display"
         );
@@ -222,7 +210,6 @@ document.addEventListener("DOMContentLoaded", () => {
       "   -> Volám flatpickr('.calendar-container', flatpickrConfig)..."
     );
     try {
-      // Flatpickr inicializujeme PŘÍMO na kontejner
       flatpickrInstance = flatpickr(calendarContainer, flatpickrConfig);
       console.log("   -> Flatpickr instance vytvořena:", flatpickrInstance);
       if (!flatpickrInstance) {
@@ -242,7 +229,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Načtení a zobrazení rezervací
   async function loadReservations() {
-    // Zobrazíme indikátor načítání
     if (reservationsListDiv)
       reservationsListDiv.innerHTML = "<p><i>Aktualizuji rezervace...</i></p>";
     else
@@ -277,24 +263,17 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       const rezervace = await response.json();
-      window.currentReservations = rezervace; // Uložíme aktuální data
+      window.currentReservations = rezervace;
       console.log(
         "Aktuální rezervace načteny/aktualizovány:",
         window.currentReservations
       );
 
-      // Zpracování pro disable
       const disabledRanges = rezervace.map((r) => ({ from: r.from, to: r.to }));
 
-      // --- AKTUALIZACE NEBO INICIALIZACE ---
       if (flatpickrInstance) {
-        // Pokud instance existuje, jen aktualizujeme 'disable' a překreslíme
         console.log(">>> Aktualizuji existující Flatpickr instanci.");
         flatpickrInstance.set("disable", disabledRanges);
-        // Není potřeba volat redraw explicitně, set by to měl zařídit, ale pro jistotu:
-        // flatpickrInstance.redraw();
-
-        // Aktualizujeme přehled rezervací
         console.log(
           ">>> Volám renderReservationsOverview po aktualizaci instance."
         );
@@ -303,11 +282,9 @@ document.addEventListener("DOMContentLoaded", () => {
           flatpickrInstance.currentYear
         );
       } else {
-        // Pokud instance neexistuje (první načtení), inicializujeme ji
         console.log(">>> Inicializuji novou Flatpickr instanci.");
-        initializeDatePicker(disabledRanges); // Vytvoří novou instanci a uloží ji do flatpickrInstance
+        initializeDatePicker(disabledRanges);
 
-        // Manuální první render přehledu po vytvoření nové instance
         setTimeout(() => {
           if (flatpickrInstance) {
             console.log(
@@ -324,7 +301,6 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         }, 50);
       }
-      // --- KONEC AKTUALIZACE NEBO INICIALIZACE ---
     } catch (error) {
       console.error("Chyba při načítání/aktualizaci rezervací:", error);
       if (reservationsListDiv)
@@ -332,53 +308,47 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Pomocná funkce pro formátování data YYYY-MM-DD na DD.MM.YYYY
   function formatDateForDisplay(dateString) {
     if (!dateString || typeof dateString !== "string") return "";
     const parts = dateString.split("-");
-    if (parts.length !== 3) return dateString; // Vrať originál, pokud formát nesedí
+    if (parts.length !== 3) return dateString;
     const [year, month, day] = parts;
     return `${day}.${month}.${year}`;
   }
 
-  // Zpracování formuláře rezervace
   bookingForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     bookingMessage.textContent = "Odesílám rezervaci...";
-    bookingMessage.style.color = ""; // Reset barvy
+    bookingMessage.style.color = "";
 
-    // BOD 1: Získání tokenu
     const token = getToken();
-    console.log("Submit handler: Token nalezen?", !!token); // Log 1: Máme token?
+    console.log("Submit handler: Token nalezen?", !!token);
 
-    // BOD 2: Kontrola instance kalendáře a vybraných dat
-    console.log("Submit handler: Instance FP existuje?", !!flatpickrInstance); // Log 2a: Existuje instance?
+    console.log("Submit handler: Instance FP existuje?", !!flatpickrInstance);
     if (flatpickrInstance) {
       console.log(
         "Submit handler: Počet vybraných dat:",
         flatpickrInstance.selectedDates.length
-      ); // Log 2b: Kolik dat je vybráno?
+      );
     }
 
     if (!flatpickrInstance || flatpickrInstance.selectedDates.length !== 2) {
       console.log(
         "Submit handler: KONEC - Instance neexistuje nebo nejsou vybrány 2 datumy."
-      ); // Log 2c: Končíme zde?
+      );
       bookingMessage.textContent = "Prosím, vyberte platný termín (od - do).";
       bookingMessage.style.color = "red";
-      return; // <<--- MOŽNÝ BOD UKONČENÍ 1
+      return;
     }
 
-    // BOD 3: Kontrola tokenu (znovu, pro jistotu)
     if (!token) {
-      console.log("Submit handler: KONEC - Token nenalezen (druhá kontrola)."); // Log 3: Končíme zde?
+      console.log("Submit handler: KONEC - Token nenalezen (druhá kontrola).");
       bookingMessage.textContent = "Chyba: Nejste přihlášeni.";
       bookingMessage.style.color = "red";
-      logoutButton.click(); // Odhlásit
-      return; // <<--- MOŽNÝ BOD UKONČENÍ 2
+      logoutButton.click();
+      return;
     }
 
-    // BOD 4: Příprava dat
     const rezervaceData = {
       from: flatpickrInstance.formatDate(
         flatpickrInstance.selectedDates[0],
@@ -389,10 +359,9 @@ document.addEventListener("DOMContentLoaded", () => {
         "Y-m-d"
       ),
     };
-    console.log("Submit handler: Data pro odeslání připravena:", rezervaceData); // Log 4: Data jsou OK?
+    console.log("Submit handler: Data pro odeslání připravena:", rezervaceData);
 
-    // BOD 5: Pokus o fetch
-    console.log("Submit handler: Pokouším se volat fetch POST..."); // Log 5: Dostane se to sem?
+    console.log("Submit handler: Pokouším se volat fetch POST...");
     try {
       const response = await fetch(`${backendUrl}/api/reservations`, {
         method: "POST",
@@ -405,15 +374,12 @@ document.addEventListener("DOMContentLoaded", () => {
       console.log(
         "Submit handler: Fetch POST dokončen, status:",
         response.status
-      ); // Log 6: Fetch proběhl?
+      );
 
-      // ... zbytek try bloku ...
       const result = await response.json();
       if (!response.ok) {
-        // ... zpracování chyby z backendu ...
         throw new Error(result.message || `Chyba ${response.status}`);
       }
-      // ... zpracování úspěchu ...
       bookingMessage.textContent = `Rezervace úspěšně vytvořena!`;
       bookingMessage.style.color = "green";
       flatpickrInstance.clear();
@@ -421,22 +387,17 @@ document.addEventListener("DOMContentLoaded", () => {
         "- Vyberte -";
       document.getElementById("check-out-date-display").textContent =
         "- Vyberte -";
-      loadReservations(); // Znovu načteme rezervace
+      loadReservations();
     } catch (error) {
-      // BOD 6: Zachycení chyby
-      console.error("Submit handler: Chyba v try bloku:", error); // Log 7: Nastala chyba?
+      console.error("Submit handler: Chyba v try bloku:", error);
       bookingMessage.textContent = `Chyba: ${error.message}`;
       bookingMessage.style.color = "red";
-      // ... případné odhlášení ...
     } finally {
-      console.log("Submit handler: Konec zpracování (finally)."); // Log 8: Proběhl finally blok?
+      console.log("Submit handler: Konec zpracování (finally).");
     }
   });
 
-  // Funkce pro vykreslení přehledu rezervací
   function renderReservationsOverview(month, year) {
-    // Váš kód pro renderReservationsOverview ...
-    // (zkráceno pro přehlednost)
     const reservationsContainer = document.getElementById("reservations-list");
     if (!reservationsContainer) return;
     if (!window.currentReservations) {
@@ -470,13 +431,13 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
-    reservationsContainer.innerHTML = ""; // Vyčistit
+    reservationsContainer.innerHTML = "";
     if (filteredReservations.length === 0) {
       reservationsContainer.innerHTML =
         "<p><i>Pro tento měsíc nejsou žádné rezervace.</i></p>";
     } else {
       filteredReservations.sort((a, b) => new Date(a.from) - new Date(b.from));
-      const list = document.createElement("ul"); // Použijeme seznam pro lepší strukturu
+      const list = document.createElement("ul");
       filteredReservations.forEach((r) => {
         const listItem = document.createElement("li");
         listItem.textContent = `${r.username}: ${formatDateForDisplay(
@@ -493,14 +454,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const initialUsername = localStorage.getItem("username");
   if (initialToken && initialUsername) {
     console.log("Nalezen token a username, volám showApp.");
-    // Zde MŮŽE být vhodné přidat rychlé ověření tokenu na backendu,
-    // např. GET /api/verify-token, které vrátí { valid: true/false }.
-    // Pokud není validní, zavolat showLogin(). Pro jednoduchost to zde neděláme.
     showApp(initialUsername);
   } else {
     console.log("Token nebo username nenalezeno, volám showLogin.");
     showLogin();
   }
-}); // Konec DOMContentLoaded
+});
 
 // --- END OF FILE script.js ---
