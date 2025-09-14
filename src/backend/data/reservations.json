@@ -56,42 +56,6 @@
     "to": "2025-09-30"
   },
   {
-    "id": "94a3f142-b9ec-4f0b-a07a-96505a8592a3",
-    "userId": "user1",
-    "username": "KatkaVelka",
-    "from": "2025-10-04",
-    "to": "2025-10-05",
-    "purpose": "Práce na zahradě",
-    "notes": ""
-  },
-  {
-    "id": "203267bb-cb3c-44f7-8cf3-a5eb38080a98",
-    "userId": "user1",
-    "username": "KatkaVelka",
-    "from": "2025-10-02",
-    "to": "2025-10-02",
-    "purpose": "Relax",
-    "notes": "test"
-  },
-  {
-    "id": "ced9745f-22f6-4fb6-9eb3-4fd3b055c720",
-    "userId": "user1",
-    "username": "KatkaVelka",
-    "from": "2025-10-06",
-    "to": "2025-10-13",
-    "purpose": "Relax",
-    "notes": "Vymalovat pokoj"
-  },
-  {
-    "id": "6fb27ca2-e925-4408-8956-ab325478f672",
-    "userId": "user1",
-    "username": "KatkaVelka",
-    "from": "2025-09-13",
-    "to": "2025-09-13",
-    "purpose": "Relax",
-    "notes": ""
-  },
-  {
     "id": "0eee5b49-f3df-4406-bcf2-cd9d87141cfe",
     "userId": "user1",
     "username": "KatkaVelka",

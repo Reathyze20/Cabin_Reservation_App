@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const calendarContainer = document.querySelector(".calendar-container");
   const reservationsTitle = document.getElementById("reservations-title");
   
-  // Prvky pro modální okno
+  // Prvky pro modální okno rezervace
   const bookingModal = document.getElementById("booking-modal");
   const closeModalButton = document.querySelector(".modal-close-button");
   const openModalButton = document.getElementById("open-booking-modal-button");
@@ -34,16 +34,23 @@ document.addEventListener("DOMContentLoaded", () => {
   const modalDateRangeSpan = document.getElementById("modal-date-range");
   const modalTitle = document.getElementById("modal-title");
   const modalSubmitButton = document.getElementById("modal-submit-button");
+  const modalDeleteButton = document.getElementById("modal-delete-button");
   const reservationIdInput = document.getElementById("reservation-id");
   const purposeSelect = document.getElementById("purpose-select");
   const otherPurposeGroup = document.getElementById("other-purpose-group");
   const otherPurposeInput = document.getElementById("other-purpose-input");
   const notesTextarea = document.getElementById("notes-textarea");
 
+  // Prvky pro modální okno potvrzení smazání
+  const confirmDeleteModal = document.getElementById('confirm-delete-modal');
+  const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+  const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
+
 
   // Globální proměnné
   let flatpickrInstance = null;
   window.currentReservations = [];
+  let reservationIdToDelete = null; // Pro uchování ID rezervace ke smazání
   const backendUrl = "http://localhost:3000";
 
   // --- Funkce pro zobrazení/skrytí sekcí ---
@@ -167,11 +174,18 @@ document.addEventListener("DOMContentLoaded", () => {
       bookingForm.reset();
       otherPurposeGroup.style.display = 'none';
       reservationIdInput.value = '';
+      modalDeleteButton.style.display = 'none';
+      modalDeleteButton.onclick = null;
 
       if (isEdit && reservation) {
         // Editace existující rezervace
         modalTitle.textContent = "Upravit rezervaci";
         modalSubmitButton.textContent = "Uložit změny";
+        modalDeleteButton.style.display = 'inline-block';
+        modalDeleteButton.onclick = () => {
+            closeBookingModal();
+            openConfirmDeleteModal(reservation.id);
+        };
         modalDateRangeSpan.textContent = `${formatDateForDisplay(reservation.from)} - ${formatDateForDisplay(reservation.to)}`;
         reservationIdInput.value = reservation.id;
         
@@ -201,18 +215,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function closeBookingModal() {
       bookingModal.style.display = "none";
-      bookingForm.reset();
-      otherPurposeGroup.style.display = 'none';
-      reservationIdInput.value = ''; // Důležité pro reset stavu
+  }
+  
+  function openConfirmDeleteModal(id) {
+    reservationIdToDelete = id;
+    confirmDeleteModal.style.display = 'flex';
+  }
+
+  function closeConfirmDeleteModal() {
+    confirmDeleteModal.style.display = 'none';
+    reservationIdToDelete = null;
   }
 
   openModalButton.addEventListener('click', () => openBookingModal(false));
   closeModalButton.addEventListener('click', closeBookingModal);
-  window.addEventListener('click', (event) => {
-      if (event.target === bookingModal) {
-          closeBookingModal();
-      }
-  });
   
   purposeSelect.addEventListener('change', () => {
       if (purposeSelect.value === 'Jiný') {
@@ -259,7 +275,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (matchingReservation) {
           dayElem.title = `Rezervováno: ${matchingReservation.username}`;
           dayElem.classList.add("booked-day");
-          // Použijeme ID uživatele pro třídu, aby se předešlo problémům se jmény s mezerami
           const userClass = `user-${matchingReservation.userId.replace(/\s+/g, '-')}`;
           dayElem.classList.add(userClass);
           
@@ -276,10 +291,10 @@ document.addEventListener("DOMContentLoaded", () => {
           checkInDateDisplay.textContent = instance.formatDate(selectedDates[0], "d. M Y");
           if (selectedDates.length === 2) {
             checkOutDateDisplay.textContent = instance.formatDate(selectedDates[1], "d. M Y");
-            openModalButton.style.display = 'block'; // Zobrazit tlačítko
+            openModalButton.style.display = 'block';
           } else {
             checkOutDateDisplay.textContent = "- Vyberte -";
-            openModalButton.style.display = 'none'; // Skrýt tlačítko
+            openModalButton.style.display = 'none';
           }
         } else {
           checkInDateDisplay.textContent = "- Vyberte -";
@@ -287,7 +302,6 @@ document.addEventListener("DOMContentLoaded", () => {
           openModalButton.style.display = 'none';
         }
         
-        // Zobrazíme přehled pro výběr nebo pro celý měsíc
         if (selectedDates.length === 2) {
             renderReservationsForSelection(selectedDates);
         } else {
@@ -295,7 +309,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       },
       onMonthChange: function(selectedDates, dateStr, instance) {
-        // Aktualizujeme seznam rezervací při změně měsíce
         renderReservationsOverview(instance.currentMonth, instance.currentYear);
       },
     };
@@ -337,7 +350,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (flatpickrInstance) {
         flatpickrInstance.set("disable", disabledRanges);
-        flatpickrInstance.redraw(); // Důležité pro překreslení s novými daty
+        flatpickrInstance.redraw();
         renderReservationsOverview(flatpickrInstance.currentMonth, flatpickrInstance.currentYear);
       } else {
         initializeDatePicker(disabledRanges);
@@ -361,7 +374,6 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
         dateObj = date;
     }
-    // Přičteme časové pásmo, aby se datum nezměnilo
     dateObj.setMinutes(dateObj.getMinutes() + dateObj.getTimezoneOffset());
     return `${dateObj.getDate()}.${dateObj.getMonth() + 1}.${dateObj.getFullYear()}`;
   }
@@ -496,12 +508,17 @@ document.addEventListener("DOMContentLoaded", () => {
                   ? `<p><strong>Poznámka:</strong> ${r.notes}</p>` 
                   : '';
               
-              const editButtonHTML = loggedInUserId === r.userId
-                  ? `<button class="edit-btn" data-id="${r.id}" title="Upravit rezervaci"><i class="fas fa-pencil-alt"></i></button>`
-                  : '';
+              let actionButtonsHTML = '';
+              if (loggedInUserId === r.userId) {
+                  actionButtonsHTML = `
+                  <div class="action-buttons">
+                      <button class="edit-btn" data-id="${r.id}" title="Upravit rezervaci"><i class="fas fa-pencil-alt"></i></button>
+                      <button class="delete-btn" data-id="${r.id}" title="Smazat rezervaci"><i class="fas fa-trash-alt"></i></button>
+                  </div>`;
+              }
 
               listItem.innerHTML = `
-                ${editButtonHTML}
+                ${actionButtonsHTML}
                 <div class="reservation-header">
                     <strong>${r.username}</strong>
                     <span>${formatDateForDisplay(r.from)} - ${formatDateForDisplay(r.to)}</span>
@@ -517,7 +534,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
   }
 
-  // Event listener pro editaci
+  // Delegované event listenery pro akce v seznamu rezervací
   reservationsListDiv.addEventListener('click', (event) => {
     const editButton = event.target.closest('.edit-btn');
     if (editButton) {
@@ -526,7 +543,69 @@ document.addEventListener("DOMContentLoaded", () => {
         if (reservation) {
             openBookingModal(true, reservation);
         }
+        return;
     }
+
+    const deleteButton = event.target.closest('.delete-btn');
+    if (deleteButton) {
+        const reservationId = deleteButton.dataset.id;
+        openConfirmDeleteModal(reservationId);
+    }
+  });
+
+  // Listenery pro potvrzovací modál
+  cancelDeleteBtn.addEventListener('click', closeConfirmDeleteModal);
+  confirmDeleteBtn.addEventListener('click', async () => {
+    if (!reservationIdToDelete) return;
+
+    const token = getToken();
+    if (!token) {
+        alert("Vaše přihlášení vypršelo. Přihlaste se prosím znovu.");
+        closeConfirmDeleteModal();
+        return;
+    }
+
+    try {
+        const response = await fetch(`${backendUrl}/api/reservations/${reservationIdToDelete}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message || `Chyba ${response.status}`);
+        
+        closeConfirmDeleteModal();
+        
+        // Místo znovunačtení všeho (což způsobovalo problém),
+        // smažeme rezervaci z lokálního pole a překreslíme komponenty.
+        const index = window.currentReservations.findIndex(r => r.id === reservationIdToDelete);
+        if (index > -1) {
+            window.currentReservations.splice(index, 1);
+        }
+        
+        // Aktualizujeme kalendář a seznam
+        const disabledRanges = window.currentReservations.map((r) => ({ from: r.from, to: r.to }));
+        flatpickrInstance.set('disable', disabledRanges);
+        flatpickrInstance.redraw();
+        renderReservationsOverview(flatpickrInstance.currentMonth, flatpickrInstance.currentYear);
+
+    } catch (error) {
+        console.error("Chyba při mazání rezervace:", error);
+        alert(`Nepodařilo se smazat rezervaci: ${error.message}`);
+        closeConfirmDeleteModal();
+    }
+  });
+
+  // Zavírání modálních oken kliknutím na pozadí
+  window.addEventListener('click', (event) => {
+      if (event.target === bookingModal) {
+          closeBookingModal();
+      }
+      if (event.target === confirmDeleteModal) {
+          closeConfirmDeleteModal();
+      }
   });
 
 
