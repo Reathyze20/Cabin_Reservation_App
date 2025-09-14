@@ -8,5 +8,15 @@
     "id": "user2",
     "username": "KatkaMala",
     "passwordHash": "$2b$10$xpfsIxP7DplSiCvTAGmeLetanc1tV6W15evGiLA6E4.RLXDyh3VDu"
+  },
+  {
+    "id": "d9aec492-f5be-4e72-81a0-44b69a3f1036",
+    "username": "Tester Testovič",
+    "passwordHash": "$2b$10$gRz/CsbTjJOod6qsxP4aTO51QIqWprAyyTw96M4z4ETB75mUiEvym"
+  },
+  {
+    "id": "f87e5413-fc42-4743-a1dc-b31324bf833d",
+    "username": "Tomáš Rambousek",
+    "passwordHash": "$2b$10$eMHa2Gaei5KKFJ.CN4TOrOIN9gun89nrvFRk8akipGSb1L2fAKlu2"
   }
 ]

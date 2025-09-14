@@ -40,5 +40,19 @@
     "username": "KatkaVelka",
     "from": "2025-04-22",
     "to": "2025-04-22"
+  },
+  {
+    "id": "c36c7101-2997-4ea1-a91f-ec34535bc78d",
+    "userId": "d9aec492-f5be-4e72-81a0-44b69a3f1036",
+    "username": "Tester Testovič",
+    "from": "2025-09-15",
+    "to": "2025-09-23"
+  },
+  {
+    "id": "a18360c3-dee0-4423-a3c1-eed1af95a32b",
+    "userId": "f87e5413-fc42-4743-a1dc-b31324bf833d",
+    "username": "Tomáš Rambousek",
+    "from": "2025-09-24",
+    "to": "2025-09-30"
   }
 ]

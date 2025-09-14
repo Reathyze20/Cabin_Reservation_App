@@ -1,5 +1,3 @@
-// --- START OF FILE script.js ---
-
 document.addEventListener("DOMContentLoaded", () => {
   // Mapa barev uživatelů
   const userColors = {
@@ -14,6 +12,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const usernameInput = document.getElementById("username");
   const passwordInput = document.getElementById("password");
   const loginError = document.getElementById("login-error");
+
+  const registerSection = document.getElementById("register-section");
+  const registerForm = document.getElementById("register-form");
+  const registerMessage = document.getElementById("register-message");
+  const showRegisterLink = document.getElementById("show-register-link");
+  const showLoginLink = document.getElementById("show-login-link");
+
   const loggedInUsernameSpan = document.getElementById("logged-in-username");
   const logoutButton = document.getElementById("logout-button");
   const bookingForm = document.getElementById("booking-form");
@@ -29,17 +34,37 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- Funkce pro zobrazení/skrytí sekcí ---
   function showLogin() {
     loginSection.style.display = "block";
+    registerSection.style.display = "none";
     appSection.style.display = "none";
     loginError.textContent = "";
   }
 
+  function showRegister() {
+    loginSection.style.display = "none";
+    registerSection.style.display = "block";
+    appSection.style.display = "none";
+    registerMessage.textContent = "";
+  }
+
   function showApp(username) {
     loginSection.style.display = "none";
+    registerSection.style.display = "none";
     appSection.style.display = "flex";
     loggedInUsernameSpan.textContent = username;
     // ZAVOLÁME POUZE loadReservations, KTERÝ SE POSTARÁ O ZBYTEK
     loadReservations();
   }
+
+  // --- Logika Přepínání Formulářů ---
+  showRegisterLink.addEventListener("click", (e) => {
+    e.preventDefault();
+    showRegister();
+  });
+
+  showLoginLink.addEventListener("click", (e) => {
+    e.preventDefault();
+    showLogin();
+  });
 
   // --- Logika Přihlášení ---
   loginForm.addEventListener("submit", async (event) => {
@@ -69,6 +94,54 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("Chyba při přihlášení:", error);
       loginError.textContent = error.message || "Nepodařilo se přihlásit.";
       passwordInput.value = "";
+    }
+  });
+
+  // --- Logika Registrace ---
+  registerForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    registerMessage.textContent = "";
+    const username = document.getElementById("register-username").value;
+    const password = document.getElementById("register-password").value;
+
+    if (!username || !password) {
+      registerMessage.textContent = "Prosím, vyplňte jméno i heslo.";
+      registerMessage.style.color = "red";
+      return;
+    }
+    if (password.length < 6) {
+      registerMessage.textContent = "Heslo musí mít alespoň 6 znaků.";
+      registerMessage.style.color = "red";
+      return;
+    }
+
+    try {
+      const response = await fetch(`${backendUrl}/api/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || `Chyba ${response.status}`);
+      }
+
+      registerMessage.textContent = data.message;
+      registerMessage.style.color = "green";
+      registerForm.reset();
+      
+      // Po úspěšné registraci přepne zpět na přihlášení
+      setTimeout(() => {
+        showLogin();
+      }, 2000);
+    } catch (error) {
+      console.error("Chyba při registraci:", error);
+      registerMessage.textContent = error.message || "Nepodařilo se zaregistrovat.";
+      registerMessage.style.color = "red";
     }
   });
 
@@ -462,3 +535,6 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // --- END OF FILE script.js ---
+
+
+

@@ -37,7 +37,13 @@
         <form id="login-form">
           <div>
             <label for="username">Uživatelské jméno:</label><br />
-<!-- ... existing code ... -->
+            <input type="text" id="username" name="username" required />
+          </div>
+          <br />
+          <div>
+            <label for="password">Heslo:</label><br />
+            <input type="password" id="password" name="password" required />
+          </div>
           <br />
           <button type="submit">Přihlásit se</button>
           <p id="login-error" class="error-message"></p>
@@ -65,9 +71,9 @@
         <p class="toggle-form-text">Máte již účet? <a href="#" id="show-login-link">Přihlaste se</a></p>
       </div>
 
+
       <!-- Hlavní sekce aplikace -->
-      <!-- style="display: none;" byl odstraněn, řídí to JS -->
-      <div id="app-section" class="app-container">
+      <div id="app-section" class="app-container" style="display: none;">
         <!-- Informace o uživateli a odhlášení -->
         <div class="user-info">
           <span>Přihlášen jako: <strong id="logged-in-username"></strong></span>
@@ -111,7 +117,6 @@
           <input type="hidden" id="date-picker" />
 
           <!-- Sekce pro potvrzení rezervace / tlačítko -->
-          <!-- Umístěno ZDE, uvnitř .card a uvnitř #app-section -->
           <form id="booking-form" class="booking-controls">
             <button type="submit" class="button-primary">
               Rezervovat vybraný termín
