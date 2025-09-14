@@ -228,10 +228,16 @@ select {
   position: relative; /* Pro pozicování edit tlačítka */
 }
 
-.edit-btn {
+.action-buttons {
     position: absolute;
     top: 8px;
     right: 8px;
+    display: flex;
+    flex-direction: row; /* Změna na řádek */
+    gap: 4px;
+}
+
+.edit-btn, .delete-btn {
     background: none;
     border: none;
     color: #9ca3af;
@@ -239,11 +245,26 @@ select {
     font-size: 0.9em;
     padding: 5px;
     border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .edit-btn:hover {
     background-color: #e5e7eb;
     color: #374151;
+}
+
+.delete-btn {
+    color: #ef4444; /* Červená barva pro smazání */
+}
+
+.delete-btn:hover {
+    background-color: #fee2e2; /* Světle červené pozadí */
+    color: #b91c1c; /* Tmavě červená */
 }
 
 
@@ -253,7 +274,7 @@ select {
     align-items: center;
     margin-bottom: 8px;
     flex-wrap: wrap; /* Pro menší šířky */
-    padding-right: 30px; /* Mezera pro tlačítko */
+    padding-right: 60px; /* Větší mezera pro dvě tlačítka */
 }
 
 .reservation-header strong {
@@ -582,6 +603,28 @@ span.flatpickr-weekday {
   color: #555;
 }
 
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.button-danger {
+    background-color: #ef4444;
+    color: white;
+}
+.button-danger:hover {
+    background-color: #dc2626;
+}
+
+.button-secondary {
+    background-color: #e5e7eb;
+    color: #374151;
+}
+.button-secondary:hover {
+    background-color: #d1d5db;
+}
+
 /* --- Responzivní design --- */
 @media (max-width: 850px) {
     .main-content {
@@ -613,3 +656,4 @@ span.flatpickr-weekday {
         display: none;
     }
 }
+

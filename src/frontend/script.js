@@ -45,7 +45,6 @@ document.addEventListener("DOMContentLoaded", () => {
   let flatpickrInstance = null;
   window.currentReservations = [];
   const backendUrl = "http://localhost:3000";
-  let lastViewedDate = new Date(); // Uložíme si poslední zobrazené datum
 
   // --- Funkce pro zobrazení/skrytí sekcí ---
   function showLogin() {
@@ -260,6 +259,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (matchingReservation) {
           dayElem.title = `Rezervováno: ${matchingReservation.username}`;
           dayElem.classList.add("booked-day");
+          // Použijeme ID uživatele pro třídu, aby se předešlo problémům se jmény s mezerami
           const userClass = `user-${matchingReservation.userId.replace(/\s+/g, '-')}`;
           dayElem.classList.add(userClass);
           
@@ -276,10 +276,10 @@ document.addEventListener("DOMContentLoaded", () => {
           checkInDateDisplay.textContent = instance.formatDate(selectedDates[0], "d. M Y");
           if (selectedDates.length === 2) {
             checkOutDateDisplay.textContent = instance.formatDate(selectedDates[1], "d. M Y");
-            openModalButton.style.display = 'block';
+            openModalButton.style.display = 'block'; // Zobrazit tlačítko
           } else {
             checkOutDateDisplay.textContent = "- Vyberte -";
-            openModalButton.style.display = 'none';
+            openModalButton.style.display = 'none'; // Skrýt tlačítko
           }
         } else {
           checkInDateDisplay.textContent = "- Vyberte -";
@@ -287,6 +287,7 @@ document.addEventListener("DOMContentLoaded", () => {
           openModalButton.style.display = 'none';
         }
         
+        // Zobrazíme přehled pro výběr nebo pro celý měsíc
         if (selectedDates.length === 2) {
             renderReservationsForSelection(selectedDates);
         } else {
@@ -294,13 +295,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       },
       onMonthChange: function(selectedDates, dateStr, instance) {
-        lastViewedDate = instance.currentDate;
+        // Aktualizujeme seznam rezervací při změně měsíce
         renderReservationsOverview(instance.currentMonth, instance.currentYear);
       },
-       onYearChange: function(selectedDates, dateStr, instance) {
-        lastViewedDate = instance.currentDate;
-        renderReservationsOverview(instance.currentMonth, instance.currentYear);
-      }
     };
 
     try {
@@ -340,8 +337,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (flatpickrInstance) {
         flatpickrInstance.set("disable", disabledRanges);
-        flatpickrInstance.jumpToDate(lastViewedDate);
-        flatpickrInstance.redraw();
+        flatpickrInstance.redraw(); // Důležité pro překreslení s novými daty
         renderReservationsOverview(flatpickrInstance.currentMonth, flatpickrInstance.currentYear);
       } else {
         initializeDatePicker(disabledRanges);
@@ -365,6 +361,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
         dateObj = date;
     }
+    // Přičteme časové pásmo, aby se datum nezměnilo
     dateObj.setMinutes(dateObj.getMinutes() + dateObj.getTimezoneOffset());
     return `${dateObj.getDate()}.${dateObj.getMonth() + 1}.${dateObj.getFullYear()}`;
   }
@@ -542,3 +539,4 @@ document.addEventListener("DOMContentLoaded", () => {
     showLogin();
   }
 });
+

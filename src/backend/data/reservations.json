@@ -81,5 +81,32 @@
     "to": "2025-10-13",
     "purpose": "Relax",
     "notes": "Vymalovat pokoj"
+  },
+  {
+    "id": "6fb27ca2-e925-4408-8956-ab325478f672",
+    "userId": "user1",
+    "username": "KatkaVelka",
+    "from": "2025-09-13",
+    "to": "2025-09-13",
+    "purpose": "Relax",
+    "notes": ""
+  },
+  {
+    "id": "0eee5b49-f3df-4406-bcf2-cd9d87141cfe",
+    "userId": "user1",
+    "username": "KatkaVelka",
+    "from": "2025-11-05",
+    "to": "2025-11-07",
+    "purpose": "Relax",
+    "notes": ""
+  },
+  {
+    "id": "62afa8f0-56c3-4938-abc6-a5fe65f26ff4",
+    "userId": "user1",
+    "username": "KatkaVelka",
+    "from": "2025-10-16",
+    "to": "2025-10-17",
+    "purpose": "Relax",
+    "notes": ""
   }
 ]

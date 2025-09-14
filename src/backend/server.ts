@@ -246,8 +246,47 @@ app.put("/api/reservations/:id", protect, async (req: Request, res: Response) =>
     }
 });
 
+// DELETE /api/reservations/:id - Smazání existující rezervace (chráněno)
+app.delete("/api/reservations/:id", protect, async (req: Request, res: Response) => {
+    if (!req.user) {
+        return res.status(401).json({ message: "Neautorizováno." });
+    }
+
+    const { id } = req.params;
+    const { userId } = req.user;
+
+    try {
+        const allReservations = await loadReservations();
+        const reservationIndex = allReservations.findIndex(r => r.id === id);
+
+        if (reservationIndex === -1) {
+            return res.status(404).json({ message: "Rezervace nenalezena." });
+        }
+
+        const reservation = allReservations[reservationIndex];
+
+        // Ověření, zda uživatel může mazat tuto rezervaci
+        if (reservation.userId !== userId) {
+            return res.status(403).json({ message: "Nemáte oprávnění smazat tuto rezervaci." });
+        }
+
+        // Smazání rezervace
+        allReservations.splice(reservationIndex, 1);
+
+        await saveReservation(allReservations);
+
+        console.log(`[DELETE /api/reservations/${id}] Uživatel ${req.user.username} smazal rezervaci.`);
+        res.status(200).json({ message: "Rezervace byla úspěšně smazána." });
+
+    } catch (error) {
+        console.error(`Chyba při mazání rezervace (DELETE /api/reservations/${id}):`, error);
+        res.status(500).json({ message: "Chyba při mazání rezervace." });
+    }
+});
+
 
 // --- Start serveru ---
 app.listen(port, () => {
   console.log(`Backend server naslouchá na http://localhost:${port}`);
 });
+
