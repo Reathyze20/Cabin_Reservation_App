@@ -37,17 +37,32 @@
         <form id="login-form">
           <div>
             <label for="username">Uživatelské jméno:</label><br />
-            <input type="text" id="username" name="username" required />
-          </div>
-          <br />
-          <div>
-            <label for="password">Heslo:</label><br />
-            <input type="password" id="password" name="password" required />
-          </div>
+<!-- ... existing code ... -->
           <br />
           <button type="submit">Přihlásit se</button>
           <p id="login-error" class="error-message"></p>
         </form>
+        <p class="toggle-form-text">Ještě nemáte účet? <a href="#" id="show-register-link">Zaregistrujte se</a></p>
+      </div>
+
+      <!-- Sekce pro registraci -->
+      <div id="register-section" class="login-container card" style="display: none;">
+        <h1>Registrace</h1>
+        <form id="register-form">
+            <div>
+                <label for="register-username">Uživatelské jméno:</label><br />
+                <input type="text" id="register-username" name="username" required />
+            </div>
+            <br />
+            <div>
+                <label for="register-password">Heslo (min. 6 znaků):</label><br />
+                <input type="password" id="register-password" name="password" required />
+            </div>
+            <br />
+            <button type="submit">Zaregistrovat</button>
+            <p id="register-message" class="message"></p>
+        </form>
+        <p class="toggle-form-text">Máte již účet? <a href="#" id="show-login-link">Přihlaste se</a></p>
       </div>
 
       <!-- Hlavní sekce aplikace -->

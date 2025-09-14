@@ -19,6 +19,16 @@ export async function loadUsers(): Promise<User[]> {
   }
 }
 
+export async function saveUsers(users: User[]) {
+  try {
+    const data = JSON.stringify(users, null, 2);
+    await fs.promises.writeFile(usersFilePath, data, "utf-8");
+  } catch (error) {
+    console.error("Chyba při ukládání uživatelů:", error);
+    throw new Error("Chyba při ukládání uživatelů.");
+  }
+}
+
 export async function loadReservations(): Promise<Reservation[]> {
   try {
     const data = await fs.promises.readFile(reservationsFilePath, "utf-8");
