@@ -239,11 +239,6 @@ select {
     font-size: 0.9em;
     padding: 5px;
     border-radius: 50%;
-    display: none; /* Skryté ve výchozím stavu */
-}
-
-#reservations-list li:hover .edit-btn {
-    display: block; /* Zobrazit při najetí na položku */
 }
 
 .edit-btn:hover {
@@ -258,6 +253,7 @@ select {
     align-items: center;
     margin-bottom: 8px;
     flex-wrap: wrap; /* Pro menší šířky */
+    padding-right: 30px; /* Mezera pro tlačítko */
 }
 
 .reservation-header strong {
@@ -617,4 +613,3 @@ span.flatpickr-weekday {
         display: none;
     }
 }
-
