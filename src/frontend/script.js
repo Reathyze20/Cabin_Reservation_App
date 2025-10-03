@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let flatpickrInstance = null;
   window.currentReservations = [];
   let reservationIdToDelete = null; // Pro uchování ID rezervace ke smazání
-  const backendUrl = "http://localhost:3000";
+  const backendUrl = "https://cabin-reservation-app.onrender.com";
 
   // --- Funkce pro zobrazení/skrytí sekcí ---
   function showLogin() {

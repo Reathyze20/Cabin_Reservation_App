@@ -12,13 +12,18 @@ import { User, Reservation } from "../types";
 import { JWT_SECRET } from "../config/config";
 import { protect } from "../middleware/authMiddleware";
 import { v4 as uuidv4 } from "uuid";
+import path from "path";
 
 const app = express();
+
 const port = process.env.PORT || 3000;
 
 // --- Middleware ---
 app.use(cors());
 app.use(express.json());
+
+const frontendPath = path.join(__dirname, "../../src/frontend");
+app.use(express.static(frontendPath));
 
 // --- Endpointy ---
 
