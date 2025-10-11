@@ -170,9 +170,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- Logika Odhlášení ---
   logoutButton.addEventListener("click", () => {
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("username");
-    localStorage.removeItem("userId"); // Odstraníme i ID
+  localStorage.removeItem("authToken");
+  localStorage.removeItem("username");
+  localStorage.removeItem("userId"); // Odstraníme i ID
+  localStorage.removeItem("role"); // Odstraníme i roli
     if (flatpickrInstance) {
       flatpickrInstance.destroy();
       flatpickrInstance = null;

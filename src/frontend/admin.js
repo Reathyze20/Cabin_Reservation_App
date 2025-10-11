@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
   const userListDiv = document.getElementById('admin-user-list');
   const logoutBtn = document.getElementById('admin-logout');
+  const backBtn = document.getElementById('admin-back');
 
   // Získání tokenu z localStorage
   const token = localStorage.getItem('authToken');
@@ -67,6 +68,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     localStorage.removeItem('userId');
     window.location.href = 'index.html';
   });
+
+  // Návrat do hlavní aplikace
+  if (backBtn) {
+    backBtn.addEventListener('click', () => {
+      window.location.href = 'index.html';
+    });
+  }
 
   // Načti uživatele při načtení stránky
   loadUsers();
