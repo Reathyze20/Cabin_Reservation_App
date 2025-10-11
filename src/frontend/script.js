@@ -594,7 +594,7 @@ document.addEventListener("DOMContentLoaded", () => {
         console.error("Chyba při odeslání rezervace:", error);
         alert(`Chyba: ${error.message}`);
       }
-    });
+    }); // <-- správné uzavření handleru
   
   const monthNames = ["ledna", "února", "března", "dubna", "května", "června", "července", "srpna", "září", "října", "listopadu", "prosince"];
 
