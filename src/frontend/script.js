@@ -438,6 +438,26 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   bookingForm.addEventListener("submit", async (event) => {
+    // Bulletproof validace polí
+    // Účel návštěvy
+    if (!purpose || purpose.length > 15 || /[<>]/.test(purpose)) {
+      bookingMessage.textContent = "Účel návštěvy musí být vyplněn, max. 15 znaků, nesmí obsahovat < nebo >.";
+      bookingMessage.style.color = "red";
+      return;
+    }
+    // Poznámka
+    const notes = notesTextarea.value.trim();
+    if (notes.length > 200) {
+      bookingMessage.textContent = "Poznámka nesmí být delší než 200 znaků.";
+      bookingMessage.style.color = "red";
+      return;
+    }
+    if (/[<>]/.test(notes) || /script/i.test(notes)) {
+      bookingMessage.textContent = "Poznámka nesmí obsahovat <, > ani slovo 'script'.";
+      bookingMessage.style.color = "red";
+      return;
+    }
+    bodyData.notes = notes;
     event.preventDefault();
     bookingMessage.textContent = "Odesílám rezervaci...";
     bookingMessage.style.color = "";
