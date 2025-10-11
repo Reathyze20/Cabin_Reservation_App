@@ -200,6 +200,11 @@ document.addEventListener("DOMContentLoaded", () => {
             openConfirmDeleteModal(reservation.id);
         };
         modalDateRangeSpan.textContent = `${formatDateForDisplay(reservation.from)} - ${formatDateForDisplay(reservation.to)}`;
+        // Přidání inputů pro úpravu datumu od/do
+        modalDateRangeSpan.innerHTML = `
+          <label>Od: <input type="date" id="edit-from-date" value="${reservation.from}" /></label>
+          <label>Do: <input type="date" id="edit-to-date" value="${reservation.to}" /></label>
+        `;
         reservationIdInput.value = reservation.id;
         
         // Nastavení hodnot formuláře
@@ -425,7 +430,18 @@ document.addEventListener("DOMContentLoaded", () => {
         notes: notesTextarea.value.trim(),
     };
 
-    if (!isEditMode) {
+    if (isEditMode) {
+      // Pokud editujeme, vezmeme hodnoty z inputů
+      const fromInput = document.getElementById('edit-from-date');
+      const toInput = document.getElementById('edit-to-date');
+      if (!fromInput || !toInput || !fromInput.value || !toInput.value) {
+        bookingMessage.textContent = "Chyba: Chybí datum od/do.";
+        bookingMessage.style.color = "red";
+        return;
+      }
+      bodyData.from = fromInput.value;
+      bodyData.to = toInput.value;
+    } else {
       if (!flatpickrInstance || flatpickrInstance.selectedDates.length !== 2) {
         bookingMessage.textContent = "Chyba: Chybí výběr datumu.";
         bookingMessage.style.color = "red";
