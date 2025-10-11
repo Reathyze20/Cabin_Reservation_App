@@ -478,67 +478,124 @@ document.addEventListener("DOMContentLoaded", () => {
         bookingMessage.textContent = "Chyba: Datum 'do' nesmí být před datem 'od'.";
         bookingMessage.style.color = "red";
         return;
+      event.preventDefault();
+      bookingMessage.textContent = "Odesílám rezervaci...";
+      bookingMessage.style.color = "";
+
+      // Uložíme aktuální měsíc a rok z flatpickrInstance
+      let prevMonth = null;
+      let prevYear = null;
+      if (flatpickrInstance) {
+        prevMonth = flatpickrInstance.currentMonth;
+        prevYear = flatpickrInstance.currentYear;
       }
-      // Validace kolize s jinou rezervací
-      const myId = reservationIdInput.value;
-      const overlap = window.currentReservations.some(r => {
-        if (r.id === myId) return false;
-        const resStart = new Date(r.from);
-        const resEnd = new Date(r.to);
-        return fromDate <= resEnd && toDate >= resStart;
-      });
-      if (overlap) {
-        bookingMessage.textContent = "Chyba: Vybraný termín zasahuje do jiné rezervace.";
+
+      const token = getToken();
+      if (!token) {
+        bookingMessage.textContent = "Chyba: Vypršelo přihlášení.";
         bookingMessage.style.color = "red";
         return;
       }
-      bodyData.from = fromInput.value;
-      bodyData.to = toInput.value;
-    } else {
-      if (!flatpickrInstance || flatpickrInstance.selectedDates.length !== 2) {
-        bookingMessage.textContent = "Chyba: Chybí výběr datumu.";
-        bookingMessage.style.color = "red";
-        return;
-      }
-      bodyData.from = flatpickrInstance.formatDate(flatpickrInstance.selectedDates[0], "Y-m-d");
-      bodyData.to = flatpickrInstance.formatDate(flatpickrInstance.selectedDates[1], "Y-m-d");
-    }
 
-
-    try {
-      const response = await fetch(url, {
-        method: method,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(bodyData),
-      });
-
-      const result = await response.json();
-      if (!response.ok) {
-        throw new Error(result.message || `Chyba ${response.status}`);
-      }
-      
-      closeBookingModal();
-      
-       if (!isEditMode) {
-        flatpickrInstance.clear();
-        document.getElementById("check-in-date-display").textContent = "- Vyberte -";
-        document.getElementById("check-out-date-display").textContent = "- Vyberte -";
-        openModalButton.style.display = 'none';
+      let purpose = purposeSelect.value;
+      if (purpose === 'Jiný') {
+          purpose = otherPurposeInput.value.trim();
+          if (!purpose) {
+              alert('Prosím, specifikujte jiný účel návštěvy.');
+              return;
+          }
       }
 
-      loadReservations(); // <--- TENTO ŘÁDEK ZAJIŠŤUJE OBNOVENÍ
-      // Pro jistotu refresh i po editaci
+      const isEditMode = !!reservationIdInput.value;
+      const url = isEditMode 
+          ? `${backendUrl}/api/reservations/${reservationIdInput.value}`
+          : `${backendUrl}/api/reservations`;
+
+      const method = isEditMode ? "PUT" : "POST";
+
+      let bodyData = {
+          purpose: purpose,
+          notes: notesTextarea.value.trim(),
+      };
+
       if (isEditMode) {
-        loadReservations();
+        // Pokud editujeme, vezmeme hodnoty z inputů
+        const fromInput = document.getElementById('edit-from-date');
+        const toInput = document.getElementById('edit-to-date');
+        if (!fromInput || !toInput || !fromInput.value || !toInput.value) {
+          bookingMessage.textContent = "Chyba: Chybí datum od/do.";
+          bookingMessage.style.color = "red";
+          return;
+        }
+        const fromDate = new Date(fromInput.value);
+        const toDate = new Date(toInput.value);
+        if (toDate < fromDate) {
+          bookingMessage.textContent = "Chyba: Datum 'do' nesmí být před datem 'od'.";
+          bookingMessage.style.color = "red";
+          return;
+        }
+        // Validace kolize s jinou rezervací
+        const myId = reservationIdInput.value;
+        const overlap = window.currentReservations.some(r => {
+          if (r.id === myId) return false;
+          const resStart = new Date(r.from);
+          const resEnd = new Date(r.to);
+          return fromDate <= resEnd && toDate >= resStart;
+        });
+        if (overlap) {
+          bookingMessage.textContent = "Chyba: Vybraný termín zasahuje do jiné rezervace.";
+          bookingMessage.style.color = "red";
+          return;
+        }
+        bodyData.from = fromInput.value;
+        bodyData.to = toInput.value;
+      } else {
+        if (!flatpickrInstance || flatpickrInstance.selectedDates.length !== 2) {
+          bookingMessage.textContent = "Chyba: Chybí výběr datumu.";
+          bookingMessage.style.color = "red";
+          return;
+        }
+        bodyData.from = flatpickrInstance.formatDate(flatpickrInstance.selectedDates[0], "Y-m-d");
+        bodyData.to = flatpickrInstance.formatDate(flatpickrInstance.selectedDates[1], "Y-m-d");
       }
-    } catch (error) {
-      console.error("Chyba při odeslání rezervace:", error);
-      alert(`Chyba: ${error.message}`);
-    }
-  });
+
+      try {
+        const response = await fetch(url, {
+          method: method,
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(bodyData),
+        });
+
+        const result = await response.json();
+        if (!response.ok) {
+          throw new Error(result.message || `Chyba ${response.status}`);
+        }
+      
+        closeBookingModal();
+      
+        if (!isEditMode) {
+          flatpickrInstance.clear();
+          document.getElementById("check-in-date-display").textContent = "- Vyberte -";
+          document.getElementById("check-out-date-display").textContent = "- Vyberte -";
+          openModalButton.style.display = 'none';
+        }
+
+        // Po odeslání rezervace načteme rezervace a obnovíme měsíc
+        await loadReservations();
+        // Pokud jsme měli uložený měsíc/rok, nastavíme zpět
+        if (flatpickrInstance && prevMonth !== null && prevYear !== null) {
+          flatpickrInstance.changeMonth(prevMonth, false);
+          flatpickrInstance.currentYear = prevYear;
+          renderReservationsOverview(prevMonth, prevYear);
+        }
+      } catch (error) {
+        console.error("Chyba při odeslání rezervace:", error);
+        alert(`Chyba: ${error.message}`);
+      }
+    });
   
   const monthNames = ["ledna", "února", "března", "dubna", "května", "června", "července", "srpna", "září", "října", "listopadu", "prosince"];
 
