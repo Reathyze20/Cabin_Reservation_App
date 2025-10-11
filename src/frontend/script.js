@@ -609,6 +609,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="reservation-header">
                     <strong>${r.username}</strong>
                     <span>${formatDateForDisplay(r.from)} - ${formatDateForDisplay(r.to)}</span>
+                    <span class="reservation-range-info" style="color:#d18b00;font-size:0.95em;margin-left:8px;">
+                      (Rezervace: ${formatDateForDisplay(r.from)} - ${formatDateForDisplay(r.to)})
+                    </span>
                 </div>
                 <div class="reservation-body">
                     <p><strong>Účel:</strong> ${r.purpose || '<em>Nespecifikováno</em>'}</p>
