@@ -41,6 +41,50 @@ app.get('/api/users', protect, async (req: Request, res: Response) => {
 });
 
 // Admin: Smazání uživatele
+// Admin: Změna role uživatele
+app.put('/api/users/:id/role', protect, async (req: Request, res: Response) => {
+  if (!req.user || req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Přístup pouze pro administrátora.' });
+  }
+  const { id } = req.params;
+  const { role } = req.body;
+  if (!role || !['admin', 'user'].includes(role)) {
+    return res.status(400).json({ message: 'Neplatná role.' });
+  }
+  try {
+    let users = await loadUsers();
+    const user = users.find(u => u.id === id);
+    if (!user) return res.status(404).json({ message: 'Uživatel nenalezen.' });
+    user.role = role;
+    await saveUsers(users);
+    res.status(200).json({ message: 'Role změněna.' });
+  } catch (error) {
+    res.status(500).json({ message: 'Chyba při změně role.' });
+  }
+});
+
+// Admin: Reset hesla uživatele
+app.put('/api/users/:id/password', protect, async (req: Request, res: Response) => {
+  if (!req.user || req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Přístup pouze pro administrátora.' });
+  }
+  const { id } = req.params;
+  const { password } = req.body;
+  if (!password || password.length < 6) {
+    return res.status(400).json({ message: 'Heslo musí mít alespoň 6 znaků.' });
+  }
+  try {
+    let users = await loadUsers();
+    const user = users.find(u => u.id === id);
+    if (!user) return res.status(404).json({ message: 'Uživatel nenalezen.' });
+    const saltRounds = 10;
+    user.passwordHash = await bcrypt.hash(password, saltRounds);
+    await saveUsers(users);
+    res.status(200).json({ message: 'Heslo změněno.' });
+  } catch (error) {
+    res.status(500).json({ message: 'Chyba při změně hesla.' });
+  }
+});
 app.delete('/api/users/:id', protect, async (req: Request, res: Response) => {
   if (!req.user || req.user.role !== 'admin') {
     return res.status(403).json({ message: 'Přístup pouze pro administrátora.' });
