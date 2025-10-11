@@ -76,9 +76,11 @@
       <div id="app-section" class="app-container" style="display: none;">
         <!-- Informace o uživateli a odhlášení -->
         <div class="user-info">
-          <span>Přihlášen jako: <strong id="logged-in-username"></strong></span>
+          <span>
+            Přihlášen jako: <strong id="logged-in-username"></strong>
+            <a href="admin.html" id="admin-link" style="display:none;margin-left:10px;vertical-align:middle;">Admin</a>
+          </span>
           <button id="logout-button" class="button-logout">
-            <a href="admin.html" id="admin-link" style="display:none;margin-left:10px;">Admin</a>
             <i class="fas fa-sign-out-alt"></i> Odhlásit se
           </button>
         </div>
