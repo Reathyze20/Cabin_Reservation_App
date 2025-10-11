@@ -215,7 +215,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function closeBookingModal() {
-      bookingModal.style.display = "none";
+  bookingModal.style.display = "none";
+  bookingMessage.textContent = "";
   }
   
   function openConfirmDeleteModal(id) {
