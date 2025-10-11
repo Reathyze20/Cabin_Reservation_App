@@ -48,13 +48,20 @@ app.put('/api/users/:id/role', protect, async (req: Request, res: Response) => {
   }
   const { id } = req.params;
   const { role } = req.body;
-  if (!role || !['admin', 'user'].includes(role)) {
+  if (!role || !['admin', 'user', 'guest'].includes(role)) {
     return res.status(400).json({ message: 'Neplatná role.' });
   }
   try {
     let users = await loadUsers();
     const user = users.find(u => u.id === id);
     if (!user) return res.status(404).json({ message: 'Uživatel nenalezen.' });
+    // Pokud měníme admina na jinou roli, ověřit že zůstane alespoň jeden admin
+    if (user.role === 'admin' && role !== 'admin') {
+      const adminCount = users.filter(u => u.role === 'admin').length;
+      if (adminCount <= 1) {
+        return res.status(400).json({ message: 'V systému musí zůstat alespoň jeden admin.' });
+      }
+    }
     user.role = role;
     await saveUsers(users);
     res.status(200).json({ message: 'Role změněna.' });

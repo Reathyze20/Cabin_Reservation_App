@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // Render seznamu uživatelů jako tabulku s akcemi
+  // Render seznamu uživatelů jako moderní tabulku s akcemi
   function renderUserList(users) {
     if (!users.length) {
       userListDiv.innerHTML = '<p>Žádní uživatelé.</p>';
@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td>${user.username}</td>
-        <td>${user.role || 'user'}</td>
+        <td><span class="user-role-label">${user.role || 'user'}</span></td>
         <td>${user.id}</td>
         <td>
           <button data-id="${user.id}" class="detail-user-btn">Detail</button>
@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     userListDiv.appendChild(table);
   }
 
-  // Detail uživatele (zobrazí info, možnost změnit roli, reset hesla, počet rezervací)
+  // Detail uživatele (zobrazí info, možnost změnit roli přes select, reset hesla, počet rezervací)
   userListDiv.addEventListener('click', async (e) => {
     if (e.target.classList.contains('detail-user-btn')) {
       const userId = e.target.getAttribute('data-id');
@@ -90,15 +90,19 @@ document.addEventListener('DOMContentLoaded', async () => {
           <h2>Detail uživatele</h2>
           <p><strong>Jméno:</strong> ${user.username}</p>
           <p><strong>ID:</strong> ${user.id}</p>
-          <p><strong>Role:</strong> <span id="user-role">${user.role || 'user'}</span></p>
+          <p><strong>Role:</strong> <select id="role-select">
+            <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>admin</option>
+            <option value="user" ${user.role === 'user' ? 'selected' : ''}>user</option>
+            <option value="guest" ${user.role === 'guest' ? 'selected' : ''}>guest</option>
+          </select></p>
           <p><strong>Počet rezervací:</strong> ${reservationCount}</p>
-          <button id="change-role-btn">Změnit roli</button>
+          <button id="save-role-btn">Uložit roli</button>
           <button id="reset-password-btn">Resetovat heslo</button>
           <button id="close-detail-btn">Zavřít detail</button>
         `;
-        // Změna role
-        document.getElementById('change-role-btn').onclick = async () => {
-          const newRole = user.role === 'admin' ? 'user' : 'admin';
+        // Uložení nové role
+        document.getElementById('save-role-btn').onclick = async () => {
+          const newRole = document.getElementById('role-select').value;
           try {
             const resp = await fetch(`/api/users/${userId}/role`, {
               method: 'PUT',
@@ -106,7 +110,6 @@ document.addEventListener('DOMContentLoaded', async () => {
               body: JSON.stringify({ role: newRole })
             });
             if (resp.ok) {
-              detailDiv.querySelector('#user-role').textContent = newRole;
               loadUsers();
               alert('Role změněna.');
             } else {

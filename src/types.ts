@@ -2,7 +2,7 @@ export interface User {
   id: string;
   username: string;
   passwordHash: string;
-  role?: 'admin' | 'user';
+  role?: 'admin' | 'user' | 'guest';
 }
 
 export interface Reservation {
@@ -18,7 +18,7 @@ export interface Reservation {
 export interface JwtPayload {
   userId: string;
   username: string;
-  role?: 'admin' | 'user';
+  role?: 'admin' | 'user' | 'guest';
   iat: number; // Čas vydání tokenu
   exp: number; // Čas expirace tokenu
 }

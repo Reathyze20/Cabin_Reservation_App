@@ -1,3 +1,91 @@
+.admin-user-table {
+  width: 100%;
+  max-width: 700px;
+  margin: 32px auto 16px auto;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: #fff;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.admin-user-table th, .admin-user-table td {
+  padding: 12px 18px;
+  text-align: left;
+}
+.admin-user-table th {
+  background: #fff7d6;
+  color: #d18b00;
+  font-weight: 700;
+  border-bottom: 2px solid #ffe1a6;
+}
+.admin-user-table tr:not(:last-child) td {
+  border-bottom: 1px solid #f3e2c0;
+}
+.admin-user-table td {
+  font-size: 1rem;
+}
+.admin-user-table .user-role-label {
+  display: inline-block;
+  background: #ffe1a6;
+  color: #a86c00;
+  border-radius: 6px;
+  padding: 2px 10px;
+  font-size: 0.95em;
+}
+.admin-user-table button {
+  background: #fff7d6;
+  color: #d18b00;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 16px;
+  margin-right: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.admin-user-table button:hover {
+  background: #ffe1a6;
+  color: #a86c00;
+}
+#admin-user-detail {
+  max-width: 500px;
+  margin: 24px auto;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+  padding: 24px 32px;
+}
+#admin-user-detail h2 {
+  margin-top: 0;
+  color: #d18b00;
+}
+#admin-user-detail p {
+  margin: 10px 0;
+}
+#admin-user-detail select {
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px solid #ffe1a6;
+  background: #fff7d6;
+  color: #a86c00;
+  font-weight: 600;
+}
+#admin-user-detail button {
+  background: #fff7d6;
+  color: #d18b00;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 18px;
+  margin: 8px 8px 0 0;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+#admin-user-detail button:hover {
+  background: #ffe1a6;
+  color: #a86c00;
+}
 /* style.css */
 
 /* Základní reset a nastavení */
