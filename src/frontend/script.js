@@ -434,6 +434,14 @@ document.addEventListener("DOMContentLoaded", () => {
     bookingMessage.textContent = "Odesílám rezervaci...";
     bookingMessage.style.color = "";
 
+    // Uložíme aktuální měsíc a rok z flatpickrInstance
+    let prevMonth = null;
+    let prevYear = null;
+    if (flatpickrInstance) {
+      prevMonth = flatpickrInstance.currentMonth;
+      prevYear = flatpickrInstance.currentYear;
+    }
+
     const token = getToken();
     if (!token) {
       bookingMessage.textContent = "Chyba: Vypršelo přihlášení.";
