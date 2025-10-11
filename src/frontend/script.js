@@ -387,14 +387,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function formatDateForDisplay(date) {
     if(!date) return "";
-    let dateObj;
-    if (typeof date === 'string') {
-        dateObj = new Date(date);
-    } else {
-        dateObj = date;
-    }
-    dateObj.setMinutes(dateObj.getMinutes() + dateObj.getTimezoneOffset());
-    return `${dateObj.getDate()}.${dateObj.getMonth() + 1}.${dateObj.getFullYear()}`;
+  let dateObj;
+  if (typeof date === 'string') {
+    dateObj = new Date(date);
+  } else {
+    dateObj = date;
+  }
+  // Odstraněno posouvání o timezone
+  return `${dateObj.getDate()}.${dateObj.getMonth() + 1}.${dateObj.getFullYear()}`;
   }
 
   bookingForm.addEventListener("submit", async (event) => {
