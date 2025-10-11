@@ -135,8 +135,41 @@ document.addEventListener("DOMContentLoaded", () => {
     const username = document.getElementById("register-username").value;
     const password = document.getElementById("register-password").value;
 
+    // Validace uživatelského jména
     if (!username || !password) {
       registerMessage.textContent = "Prosím, vyplňte jméno i heslo.";
+      registerMessage.style.color = "red";
+      return;
+    }
+    // Best practices:
+    // - 3-20 znaků
+    // - pouze písmena, čísla, podtržítko, tečka, pomlčka
+    // - nesmí začínat ani končit speciálním znakem
+    // - nesmí obsahovat mezery
+    // - nesmí obsahovat více speciálních znaků za sebou
+    // - není case sensitive
+    if (username.length < 3 || username.length > 20) {
+      registerMessage.textContent = "Uživatelské jméno musí mít 3-20 znaků.";
+      registerMessage.style.color = "red";
+      return;
+    }
+    if (!/^[a-zA-Z0-9._-]+$/.test(username)) {
+      registerMessage.textContent = "Jméno může obsahovat pouze písmena, čísla, podtržítko, tečku a pomlčku.";
+      registerMessage.style.color = "red";
+      return;
+    }
+    if (/^[._-]/.test(username) || /[._-]$/.test(username)) {
+      registerMessage.textContent = "Jméno nesmí začínat ani končit speciálním znakem.";
+      registerMessage.style.color = "red";
+      return;
+    }
+    if (/([._-])\1+/.test(username)) {
+      registerMessage.textContent = "Jméno nesmí obsahovat více speciálních znaků za sebou.";
+      registerMessage.style.color = "red";
+      return;
+    }
+    if (username.includes(' ')) {
+      registerMessage.textContent = "Jméno nesmí obsahovat mezery.";
       registerMessage.style.color = "red";
       return;
     }
