@@ -74,6 +74,16 @@ document.addEventListener("DOMContentLoaded", () => {
     appSection.style.display = "flex"; // Změna na flex pro správné zobrazení
     loggedInUsernameSpan.textContent = username;
     loadReservations();
+    // Zobrazit admin odkaz pokud je uživatel admin
+    const adminLink = document.getElementById('admin-link');
+    const role = localStorage.getItem('role');
+    if (adminLink) {
+      if (role === 'admin') {
+        adminLink.style.display = 'inline-block';
+      } else {
+        adminLink.style.display = 'none';
+      }
+    }
   }
 
   // --- Logika Přepínání Formulářů ---
@@ -105,9 +115,10 @@ document.addEventListener("DOMContentLoaded", () => {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || `Chyba ${response.status}`);
-      localStorage.setItem("authToken", data.token);
-      localStorage.setItem("username", data.username);
-      localStorage.setItem("userId", data.userId); // Uložíme i ID uživatele
+  localStorage.setItem("authToken", data.token);
+  localStorage.setItem("username", data.username);
+  localStorage.setItem("userId", data.userId); // Uložíme i ID uživatele
+  if (data.role) localStorage.setItem("role", data.role);
   showApp(data.username);
   loadReservations(); // Refresh po přihlášení
     } catch (error) {

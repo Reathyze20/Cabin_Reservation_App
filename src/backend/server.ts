@@ -26,6 +26,40 @@ const frontendPath = path.join(__dirname, "../../src/frontend");
 app.use(express.static(frontendPath));
 
 // --- Endpointy ---
+// Admin: Získání seznamu uživatelů
+app.get('/api/users', protect, async (req: Request, res: Response) => {
+  if (!req.user || req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Přístup pouze pro administrátora.' });
+  }
+  try {
+    const users = await loadUsers();
+    res.json(users);
+  } catch (error) {
+    console.error('Chyba při načítání uživatelů:', error);
+    res.status(500).json({ message: 'Chyba při načítání uživatelů.' });
+  }
+});
+
+// Admin: Smazání uživatele
+app.delete('/api/users/:id', protect, async (req: Request, res: Response) => {
+  if (!req.user || req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Přístup pouze pro administrátora.' });
+  }
+  const { id } = req.params;
+  try {
+    let users = await loadUsers();
+    const userIndex = users.findIndex(u => u.id === id);
+    if (userIndex === -1) {
+      return res.status(404).json({ message: 'Uživatel nenalezen.' });
+    }
+    users.splice(userIndex, 1);
+    await saveUsers(users);
+    res.status(200).json({ message: 'Uživatel byl úspěšně smazán.' });
+  } catch (error) {
+    console.error('Chyba při mazání uživatele:', error);
+    res.status(500).json({ message: 'Chyba při mazání uživatele.' });
+  }
+});
 
 // Základní endpoint
 app.get("/", (req, res) => {
@@ -59,11 +93,12 @@ app.post("/api/login", async (req: Request, res: Response) => {
     const payload = {
       userId: user.id,
       username: user.username,
+      role: user.role || 'user',
     };
 
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "1h" });
 
-    res.json({ token, username: user.username, userId: user.id });
+  res.json({ token, username: user.username, userId: user.id, role: user.role || 'user' });
   } catch (error) {
     console.error("Chyba při přihlašování:", error);
     res.status(500).json({ message: "Došlo k chybě na serveru." });
@@ -257,8 +292,8 @@ app.delete("/api/reservations/:id", protect, async (req: Request, res: Response)
         return res.status(401).json({ message: "Neautorizováno." });
     }
 
-    const { id } = req.params;
-    const { userId } = req.user;
+  const { id } = req.params;
+  const { userId, role } = req.user;
 
     try {
         const allReservations = await loadReservations();
@@ -270,10 +305,10 @@ app.delete("/api/reservations/:id", protect, async (req: Request, res: Response)
 
         const reservation = allReservations[reservationIndex];
 
-        // Ověření, zda uživatel může mazat tuto rezervaci
-        if (reservation.userId !== userId) {
-            return res.status(403).json({ message: "Nemáte oprávnění smazat tuto rezervaci." });
-        }
+    // Ověření, zda uživatel může mazat tuto rezervaci
+    if (reservation.userId !== userId && role !== 'admin') {
+      return res.status(403).json({ message: "Nemáte oprávnění smazat tuto rezervaci." });
+    }
 
         // Smazání rezervace
         allReservations.splice(reservationIndex, 1);
