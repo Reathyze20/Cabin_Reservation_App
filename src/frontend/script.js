@@ -108,7 +108,8 @@ document.addEventListener("DOMContentLoaded", () => {
       localStorage.setItem("authToken", data.token);
       localStorage.setItem("username", data.username);
       localStorage.setItem("userId", data.userId); // Uložíme i ID uživatele
-      showApp(data.username);
+  showApp(data.username);
+  loadReservations(); // Refresh po přihlášení
     } catch (error) {
       console.error("Chyba při přihlášení:", error);
       loginError.textContent = error.message || "Nepodařilo se přihlásit.";
@@ -148,7 +149,7 @@ document.addEventListener("DOMContentLoaded", () => {
       registerMessage.style.color = "green";
       registerForm.reset();
       
-      setTimeout(() => { showLogin(); }, 2000);
+  setTimeout(() => { showLogin(); loadReservations(); }, 2000); // Refresh po registraci
     } catch (error) {
       console.error("Chyba při registraci:", error);
       registerMessage.textContent = error.message || "Nepodařilo se zaregistrovat.";
@@ -447,6 +448,10 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       loadReservations(); // <--- TENTO ŘÁDEK ZAJIŠŤUJE OBNOVENÍ
+      // Pro jistotu refresh i po editaci
+      if (isEditMode) {
+        loadReservations();
+      }
     } catch (error) {
       console.error("Chyba při odeslání rezervace:", error);
       alert(`Chyba: ${error.message}`);
@@ -600,6 +605,7 @@ document.addEventListener("DOMContentLoaded", () => {
         flatpickrInstance.set('disable', disabledRanges);
         flatpickrInstance.redraw();
         renderReservationsOverview(flatpickrInstance.currentMonth, flatpickrInstance.currentYear);
+      loadReservations(); // Po úspěšném smazání rezervace načteme nové rezervace (refresh UI)
 
     } catch (error) {
         console.error("Chyba při mazání rezervace:", error);
