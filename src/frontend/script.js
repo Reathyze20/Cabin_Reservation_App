@@ -439,14 +439,14 @@ document.addEventListener("DOMContentLoaded", () => {
       
       closeBookingModal();
       
-      if (!isEditMode) {
+       if (!isEditMode) {
         flatpickrInstance.clear();
         document.getElementById("check-in-date-display").textContent = "- Vyberte -";
         document.getElementById("check-out-date-display").textContent = "- Vyberte -";
         openModalButton.style.display = 'none';
       }
 
-      loadReservations();
+      loadReservations(); // <--- TENTO ŘÁDEK ZAJIŠŤUJE OBNOVENÍ
     } catch (error) {
       console.error("Chyba při odeslání rezervace:", error);
       alert(`Chyba: ${error.message}`);
@@ -605,6 +605,8 @@ document.addEventListener("DOMContentLoaded", () => {
         console.error("Chyba při mazání rezervace:", error);
         alert(`Nepodařilo se smazat rezervaci: ${error.message}`);
         closeConfirmDeleteModal();
+
+        loadReservations(); // Obnovení dat pro případ nekonzistence
     }
   });
 
