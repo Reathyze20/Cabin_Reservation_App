@@ -98,6 +98,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           <p><strong>Počet rezervací:</strong> ${reservationCount}</p>
           <button id="save-role-btn">Uložit roli</button>
           <button id="reset-password-btn">Resetovat heslo</button>
+          <button id="delete-all-reservations-btn">Smazat všechny rezervace</button>
           <button id="close-detail-btn">Zavřít detail</button>
         `;
         // Uložení nové role
@@ -136,6 +137,24 @@ document.addEventListener('DOMContentLoaded', async () => {
               alert('Chyba při změně hesla.');
             }
           } catch {}
+        };
+        // Smazání všech rezervací uživatele
+        document.getElementById('delete-all-reservations-btn').onclick = async () => {
+          if (confirm('Opravdu chcete smazat všechny rezervace tohoto uživatele?')) {
+            try {
+              const resp = await fetch(`/api/users/${userId}/reservations`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${token}` }
+              });
+              const result = await resp.json();
+              if (resp.ok) {
+                alert(result.message);
+                detailDiv.style.display = 'none';
+              } else {
+                alert(result.message || 'Chyba při mazání rezervací.');
+              }
+            } catch {}
+          }
         };
         // Zavřít detail
         document.getElementById('close-detail-btn').onclick = () => {

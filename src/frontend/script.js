@@ -472,6 +472,26 @@ document.addEventListener("DOMContentLoaded", () => {
         bookingMessage.style.color = "red";
         return;
       }
+      const fromDate = new Date(fromInput.value);
+      const toDate = new Date(toInput.value);
+      if (toDate < fromDate) {
+        bookingMessage.textContent = "Chyba: Datum 'do' nesmí být před datem 'od'.";
+        bookingMessage.style.color = "red";
+        return;
+      }
+      // Validace kolize s jinou rezervací
+      const myId = reservationIdInput.value;
+      const overlap = window.currentReservations.some(r => {
+        if (r.id === myId) return false;
+        const resStart = new Date(r.from);
+        const resEnd = new Date(r.to);
+        return fromDate <= resEnd && toDate >= resStart;
+      });
+      if (overlap) {
+        bookingMessage.textContent = "Chyba: Vybraný termín zasahuje do jiné rezervace.";
+        bookingMessage.style.color = "red";
+        return;
+      }
       bodyData.from = fromInput.value;
       bodyData.to = toInput.value;
     } else {

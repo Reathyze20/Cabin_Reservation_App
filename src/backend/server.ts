@@ -41,6 +41,22 @@ app.get('/api/users', protect, async (req: Request, res: Response) => {
 });
 
 // Admin: Smazání uživatele
+// Admin: Smazání všech rezervací uživatele
+app.delete('/api/users/:id/reservations', protect, async (req: Request, res: Response) => {
+  if (!req.user || req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Přístup pouze pro administrátora.' });
+  }
+  const { id } = req.params;
+  try {
+    let reservations = await loadReservations();
+    const beforeCount = reservations.length;
+    reservations = reservations.filter(r => r.userId !== id);
+    await saveReservation(reservations);
+    res.status(200).json({ message: `Smazáno ${beforeCount - reservations.length} rezervací.` });
+  } catch (error) {
+    res.status(500).json({ message: 'Chyba při mazání rezervací uživatele.' });
+  }
+});
 // Admin: Změna role uživatele
 app.put('/api/users/:id/role', protect, async (req: Request, res: Response) => {
   if (!req.user || req.user.role !== 'admin') {
@@ -304,7 +320,7 @@ app.put("/api/reservations/:id", protect, async (req: Request, res: Response) =>
     }
 
     const { id } = req.params;
-    const { purpose, notes } = req.body;
+  const { purpose, notes, from, to } = req.body;
     const { userId } = req.user;
 
     try {
@@ -322,9 +338,11 @@ app.put("/api/reservations/:id", protect, async (req: Request, res: Response) =>
             return res.status(403).json({ message: "Nemáte oprávnění upravit tuto rezervaci." });
         }
 
-        // Aktualizace dat
-        reservation.purpose = purpose;
-        reservation.notes = notes;
+  // Aktualizace dat
+  if (from) reservation.from = from;
+  if (to) reservation.to = to;
+  reservation.purpose = purpose;
+  reservation.notes = notes;
 
         await saveReservation(allReservations);
 
