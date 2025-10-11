@@ -177,6 +177,14 @@ document.addEventListener("DOMContentLoaded", () => {
       registerMessage.style.color = "red";
       return;
     }
+    // Povolené speciální znaky
+    const specialChars = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/g;
+    const matches = password.match(specialChars);
+    if (matches && matches.length > 1) {
+      registerMessage.textContent = "Heslo nesmí obsahovat více než jeden speciální symbol.";
+      registerMessage.style.color = "red";
+      return;
+    }
 
     try {
       const response = await fetch(`${backendUrl}/api/register`, {
@@ -617,9 +625,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 ${actionButtonsHTML}
                 <div class="reservation-header">
                     <strong>${r.username}</strong>
-                    <span>${formatDateForDisplay(r.from)} - ${formatDateForDisplay(r.to)}</span>
-                    <span class="reservation-range-info" style="color:#d18b00;font-size:0.95em;margin-left:8px;">
-                      (Rezervace: ${formatDateForDisplay(r.from)} - ${formatDateForDisplay(r.to)})
+                    <span style="color:#d18b00;font-size:0.95em;margin-left:8px;">
+                      ${formatDateForDisplay(r.from)} – ${formatDateForDisplay(r.to)}
                     </span>
                 </div>
                 <div class="reservation-body">
