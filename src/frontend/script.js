@@ -120,7 +120,6 @@ document.addEventListener("DOMContentLoaded", () => {
   localStorage.setItem("userId", data.userId); // Uložíme i ID uživatele
   if (data.role) localStorage.setItem("role", data.role);
   showApp(data.username);
-  loadReservations(); // Refresh po přihlášení
     } catch (error) {
       console.error("Chyba při přihlášení:", error);
       loginError.textContent = error.message || "Nepodařilo se přihlásit.";
