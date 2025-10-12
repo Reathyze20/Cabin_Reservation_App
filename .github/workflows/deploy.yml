@@ -1,0 +1,37 @@
+name: Deploy to Production
+
+# Spustí se pokaždé, když nahrajete změny do větve "main"
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Krok 1: Stáhne si kód z repozitáře
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    # Krok 2: Nastaví SSH klíč pro bezpečné přihlášení
+    - name: Install SSH Key
+      uses: shimataro/ssh-key-action@v2
+      with:
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        known_hosts: 'just-a-placeholder-so-we-dont-get-errors'
+
+    - name: Adding Known Hosts
+      run: ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+    # Krok 3: Připojí se na server a spustí nasazovací příkazy
+    - name: Deploy to Server
+      run: |
+        ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+          cd ${{ secrets.SERVER_PATH }}
+          git reset --hard
+          git pull
+          npm install
+          npm run build
+          pm2 restart chata-app
+        EOF

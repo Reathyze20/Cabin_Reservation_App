@@ -1,5 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
-  // Přidání tlačítka pro vymazání výběru datumu
+  // ...existing code...
+  // Přidání tlačítka pro vymazání výběru datumu (až po deklaraci calendarContainer)
   const clearDateButton = document.createElement('button');
   clearDateButton.id = 'clear-date-button';
   clearDateButton.textContent = 'Vymazat výběr datumu';
