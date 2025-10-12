@@ -1,4 +1,20 @@
 document.addEventListener("DOMContentLoaded", () => {
+  // Přidání tlačítka pro vymazání výběru datumu
+  const clearDateButton = document.createElement('button');
+  clearDateButton.id = 'clear-date-button';
+  clearDateButton.textContent = 'Vymazat výběr datumu';
+  clearDateButton.className = 'button-secondary';
+  clearDateButton.style.margin = '8px 0';
+  calendarContainer.parentNode.insertBefore(clearDateButton, calendarContainer.nextSibling);
+
+  clearDateButton.addEventListener('click', () => {
+    if (flatpickrInstance) {
+      flatpickrInstance.clear();
+      document.getElementById("check-in-date-display").textContent = "- Vyberte -";
+      document.getElementById("check-out-date-display").textContent = "- Vyberte -";
+      openModalButton.style.display = 'none';
+    }
+  });
   // Mapa barev uživatelů
   const userColors = {
     user1: "#FFD700",
@@ -438,14 +454,26 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   bookingForm.addEventListener("submit", async (event) => {
-    // Bulletproof validace polí
-    // Účel návštěvy
-    if (!purpose || purpose.length > 15 || /[<>]/.test(purpose)) {
-      bookingMessage.textContent = "Účel návštěvy musí být vyplněn, max. 15 znaků, nesmí obsahovat < nebo >.";
+    event.preventDefault();
+    bookingMessage.textContent = "Odesílám rezervaci...";
+    bookingMessage.style.color = "";
+
+  let purpose = purposeSelect.value;
+    if (purpose === 'Jiný') {
+        purpose = otherPurposeInput.value.trim();
+        if (!purpose) {
+            bookingMessage.textContent = 'Prosím, specifikujte jiný účel návštěvy.';
+            bookingMessage.style.color = 'red';
+            return;
+        }
+    }
+    // Validace účelu návštěvy
+    if (!purpose || purpose.length > 50 || /[<>]/.test(purpose)) {
+      bookingMessage.textContent = "Účel návštěvy musí být vyplněn, max. 50 znaků, nesmí obsahovat < nebo >.";
       bookingMessage.style.color = "red";
       return;
     }
-    // Poznámka
+    // Validace poznámky
     const notes = notesTextarea.value.trim();
     if (notes.length > 200) {
       bookingMessage.textContent = "Poznámka nesmí být delší než 200 znaků.";
@@ -457,7 +485,6 @@ document.addEventListener("DOMContentLoaded", () => {
       bookingMessage.style.color = "red";
       return;
     }
-    bodyData.notes = notes;
     event.preventDefault();
     bookingMessage.textContent = "Odesílám rezervaci...";
     bookingMessage.style.color = "";
@@ -477,7 +504,6 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
     
-    let purpose = purposeSelect.value;
     if (purpose === 'Jiný') {
         purpose = otherPurposeInput.value.trim();
         if (!purpose) {
