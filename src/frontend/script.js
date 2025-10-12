@@ -35,38 +35,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const otherPurposeInput = document.getElementById("other-purpose-input");
   const notesTextarea = document.getElementById("notes-textarea");
 
-  // Očko pro login heslo
-  const togglePasswordLogin = document.getElementById('toggle-password-login');
-  if (togglePasswordLogin && passwordInput) {
-    togglePasswordLogin.addEventListener('click', () => {
-      if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        togglePasswordLogin.querySelector('i').classList.remove('fa-eye');
-        togglePasswordLogin.querySelector('i').classList.add('fa-eye-slash');
-      } else {
-        passwordInput.type = 'password';
-        togglePasswordLogin.querySelector('i').classList.remove('fa-eye-slash');
-        togglePasswordLogin.querySelector('i').classList.add('fa-eye');
-      }
-    });
-  }
-
-  // Očko pro registrační heslo
-  const registerPasswordInput = document.getElementById('register-password');
-  const togglePasswordRegister = document.getElementById('toggle-password-register');
-  if (togglePasswordRegister && registerPasswordInput) {
-    togglePasswordRegister.addEventListener('click', () => {
-      if (registerPasswordInput.type === 'password') {
-        registerPasswordInput.type = 'text';
-        togglePasswordRegister.querySelector('i').classList.remove('fa-eye');
-        togglePasswordRegister.querySelector('i').classList.add('fa-eye-slash');
-      } else {
-        registerPasswordInput.type = 'password';
-        togglePasswordRegister.querySelector('i').classList.remove('fa-eye-slash');
-        togglePasswordRegister.querySelector('i').classList.add('fa-eye');
-      }
-    });
-  }
   // ...existing code...
   // Přidání tlačítka pro vymazání výběru datumu (až po deklaraci calendarContainer)
   const clearDateButton = document.createElement('button');
