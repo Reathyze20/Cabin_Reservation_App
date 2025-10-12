@@ -18,6 +18,13 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: 22
         script: |
+          source ~/.bashrc
+          cd ${{ secrets.SERVER_PATH }}
+          git reset --hard
+          git pull
+          npm install
+          npm run build
+          pm2 restart chata-app
           cd ${{ secrets.SERVER_PATH }}
           git reset --hard
           git pull
