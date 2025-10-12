@@ -55,7 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const appSection = document.getElementById("app-section");
   const loginForm = document.getElementById("login-form");
   const usernameInput = document.getElementById("username");
-  const passwordInput = document.getElementById("password");
+  const passwordInput = document.getElementById("login-password");
   const loginError = document.getElementById("login-error");
 
   const registerSection = document.getElementById("register-section");
