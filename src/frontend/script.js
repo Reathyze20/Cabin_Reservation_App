@@ -1,40 +1,32 @@
 document.addEventListener("DOMContentLoaded", () => {
-  // Odkazy na HTML elementy
-  const loginSection = document.getElementById("login-section");
-  const appSection = document.getElementById("app-section");
-  const loginForm = document.getElementById("login-form");
-  const usernameInput = document.getElementById("username");
-  const passwordInput = document.getElementById("password");
-  const loginError = document.getElementById("login-error");
+  // Očko pro login heslo
+  const togglePasswordLogin = document.getElementById('toggle-password-login');
+  if (togglePasswordLogin && passwordInput) {
+    togglePasswordLogin.addEventListener('click', () => {
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        togglePasswordLogin.innerHTML = '<i class="fa fa-eye-slash"></i>';
+      } else {
+        passwordInput.type = 'password';
+        togglePasswordLogin.innerHTML = '<i class="fa fa-eye"></i>';
+      }
+    });
+  }
 
-  const registerSection = document.getElementById("register-section");
-  const registerForm = document.getElementById("register-form");
-  const registerMessage = document.getElementById("register-message");
-  const showRegisterLink = document.getElementById("show-register-link");
-  const showLoginLink = document.getElementById("show-login-link");
-
-  const loggedInUsernameSpan = document.getElementById("logged-in-username");
-  const logoutButton = document.getElementById("logout-button");
-  const reservationsListDiv = document.getElementById("reservations-list");
-  const calendarContainer = document.querySelector(".calendar-container");
-  const reservationsTitle = document.getElementById("reservations-title");
-
-  // Prvky pro modální okno rezervace
-  const bookingModal = document.getElementById("booking-modal");
-  const closeModalButton = document.querySelector(".modal-close-button");
-  const openModalButton = document.getElementById("open-booking-modal-button");
-  const bookingForm = document.getElementById("booking-form");
-  const bookingMessage = document.getElementById("booking-message");
-  const modalDateRangeSpan = document.getElementById("modal-date-range");
-  const modalTitle = document.getElementById("modal-title");
-  const modalSubmitButton = document.getElementById("modal-submit-button");
-  const modalDeleteButton = document.getElementById("modal-delete-button");
-  const reservationIdInput = document.getElementById("reservation-id");
-  const purposeSelect = document.getElementById("purpose-select");
-  const otherPurposeGroup = document.getElementById("other-purpose-group");
-  const otherPurposeInput = document.getElementById("other-purpose-input");
-  const notesTextarea = document.getElementById("notes-textarea");
-
+  // Očko pro registrační heslo
+  const registerPasswordInput = document.getElementById('register-password');
+  const togglePasswordRegister = document.getElementById('toggle-password-register');
+  if (togglePasswordRegister && registerPasswordInput) {
+    togglePasswordRegister.addEventListener('click', () => {
+      if (registerPasswordInput.type === 'password') {
+        registerPasswordInput.type = 'text';
+        togglePasswordRegister.innerHTML = '<i class="fa fa-eye-slash"></i>';
+      } else {
+        registerPasswordInput.type = 'password';
+        togglePasswordRegister.innerHTML = '<i class="fa fa-eye"></i>';
+      }
+    });
+  }
   // ...existing code...
   // Přidání tlačítka pro vymazání výběru datumu (až po deklaraci calendarContainer)
   const clearDateButton = document.createElement('button');
