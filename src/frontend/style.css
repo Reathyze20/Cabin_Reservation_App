@@ -1,3 +1,25 @@
+/* Styl pro input s očíčkem uvnitř */
+.input-eye-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.input-eye-wrapper input[type="password"],
+.input-eye-wrapper input[type="text"] {
+  width: 100%;
+  padding-right: 36px;
+  box-sizing: border-box;
+}
+.toggle-password {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #d18b00;
+  font-size: 1.2em;
+  z-index: 2;
+}
 .spinner {
   display: inline-block;
   width: 32px;

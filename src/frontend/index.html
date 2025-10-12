@@ -45,7 +45,10 @@
           <div>
             <label for="password">Heslo:</label><br />
             <input type="password" id="password" name="password" required />
-            <span class="toggle-password" id="toggle-password-login" style="cursor:pointer;margin-left:8px;"><i class="fa fa-eye"></i></span>
+            <div class="input-eye-wrapper">
+              <input type="password" id="password" name="password" required />
+              <span class="toggle-password" id="toggle-password-login"><i class="fa fa-eye"></i></span>
+            </div>
           </div>
           <br />
           <button type="submit">Přihlásit se</button>
@@ -66,7 +69,10 @@
             <div>
                 <label for="register-password">Heslo (min. 6 znaků):</label><br />
                 <input type="password" id="register-password" name="password" required />
-                <span class="toggle-password" id="toggle-password-register" style="cursor:pointer;margin-left:8px;"><i class="fa fa-eye"></i></span>
+                <div class="input-eye-wrapper">
+                  <input type="password" id="register-password" name="password" required />
+                  <span class="toggle-password" id="toggle-password-register"><i class="fa fa-eye"></i></span>
+                </div>
             </div>
             <br />
             <button type="submit">Zaregistrovat</button>
