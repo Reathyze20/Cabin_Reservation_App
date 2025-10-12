@@ -1,4 +1,32 @@
 document.addEventListener("DOMContentLoaded", () => {
+  // Očko pro login heslo
+  const togglePasswordLogin = document.getElementById('toggle-password-login');
+  if (togglePasswordLogin && passwordInput) {
+    togglePasswordLogin.addEventListener('click', () => {
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        togglePasswordLogin.innerHTML = '<i class="fa fa-eye-slash"></i>';
+      } else {
+        passwordInput.type = 'password';
+        togglePasswordLogin.innerHTML = '<i class="fa fa-eye"></i>';
+      }
+    });
+  }
+
+  // Očko pro registrační heslo
+  const registerPasswordInput = document.getElementById('register-password');
+  const togglePasswordRegister = document.getElementById('toggle-password-register');
+  if (togglePasswordRegister && registerPasswordInput) {
+    togglePasswordRegister.addEventListener('click', () => {
+      if (registerPasswordInput.type === 'password') {
+        registerPasswordInput.type = 'text';
+        togglePasswordRegister.innerHTML = '<i class="fa fa-eye-slash"></i>';
+      } else {
+        registerPasswordInput.type = 'password';
+        togglePasswordRegister.innerHTML = '<i class="fa fa-eye"></i>';
+      }
+    });
+  }
   // ...existing code...
   // Přidání tlačítka pro vymazání výběru datumu (až po deklaraci calendarContainer)
   const clearDateButton = document.createElement('button');
