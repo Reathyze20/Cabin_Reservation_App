@@ -124,6 +124,40 @@ document.addEventListener("DOMContentLoaded", () => {
     showLogin();
   });
 
+  // --- Logika Přihlášení ---
+  if (loginForm) {
+    loginForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!usernameInput || !passwordInput) return;
+      loginError.textContent = "";
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value;
+      if (!username || !password) {
+        if (loginError) loginError.textContent = "Prosím, vyplňte jméno i heslo.";
+        return;
+      }
+
+      try {
+        const response = await fetch(`${backendUrl}/api/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, password }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.message || `Chyba ${response.status}`);
+        localStorage.setItem("authToken", data.token);
+        localStorage.setItem("username", data.username || username);
+        if (data.userId) localStorage.setItem("userId", data.userId);
+        if (data.role) localStorage.setItem("role", data.role);
+        showApp(data.username || username);
+      } catch (err) {
+        console.error("Chyba při přihlášení:", err);
+        if (loginError) loginError.textContent = err.message || "Nepodařilo se přihlásit.";
+        if (passwordInput) passwordInput.value = "";
+      }
+    });
+  }
+
   // --- Logika Registrace ---
   registerForm.addEventListener("submit", async (event) => {
     event.preventDefault();
