@@ -354,6 +354,15 @@ document.addEventListener("DOMContentLoaded", () => {
           dayElem.title = `Rezervováno: ${matchingReservation.username}`;
           dayElem.classList.add("booked-day");
           const userClass = `user-${matchingReservation.userId.replace(/\s+/g, '-')}`;
+          // expose reservation data on the day element for strip rendering
+          try {
+            dayElem.dataset.reservationId = matchingReservation.id;
+            dayElem.dataset.username = matchingReservation.username || '';
+            dayElem.dataset.userId = matchingReservation.userId || '';
+            dayElem.dataset.dateIso = date.toISOString().slice(0,10);
+          } catch (e) {
+            // silent
+          }
           dayElem.classList.add(userClass);
           
           if(!userColors[matchingReservation.userId]) {
@@ -431,7 +440,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (flatpickrInstance) {
         flatpickrInstance.set("disable", disabledRanges);
         flatpickrInstance.redraw();
-        renderReservationsOverview(flatpickrInstance.currentMonth, flatpickrInstance.currentYear);
+          renderReservationsOverview(flatpickrInstance.currentMonth, flatpickrInstance.currentYear);
+          setTimeout(() => renderReservationStrips(), 30);
       } else {
         initializeDatePicker(disabledRanges);
         setTimeout(() => {
@@ -627,6 +637,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     renderReservationList(filteredReservations, "Pro tento měsíc nejsou žádné rezervace.");
+  // draw strips under calendar for visible reservations
+  setTimeout(() => renderReservationStrips(), 20);
   }
   
   function renderReservationsForSelection(selectedDates) {
@@ -646,6 +658,66 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     renderReservationList(overlappingReservations, "Ve vybraném termínu nejsou žádné jiné rezervace.");
+    setTimeout(() => renderReservationStrips(), 20);
+
+  function renderReservationStrips() {
+    if (!calendarContainer) return;
+    // remove existing strips
+    const existing = calendarContainer.querySelectorAll('.reservation-strip');
+    existing.forEach(n => n.remove());
+
+    // collect day elements with reservation ids
+    const dayElems = Array.from(calendarContainer.querySelectorAll('.flatpickr-day[data-reservation-id]'));
+    if (dayElems.length === 0) return;
+
+    const groups = {};
+    dayElems.forEach(de => {
+      const id = de.dataset.reservationId;
+      if (!id) return;
+      groups[id] = groups[id] || [];
+      groups[id].push(de);
+    });
+
+    const containerRect = calendarContainer.getBoundingClientRect();
+    Object.keys(groups).forEach(id => {
+      const days = groups[id].slice().sort((a,b) => (a.dataset.dateIso > b.dataset.dateIso) ? 1 : -1);
+      const first = days[0];
+      const last = days[days.length - 1];
+      if (!first || !last) return;
+
+      const r1 = first.getBoundingClientRect();
+      const r2 = last.getBoundingClientRect();
+      // position relative to calendarContainer
+      const left = r1.left - containerRect.left;
+      const width = r2.right - r1.left;
+      // place strip slightly below the day cells
+      const top = r1.bottom - containerRect.top + 6;
+
+      const strip = document.createElement('div');
+      strip.className = 'reservation-strip';
+      strip.style.left = `${left}px`;
+      strip.style.width = `${Math.max(12, width)}px`;
+      strip.style.top = `${top}px`;
+      strip.dataset.reservationId = id;
+
+      const label = document.createElement('span');
+      label.className = 'reservation-strip-label';
+      label.textContent = days[0].dataset.username || 'Rezervace';
+      strip.appendChild(label);
+
+      // use user color if available
+      const userId = days[0].dataset.userId;
+      if (userId && userColors[userId]) {
+        strip.style.background = userColors[userId];
+        strip.style.opacity = '0.25';
+      } else {
+        strip.style.background = '#e9ecef';
+        strip.style.opacity = '0.6';
+      }
+
+      calendarContainer.appendChild(strip);
+    });
+  }
   }
   
   function renderReservationList(reservations, emptyMessage) {

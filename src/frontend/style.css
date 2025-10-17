@@ -659,6 +659,29 @@ span.flatpickr-weekday {
     color: #495057 !important;
 }
 
+/* Reservation strip that spans range under calendar days */
+.calendar-container {
+  position: relative; /* allow absolute strips inside */
+}
+.reservation-strip {
+  position: absolute;
+  height: 20px;
+  border-radius: 8px;
+  background: #e9ecef;
+  display: flex;
+  align-items: center;
+  padding-left: 8px;
+  box-sizing: border-box;
+  pointer-events: none;
+  z-index: 5;
+}
+.reservation-strip-label {
+  font-size: 12px;
+  color: #333;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 
 /* --- Styly pro modální okno --- */
 .modal-overlay {
