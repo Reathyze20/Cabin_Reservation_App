@@ -1,56 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-  // Očko pro login heslo
-  const togglePasswordLogin = document.getElementById('toggle-password-login');
-  if (togglePasswordLogin && passwordInput) {
-    togglePasswordLogin.addEventListener('click', () => {
-      if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        togglePasswordLogin.innerHTML = '<i class="fa fa-eye-slash"></i>';
-      } else {
-        passwordInput.type = 'password';
-        togglePasswordLogin.innerHTML = '<i class="fa fa-eye"></i>';
-      }
-    });
-  }
-
-  // Očko pro registrační heslo
-  const registerPasswordInput = document.getElementById('register-password');
-  const togglePasswordRegister = document.getElementById('toggle-password-register');
-  if (togglePasswordRegister && registerPasswordInput) {
-    togglePasswordRegister.addEventListener('click', () => {
-      if (registerPasswordInput.type === 'password') {
-        registerPasswordInput.type = 'text';
-        togglePasswordRegister.innerHTML = '<i class="fa fa-eye-slash"></i>';
-      } else {
-        registerPasswordInput.type = 'password';
-        togglePasswordRegister.innerHTML = '<i class="fa fa-eye"></i>';
-      }
-    });
-  }
-  // ...existing code...
-  // Přidání tlačítka pro vymazání výběru datumu (až po deklaraci calendarContainer)
-  const clearDateButton = document.createElement('button');
-  clearDateButton.id = 'clear-date-button';
-  clearDateButton.textContent = 'Vymazat výběr datumu';
-  clearDateButton.className = 'button-secondary';
-  clearDateButton.style.margin = '8px 0';
-  calendarContainer.parentNode.insertBefore(clearDateButton, calendarContainer.nextSibling);
-
-  clearDateButton.addEventListener('click', () => {
-    if (flatpickrInstance) {
-      flatpickrInstance.clear();
-      document.getElementById("check-in-date-display").textContent = "- Vyberte -";
-      document.getElementById("check-out-date-display").textContent = "- Vyberte -";
-      openModalButton.style.display = 'none';
-    }
-  });
-  // Mapa barev uživatelů
-  const userColors = {
-    user1: "#FFD700",
-    user2: "#FFA500",
-  };
-
-  // Odkazy na HTML elementy
+  // Query all DOM elements up front to avoid TDZ and redeclaration issues
   const loginSection = document.getElementById("login-section");
   const appSection = document.getElementById("app-section");
   const loginForm = document.getElementById("login-form");
@@ -69,7 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const reservationsListDiv = document.getElementById("reservations-list");
   const calendarContainer = document.querySelector(".calendar-container");
   const reservationsTitle = document.getElementById("reservations-title");
-  
+
   // Prvky pro modální okno rezervace
   const bookingModal = document.getElementById("booking-modal");
   const closeModalButton = document.querySelector(".modal-close-button");
@@ -90,6 +39,37 @@ document.addEventListener("DOMContentLoaded", () => {
   const confirmDeleteModal = document.getElementById('confirm-delete-modal');
   const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
   const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
+
+  // Password toggle elements
+  const togglePasswordLogin = document.getElementById('toggle-password-login');
+  const registerPasswordInput = document.getElementById('register-password');
+  const togglePasswordRegister = document.getElementById('toggle-password-register');
+
+  // Přidání tlačítka pro vymazání výběru datumu (guarded)
+  const clearDateButton = document.createElement('button');
+  clearDateButton.id = 'clear-date-button';
+  clearDateButton.textContent = 'Vymazat výběr datumu';
+  clearDateButton.className = 'button-secondary';
+  clearDateButton.style.margin = '8px 0';
+  if (calendarContainer && calendarContainer.parentNode) {
+    calendarContainer.parentNode.insertBefore(clearDateButton, calendarContainer.nextSibling);
+  }
+
+  clearDateButton.addEventListener('click', () => {
+    if (typeof flatpickrInstance !== 'undefined' && flatpickrInstance) {
+      flatpickrInstance.clear();
+      const inEl = document.getElementById("check-in-date-display");
+      const outEl = document.getElementById("check-out-date-display");
+      if (inEl) inEl.textContent = "- Vyberte -";
+      if (outEl) outEl.textContent = "- Vyberte -";
+      if (openModalButton) openModalButton.style.display = 'none';
+    }
+  });
+  const userColors = {
+    user1: "#FFD700",
+    user2: "#FFA500",
+  };
+
 
 
   // Globální proměnné
@@ -142,36 +122,6 @@ document.addEventListener("DOMContentLoaded", () => {
     showLogin();
   });
 
-  // --- Logika Přihlášení ---
-  loginForm.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    loginError.textContent = "";
-    const username = usernameInput.value;
-    const password = passwordInput.value;
-    if (!username || !password) {
-      loginError.textContent = "Prosím, vyplňte jméno i heslo.";
-      return;
-    }
-    try {
-      const response = await fetch(`${backendUrl}/api/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || `Chyba ${response.status}`);
-  localStorage.setItem("authToken", data.token);
-  localStorage.setItem("username", data.username);
-  localStorage.setItem("userId", data.userId); // Uložíme i ID uživatele
-  if (data.role) localStorage.setItem("role", data.role);
-  showApp(data.username);
-    } catch (error) {
-      console.error("Chyba při přihlášení:", error);
-      loginError.textContent = error.message || "Nepodařilo se přihlásit.";
-      passwordInput.value = "";
-    }
-  });
-
   // --- Logika Registrace ---
   registerForm.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -180,18 +130,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const password = document.getElementById("register-password").value;
 
     // Validace uživatelského jména
-    if (!username || !password) {
-      registerMessage.textContent = "Prosím, vyplňte jméno i heslo.";
-      registerMessage.style.color = "red";
-      return;
-    }
-    // Best practices:
-    // - 3-20 znaků
-    // - pouze písmena, čísla, podtržítko, tečka, pomlčka
-    // - nesmí začínat ani končit speciálním znakem
-    // - nesmí obsahovat mezery
-    // - nesmí obsahovat více speciálních znaků za sebou
-    // - není case sensitive
     if (username.length < 3 || username.length > 20) {
       registerMessage.textContent = "Uživatelské jméno musí mít 3-20 znaků.";
       registerMessage.style.color = "red";
@@ -811,4 +749,4 @@ document.addEventListener("DOMContentLoaded", () => {
   } else {
     showLogin();
   }
-})
+});
