@@ -51,8 +51,10 @@ document.addEventListener("DOMContentLoaded", () => {
   clearDateButton.textContent = 'Vymazat výběr datumu';
   clearDateButton.className = 'button-secondary';
   clearDateButton.style.margin = '8px 0';
-  if (calendarContainer && calendarContainer.parentNode) {
-    calendarContainer.parentNode.insertBefore(clearDateButton, calendarContainer.nextSibling);
+  // Use a runtime lookup to avoid TDZ / initialization timing issues
+  const _calendarContainer = calendarContainer || document.querySelector('.calendar-container');
+  if (_calendarContainer && _calendarContainer.parentNode) {
+    _calendarContainer.parentNode.insertBefore(clearDateButton, _calendarContainer.nextSibling);
   }
 
   clearDateButton.addEventListener('click', () => {
@@ -356,7 +358,9 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     try {
-      flatpickrInstance = flatpickr(calendarContainer, flatpickrConfig);
+      const _cal = calendarContainer || document.querySelector('.calendar-container');
+      if (!_cal) throw new Error('Element .calendar-container nenalezen, nelze inicializovat kalendář.');
+      flatpickrInstance = flatpickr(_cal, flatpickrConfig);
     } catch (e) {
       console.error("KRITICKÁ CHYBA při inicializaci flatpickr():", e);
     }
