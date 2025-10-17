@@ -665,21 +665,31 @@ span.flatpickr-weekday {
 }
 .reservation-strip {
   position: absolute;
-  height: 20px;
+  height: 28px;
   border-radius: 8px;
   background: #e9ecef;
   display: flex;
   align-items: center;
-  padding-left: 8px;
+  justify-content: center;
+  padding: 4px 8px;
   box-sizing: border-box;
   pointer-events: none;
   z-index: 5;
 }
 .reservation-strip-label {
-  font-size: 12px;
+  position: absolute;
+  top: -18px; /* place bubble above the segment */
+  left: 50%;
+  transform: translateX(-50%);
+  background: #fff;
+  padding: 4px 8px;
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  font-size: 13px;
   color: #333;
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
+  pointer-events: auto;
 }
 
 

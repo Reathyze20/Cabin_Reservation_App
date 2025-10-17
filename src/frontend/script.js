@@ -681,41 +681,58 @@ document.addEventListener("DOMContentLoaded", () => {
     const containerRect = calendarContainer.getBoundingClientRect();
     Object.keys(groups).forEach(id => {
       const days = groups[id].slice().sort((a,b) => (a.dataset.dateIso > b.dataset.dateIso) ? 1 : -1);
-      const first = days[0];
-      const last = days[days.length - 1];
-      if (!first || !last) return;
+      if (days.length === 0) return;
 
-      const r1 = first.getBoundingClientRect();
-      const r2 = last.getBoundingClientRect();
-      // position relative to calendarContainer
-      const left = r1.left - containerRect.left;
-      const width = r2.right - r1.left;
-      // place strip slightly below the day cells
-      const top = r1.bottom - containerRect.top + 6;
+      // group contiguous days by visual row (top coordinate)
+      const rowGroups = [];
+      days.forEach(d => {
+        const topKey = Math.round(d.getBoundingClientRect().top);
+        let g = rowGroups.find(r => r.topKey === topKey);
+        if (!g) {
+          g = { topKey, days: [] };
+          rowGroups.push(g);
+        }
+        g.days.push(d);
+      });
 
-      const strip = document.createElement('div');
-      strip.className = 'reservation-strip';
-      strip.style.left = `${left}px`;
-      strip.style.width = `${Math.max(12, width)}px`;
-      strip.style.top = `${top}px`;
-      strip.dataset.reservationId = id;
+      rowGroups.forEach(g => {
+        const segDays = g.days;
+        segDays.sort((a,b) => (a.dataset.dateIso > b.dataset.dateIso) ? 1 : -1);
+        const first = segDays[0];
+        const last = segDays[segDays.length - 1];
+        if (!first || !last) return;
 
-      const label = document.createElement('span');
-      label.className = 'reservation-strip-label';
-      label.textContent = days[0].dataset.username || 'Rezervace';
-      strip.appendChild(label);
+        const r1 = first.getBoundingClientRect();
+        const r2 = last.getBoundingClientRect();
+        const left = r1.left - containerRect.left;
+        const width = r2.right - r1.left;
+        const top = r1.bottom - containerRect.top + 6;
 
-      // use user color if available
-      const userId = days[0].dataset.userId;
-      if (userId && userColors[userId]) {
-        strip.style.background = userColors[userId];
-        strip.style.opacity = '0.25';
-      } else {
-        strip.style.background = '#e9ecef';
-        strip.style.opacity = '0.6';
-      }
+        const seg = document.createElement('div');
+        seg.className = 'reservation-strip reservation-strip-segment';
+        seg.style.left = `${left}px`;
+        seg.style.width = `${Math.max(12, width)}px`;
+        seg.style.top = `${top}px`;
+        seg.dataset.reservationId = id;
 
-      calendarContainer.appendChild(strip);
+        // bubble label above the segment (centered)
+        const label = document.createElement('div');
+        label.className = 'reservation-strip-label';
+        label.textContent = segDays[0].dataset.username || 'Rezervace';
+        seg.appendChild(label);
+
+        // color accent (light) based on user
+        const userId = segDays[0].dataset.userId;
+        if (userId && userColors[userId]) {
+          seg.style.background = userColors[userId];
+          seg.style.opacity = '0.18';
+        } else {
+          seg.style.background = '#e9ecef';
+          seg.style.opacity = '0.5';
+        }
+
+        calendarContainer.appendChild(seg);
+      });
     });
   }
   }
