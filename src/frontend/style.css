@@ -737,3 +737,39 @@ span.flatpickr-weekday {
     font-weight: 600;
 }
 
+/* --- Status Badges in Reservation List --- */
+.status-badge {
+    font-size: 0.8em;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
+.status-badge.primary-with-backup {
+    background-color: #dcfce7; /* Light green */
+    color: #166534;
+}
+
+.status-badge.backup {
+    background-color: #ffedd5; /* Light orange */
+    color: #9a3412;
+}
+
+/* --- Warning message in modal --- */
+.backup-warning {
+  background-color: #fffbeb;
+  border: 1px solid #facc15;
+  color: #854d0e;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  font-size: 0.9em;
+}
+.backup-warning p {
+  margin: 0;
+}
+.backup-warning strong {
+  color: #713f12;
+}

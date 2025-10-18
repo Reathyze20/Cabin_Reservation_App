@@ -15,6 +15,8 @@ export interface Reservation {
   purpose?: string; // Účel návštěvy (nepovinné)
   notes?: string;   // Poznámky (nepovinné)
   userColor?: string;
+  status?: 'primary' | 'backup'; // "primary" je hlavní, "backup" je záložní
+  parentId?: string; // ID hlavní rezervace, pokud je tato záložní
 }
 
 export interface JwtPayload {

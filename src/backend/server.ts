@@ -286,22 +286,20 @@ app.post("/api/reservations", protect, async (req: Request, res: Response) => {
 
   try {
     const allReservations = await loadReservations();
-    const isOverlap = allReservations.some((existing) => {
+    
+    // Zjistíme, zda existuje PŘEKRÝVAJÍCÍ SE HLAVNÍ rezervace
+    const overlappingPrimary = allReservations.find((existing) => {
+      // Porovnáváme pouze s hlavními (primary) rezervacemi nebo starými daty bez statusu
+      if (existing.status === 'backup') return false;
+
       const existingOd = new Date(existing.from);
       const existingDo = new Date(existing.to);
       const newOd = new Date(from);
       const newDo = new Date(reservationTo);
+      
+      // Podmínka pro překryv: newStart <= oldEnd AND newEnd >= oldStart
       return newOd <= existingDo && newDo >= existingOd;
     });
-
-    if (isOverlap) {
-      console.warn(
-        `[POST /api/rezervace] Pokus o rezervaci překrývajícího se termínu: ${from} - ${reservationTo}`
-      );
-      return res
-        .status(409)
-        .json({ message: "Tento termín je již částečně nebo zcela obsazen." });
-    }
 
     const newReservation: Reservation = {
       id: uuidv4(),
@@ -313,11 +311,24 @@ app.post("/api/reservations", protect, async (req: Request, res: Response) => {
       notes,   // Uložíme poznámky
     };
 
+    if (overlappingPrimary) {
+      // Pokud existuje překryv, nová rezervace bude záložní
+      newReservation.status = 'backup';
+      newReservation.parentId = overlappingPrimary.id;
+      console.warn(
+        `[POST /api/reservations] Uživatel ${username} vytváří ZÁLOŽNÍ rezervaci pro termín: ${from} - ${reservationTo}`
+      );
+    } else {
+      // Pokud není žádný překryv, je to hlavní rezervace
+      newReservation.status = 'primary';
+    }
+
+
     allReservations.push(newReservation);
     await saveReservation(allReservations);
 
     console.log(
-      `[POST /api/rezervace] Uživatel ${username} (ID: ${userId}) vytvořil rezervaci: ${from} - ${reservationTo}`
+      `[POST /api/reservace] Uživatel ${username} (ID: ${userId}) vytvořil ${newReservation.status} rezervaci: ${from} - ${reservationTo}`
     );
        res.status(201).json(newReservation);
   } catch (error) {

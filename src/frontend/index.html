@@ -153,6 +153,12 @@
         <div class="modal-content">
             <span class="modal-close-button">&times;</span>
             <h2 id="modal-title">Detail rezervace</h2>
+            
+            <!-- Upozornění na záložní rezervaci -->
+            <div id="backup-warning-message" class="backup-warning" style="display: none;">
+                <p><strong>Upozornění:</strong> Vámi vybraný termín je již obsazen. Vaše rezervace bude vytvořena jako <strong>záložní</strong>. O případném uvolnění termínu budete informováni.</p>
+            </div>
+
             <p><strong>Termín:</strong> <span id="modal-date-range"></span></p>
             <form id="booking-form">
                 <input type="hidden" id="reservation-id" name="reservationId">

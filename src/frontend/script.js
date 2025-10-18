@@ -34,6 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const otherPurposeGroup = document.getElementById("other-purpose-group");
   const otherPurposeInput = document.getElementById("other-purpose-input");
   const notesTextarea = document.getElementById("notes-textarea");
+  const backupWarningMessage = document.getElementById("backup-warning-message");
 
   // Elements for the confirm delete modal
   const confirmDeleteModal = document.getElementById('confirm-delete-modal');
@@ -233,6 +234,7 @@ document.addEventListener("DOMContentLoaded", () => {
       reservationIdInput.value = '';
       modalDeleteButton.style.display = 'none';
       modalDeleteButton.onclick = null;
+      backupWarningMessage.style.display = 'none'; // Skrýt varování ve výchozím stavu
 
       if (isEdit && reservation) {
         modalTitle.textContent = "Upravit rezervaci";
@@ -265,6 +267,19 @@ document.addEventListener("DOMContentLoaded", () => {
             const from = flatpickrInstance.selectedDates[0];
             const to = flatpickrInstance.selectedDates[1];
             modalDateRangeSpan.textContent = `${formatDateForDisplay(from)} - ${formatDateForDisplay(to)}`;
+
+            // Zkontrolovat překryv a zobrazit varování, pokud je to nutné
+            const isOverlapping = window.currentReservations.some(r => {
+                // Kontrolujeme pouze proti hlavním rezervacím
+                if (r.status === 'backup') return false;
+                const resStart = new Date(r.from);
+                const resEnd = new Date(r.to);
+                return from <= resEnd && to >= resStart;
+            });
+
+            if (isOverlapping) {
+                backupWarningMessage.style.display = 'block';
+            }
         }
       }
       bookingModal.style.display = "flex";
@@ -305,7 +320,6 @@ document.addEventListener("DOMContentLoaded", () => {
       mode: "range",
       dateFormat: "Y-m-d",
       inline: true,
-      disable: disabledDates,
       minDate: "today",
       locale: "cs",
       onDayCreate: function (dObj, dStr, fp, dayElem) {
@@ -314,7 +328,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (!window.currentReservations || window.currentReservations.length === 0) return;
 
-        const matchingReservation = window.currentReservations.find((r) => {
+        const reservationsForDay = window.currentReservations.filter((r) => {
           try {
             const startTs = new Date(r.from + 'T00:00:00Z').getTime();
             const endTs = new Date(r.to + 'T00:00:00Z').getTime();
@@ -324,16 +338,27 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         });
 
-        if (matchingReservation) {
-          dayElem.title = `Rezervováno: ${matchingReservation.username}`;
-          dayElem.classList.add("booked-day");
-          
-          const assignedColor = matchingReservation.userColor;
-          if (assignedColor) {
-            dayElem.style.backgroundColor = hexToRgba(assignedColor, 0.8);
-            dayElem.style.color = '#fff';
-            dayElem.style.fontWeight = 'bold';
-          }
+        const primaryReservation = reservationsForDay.find(r => r.status !== 'backup');
+        const backupReservation = reservationsForDay.find(r => r.status === 'backup');
+
+        if (primaryReservation && backupReservation) {
+            const primaryColor = primaryReservation.userColor || '#808080';
+            const backupColor = backupReservation.userColor || '#cccccc';
+            
+            dayElem.style.backgroundImage = `linear-gradient(to right, ${hexToRgba(primaryColor, 0.8)} 50%, ${hexToRgba(backupColor, 0.8)} 50%)`;
+            dayElem.classList.add("booked-day");
+            dayElem.title = `Hlavní: ${primaryReservation.username}\nZáložní: ${backupReservation.username}`;
+
+        } else if (primaryReservation) {
+            dayElem.title = `Rezervováno: ${primaryReservation.username}`;
+            dayElem.classList.add("booked-day");
+            
+            const assignedColor = primaryReservation.userColor;
+            if (assignedColor) {
+              dayElem.style.backgroundColor = hexToRgba(assignedColor, 0.8);
+              dayElem.style.color = '#fff';
+              dayElem.style.fontWeight = 'bold';
+            }
         }
       },
       onChange: function (selectedDates, dateStr, instance) {
@@ -403,13 +428,10 @@ document.addEventListener("DOMContentLoaded", () => {
       const reservations = await response.json();
       window.currentReservations = reservations;
       
-      const disabledRanges = reservations.map((r) => ({ from: r.from, to: r.to }));
-
       if (flatpickrInstance) {
-        flatpickrInstance.set("disable", disabledRanges);
         flatpickrInstance.redraw();
       } else {
-        initializeDatePicker(disabledRanges);
+        initializeDatePicker();
       }
       
       setTimeout(() => {
@@ -605,11 +627,22 @@ document.addEventListener("DOMContentLoaded", () => {
                   </div>`;
               }
 
+              let statusBadge = '';
+              if (r.status === 'backup') {
+                  statusBadge = '<span class="status-badge backup">Záložní</span>';
+              } else { // Primary or old data without status
+                  const hasBackups = reservations.some(backup => backup.parentId === r.id);
+                  if (hasBackups) {
+                      statusBadge = '<span class="status-badge primary-with-backup">Má zálohy</span>';
+                  }
+              }
+
               listItem.innerHTML = `
                 ${actionButtonsHTML}
                 <div class="reservation-header">
                     <strong>${r.username}</strong>
-                    <span style="color:#d18b00;font-size:0.95em;margin-left:8px;">
+                    ${statusBadge}
+                    <span style="color:#d18b00;font-size:0.95em;margin-left:auto;">
                       ${formatDateForDisplay(r.from)} – ${formatDateForDisplay(r.to)}
                     </span>
                 </div>
@@ -692,3 +725,4 @@ document.addEventListener("DOMContentLoaded", () => {
     showLogin();
   }
 });
+
