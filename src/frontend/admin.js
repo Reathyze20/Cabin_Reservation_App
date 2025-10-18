@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Funkce pro API volání ---
     const apiFetch = async (url, options = {}) => {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('authToken');
         const headers = {
             'Content-Type': 'application/json',
             ...options.headers,
@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Inicializace ---
     const init = () => {
-        const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
         if (token) {
             try {
                 const payload = JSON.parse(atob(token.split('.')[1]));
