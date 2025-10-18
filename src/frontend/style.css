@@ -606,38 +606,29 @@ span.flatpickr-weekday {
   text-decoration: none;
   opacity: 1;
   cursor: not-allowed;
-  border: 1px solid transparent;
+  border: none;
   color: white;
   box-shadow: none;
-  /* background-color is set by JS */
+  border-radius: 0; /* Default to square */
 }
 
-/* Remove radius for middle days */
-.flatpickr-day.booked-day.flatpickr-disabled + .flatpickr-day.booked-day.flatpickr-disabled:not(:nth-child(7n+1)) {
-  border-radius: 0;
-  box-shadow: -5px 0 0, 5px 0 0; /* Color is set in JS */
+.flatpickr-day.booked-day.range-middle {
+    /* Fill gaps between days */
+    box-shadow: -5px 0 0 var(--day-bg-color), 5px 0 0 var(--day-bg-color);
 }
 
-/* Start of range */
-.flatpickr-day.booked-day.flatpickr-disabled:not(:nth-child(7n+1)) + .flatpickr-day.flatpickr-disabled:not(.booked-day),
-.flatpickr-day.booked-day.flatpickr-disabled:first-child,
-.flatpickr-day.booked-day.flatpickr-disabled:nth-child(7n+1),
-.flatpickr-day.flatpickr-disabled:not(.booked-day) + .flatpickr-day.booked-day.flatpickr-disabled {
+.flatpickr-day.booked-day.range-start {
   border-top-left-radius: 20px;
   border-bottom-left-radius: 20px;
 }
 
-/* End of range */
-.flatpickr-day.booked-day.flatpickr-disabled:nth-child(7n):not(:last-child),
-.flatpickr-day.booked-day.flatpickr-disabled:last-child,
-.flatpickr-day.booked-day.flatpickr-disabled + .flatpickr-day.flatpickr-disabled:not(.booked-day),
-.flatpickr-day.booked-day.flatpickr-disabled.flatpickr-disabled + .flatpickr-day:not(.booked-day) {
-    border-top-right-radius: 20px;
-    border-bottom-right-radius: 20px;
+.flatpickr-day.booked-day.range-end {
+  border-top-right-radius: 20px;
+  border-bottom-right-radius: 20px;
 }
 
-/* Single day booking */
-.flatpickr-day.booked-day.startRange.endRange {
+/* For a single day that is both start and end */
+.flatpickr-day.booked-day.range-start.range-end {
   border-radius: 20px;
 }
 
@@ -799,4 +790,5 @@ span.flatpickr-weekday {
     text-decoration: none;
     font-weight: 600;
 }
+
 

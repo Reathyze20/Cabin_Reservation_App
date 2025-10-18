@@ -347,9 +347,8 @@ document.addEventListener("DOMContentLoaded", () => {
       locale: "cs",
       onDayCreate: function (dObj, dStr, fp, dayElem) {
         const date = dayElem.dateObj;
-        const currentDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-        currentDate.setHours(0, 0, 0, 0);
-        const currentTimestamp = currentDate.getTime();
+        // Use UTC to avoid timezone issues when comparing dates
+        const currentTimestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
 
         if (!window.currentReservations || window.currentReservations.length === 0) return;
 
@@ -357,9 +356,9 @@ document.addEventListener("DOMContentLoaded", () => {
           try {
             const resStart = new Date(r.from);
             const resEnd = new Date(r.to);
-            resStart.setHours(0, 0, 0, 0);
-            resEnd.setHours(0, 0, 0, 0);
-            return currentTimestamp >= resStart.getTime() && currentTimestamp <= resEnd.getTime();
+            const startTs = Date.UTC(resStart.getUTCFullYear(), resStart.getUTCMonth(), resStart.getUTCDate());
+            const endTs = Date.UTC(resEnd.getUTCFullYear(), resEnd.getUTCMonth(), resEnd.getUTCDate());
+            return currentTimestamp >= startTs && currentTimestamp <= endTs;
           } catch (e) {
             return false;
           }
@@ -374,9 +373,22 @@ document.addEventListener("DOMContentLoaded", () => {
           dayElem.dataset.userId = matchingReservation.userId || '';
           dayElem.dataset.dateIso = date.toISOString().slice(0,10);
 
+          // Add classes for start/middle/end of range for oval styling
+          const fromD = new Date(matchingReservation.from);
+          const toD = new Date(matchingReservation.to);
+          const fromTs = Date.UTC(fromD.getUTCFullYear(), fromD.getUTCMonth(), fromD.getUTCDate());
+          const toTs = Date.UTC(toD.getUTCFullYear(), toD.getUTCMonth(), toD.getUTCDate());
+
+          if (currentTimestamp === fromTs) dayElem.classList.add('range-start');
+          if (currentTimestamp === toTs) dayElem.classList.add('range-end');
+          if (currentTimestamp > fromTs && currentTimestamp < toTs) dayElem.classList.add('range-middle');
+
+
           const assignedColor = getUserColor(matchingReservation.userId);
           if (assignedColor) {
-            dayElem.style.backgroundColor = hexToRgba(assignedColor, 0.8);
+            const bgColor = hexToRgba(assignedColor, 0.8);
+            dayElem.style.backgroundColor = bgColor;
+            dayElem.style.setProperty('--day-bg-color', bgColor);
             dayElem.style.color = '#fff';
             dayElem.style.fontWeight = 'bold';
           }
@@ -805,3 +817,4 @@ document.addEventListener("DOMContentLoaded", () => {
     showLogin();
   }
 });
+
