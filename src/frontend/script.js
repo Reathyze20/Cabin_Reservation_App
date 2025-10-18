@@ -52,6 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
   clearDateButton.textContent = 'Vymazat výběr datumu';
   clearDateButton.className = 'button-secondary';
   clearDateButton.style.margin = '8px 0';
+  clearDateButton.style.display = 'none'; // Initially hide the button
   const _calendarContainer = calendarContainer || document.querySelector('.calendar-container');
   if (_calendarContainer && _calendarContainer.parentNode) {
     _calendarContainer.parentNode.insertBefore(clearDateButton, _calendarContainer.nextSibling);
@@ -65,6 +66,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (inEl) inEl.textContent = "- Vyberte -";
       if (outEl) outEl.textContent = "- Vyberte -";
       if (openModalButton) openModalButton.style.display = 'none';
+      clearDateButton.style.display = 'none'; // Hide button on clear
     }
   });
   
@@ -364,9 +366,11 @@ document.addEventListener("DOMContentLoaded", () => {
       onChange: function (selectedDates, dateStr, instance) {
         const checkInDateDisplay = document.getElementById("check-in-date-display");
         const checkOutDateDisplay = document.getElementById("check-out-date-display");
+        const clearBtn = document.getElementById('clear-date-button');
 
         if (selectedDates.length >= 1) {
           checkInDateDisplay.textContent = instance.formatDate(selectedDates[0], "d. M Y");
+          if(clearBtn) clearBtn.style.display = 'block';
           if (selectedDates.length === 2) {
             checkOutDateDisplay.textContent = instance.formatDate(selectedDates[1], "d. M Y");
             openModalButton.style.display = 'block';
@@ -378,6 +382,7 @@ document.addEventListener("DOMContentLoaded", () => {
           checkInDateDisplay.textContent = "- Vyberte -";
           checkOutDateDisplay.textContent = "- Vyberte -";
           openModalButton.style.display = 'none';
+          if(clearBtn) clearBtn.style.display = 'none';
         }
         
         if (selectedDates.length === 2) {
@@ -725,4 +730,3 @@ document.addEventListener("DOMContentLoaded", () => {
     showLogin();
   }
 });
-
