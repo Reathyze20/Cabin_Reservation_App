@@ -703,91 +703,65 @@ document.addEventListener("DOMContentLoaded", () => {
       const response = await fetch(`${backendUrl}/api/shopping-list`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      if (!response.ok) throw new Error('Nepodařilo se načíst seznam.');
-      const items = await response.json();
-      renderShoppingList(items);
+      if (!response.ok) throw new Error('Nepodařilo se načíst seznamy.');
+      const lists = await response.json();
+      renderShoppingLists(lists);
     } catch (error) {
       shoppingListDiv.innerHTML = `<p style="color:red;">${error.message}</p>`;
     }
   }
-
-  function renderShoppingList(items) {
+  function renderShoppingLists(lists) {
     shoppingListDiv.innerHTML = '';
-    const toBuyList = document.createElement('ul');
-    const purchasedList = document.createElement('ul');
+    if (!Array.isArray(lists) || lists.length === 0) {
+      shoppingListDiv.innerHTML = '<p><i>Seznamy jsou prázdné.</i></p>';
+      return;
+    }
 
-    items.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
-    
-    const loggedInUserId = localStorage.getItem('userId');
-    const isAdmin = localStorage.getItem('role') === 'admin';
+    const container = document.createElement('div');
+    container.className = 'shopping-lists-overview';
 
-    items.forEach(item => {
-      const li = document.createElement('li');
-      li.className = `shopping-list-item ${item.purchased ? 'purchased' : ''}`;
-      li.dataset.id = item.id;
-      
-      const canDelete = isAdmin || (item.addedById === loggedInUserId);
-      const deleteBtn = canDelete ? `<button class="delete-item-btn" title="Smazat"><i class="fas fa-times"></i></button>` : '';
+    lists.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-      const detailsHTML = `<span class="added-by">Přidal: ${item.addedBy}</span>`;
-      
-      let priceHTML = '';
-      if (item.purchased && item.price) {
-          let splitHTML = '';
-          if (item.splitWith && item.splitWith.length > 0) {
-              const allSharers = [item.purchasedById, ...item.splitWith];
-              const pricePerPerson = (item.price / allSharers.length).toFixed(2);
-              const splitUsernames = item.splitWith.map(userId => allUsers.find(u => u.id === userId)?.username).filter(Boolean);
-              splitHTML = `<div class="split-info">Rozděleno s: ${splitUsernames.join(', ')} (${pricePerPerson} Kč/os.)</div>`;
-          }
-          priceHTML = `
-            <div class="price-info">
-              <div class="paid-by">Zaplatil(a): <strong>${item.purchasedBy} ${item.price} Kč</strong></div>
-              ${splitHTML}
-            </div>`;
-      }
-
-
-      li.innerHTML = `
-        <div class="item-main-info">
-          <i class="${item.icon || 'fas fa-shopping-basket'} item-icon"></i>
-          <span class="item-name">${item.name}</span>
-          ${deleteBtn}
-          <input type="checkbox" class="purchase-checkbox" ${item.purchased ? 'checked' : ''} title="Označit jako koupené">
+    lists.forEach(list => {
+      const card = document.createElement('div');
+      card.className = 'shopping-list-card';
+      const count = Array.isArray(list.items) ? list.items.length : 0;
+      card.innerHTML = `
+        <div class="list-header">
+          <strong>${list.name}</strong>
+          <div class="list-meta">${count} položek • Přidal: ${list.addedBy}</div>
         </div>
-        <div class="item-details">${detailsHTML}</div>
-        ${priceHTML}
-        <div class="purchase-form">
-            <input type="number" class="price-input" placeholder="Cena (Kč)" min="0" step="0.01">
-            <button class="save-purchase-btn">Uložit</button>
-            <button class="split-purchase-btn">Rozdělit</button>
+        <div class="list-actions">
+          <button class="btn-open-list" data-id="${list.id}">Otevřít</button>
+          <button class="btn-delete-list" data-id="${list.id}">Smazat</button>
         </div>
       `;
-      
-      if(item.purchased) {
-        purchasedList.appendChild(li);
-      } else {
-        toBuyList.appendChild(li);
-      }
+      container.appendChild(card);
     });
 
-    if(toBuyList.hasChildNodes()){
-      const h3ToBuy = document.createElement('h3');
-      h3ToBuy.textContent = 'Koupit';
-      shoppingListDiv.appendChild(h3ToBuy);
-      shoppingListDiv.appendChild(toBuyList);
-    }
-    
-    if(purchasedList.hasChildNodes()){
-      const h3Purchased = document.createElement('h3');
-      h3Purchased.textContent = 'Koupeno';
-      shoppingListDiv.appendChild(h3Purchased);
-      shoppingListDiv.appendChild(purchasedList);
-    }
-    
-    if(!shoppingListDiv.hasChildNodes()){
-      shoppingListDiv.innerHTML = '<p><i>Seznam je prázdný.</i></p>';
-    }
+    shoppingListDiv.appendChild(container);
+
+    // Attach listeners
+    shoppingListDiv.querySelectorAll('.btn-open-list').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const id = btn.dataset.id;
+        await openShoppingListModal(id);
+      });
+    });
+    shoppingListDiv.querySelectorAll('.btn-delete-list').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const id = btn.dataset.id;
+        if (!confirm('Opravdu smazat tento seznam?')) return;
+        try {
+          const token = getToken();
+          const resp = await fetch(`${backendUrl}/api/shopping-list/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+          if (!resp.ok) throw new Error('Nepodařilo se smazat seznam.');
+          await loadShoppingList();
+        } catch (err) {
+          alert(err.message);
+        }
+      });
+    });
   }
 
   if (addItemForm) {
@@ -804,15 +778,135 @@ document.addEventListener("DOMContentLoaded", () => {
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
           body: JSON.stringify({ name, icon })
         });
-        if (!response.ok) throw new Error('Chyba při přidávání položky.');
-        
+        if (!response.ok) throw new Error('Chyba při vytváření seznamu.');
+        const created = await response.json();
+
         itemNameInput.value = '';
         itemIconInput.value = 'fas fa-shopping-basket'; // Reset na výchozí
-        openIconModalBtn.querySelector('i').className = 'fas fa-shopping-basket';
-        
-        loadShoppingList();
+        if (openIconModalBtn && openIconModalBtn.querySelector) openIconModalBtn.querySelector('i').className = 'fas fa-shopping-basket';
+
+        // Open modal for the new list
+        await openShoppingListModal(created.id);
+        await loadShoppingList();
       } catch (error) {
         alert(error.message);
+      }
+    });
+  }
+
+  // Shopping list modal handlers and helpers
+  const shoppingListModal = document.getElementById('shopping-list-modal');
+  const shoppingModalTitle = document.getElementById('shopping-modal-title');
+  const shoppingModalList = document.getElementById('shopping-modal-list');
+  const shoppingItemInput = document.getElementById('shopping-item-input');
+  const shoppingItemAddBtn = document.getElementById('shopping-item-add-btn');
+  const shoppingModalCloseBtn = document.getElementById('shopping-modal-close');
+  let currentEditingListId = null;
+
+  if (shoppingModalCloseBtn) {
+    shoppingModalCloseBtn.addEventListener('click', () => {
+      if (shoppingListModal) shoppingListModal.style.display = 'none';
+      currentEditingListId = null;
+      if (shoppingModalList) shoppingModalList.innerHTML = '';
+    });
+  }
+
+  async function openShoppingListModal(listId) {
+    try {
+      const token = getToken();
+      const resp = await fetch(`${backendUrl}/api/shopping-list`, { headers: { Authorization: `Bearer ${token}` } });
+      if (!resp.ok) throw new Error('Nepodařilo se načíst seznam.');
+      const lists = await resp.json();
+      const list = lists.find(l => l.id === listId);
+      if (!list) throw new Error('Seznam nenalezen.');
+
+      currentEditingListId = listId;
+      if (shoppingModalTitle) shoppingModalTitle.textContent = list.name;
+      renderShoppingModalItems(list.items || []);
+      if (shoppingListModal) shoppingListModal.style.display = 'flex';
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  function renderShoppingModalItems(items) {
+    if (!shoppingModalList) return;
+    shoppingModalList.innerHTML = '';
+    if (!items || items.length === 0) {
+      shoppingModalList.innerHTML = '<p><i>Seznam je prázdný.</i></p>';
+      return;
+    }
+    items.forEach(it => {
+      const li = document.createElement('div');
+      li.className = `modal-item ${it.purchased ? 'purchased' : ''}`;
+      li.dataset.id = it.id;
+      li.innerHTML = `
+        <div class="modal-item-main">
+          <input type="checkbox" class="modal-purchase-checkbox" ${it.purchased ? 'checked' : ''}>
+          <span class="modal-item-name">${it.name}</span>
+          <button class="modal-delete-item" title="Smazat">&times;</button>
+        </div>
+      `;
+      shoppingModalList.appendChild(li);
+    });
+
+    // attach listeners
+    shoppingModalList.querySelectorAll('.modal-purchase-checkbox').forEach(ch => {
+      ch.addEventListener('change', async (e) => {
+        const id = e.target.closest('.modal-item').dataset.id;
+        try {
+          const token = getToken();
+          const res = await fetch(`${backendUrl}/api/shopping-list/${currentEditingListId}/items/${id}/purchase`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ purchased: e.target.checked })
+          });
+          if (!res.ok) throw new Error('Nepodařilo se aktualizovat položku.');
+          await openShoppingListModal(currentEditingListId);
+          await loadShoppingList();
+        } catch (err) {
+          alert(err.message);
+        }
+      });
+    });
+
+    shoppingModalList.querySelectorAll('.modal-delete-item').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const id = e.target.closest('.modal-item').dataset.id;
+        if (!confirm('Smazat položku?')) return;
+        try {
+          const token = getToken();
+          const res = await fetch(`${backendUrl}/api/shopping-list/${currentEditingListId}/items/${id}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (!res.ok) throw new Error('Nepodařilo se smazat položku.');
+          await openShoppingListModal(currentEditingListId);
+          await loadShoppingList();
+        } catch (err) {
+          alert(err.message);
+        }
+      });
+    });
+  }
+
+  if (shoppingItemAddBtn) {
+    shoppingItemAddBtn.addEventListener('click', async () => {
+      const name = shoppingItemInput.value.trim();
+      if (!name || !currentEditingListId) return;
+      try {
+        const token = getToken();
+        const res = await fetch(`${backendUrl}/api/shopping-list/${currentEditingListId}/items`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ name })
+        });
+        if (!res.ok) throw new Error('Nepodařilo se přidat položku.');
+        shoppingItemInput.value = '';
+        await openShoppingListModal(currentEditingListId);
+        await loadShoppingList();
+      } catch (err) {
+        alert(err.message);
       }
     });
   }

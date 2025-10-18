@@ -68,12 +68,30 @@ export async function saveReservation(reservations: Reservation[]) {
 }
 
 export async function loadShoppingList(): Promise<ShoppingListItem[]> {
-  try {
-    const data = await fs.promises.readFile(shoppingListFilePath, "utf-8");
-    return JSON.parse(data) as ShoppingListItem[];
-  } catch (error) {
+    try {
+      const data = await fs.promises.readFile(shoppingListFilePath, "utf-8");
+      // Old format (flat items) might exist — try to detect and migrate
+      const parsed = JSON.parse(data);
+      if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].name && !parsed[0].items) {
+        // It's old flat items -> wrap into a default list
+        const defaultList = {
+          id: 'default',
+          name: 'Hlavní seznam',
+          addedBy: 'system',
+          addedById: 'system',
+          createdAt: new Date().toISOString(),
+          items: parsed as ShoppingListItem[],
+        };
+        await saveShoppingLists([defaultList]);
+        return parsed as ShoppingListItem[];
+      }
+      // New format: array of ShoppingList
+      const lists = (parsed as any[]) || [];
+      // Flatten items for compatibility when calling old functions
+      return lists.flatMap(l => (Array.isArray(l.items) ? l.items : [])) as ShoppingListItem[];
+    } catch (error) {
      if (error instanceof Error && "code" in error && error.code === "ENOENT") {
-      await saveShoppingList([]); // Vytvoří prázdný soubor, pokud neexistuje
+      await saveShoppingLists([]); // Create empty file
       return [];
     }
     console.error("Chyba při načítání nákupního seznamu:", error);
@@ -81,13 +99,14 @@ export async function loadShoppingList(): Promise<ShoppingListItem[]> {
   }
 }
 
-export async function saveShoppingList(items: ShoppingListItem[]) {
+// New: save array of ShoppingList (each list contains items)
+export async function saveShoppingLists(lists: any[]) {
   try {
-    const data = JSON.stringify(items, null, 2);
+    const data = JSON.stringify(lists, null, 2);
     await fs.promises.writeFile(shoppingListFilePath, data, "utf-8");
   } catch (error) {
-    console.error("Chyba při ukládání nákupního seznamu:", error);
-    throw new Error("Chyba při ukládání nákupního seznamu.");
+    console.error("Chyba při ukládání nákupních seznamů:", error);
+    throw new Error("Chyba při ukládání nákupních seznamů.");
   }
 }
 

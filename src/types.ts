@@ -34,6 +34,15 @@ export interface ShoppingListItem {
   splitWith?: string[]; // Pole s ID uživatelů, se kterými se dělí cena
 }
 
+export interface ShoppingList {
+  id: string;
+  name: string;
+  addedBy: string;
+  addedById: string;
+  createdAt: string;
+  items: ShoppingListItem[];
+}
+
 export interface Note {
   id: string;
   userId: string;

@@ -1,6 +1,4 @@
 /node_modules
 /dist
 /.env
-/data/users.json
-/data/reservations.json
-/adata/reservation.json
+/data/*.json

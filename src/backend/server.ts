@@ -8,10 +8,11 @@ import {
   saveReservation,
   saveUsers,
   loadShoppingList,
-  saveShoppingList,
+  saveShoppingLists,
   loadNotes,
   saveNotes,
 } from "../utils/auth";
+import fs from 'fs';
 import { User, Reservation, ShoppingListItem, Note } from "../types";
 import { JWT_SECRET } from "../config/config";
 import { protect } from "../middleware/authMiddleware";
@@ -440,60 +441,118 @@ app.post("/api/reservations/delete", protect, async (req: Request, res: Response
 // GET /api/shopping-list
 app.get('/api/shopping-list', protect, async (req, res) => {
     try {
-        const items = await loadShoppingList();
-        res.json(items);
+    // Return array of shopping lists
+    const raw = await loadShoppingList();
+    // loadShoppingList returns flattened items for backward compatibility; attempt to read lists file directly
+    const listsPath = path.join(__dirname, '../../data/shopping-list.json');
+    let listsData = [];
+    try {
+      const content = await fs.promises.readFile(listsPath, 'utf-8');
+      listsData = JSON.parse(content);
+    } catch (e) {
+      // If not present, create default list from flat items
+      const defaultList = {
+        id: 'default',
+        name: 'Hlavní seznam',
+        addedBy: 'system',
+        addedById: 'system',
+        createdAt: new Date().toISOString(),
+        items: raw
+      };
+      listsData = [defaultList];
+      await saveShoppingLists(listsData);
+    }
+    res.json(listsData);
     } catch (error) {
         res.status(500).json({ message: 'Chyba při načítání nákupního seznamu.' });
     }
 });
 
 // POST /api/shopping-list
+// POST /api/shopping-list - create a new shopping list (name required)
 app.post('/api/shopping-list', protect, async (req, res) => {
-    if (!req.user) return res.status(401).json({ message: 'Neautorizováno.' });
-    const { name, icon } = req.body;
-    if (!name || typeof name !== 'string' || name.trim().length === 0) {
-        return res.status(400).json({ message: 'Název položky je povinný.' });
-    }
-
+  if (!req.user) return res.status(401).json({ message: 'Neautorizováno.' });
+  const { name } = req.body;
+  if (!name || typeof name !== 'string' || name.trim().length === 0) {
+    return res.status(400).json({ message: 'Název seznamu je povinný.' });
+  }
+  try {
+    const listsPath = path.join(__dirname, '../../data/shopping-list.json');
+    let lists = [];
     try {
-        const items = await loadShoppingList();
-        const newItem: ShoppingListItem = {
-            id: uuidv4(),
-            name: name.trim(),
-            icon: icon || 'fas fa-shopping-basket',
-            addedBy: req.user.username,
-            addedById: req.user.userId,
-            createdAt: new Date().toISOString(),
-            purchased: false,
-        };
-        items.push(newItem);
-        await saveShoppingList(items);
-        res.status(201).json(newItem);
-    } catch (error) {
-        res.status(500).json({ message: 'Chyba při ukládání položky.' });
+      const content = await fs.promises.readFile(listsPath, 'utf-8');
+      lists = JSON.parse(content);
+    } catch (e) {
+      lists = [];
     }
+    const newList = {
+      id: uuidv4(),
+      name: name.trim(),
+      addedBy: req.user.username,
+      addedById: req.user.userId,
+      createdAt: new Date().toISOString(),
+      items: []
+    };
+    lists.push(newList);
+    await saveShoppingLists(lists);
+    res.status(201).json(newList);
+  } catch (error) {
+    res.status(500).json({ message: 'Chyba při ukládání seznamu.' });
+  }
+});
+
+// POST /api/shopping-list/:listId/items - add item to list
+app.post('/api/shopping-list/:listId/items', protect, async (req, res) => {
+  if (!req.user) return res.status(401).json({ message: 'Neautorizováno.' });
+  const { listId } = req.params;
+  const { name, icon } = req.body;
+  if (!name || typeof name !== 'string' || name.trim().length === 0) {
+    return res.status(400).json({ message: 'Název položky je povinný.' });
+  }
+  try {
+    const listsPath = path.join(__dirname, '../../data/shopping-list.json');
+    const content = await fs.promises.readFile(listsPath, 'utf-8');
+    const lists = JSON.parse(content);
+    const list = lists.find((l: any) => l.id === listId);
+    if (!list) return res.status(404).json({ message: 'Seznam nenalezen.' });
+    const newItem: any = {
+      id: uuidv4(),
+      name: name.trim(),
+      icon: icon || 'fas fa-shopping-basket',
+      addedBy: req.user.username,
+      addedById: req.user.userId,
+      createdAt: new Date().toISOString(),
+      purchased: false,
+    };
+    list.items.push(newItem);
+    await saveShoppingLists(lists);
+    res.status(201).json(newItem);
+  } catch (error) {
+    res.status(500).json({ message: 'Chyba při přidání položky.' });
+  }
 });
 
 // PUT /api/shopping-list/:id/purchase
-app.put('/api/shopping-list/:id/purchase', protect, async (req, res) => {
+// PUT toggle purchase for item inside a list
+app.put('/api/shopping-list/:listId/items/:id/purchase', protect, async (req, res) => {
     if (!req.user) return res.status(401).json({ message: 'Neautorizováno.' });
     
-    const { id } = req.params;
-    const { purchased, price, splitWith } = req.body;
+  const { listId, id } = req.params;
+  const { purchased, price, splitWith } = req.body;
 
     if (typeof purchased !== 'boolean') {
         return res.status(400).json({ message: 'Chybí stav "zakoupeno".' });
     }
 
     try {
-        const items = await loadShoppingList();
-        const itemIndex = items.findIndex(item => item.id === id);
-        if (itemIndex === -1) {
-            return res.status(404).json({ message: 'Položka nenalezena.' });
-        }
-        
-        const item = items[itemIndex];
-        item.purchased = purchased;
+    const listsPath = path.join(__dirname, '../../data/shopping-list.json');
+    const content = await fs.promises.readFile(listsPath, 'utf-8');
+    const lists = JSON.parse(content);
+    const list = lists.find((l: any) => l.id === listId);
+    if (!list) return res.status(404).json({ message: 'Seznam nenalezen.' });
+    const item = list.items.find((it: any) => it.id === id);
+    if (!item) return res.status(404).json({ message: 'Položka nenalezena.' });
+    item.purchased = purchased;
         if (purchased) {
             item.purchasedBy = req.user.username;
             item.purchasedById = req.user.userId;
@@ -508,41 +567,61 @@ app.put('/api/shopping-list/:id/purchase', protect, async (req, res) => {
             delete item.splitWith;
         }
 
-        await saveShoppingList(items);
-        res.json(item);
+    await saveShoppingLists(lists);
+    res.json(item);
     } catch (error) {
         res.status(500).json({ message: 'Chyba při aktualizaci položky.' });
     }
 });
-
-// DELETE /api/shopping-list/:id
-app.delete('/api/shopping-list/:id', protect, async (req, res) => {
+// DELETE item from list
+app.delete('/api/shopping-list/:listId/items/:id', protect, async (req, res) => {
     if (!req.user) return res.status(401).json({ message: 'Neautorizováno.' });
     
-    const { id } = req.params;
-    const { userId, role } = req.user;
+  const { listId, id } = req.params;
+  const { userId, role } = req.user;
 
-    try {
-        let items = await loadShoppingList();
-        const itemIndex = items.findIndex(item => item.id === id);
+  try {
+    const listsPath = path.join(__dirname, '../../data/shopping-list.json');
+    const content = await fs.promises.readFile(listsPath, 'utf-8');
+    const lists = JSON.parse(content);
+    const list = lists.find((l: any) => l.id === listId);
+    if (!list) return res.status(404).json({ message: 'Seznam nenalezen.' });
+    const itemIndex = list.items.findIndex((it: any) => it.id === id);
+    if (itemIndex === -1) return res.status(404).json({ message: 'Položka nenalezena.' });
 
-        if (itemIndex === -1) {
-            return res.status(404).json({ message: 'Položka nenalezena.' });
-        }
-        
-        const itemToDelete = items[itemIndex];
-
-        // Uživatel může smazat položku, pokud je admin NEBO ji sám přidal
-        if (role !== 'admin' && itemToDelete.addedById !== userId) {
-            return res.status(403).json({ message: 'Nemáte oprávnění smazat tuto položku.' });
-        }
-
-        items.splice(itemIndex, 1);
-        await saveShoppingList(items);
-        res.status(200).json({ message: 'Položka smazána.' });
-    } catch (error) {
-        res.status(500).json({ message: 'Chyba při mazání položky.' });
+    const itemToDelete = list.items[itemIndex];
+    if (role !== 'admin' && itemToDelete.addedById !== userId) {
+      return res.status(403).json({ message: 'Nemáte oprávnění smazat tuto položku.' });
     }
+    list.items.splice(itemIndex, 1);
+    await saveShoppingLists(lists);
+    res.status(200).json({ message: 'Položka smazána.' });
+  } catch (error) {
+    res.status(500).json({ message: 'Chyba při mazání položky.' });
+  }
+});
+
+// DELETE entire list
+app.delete('/api/shopping-list/:listId', protect, async (req, res) => {
+  if (!req.user) return res.status(401).json({ message: 'Neautorizováno.' });
+  const { listId } = req.params;
+  const { userId, role } = req.user;
+  try {
+    const listsPath = path.join(__dirname, '../../data/shopping-list.json');
+    const content = await fs.promises.readFile(listsPath, 'utf-8');
+    const lists = JSON.parse(content);
+    const listIndex = lists.findIndex((l: any) => l.id === listId);
+    if (listIndex === -1) return res.status(404).json({ message: 'Seznam nenalezen.' });
+    const list = lists[listIndex];
+    if (role !== 'admin' && list.addedById !== userId) {
+      return res.status(403).json({ message: 'Nemáte oprávnění smazat tento seznam.' });
+    }
+    lists.splice(listIndex, 1);
+    await saveShoppingLists(lists);
+    res.status(200).json({ message: 'Seznam smazán.' });
+  } catch (error) {
+    res.status(500).json({ message: 'Chyba při mazání seznamu.' });
+  }
 });
 
 // --- Notes (Nástěnka) Endpoints ---
