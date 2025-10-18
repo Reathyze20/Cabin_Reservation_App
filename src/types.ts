@@ -22,6 +22,7 @@ export interface Reservation {
 export interface ShoppingListItem {
   id: string;
   name: string;
+  icon?: string;
   addedBy: string;
   addedById: string;
   createdAt: string;
@@ -39,3 +40,4 @@ export interface JwtPayload {
   iat: number; // Čas vydání tokenu
   exp: number; // Čas expirace tokenu
 }
+

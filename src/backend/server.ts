@@ -7,8 +7,10 @@ import {
   loadReservations,
   saveReservation,
   saveUsers,
+  loadShoppingList,
+  saveShoppingList
 } from "../utils/auth";
-import { User, Reservation } from "../types";
+import { User, Reservation, ShoppingListItem } from "../types";
 import { JWT_SECRET } from "../config/config";
 import { protect } from "../middleware/authMiddleware";
 import { v4 as uuidv4 } from "uuid";
@@ -429,8 +431,106 @@ app.post("/api/reservations/delete", protect, async (req: Request, res: Response
     }
 });
 
+// --- Shopping List Endpoints ---
+
+// GET /api/shopping-list
+app.get('/api/shopping-list', protect, async (req, res) => {
+    try {
+        const items = await loadShoppingList();
+        res.json(items);
+    } catch (error) {
+        res.status(500).json({ message: 'Chyba při načítání nákupního seznamu.' });
+    }
+});
+
+// POST /api/shopping-list
+app.post('/api/shopping-list', protect, async (req, res) => {
+    if (!req.user) return res.status(401).json({ message: 'Neautorizováno.' });
+    const { name, icon } = req.body;
+    if (!name || typeof name !== 'string' || name.trim().length === 0) {
+        return res.status(400).json({ message: 'Název položky je povinný.' });
+    }
+
+    try {
+        const items = await loadShoppingList();
+        const newItem: ShoppingListItem = {
+            id: uuidv4(),
+            name: name.trim(),
+            icon: icon || 'fas fa-shopping-basket',
+            addedBy: req.user.username,
+            addedById: req.user.userId,
+            createdAt: new Date().toISOString(),
+            purchased: false,
+        };
+        items.push(newItem);
+        await saveShoppingList(items);
+        res.status(201).json(newItem);
+    } catch (error) {
+        res.status(500).json({ message: 'Chyba při ukládání položky.' });
+    }
+});
+
+// PUT /api/shopping-list/:id/purchase
+app.put('/api/shopping-list/:id/purchase', protect, async (req, res) => {
+    if (!req.user) return res.status(401).json({ message: 'Neautorizováno.' });
+    
+    const { id } = req.params;
+    const { purchased, price } = req.body;
+
+    if (typeof purchased !== 'boolean') {
+        return res.status(400).json({ message: 'Chybí stav "zakoupeno".' });
+    }
+
+    try {
+        const items = await loadShoppingList();
+        const itemIndex = items.findIndex(item => item.id === id);
+        if (itemIndex === -1) {
+            return res.status(404).json({ message: 'Položka nenalezena.' });
+        }
+        
+        const item = items[itemIndex];
+        item.purchased = purchased;
+        if (purchased) {
+            item.purchasedBy = req.user.username;
+            item.purchasedById = req.user.userId;
+            item.price = price ? parseFloat(price) : undefined;
+        } else {
+            delete item.purchasedBy;
+            delete item.purchasedById;
+            delete item.price;
+        }
+
+        await saveShoppingList(items);
+        res.json(item);
+    } catch (error) {
+        res.status(500).json({ message: 'Chyba při aktualizaci položky.' });
+    }
+});
+
+// DELETE /api/shopping-list/:id
+app.delete('/api/shopping-list/:id', protect, async (req, res) => {
+    if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({ message: 'Pouze admin může mazat položky.' });
+    }
+    const { id } = req.params;
+    try {
+        let items = await loadShoppingList();
+        const initialLength = items.length;
+        items = items.filter(item => item.id !== id);
+        if (items.length === initialLength) {
+            return res.status(404).json({ message: 'Položka nenalezena.' });
+        }
+        await saveShoppingList(items);
+        res.status(200).json({ message: 'Položka smazána.' });
+    } catch (error) {
+        res.status(500).json({ message: 'Chyba při mazání položky.' });
+    }
+});
+
+
 
 // --- Start serveru ---
 app.listen(port, () => {
   console.log(`Backend server naslouchá na http://localhost:${port}`);
 });
+

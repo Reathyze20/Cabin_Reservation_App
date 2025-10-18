@@ -21,7 +21,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Elements for the booking modal
   const bookingModal = document.getElementById("booking-modal");
-  const closeModalButton = document.querySelector(".modal-close-button");
   const openModalButton = document.getElementById("open-booking-modal-button");
   const bookingForm = document.getElementById("booking-form");
   const bookingMessage = document.getElementById("booking-message");
@@ -40,6 +39,25 @@ document.addEventListener("DOMContentLoaded", () => {
   const confirmDeleteModal = document.getElementById('confirm-delete-modal');
   const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
   const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
+  
+  // Shopping list elements
+  const shoppingListDiv = document.getElementById("shopping-list");
+  const addItemForm = document.getElementById("add-item-form");
+  const itemNameInput = document.getElementById("item-name-input");
+  const itemIconInput = document.getElementById("item-icon-input");
+  const openIconModalBtn = document.getElementById("open-icon-modal-btn");
+
+  // Icon modal elements
+  const iconSelectModal = document.getElementById("icon-select-modal");
+  const iconGrid = document.getElementById("icon-grid");
+  
+  // --- Close buttons for all modals ---
+  document.querySelectorAll('.modal-close-button').forEach(button => {
+    button.addEventListener('click', () => {
+      button.closest('.modal-overlay').style.display = 'none';
+    });
+  });
+
 
   // Password toggle elements
   const togglePasswordLogin = document.getElementById('toggle-password-login');
@@ -115,6 +133,7 @@ document.addEventListener("DOMContentLoaded", () => {
     appSection.style.display = "flex";
     loggedInUsernameSpan.textContent = username;
     loadReservations();
+    loadShoppingList();
     
     const adminLink = document.getElementById('admin-link');
     const role = localStorage.getItem('role');
@@ -159,6 +178,7 @@ document.addEventListener("DOMContentLoaded", () => {
         localStorage.setItem("username", data.username || username);
         if (data.userId) localStorage.setItem("userId", data.userId);
         if (data.role) localStorage.setItem("role", data.role);
+        if (data.color) localStorage.setItem("userColor", data.color);
         showApp(data.username || username);
       } catch (err) {
         console.error("Login error:", err);
@@ -303,7 +323,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if(openModalButton) openModalButton.addEventListener('click', () => openBookingModal(false));
-  if(closeModalButton) closeModalButton.addEventListener('click', closeBookingModal);
   
   if(purposeSelect) {
     purposeSelect.addEventListener('change', () => {
@@ -435,16 +454,16 @@ document.addEventListener("DOMContentLoaded", () => {
       
       if (flatpickrInstance) {
         flatpickrInstance.redraw();
+        renderReservationsOverview(flatpickrInstance.currentMonth, flatpickrInstance.currentYear);
       } else {
         initializeDatePicker();
+        setTimeout(() => {
+          if (flatpickrInstance) {
+              renderReservationsOverview(flatpickrInstance.currentMonth, flatpickrInstance.currentYear);
+          }
+        }, 50);
       }
       
-      setTimeout(() => {
-        if (flatpickrInstance) {
-            renderReservationsOverview(flatpickrInstance.currentMonth, flatpickrInstance.currentYear);
-        }
-      }, 50);
-
     } catch (error) {
       console.error("Error loading/refreshing reservations:", error);
       if (reservationsListDiv) reservationsListDiv.innerHTML = `<p style="color: red;">Nepodařilo se aktualizovat rezervace.</p>`;
@@ -464,6 +483,12 @@ document.addEventListener("DOMContentLoaded", () => {
         event.preventDefault();
         bookingMessage.textContent = "Odesílám rezervaci...";
         bookingMessage.style.color = "";
+
+        let currentMonth, currentYear;
+        if(flatpickrInstance) {
+          currentMonth = flatpickrInstance.currentMonth;
+          currentYear = flatpickrInstance.currentYear;
+        }
 
         let purpose = purposeSelect.value;
         if (purpose === 'Jiný') {
@@ -497,10 +522,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const method = isEditMode ? "PUT" : "POST";
 
         let bodyData = { purpose, notes };
-
-        // Store current view before action
-        const monthToReturnTo = flatpickrInstance.currentMonth;
-        const yearToReturnTo = flatpickrInstance.currentYear;
 
         if (isEditMode) {
             const fromInput = document.getElementById('edit-from-date');
@@ -563,11 +584,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 document.getElementById("check-out-date-display").textContent = "- Vyberte -";
                 openModalButton.style.display = 'none';
             }
+            
             await loadReservations();
             
-            // After reservations are loaded, jump to the stored month
-            if (flatpickrInstance) {
-                flatpickrInstance.jumpToDate(new Date(yearToReturnTo, monthToReturnTo));
+            if(flatpickrInstance && currentMonth !== undefined && currentYear !== undefined) {
+              flatpickrInstance.changeMonth(currentMonth, false);
+              flatpickrInstance.jumpToDate(new Date(currentYear, currentMonth));
             }
 
         } catch (error) {
@@ -728,7 +750,200 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener('click', (event) => {
       if (event.target === bookingModal) closeBookingModal();
       if (event.target === confirmDeleteModal) closeConfirmDeleteModal();
+      if (event.target === iconSelectModal) iconSelectModal.style.display = 'none';
   });
+
+  // --- Shopping List Logic ---
+
+  async function loadShoppingList() {
+    shoppingListDiv.innerHTML = "<p><i>Načítám...</i></p>";
+    const token = getToken();
+    try {
+      const response = await fetch(`${backendUrl}/api/shopping-list`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error('Nepodařilo se načíst seznam.');
+      const items = await response.json();
+      renderShoppingList(items);
+    } catch (error) {
+      shoppingListDiv.innerHTML = `<p style="color:red;">${error.message}</p>`;
+    }
+  }
+
+  function renderShoppingList(items) {
+    shoppingListDiv.innerHTML = '';
+    const toBuyList = document.createElement('ul');
+    const purchasedList = document.createElement('ul');
+
+    items.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    items.forEach(item => {
+      const li = document.createElement('li');
+      li.className = `shopping-list-item ${item.purchased ? 'purchased' : ''}`;
+      li.dataset.id = item.id;
+      
+      const isAdmin = localStorage.getItem('role') === 'admin';
+      const deleteBtn = isAdmin ? `<button class="delete-item-btn" title="Smazat"><i class="fas fa-times"></i></button>` : '';
+
+      li.innerHTML = `
+        <div class="item-main-info">
+          <input type="checkbox" class="purchase-checkbox" ${item.purchased ? 'checked' : ''}>
+          <i class="${item.icon || 'fas fa-shopping-basket'}"></i>
+          <span class="item-name">${item.name}</span>
+          ${deleteBtn}
+        </div>
+        <div class="item-details">
+            <span class="added-by">Přidal: ${item.addedBy}</span>
+            ${item.purchased ? `<span class="purchased-by"> | Koupil: ${item.purchasedBy} ${item.price ? `(${item.price} Kč)` : ''}</span>` : ''}
+        </div>
+        <div class="purchase-form" style="display: none;">
+            <input type="number" class="price-input" placeholder="Cena (Kč)">
+            <button class="save-purchase-btn">Uložit</button>
+        </div>
+      `;
+      
+      if(item.purchased) {
+        purchasedList.appendChild(li);
+      } else {
+        toBuyList.appendChild(li);
+      }
+    });
+
+    if(toBuyList.hasChildNodes()){
+      const h3ToBuy = document.createElement('h3');
+      h3ToBuy.textContent = 'Koupit';
+      shoppingListDiv.appendChild(h3ToBuy);
+      shoppingListDiv.appendChild(toBuyList);
+    }
+    
+    if(purchasedList.hasChildNodes()){
+      const h3Purchased = document.createElement('h3');
+      h3Purchased.textContent = 'Koupeno';
+      shoppingListDiv.appendChild(h3Purchased);
+      shoppingListDiv.appendChild(purchasedList);
+    }
+    
+    if(!shoppingListDiv.hasChildNodes()){
+      shoppingListDiv.innerHTML = '<p><i>Seznam je prázdný.</i></p>';
+    }
+  }
+
+  if (addItemForm) {
+    addItemForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = itemNameInput.value.trim();
+      const icon = itemIconInput.value;
+      if (!name) return;
+      
+      const token = getToken();
+      try {
+        const response = await fetch(`${backendUrl}/api/shopping-list`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ name, icon })
+        });
+        if (!response.ok) throw new Error('Chyba při přidávání položky.');
+        
+        itemNameInput.value = '';
+        itemIconInput.value = 'fas fa-shopping-basket'; // Reset na výchozí
+        openIconModalBtn.querySelector('i').className = 'fas fa-shopping-basket';
+        
+        loadShoppingList(); // Refresh list after adding
+      } catch (error) {
+        alert(error.message);
+      }
+    });
+  }
+
+  shoppingListDiv.addEventListener('change', e => {
+    if (e.target.classList.contains('purchase-checkbox')) {
+      const li = e.target.closest('.shopping-list-item');
+      const purchaseForm = li.querySelector('.purchase-form');
+      if (e.target.checked) {
+        purchaseForm.style.display = 'flex';
+      } else {
+        purchaseForm.style.display = 'none';
+        updatePurchaseStatus(li.dataset.id, false);
+      }
+    }
+  });
+
+  shoppingListDiv.addEventListener('click', e => {
+    if(e.target.closest('.save-purchase-btn')) {
+      const li = e.target.closest('.shopping-list-item');
+      const priceInput = li.querySelector('.price-input');
+      updatePurchaseStatus(li.dataset.id, true, priceInput.value);
+    }
+    if(e.target.closest('.delete-item-btn')) {
+      const li = e.target.closest('.shopping-list-item');
+      if(confirm('Opravdu chcete smazat tuto položku?')) {
+        deleteShoppingItem(li.dataset.id);
+      }
+    }
+  });
+
+  async function updatePurchaseStatus(id, purchased, price = null) {
+      const token = getToken();
+      try {
+          const response = await fetch(`${backendUrl}/api/shopping-list/${id}/purchase`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+              body: JSON.stringify({ purchased, price: price || undefined })
+          });
+          if (!response.ok) throw new Error('Chyba při aktualizaci.');
+          loadShoppingList();
+      } catch (error) {
+          alert(error.message);
+      }
+  }
+
+  async function deleteShoppingItem(id) {
+    const token = getToken();
+      try {
+          const response = await fetch(`${backendUrl}/api/shopping-list/${id}`, {
+              method: 'DELETE',
+              headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (!response.ok) throw new Error('Chyba při mazání položky.');
+          loadShoppingList();
+      } catch (error) {
+          alert(error.message);
+      }
+  }
+
+  // --- Icon Modal ---
+  const icons = [
+      'fas fa-shopping-basket', 'fas fa-utensils', 'fas fa-wine-glass-alt', 'fas fa-beer', 'fas fa-coffee',
+      'fas fa-seedling', 'fas fa-hammer', 'fas fa-paint-roller', 'fas fa-lightbulb', 'fas fa-broom',
+      'fas fa-soap', 'fas fa-toilet-paper', 'fas fa-bed', 'fas fa-gamepad', 'fas fa-book', 'fas fa-first-aid'
+  ];
+  
+  if(iconGrid) {
+      icons.forEach(iconClass => {
+          const iconWrapper = document.createElement('div');
+          iconWrapper.className = 'icon-wrapper';
+          iconWrapper.dataset.icon = iconClass;
+          iconWrapper.innerHTML = `<i class="${iconClass}"></i>`;
+          iconGrid.appendChild(iconWrapper);
+      });
+  }
+
+  if(openIconModalBtn) {
+    openIconModalBtn.addEventListener('click', () => {
+      iconSelectModal.style.display = 'flex';
+    });
+  }
+
+  if(iconGrid) {
+    iconGrid.addEventListener('click', e => {
+      const wrapper = e.target.closest('.icon-wrapper');
+      if (!wrapper) return;
+      const iconClass = wrapper.dataset.icon;
+      itemIconInput.value = iconClass;
+      openIconModalBtn.querySelector('i').className = iconClass;
+      iconSelectModal.style.display = 'none';
+    });
+  }
 
 
   // --- Run on page load ---
