@@ -482,12 +482,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
         let bodyData = { purpose, notes };
 
-        if (isEditMode) {
-            const fromInput = document.getElementById('edit-from-date');
-            const toInput = document.getElementById('edit-to-date');
-            bodyData.from = fromInput.value;
-            bodyData.to = toInput.value;
+    if (isEditMode) {
+      // The edit inputs are injected into the modal when opening in edit mode.
+      // Guard in case they are missing (e.g., modal DOM changed) and fallback to stored reservation data.
+      const fromInput = document.getElementById('edit-from-date');
+      const toInput = document.getElementById('edit-to-date');
+      if (fromInput && toInput) {
+        bodyData.from = fromInput.value;
+        bodyData.to = toInput.value;
+      } else {
+        // Fallback: find the original reservation in memory
+        const original = window.currentReservations && window.currentReservations.find(r => r.id === reservationIdInput.value);
+        if (original) {
+          bodyData.from = original.from;
+          bodyData.to = original.to;
         } else {
+          // As a last resort, return an error to the user rather than throwing a runtime exception
+          bookingMessage.textContent = 'Chyba: Nelze získat data pro úpravu rezervace.';
+          bookingMessage.style.color = 'red';
+          return;
+        }
+      }
+    } else {
             if (!flatpickrInstance || flatpickrInstance.selectedDates.length !== 2) {
                 bookingMessage.textContent = "Chyba: Chybí výběr datumu.";
                 bookingMessage.style.color = "red";
