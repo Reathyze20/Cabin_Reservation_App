@@ -652,9 +652,14 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         try {
-            const response = await fetch(`${backendUrl}/api/reservations/${reservationIdToDelete}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}` }
+            // ZMĚNA: Použití metody POST a odeslání ID v těle požadavku
+            const response = await fetch(`${backendUrl}/api/reservations/delete`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}` 
+                },
+                body: JSON.stringify({ id: reservationIdToDelete })
             });
             
             const result = await response.json();

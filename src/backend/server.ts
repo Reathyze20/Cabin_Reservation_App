@@ -369,16 +369,21 @@ app.put("/api/reservations/:id", protect, async (req: Request, res: Response) =>
 });
 
 // DELETE /api/reservations/:id - Smazání existující rezervace (chráněno)
-app.delete("/api/reservations/:id", protect, async (req: Request, res: Response) => {
+// POST /api/reservations/delete - Smazání existující rezervace (chráněno) - ZMĚNA Z DELETE NA POST
+app.post("/api/reservations/delete", protect, async (req: Request, res: Response) => {
     if (!req.user) {
         return res.status(401).json({ message: "Neautorizováno." });
     }
 
-  const { id } = req.params;
+  const { id } = req.body; // Získání ID z těla požadavku
   const { userId, role } = req.user;
 
+    if (!id) {
+        return res.status(400).json({ message: "Chybí ID rezervace." });
+    }
+
     try {
-        const allReservations = await loadReservations();
+        let allReservations = await loadReservations();
         const reservationIndex = allReservations.findIndex(r => r.id === id);
 
         if (reservationIndex === -1) {
@@ -397,11 +402,11 @@ app.delete("/api/reservations/:id", protect, async (req: Request, res: Response)
 
         await saveReservation(allReservations);
 
-        console.log(`[DELETE /api/reservations/${id}] Uživatel ${req.user.username} smazal rezervaci.`);
+        console.log(`[POST /api/reservations/delete] Uživatel ${req.user.username} smazal rezervaci ${id}.`);
         res.status(200).json({ message: "Rezervace byla úspěšně smazána." });
 
     } catch (error) {
-        console.error(`Chyba při mazání rezervace (DELETE /api/reservations/${id}):`, error);
+        console.error(`Chyba při mazání rezervace (POST /api/reservations/delete):`, error);
         res.status(500).json({ message: "Chyba při mazání rezervace." });
     }
 });
