@@ -19,6 +19,15 @@ document.addEventListener("DOMContentLoaded", () => {
   const calendarContainer = document.querySelector(".calendar-container");
   const reservationsTitle = document.getElementById("reservations-title");
 
+  // Oprava: Admin Tool link - pouze přesměrování, neodhlašovat
+  const adminLink = document.getElementById('admin-link');
+  if (adminLink) {
+    adminLink.addEventListener('click', function(e) {
+      e.preventDefault();
+      window.location.href = 'admin.html';
+    });
+  }
+
   const bookingModal = document.getElementById("booking-modal");
   const openModalButton = document.getElementById("open-booking-modal-button");
   const bookingForm = document.getElementById("booking-form");
