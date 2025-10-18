@@ -1,201 +1,233 @@
-document.addEventListener('DOMContentLoaded', async () => {
-  const userListDiv = document.getElementById('admin-user-list');
-  const logoutBtn = document.getElementById('admin-logout');
-  const backBtn = document.getElementById('admin-back');
+document.addEventListener('DOMContentLoaded', () => {
+    // --- Elementy DOM ---
+    const appContainer = document.getElementById('app-container');
+    const authContainer = document.getElementById('auth-container');
+    const welcomeMessage = document.getElementById('welcome-message');
+    const logoutBtn = document.getElementById('logout-btn');
+    const userListContainer = document.getElementById('user-list-container');
+    
+    // Modální okno
+    const modal = document.getElementById('edit-user-modal');
+    const modalUsername = document.getElementById('modal-username');
+    const roleSelect = document.getElementById('role-select');
+    const saveChangesBtn = document.getElementById('save-user-changes-btn');
+    const resetPasswordBtn = document.getElementById('reset-password-btn');
+    const deleteReservationsBtn = document.getElementById('delete-reservations-btn');
+    const deleteUserBtn = document.getElementById('delete-user-btn');
+    const closeModalBtn = modal.querySelector('.close-button');
 
-  // Získání tokenu z localStorage
-  const token = localStorage.getItem('authToken');
-  if (!token) {
-    userListDiv.innerHTML = '<p style="color:red">Nejste přihlášen jako admin.</p>';
-    return;
-  }
+    let currentUser = null;
+    let users = [];
+    let selectedUserId = null;
 
-  // Načtení uživatelů
-  async function loadUsers() {
-    userListDiv.innerHTML = '<p>Načítám uživatele...</p>';
-    try {
-      const response = await fetch('/api/users', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (!response.ok) throw new Error('Chyba při načítání uživatelů');
-      const users = await response.json();
-      renderUserList(users);
-    } catch (err) {
-      userListDiv.innerHTML = `<p style="color:red">${err.message}</p>`;
+    // --- Funkce pro API volání ---
+    const apiFetch = async (url, options = {}) => {
+        const token = localStorage.getItem('token');
+        const headers = {
+            'Content-Type': 'application/json',
+            ...options.headers,
+        };
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        try {
+            const response = await fetch(url, { ...options, headers });
+            if (response.status === 401 || response.status === 403) {
+                logout();
+                return null;
+            }
+            if (!response.ok) {
+                const errorData = await response.json();
+                alert(`Chyba: ${errorData.message || response.statusText}`);
+                return null;
+            }
+            if (response.status === 204) return true; // Pro odpovědi bez obsahu
+            return response.json();
+        } catch (error) {
+            console.error('Chyba API volání:', error);
+            alert('Došlo k chybě při komunikaci se serverem.');
+            return null;
+        }
+    };
+
+    // --- Inicializace ---
+    const init = () => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            try {
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                if (payload.role !== 'admin') {
+                    showAuthError();
+                    return;
+                }
+                currentUser = {
+                    id: payload.userId,
+                    username: payload.username,
+                    role: payload.role,
+                };
+                showAdminPanel();
+                loadUsers();
+            } catch (e) {
+                logout();
+            }
+        } else {
+            logout();
+        }
+    };
+    
+    // --- Zobrazení a Autentizace ---
+    function showAdminPanel() {
+        authContainer.classList.add('hidden');
+        appContainer.classList.remove('hidden');
+        welcomeMessage.textContent = `Admin: ${currentUser.username}`;
     }
-  }
 
-  // Render seznamu uživatelů jako moderní tabulku s akcemi
-  function renderUserList(users) {
-    if (!users.length) {
-      userListDiv.innerHTML = '<p>Žádní uživatelé.</p>';
-      return;
+    function showAuthError() {
+        appContainer.classList.add('hidden');
+        authContainer.classList.remove('hidden');
     }
-    const table = document.createElement('table');
-    table.className = 'admin-user-table';
-    table.innerHTML = `
-      <thead>
-        <tr>
-          <th>Jméno</th>
-          <th>Role</th>
-          <th>ID</th>
-          <th>Akce</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    `;
-    const tbody = table.querySelector('tbody');
-    users.forEach(user => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${user.username}</td>
-        <td><span class="user-role-label">${user.role || 'user'}</span></td>
-        <td>${user.id}</td>
-        <td>
-          <button data-id="${user.id}" class="detail-user-btn">Detail</button>
-          <button data-id="${user.id}" class="delete-user-btn">Smazat</button>
-        </td>
-      `;
-      tbody.appendChild(tr);
-    });
-    userListDiv.innerHTML = '';
-    userListDiv.appendChild(table);
-  }
+    
+    function logout() {
+        localStorage.clear();
+        window.location.href = 'index.html';
+    }
 
-  // Detail uživatele (zobrazí info, možnost změnit roli přes select, reset hesla, počet rezervací)
-  userListDiv.addEventListener('click', async (e) => {
-    if (e.target.classList.contains('detail-user-btn')) {
-      const userId = e.target.getAttribute('data-id');
-      try {
-        const response = await fetch('/api/users', {
-          headers: { Authorization: `Bearer ${token}` }
+    // --- Načítání a Vykreslování Uživatelů ---
+    async function loadUsers() {
+        userListContainer.innerHTML = '<p>Načítám data...</p>';
+        const fetchedUsers = await apiFetch('/api/users');
+        if (fetchedUsers) {
+            users = fetchedUsers;
+            renderUserTable();
+        } else {
+            userListContainer.innerHTML = '<p style="color:red;">Nepodařilo se načíst uživatele.</p>';
+        }
+    }
+
+    function renderUserTable() {
+        userListContainer.innerHTML = '';
+        const table = document.createElement('table');
+        table.className = 'user-table';
+        table.innerHTML = `
+            <thead>
+                <tr>
+                    <th>Jméno</th>
+                    <th>Role</th>
+                    <th>ID</th>
+                    <th>Akce</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        `;
+        const tbody = table.querySelector('tbody');
+        users.forEach(user => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${user.username}</td>
+                <td><span class="role-badge role-${user.role || 'user'}">${user.role || 'user'}</span></td>
+                <td>${user.id}</td>
+                <td>
+                    <button class="btn-edit" data-id="${user.id}">Upravit</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
         });
-        const users = await response.json();
+        userListContainer.appendChild(table);
+    }
+    
+    // --- Logika Modálního Okna ---
+    function openEditModal(userId) {
+        selectedUserId = userId;
         const user = users.find(u => u.id === userId);
         if (!user) return;
-        // Získání počtu rezervací
-        let reservationCount = 0;
-        try {
-          const resResp = await fetch('/api/reservations', {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          if (resResp.ok) {
-            const reservations = await resResp.json();
-            reservationCount = reservations.filter(r => r.userId === userId).length;
-          }
-        } catch {}
-        const detailDiv = document.getElementById('admin-user-detail');
-        detailDiv.style.display = 'block';
-        detailDiv.innerHTML = `
-          <h2>Detail uživatele</h2>
-          <p><strong>Jméno:</strong> ${user.username}</p>
-          <p><strong>ID:</strong> ${user.id}</p>
-          <p><strong>Role:</strong> <select id="role-select">
-            <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>admin</option>
-            <option value="user" ${user.role === 'user' ? 'selected' : ''}>user</option>
-            <option value="guest" ${user.role === 'guest' ? 'selected' : ''}>guest</option>
-          </select></p>
-          <p><strong>Počet rezervací:</strong> ${reservationCount}</p>
-          <button id="save-role-btn">Uložit roli</button>
-          <button id="reset-password-btn">Resetovat heslo</button>
-          <button id="delete-all-reservations-btn">Smazat všechny rezervace</button>
-          <button id="close-detail-btn">Zavřít detail</button>
-        `;
-        // Uložení nové role
-        document.getElementById('save-role-btn').onclick = async () => {
-          const newRole = document.getElementById('role-select').value;
-          try {
-            const resp = await fetch(`/api/users/${userId}/role`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-              body: JSON.stringify({ role: newRole })
-            });
-            if (resp.ok) {
-              loadUsers();
-              alert('Role změněna.');
-            } else {
-              alert('Chyba při změně role.');
-            }
-          } catch {}
-        };
-        // Reset hesla
-        document.getElementById('reset-password-btn').onclick = async () => {
-          const newPassword = prompt('Zadejte nové heslo pro uživatele:');
-          if (!newPassword || newPassword.length < 6) {
-            alert('Heslo musí mít alespoň 6 znaků.');
-            return;
-          }
-          try {
-            const resp = await fetch(`/api/users/${userId}/password`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-              body: JSON.stringify({ password: newPassword })
-            });
-            if (resp.ok) {
-              alert('Heslo bylo změněno.');
-            } else {
-              alert('Chyba při změně hesla.');
-            }
-          } catch {}
-        };
-        // Smazání všech rezervací uživatele
-        document.getElementById('delete-all-reservations-btn').onclick = async () => {
-          if (confirm('Opravdu chcete smazat všechny rezervace tohoto uživatele?')) {
-            try {
-              const resp = await fetch(`/api/users/${userId}/reservations`, {
-                method: 'DELETE',
-                headers: { Authorization: `Bearer ${token}` }
-              });
-              const result = await resp.json();
-              if (resp.ok) {
-                alert(result.message);
-                detailDiv.style.display = 'none';
-              } else {
-                alert(result.message || 'Chyba při mazání rezervací.');
-              }
-            } catch {}
-          }
-        };
-        // Zavřít detail
-        document.getElementById('close-detail-btn').onclick = () => {
-          detailDiv.style.display = 'none';
-        };
-      } catch {}
+
+        modalUsername.textContent = `Úprava uživatele: ${user.username}`;
+        roleSelect.value = user.role || 'user';
+        modal.classList.remove('hidden');
     }
-    // Smazání uživatele
-    if (e.target.classList.contains('delete-user-btn')) {
-      const userId = e.target.getAttribute('data-id');
-      if (confirm('Opravdu chcete smazat tohoto uživatele?')) {
-        try {
-          const response = await fetch(`/api/users/${userId}`, {
-            method: 'DELETE',
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          const result = await response.json();
-          if (!response.ok) throw new Error(result.message || 'Chyba při mazání uživatele');
-          loadUsers();
-        } catch (err) {
-          alert('Chyba: ' + err.message);
+
+    function closeEditModal() {
+        modal.classList.add('hidden');
+        selectedUserId = null;
+    }
+
+    async function handleSaveChanges() {
+        if (!selectedUserId) return;
+        
+        const newRole = roleSelect.value;
+        const result = await apiFetch(`/api/users/${selectedUserId}/role`, {
+            method: 'PUT',
+            body: JSON.stringify({ role: newRole })
+        });
+
+        if (result) {
+            alert('Role byla úspěšně změněna.');
+            closeEditModal();
+            loadUsers();
         }
-      }
     }
-  });
 
-  // Odhlášení
-  logoutBtn.addEventListener('click', () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('username');
-    localStorage.removeItem('userId');
-    window.location.href = 'index.html';
-  });
+    async function handleResetPassword() {
+        const newPassword = prompt('Zadejte nové heslo pro uživatele (min. 6 znaků):');
+        if (!newPassword || newPassword.length < 6) {
+            alert('Heslo je příliš krátké nebo nebylo zadáno.');
+            return;
+        }
+        
+        const result = await apiFetch(`/api/users/${selectedUserId}/password`, {
+            method: 'PUT',
+            body: JSON.stringify({ password: newPassword })
+        });
 
-  // Návrat do hlavní aplikace
-  if (backBtn) {
-    backBtn.addEventListener('click', () => {
-      window.location.href = 'index.html';
+        if (result) {
+            alert('Heslo bylo úspěšně resetováno.');
+        }
+    }
+
+    async function handleDeleteReservations() {
+        if (confirm('Opravdu chcete smazat VŠECHNY rezervace tohoto uživatele?')) {
+            const result = await apiFetch(`/api/users/${selectedUserId}/reservations`, {
+                method: 'DELETE'
+            });
+            if (result) {
+                alert('Všechny rezervace uživatele byly smazány.');
+            }
+        }
+    }
+
+    async function handleDeleteUser() {
+        if (confirm('OPRAVDU chcete trvale smazat tohoto uživatele? Tato akce je nevratná!')) {
+            const result = await apiFetch(`/api/users/${selectedUserId}`, {
+                method: 'DELETE'
+            });
+            if (result) {
+                alert('Uživatel byl smazán.');
+                closeEditModal();
+                loadUsers();
+            }
+        }
+    }
+
+    // --- Event Listeners ---
+    logoutBtn.addEventListener('click', logout);
+    closeModalBtn.addEventListener('click', closeEditModal);
+    window.addEventListener('click', (e) => {
+        if (e.target === modal) closeEditModal();
     });
-  }
 
-  // Načti uživatele při načtení stránky
-  loadUsers();
+    userListContainer.addEventListener('click', (e) => {
+        if (e.target.classList.contains('btn-edit')) {
+            openEditModal(e.target.dataset.id);
+        }
+    });
+
+    saveChangesBtn.addEventListener('click', handleSaveChanges);
+    resetPasswordBtn.addEventListener('click', handleResetPassword);
+    deleteReservationsBtn.addEventListener('click', handleDeleteReservations);
+    deleteUserBtn.addEventListener('click', handleDeleteUser);
+
+    // --- Spuštění ---
+    init();
 });

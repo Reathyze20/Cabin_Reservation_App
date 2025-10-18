@@ -1,23 +1,65 @@
 <!DOCTYPE html>
 <html lang="cs">
 <head>
-  <meta charset="UTF-8">
-  <title>Admin - Správa uživatelů</title>
-  <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/809/809957.png">
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Správa uživatelů</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 </head>
 <body>
-  <div class="admin-container">
-    <h1>Správa uživatelů</h1>
-    <div id="admin-user-list">
-      <p>Načítám uživatele...</p>
+    <div id="app-container">
+        <header>
+            <h1>Admin Panel</h1>
+            <div id="user-info">
+                <span id="welcome-message"></span>
+                <button id="logout-btn">Odhlásit</button>
+            </div>
+        </header>
+
+        <nav>
+            <a href="index.html">Zpět do aplikace</a>
+        </nav>
+
+        <main class="admin-main">
+            <div class="card">
+                <h2>Přehled uživatelů</h2>
+                <div id="user-list-container">
+                    <!-- Tabulka s uživateli se vygeneruje zde -->
+                </div>
+            </div>
+        </main>
     </div>
-    <div id="admin-user-detail" style="display:none;"></div>
-    <div class="admin-actions">
-      <button id="admin-back">Zpět do aplikace</button>
-      <button id="admin-logout">Odhlásit se</button>
+
+    <!-- Modální okno pro úpravu uživatele -->
+    <div id="edit-user-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h3 id="modal-username"></h3>
+            <div class="form-group">
+                <label for="role-select">Role:</label>
+                <select id="role-select">
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                    <option value="guest">Guest</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <h4>Akce:</h4>
+                <button id="reset-password-btn" class="btn-action">Resetovat heslo</button>
+                <button id="delete-reservations-btn" class="btn-action btn-warning">Smazat rezervace</button>
+                <button id="delete-user-btn" class="btn-action btn-danger">Smazat uživatele</button>
+            </div>
+            <button id="save-user-changes-btn">Uložit změny</button>
+        </div>
     </div>
-  </div>
-  <script src="admin.js"></script>
+    
+    <div id="auth-container" class="hidden">
+        <h2>Přístup odepřen</h2>
+        <p>Pro přístup do administrace se musíte přihlásit jako administrátor.</p>
+        <a href="index.html">Zpět na přihlášení</a>
+    </div>
+
+    <script src="admin.js"></script>
 </body>
 </html>
