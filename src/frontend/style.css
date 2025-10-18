@@ -16,7 +16,7 @@
   top: 50%;
   transform: translateY(-50%);
   cursor: pointer;
-  color: #d18b00;
+  color: #0ea5e9;
   font-size: 1.2em;
   z-index: 2;
 }
@@ -24,8 +24,8 @@
   display: inline-block;
   width: 32px;
   height: 32px;
-  border: 4px solid #ffe1a6;
-  border-top: 4px solid #d18b00;
+  border: 4px solid #bae6fd;
+  border-top: 4px solid #0ea5e9;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 16px auto;
@@ -36,6 +36,7 @@
   100% { transform: rotate(360deg); }
 }
 
+/* Administrace */
 .admin-user-table {
   width: 100%;
   max-width: 700px;
@@ -53,28 +54,25 @@
   text-align: left;
 }
 .admin-user-table th {
-  background: #fff7d6;
-  color: #d18b00;
+  background: #e0f2fe;
+  color: #0369a1;
   font-weight: 700;
-  border-bottom: 2px solid #ffe1a6;
+  border-bottom: 2px solid #bae6fd;
 }
 .admin-user-table tr:not(:last-child) td {
-  border-bottom: 1px solid #f3e2c0;
-}
-.admin-user-table td {
-  font-size: 1rem;
+  border-bottom: 1px solid #e0f2fe;
 }
 .admin-user-table .user-role-label {
   display: inline-block;
-  background: #ffe1a6;
-  color: #a86c00;
+  background: #e0f2fe;
+  color: #0369a1;
   border-radius: 6px;
   padding: 2px 10px;
   font-size: 0.95em;
 }
-.admin-user-table button {
-  background: #fff7d6;
-  color: #d18b00;
+.admin-user-table button, #admin-user-detail button {
+  background: #e0f2fe;
+  color: #0369a1;
   border: none;
   border-radius: 6px;
   padding: 6px 16px;
@@ -83,10 +81,11 @@
   cursor: pointer;
   transition: background 0.2s, color 0.2s;
 }
-.admin-user-table button:hover {
-  background: #ffe1a6;
-  color: #a86c00;
+.admin-user-table button:hover, #admin-user-detail button:hover {
+  background: #bae6fd;
+  color: #0284c7;
 }
+
 #admin-user-detail {
   max-width: 500px;
   margin: 24px auto;
@@ -97,37 +96,10 @@
 }
 #admin-user-detail h2 {
   margin-top: 0;
-  color: #d18b00;
+  color: #0369a1;
 }
-#admin-user-detail p {
-  margin: 10px 0;
-}
-#admin-user-detail select {
-  padding: 4px 12px;
-  border-radius: 6px;
-  border: 1px solid #ffe1a6;
-  background: #fff7d6;
-  color: #a86c00;
-  font-weight: 600;
-}
-#admin-user-detail button {
-  background: #fff7d6;
-  color: #d18b00;
-  border: none;
-  border-radius: 6px;
-  padding: 8px 18px;
-  margin: 8px 8px 0 0;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s;
-}
-#admin-user-detail button:hover {
-  background: #ffe1a6;
-  color: #a86c00;
-}
-/* style.css */
 
-/* Basic reset and settings */
+/* Základní styly */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -151,26 +123,13 @@ body {
   min-height: 100vh;
   display: flex;
   justify-content: center; 
-  align-items: flex-start;
+  align-items: center;
   padding: 20px;
-  color: #374151;
+  color: #1f2937;
   line-height: 1.6;
-  position: relative;
-  z-index: 0;
 }
 
-body::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(255, 255, 255, 0.5);
-    z-index: -1;
-}
-
-/* Wrapper for main content */
+/* Wrapper */
 .app-wrapper {
   width: 100%;
   max-width: 1000px;
@@ -180,14 +139,13 @@ body::before {
   gap: 20px;
 }
 
-/* Login container */
+/* Login */
 .login-container {
   width: 100%;
   max-width: 400px;
-  margin-top: 50px;
 }
 
-/* Main application container */
+/* App */
 .app-container {
   width: 100%;
   display: flex;
@@ -202,13 +160,15 @@ body::before {
     align-items: flex-start;
 }
 
-
-/* Common style for "cards" */
+/* Karty s "glassmorphism" efektem */
 .card {
-  background-color: white;
+  background-color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-radius: 16px;
   padding: 24px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   width: 100%;
 }
 
@@ -223,52 +183,33 @@ body::before {
 }
 
 
-/* Top bar for dates */
+/* Lišta pro výběr data */
 .date-display-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border: 1px solid #eee;
+  border: 1px solid #e5e7eb;
   border-radius: 12px;
   padding: 12px 16px;
   margin-bottom: 20px;
 }
 
-.date-part {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
 .date-part .icon {
   font-size: 1.5em;
-  color: #fbbf24;
+  color: #0ea5e9; /* Sky blue */
 }
 
 .date-part .label {
-  display: block;
   font-size: 0.8em;
-  color: #666;
+  color: #6b7280;
 }
 
 .date-part .date-value {
   font-weight: 600;
-  font-size: 1em;
-  color: #333;
+  color: #1f2937;
 }
 
-.date-separator {
-  color: #999;
-  font-size: 0.9em;
-}
-
-/* Container for calendar - Flatpickr will be here */
-.calendar-container {
-  margin-bottom: 20px;
-  position: relative; /* Allow absolute labels inside */
-}
-
-/* Buttons */
+/* Tlačítka */
 button {
   padding: 10px 15px;
   border: none;
@@ -278,86 +219,88 @@ button {
   transition: background-color 0.2s ease;
 }
 
-button[type="submit"] {
-  background-color: #fbbf24;
+button[type="submit"], .button-primary {
+  background-color: #0ea5e9;
   color: white;
 }
-button[type="submit"]:hover {
-  background-color: #f59e0b;
+button[type="submit"]:hover, .button-primary:hover {
+  background-color: #0284c7;
 }
 
 .button-primary {
-  background-color: #f87171;
-  color: white;
   width: 100%;
   padding: 12px;
   font-size: 1em;
 }
-.button-primary:hover {
-  background-color: #ef4444;
-}
 
-/* Form elements */
+/* Formulářové prvky */
 input[type="text"],
 input[type="password"],
 textarea,
 select {
   width: 100%;
   padding: 10px;
-  border: 1px solid #ddd;
+  border: 1px solid #d1d5db;
   border-radius: 8px;
   margin-top: 4px;
 }
 
-/* User info and logout */
+/* Info o uživateli */
 .user-info {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 10px;
-  font-size: 0.9em;
+  padding: 12px 24px;
   font-size: 1em;
   background-color: rgba(255, 255, 255, 0.85);
-  color: #1f2937;
-  height: 50px;
-  text-shadow: none;
   backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-radius: 16px;
-
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #1f2937;
+  text-shadow: none;
 }
+
 .user-info strong {
-  font-weight: 700;
+  font-weight: 600;
+}
+
+.user-info a#admin-link {
+    color: #0369a1;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.user-info a#admin-link:hover {
+    color: #0284c7;
+    text-decoration: underline;
 }
 
 .button-logout {
   background: none;
   border: none;
-  color: #1f2937;
-  font-size: 0.9em;
+  color: #475569;
+  font-size: 1em;
+  font-weight: 600;
   cursor: pointer;
-  opacity: 0.9;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: background-color 0.2s, color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 .button-logout:hover {
-  opacity: 1;
-  text-decoration: underline;
-}
-.button-logout i {
-  margin-right: 5px;
+  background-color: #f1f5f9;
+  color: #1f2937;
+  text-decoration: none;
 }
 
-/* Reservation list */
+/* Seznam rezervací */
 .reservations-list-container h2 {
-  margin-bottom: 15px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #eee;
-  font-size: 1.1em;
-  font-weight: 600;
-  color: #555;
-}
-
-#reservations-list {
-  max-height: 450px;
-  overflow-y: auto;
+  color: #0369a1;
 }
 
 #reservations-list ul {
@@ -371,35 +314,17 @@ select {
 
 #reservations-list li {
   padding: 12px;
-  border: 1px solid #f3f4f6;
+  padding-left: 16px;
   border-radius: 8px;
-  background-color: #fafafa;
+  background-color: #f8fafc;
   position: relative;
+  border-left: 4px solid #0ea5e9;
 }
 
 .action-buttons {
     position: absolute;
     top: 8px;
     right: 8px;
-    display: flex;
-    flex-direction: row;
-    gap: 4px;
-}
-
-.edit-btn, .delete-btn {
-    background: none;
-    border: none;
-    color: #9ca3af;
-    cursor: pointer;
-    font-size: 0.9em;
-    padding: 5px;
-    border-radius: 50%;
-    width: 28px;
-    height: 28px;
-    line-height: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 .edit-btn:hover {
@@ -416,385 +341,159 @@ select {
     color: #b91c1c;
 }
 
-
 .reservation-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 8px;
     flex-wrap: wrap;
+    gap: 8px;
     padding-right: 60px;
 }
 
 .reservation-header strong {
-    color: #1f2937;
+    color: #0369a1;
     font-size: 1em;
 }
 
-.reservation-header span {
+.reservation-header .reservation-dates {
     font-size: 0.9em;
-    color: #6b7280;
+    color: #475569;
     white-space: nowrap;
 }
 
+.reservation-header .backup-status {
+    background-color: #f59e0b;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75em;
+    font-weight: 600;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
 .reservation-body p {
-    margin: 4px 0 0;
-    font-size: 0.85em;
-    color: #4b5563;
-    line-height: 1.5;
+    color: #475569;
 }
-
 .reservation-body p strong {
-    color: #374151;
+    color: #1e293b;
 }
 
-.reservation-body em {
-    color: #9ca3af;
-}
-
-#reservations-list i {
-    color: #9ca3af;
-}
-
-
-/* Error messages */
-.error-message {
-  color: red;
-  font-size: 0.9em;
-  margin-top: 5px;
-}
-
-/* Booking messages */
-#booking-message {
-  margin-top: 15px;
-  font-weight: 600;
-}
-
-.toggle-form-text {
-  text-align: center;
-  margin-top: 16px;
-  font-size: 0.9em;
-  color: #666;
-}
-
+/* Odkazy a zprávy */
 .toggle-form-text a {
-  color: #f59e0b;
+  color: #0ea5e9;
   font-weight: 600;
-  text-decoration: none;
 }
 
-.toggle-form-text a:hover {
-  text-decoration: underline;
-}
-
-.message {
-    margin-top: 10px;
-    font-weight: 500;
-    text-align: center;
-}
-
-
-/* --- Flatpickr Styles --- */
+/* --- Styly pro Flatpickr --- */
 .flatpickr-calendar {
-  background-color: white; 
+  background-color: transparent; 
   box-shadow: none; 
   width: 100% !important; 
-  font-family: inherit; 
 }
 
 .flatpickr-months {
   background-color: transparent; 
-  padding: 10px 0;
-  border-bottom: 1px solid #eee; 
-  margin-bottom: 10px;
+  border-bottom: 1px solid #e5e7eb; 
 }
 
 .flatpickr-months .flatpickr-prev-month,
 .flatpickr-months .flatpickr-next-month {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background-color: #fff7ed; 
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 0; 
-  top: 8px;
+  background-color: #e0f2fe;
 }
 .flatpickr-months .flatpickr-prev-month:hover,
 .flatpickr-months .flatpickr-next-month:hover {
-  background-color: #ffedd5; 
+  background-color: #bae6fd; 
 }
 
 .flatpickr-months .flatpickr-prev-month svg,
 .flatpickr-months .flatpickr-next-month svg {
-  width: 14px;
-  height: 14px;
-  fill: #fb923c;
+  fill: #0ea5e9;
 }
 
 .flatpickr-current-month {
-  font-size: 1.1em;
-  font-weight: 600;
-  color: #333;
-  padding-top: 5px;
-}
-.flatpickr-current-month .flatpickr-monthDropdown-months,
-.flatpickr-current-month .numInputWrapper {
-  font-weight: 600; 
-}
-.flatpickr-current-month input.cur-year {
-  font-weight: 600;
+  color: #0369a1;
 }
 
-.flatpickr-weekdays {
-  background-color: transparent;
-}
 span.flatpickr-weekday {
-  color: #f97316; 
+  color: #0ea5e9; 
   font-weight: 600;
-  font-size: 0.8em;
-  text-transform: uppercase; 
 }
 
-/* Individual days */
+/* Dny v kalendáři */
 .flatpickr-day {
-  border: none; 
-  font-weight: 500;
-  color: #555;
+  border: none;
   max-width: 38px;
   height: 38px;
   line-height: 38px;
   border-radius: 50%; 
-  margin: 1px;
 }
 .flatpickr-day:hover {
   background-color: #f3f4f6; 
 }
 
-.flatpickr-day.prevMonthDay,
-.flatpickr-day.nextMonthDay {
-  color: #ccc;
-  opacity: 0.7;
-}
-
 .flatpickr-day.today {
-  border-color: #fbbf24;
-  border: 1px solid #fbbf24;
-  color: #d97706; 
+  border: 1px solid #0ea5e9;
+  color: #0ea5e9; 
 }
 .flatpickr-day.today:hover {
-  background-color: #fef3c7; 
+  background-color: #e0f2fe; 
 }
 
-.flatpickr-innerContainer {
-  justify-content: center;
-  margin-bottom: 15px;
-}
-
-/* --- Selected range (oval shape) --- */
+/* Výběr */
 .flatpickr-day.selected,
 .flatpickr-day.startRange,
 .flatpickr-day.endRange {
-    background: #f87171;
-    border-color: #f87171;
+    background: #0ea5e9;
+    border-color: #0ea5e9;
     color: #fff;
 }
 .flatpickr-day.inRange {
-    background: #fecaca;
-    border-color: #fecaca;
-    color: #b91c1c;
-    border-radius: 50%;
+    background: #e0f2fe;
+    border-color: transparent;
+    color: #0369a1;
+    box-shadow: none;
 }
-.flatpickr-day.startRange {
-    border-radius: 50%;
-}
-.flatpickr-day.endRange {
-    border-radius: 50%;
-}
-.flatpickr-day.startRange.endRange {
-    border-radius: 50%;
-}
+.flatpickr-day.startRange { border-radius: 50% 0 0 50%; }
+.flatpickr-day.endRange { border-radius: 0 50% 50% 0; }
+.flatpickr-day.startRange.endRange { border-radius: 50%; }
+.flatpickr-day.inRange:not(.startRange):not(.endRange) { border-radius: 0; }
 
 
-/* --- BOOKED DAYS (circles) --- */
+/* --- Obsazené dny --- */
 .flatpickr-day.booked-day {
-  text-decoration: none;
-  opacity: 1;
   cursor: pointer;
-  border: none;
   color: white;
-  box-shadow: none;
   border-radius: 50%;
 }
 
-/* --- Modal Window Styles --- */
+.flatpickr-day.has-backup {
+    background-image: linear-gradient(to bottom right, var(--primary-color) 0%, var(--primary-color) 49%, var(--backup-color) 51%, var(--backup-color) 100%);
+}
+
+/* --- Modální okna --- */
 .modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
   background-color: rgba(0, 0, 0, 0.6);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  padding: 20px;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
 }
 
 .modal-content {
   background: white;
   padding: 30px;
   border-radius: 16px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-  width: 100%;
-  max-width: 500px;
-  position: relative;
-  animation: modal-fade-in 0.3s ease-out;
 }
 
-@keyframes modal-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.modal-close-button {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  font-size: 1.8em;
-  color: #aaa;
-  cursor: pointer;
-  line-height: 1;
-}
-
-.modal-close-button:hover {
-  color: #333;
-}
-
-.modal-content h2 {
-  margin-top: 0;
-  margin-bottom: 20px;
-  color: #333;
-}
-.modal-content p {
-    margin-bottom: 20px;
-}
-.form-group {
-  margin-bottom: 20px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 6px;
-  font-weight: 600;
-  color: #555;
-}
-
-.modal-buttons {
-    display: flex;
-    gap: 10px;
-    margin-top: 20px;
-}
-
-.button-danger {
-    background-color: #ef4444;
-    color: white;
-}
-.button-danger:hover {
-    background-color: #dc2626;
-}
-
-.button-secondary {
-    background-color: #e5e7eb;
-    color: #374151;
-}
-.button-secondary:hover {
-    background-color: #d1d5db;
-}
-
-/* --- Responsive Design --- */
+/* Responzivita */
 @media (max-width: 850px) {
     .main-content {
         flex-direction: column;
     }
-
     .calendar-card, .reservations-list-container {
         min-width: 100%;
     }
-
-    .app-wrapper {
-        padding: 10px;
-    }
 }
 
-@media (max-width: 480px) {
-    body {
-        padding: 5px;
-    }
-    .card {
-        padding: 15px;
-    }
-    .date-display-bar {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-    }
-    .date-separator {
-        display: none;
-    }
-}
-
-
-#admin-link {
-    font-size: 0.9em;
-    color: #fff;
-    text-decoration: none;
-    font-weight: 600;
-}
-
-/* --- Status Badges in Reservation List --- */
-.status-badge {
-    font-size: 0.8em;
-    padding: 2px 8px;
-    border-radius: 10px;
-    font-weight: 600;
-    margin-left: 8px;
-    vertical-align: middle;
-}
-
-.status-badge.primary-with-backup {
-    background-color: #dcfce7; /* Light green */
-    color: #166534;
-}
-
-.status-badge.backup {
-    background-color: #ffedd5; /* Light orange */
-    color: #9a3412;
-}
-
-/* --- Warning message in modal --- */
-.backup-warning {
-  background-color: #fffbeb;
-  border: 1px solid #facc15;
-  color: #854d0e;
-  padding: 12px;
-  border-radius: 8px;
-  margin-bottom: 15px;
-  font-size: 0.9em;
-}
-.backup-warning p {
-  margin: 0;
-}
-.backup-warning strong {
-  color: #713f12;
-}
 
 
