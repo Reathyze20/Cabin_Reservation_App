@@ -52,6 +52,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const userSplitList = document.getElementById('user-split-list');
   const splitModalInfo = document.getElementById('split-modal-info');
   
+  const notesListDiv = document.getElementById('notes-list');
+  const addNoteForm = document.getElementById('add-note-form');
+  const noteMessageInput = document.getElementById('note-message-input');
+
+
   document.querySelectorAll('.modal-close-button').forEach(button => {
     button.addEventListener('click', () => {
       button.closest('.modal-overlay').style.display = 'none';
@@ -118,6 +123,7 @@ document.addEventListener("DOMContentLoaded", () => {
     await fetchUsers(); // Načteme uživatele pro split funkci
     loadReservations();
     loadShoppingList();
+    loadNotes();
     
     const adminLink = document.getElementById('admin-link');
     const role = localStorage.getItem('role');
@@ -928,6 +934,105 @@ document.addEventListener("DOMContentLoaded", () => {
       iconSelectModal.style.display = 'none';
     });
   }
+
+  // --- Notes (Nástěnka) Logic ---
+
+  async function loadNotes() {
+    notesListDiv.innerHTML = `<div class="spinner-container"><div class="spinner"></div></div>`;
+    const token = getToken();
+    try {
+        const response = await fetch(`${backendUrl}/api/notes`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error('Nepodařilo se načíst vzkazy.');
+        const notes = await response.json();
+        renderNotes(notes);
+    } catch (error) {
+        notesListDiv.innerHTML = `<p style="color:red;">${error.message}</p>`;
+    }
+  }
+
+  function renderNotes(notes) {
+    notesListDiv.innerHTML = '';
+    if (notes.length === 0) {
+        notesListDiv.innerHTML = '<p><i>Zatím tu nejsou žádné vzkazy.</i></p>';
+        return;
+    }
+
+    notes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    const loggedInUserId = localStorage.getItem('userId');
+    const isAdmin = localStorage.getItem('role') === 'admin';
+
+    notes.forEach(note => {
+        const noteEl = document.createElement('div');
+        noteEl.className = 'note-item';
+        noteEl.dataset.id = note.id;
+
+        const canDelete = isAdmin || (note.userId === loggedInUserId);
+        const deleteBtn = canDelete ? `<button class="delete-note-btn" title="Smazat vzkaz"><i class="fas fa-times"></i></button>` : '';
+
+        const date = new Date(note.createdAt);
+        const formattedDate = `${date.getDate()}. ${date.getMonth() + 1}. ${date.getFullYear()} v ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+
+        noteEl.innerHTML = `
+            ${deleteBtn}
+            <p class="note-content">${note.message.replace(/\n/g, '<br>')}</p>
+            <div class="note-meta">
+                <strong>${note.username}</strong>, ${formattedDate}
+            </div>
+        `;
+        notesListDiv.appendChild(noteEl);
+    });
+  }
+  
+  if(addNoteForm) {
+    addNoteForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const message = noteMessageInput.value.trim();
+        if (!message) return;
+
+        const token = getToken();
+        try {
+            const response = await fetch(`${backendUrl}/api/notes`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ message })
+            });
+            if (!response.ok) throw new Error('Chyba při přidávání vzkazu.');
+            
+            noteMessageInput.value = '';
+            await loadNotes();
+        } catch (error) {
+            alert(error.message);
+        }
+    });
+  }
+
+  if (notesListDiv) {
+    notesListDiv.addEventListener('click', async (e) => {
+        const deleteBtn = e.target.closest('.delete-note-btn');
+        if (!deleteBtn) return;
+
+        const noteItem = deleteBtn.closest('.note-item');
+        const noteId = noteItem.dataset.id;
+        
+        if (confirm('Opravdu chcete smazat tento vzkaz?')) {
+            const token = getToken();
+            try {
+                const response = await fetch(`${backendUrl}/api/notes/${noteId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error('Chyba při mazání vzkazu.');
+                await loadNotes();
+            } catch (error) {
+                alert(error.message);
+            }
+        }
+    });
+  }
+
 
   const initialToken = getToken();
   const initialUsername = localStorage.getItem("username");
