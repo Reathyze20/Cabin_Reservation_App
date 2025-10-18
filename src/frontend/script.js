@@ -34,6 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const otherPurposeGroup = document.getElementById("other-purpose-group");
   const otherPurposeInput = document.getElementById("other-purpose-input");
   const notesTextarea = document.getElementById("notes-textarea");
+  const backupWarningMessage = document.getElementById("backup-warning-message");
 
   // Elements for the confirm delete modal
   const confirmDeleteModal = document.getElementById('confirm-delete-modal');
@@ -51,7 +52,6 @@ document.addEventListener("DOMContentLoaded", () => {
   clearDateButton.textContent = 'Vymazat výběr datumu';
   clearDateButton.className = 'button-secondary';
   clearDateButton.style.margin = '8px 0';
-  clearDateButton.style.display = 'none'; // Initially hidden
   const _calendarContainer = calendarContainer || document.querySelector('.calendar-container');
   if (_calendarContainer && _calendarContainer.parentNode) {
     _calendarContainer.parentNode.insertBefore(clearDateButton, _calendarContainer.nextSibling);
@@ -234,8 +234,7 @@ document.addEventListener("DOMContentLoaded", () => {
       reservationIdInput.value = '';
       modalDeleteButton.style.display = 'none';
       modalDeleteButton.onclick = null;
-      bookingMessage.textContent = '';
-
+      backupWarningMessage.style.display = 'none'; // Skrýt varování ve výchozím stavu
 
       if (isEdit && reservation) {
         modalTitle.textContent = "Upravit rezervaci";
@@ -262,25 +261,24 @@ document.addEventListener("DOMContentLoaded", () => {
         notesTextarea.value = reservation.notes || '';
         
       } else {
-        modalTitle.textContent = "Vytvořit rezervaci";
+        modalTitle.textContent = "Detail rezervace";
         modalSubmitButton.textContent = "Potvrdit rezervaci";
         if (flatpickrInstance && flatpickrInstance.selectedDates.length === 2) {
             const from = flatpickrInstance.selectedDates[0];
             const to = flatpickrInstance.selectedDates[1];
             modalDateRangeSpan.textContent = `${formatDateForDisplay(from)} - ${formatDateForDisplay(to)}`;
 
-            const selectionStart = from;
-            const selectionEnd = to;
-            const primaryOverlap = window.currentReservations.find(r => {
+            // Zkontrolovat překryv a zobrazit varování, pokud je to nutné
+            const isOverlapping = window.currentReservations.some(r => {
+                // Kontrolujeme pouze proti hlavním rezervacím
                 if (r.status === 'backup') return false;
                 const resStart = new Date(r.from);
                 const resEnd = new Date(r.to);
-                return selectionStart <= resEnd && selectionEnd >= resStart;
+                return from <= resEnd && to >= resStart;
             });
 
-            if (primaryOverlap) {
-                bookingMessage.innerHTML = `<i class="fas fa-exclamation-triangle"></i> V tomto termínu již existuje rezervace. Vaše bude vedena jako <strong>záložní</strong>.`;
-                bookingMessage.style.color = '#f59e0b';
+            if (isOverlapping) {
+                backupWarningMessage.style.display = 'block';
             }
         }
       }
@@ -331,28 +329,35 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!window.currentReservations || window.currentReservations.length === 0) return;
 
         const reservationsForDay = window.currentReservations.filter((r) => {
+          try {
             const startTs = new Date(r.from + 'T00:00:00Z').getTime();
             const endTs = new Date(r.to + 'T00:00:00Z').getTime();
             return currentTimestamp >= startTs && currentTimestamp <= endTs;
+          } catch (e) {
+            return false;
+          }
         });
 
-        if (reservationsForDay.length > 0) {
-            dayElem.classList.add("booked-day");
-            const primary = reservationsForDay.find(r => r.status !== 'backup');
-            const backup = reservationsForDay.find(r => r.status === 'backup');
+        const primaryReservation = reservationsForDay.find(r => r.status !== 'backup');
+        const backupReservation = reservationsForDay.find(r => r.status === 'backup');
 
-            if (primary && backup) {
-                dayElem.classList.add("has-backup");
-                dayElem.style.setProperty('--primary-color', hexToRgba(primary.userColor, 0.8));
-                dayElem.style.setProperty('--backup-color', hexToRgba(backup.userColor, 0.8));
-                dayElem.title = `Rezervováno: ${primary.username} (Záloha: ${backup.username})`;
-            } else if (primary) {
-                dayElem.style.backgroundColor = hexToRgba(primary.userColor, 0.8);
-                dayElem.title = `Rezervováno: ${primary.username}`;
-            } else if (backup) {
-                // Should not happen without primary, but handle just in case
-                dayElem.style.backgroundColor = hexToRgba(backup.userColor, 0.5); // Lighter for backup
-                dayElem.title = `Záložní rezervace: ${backup.username}`;
+        if (primaryReservation && backupReservation) {
+            const primaryColor = primaryReservation.userColor || '#808080';
+            const backupColor = backupReservation.userColor || '#cccccc';
+            
+            dayElem.style.backgroundImage = `linear-gradient(to right, ${hexToRgba(primaryColor, 0.8)} 50%, ${hexToRgba(backupColor, 0.8)} 50%)`;
+            dayElem.classList.add("booked-day");
+            dayElem.title = `Hlavní: ${primaryReservation.username}\nZáložní: ${backupReservation.username}`;
+
+        } else if (primaryReservation) {
+            dayElem.title = `Rezervováno: ${primaryReservation.username}`;
+            dayElem.classList.add("booked-day");
+            
+            const assignedColor = primaryReservation.userColor;
+            if (assignedColor) {
+              dayElem.style.backgroundColor = hexToRgba(assignedColor, 0.8);
+              dayElem.style.color = '#fff';
+              dayElem.style.fontWeight = 'bold';
             }
         }
       },
@@ -361,7 +366,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const checkOutDateDisplay = document.getElementById("check-out-date-display");
 
         if (selectedDates.length >= 1) {
-          clearDateButton.style.display = 'block';
           checkInDateDisplay.textContent = instance.formatDate(selectedDates[0], "d. M Y");
           if (selectedDates.length === 2) {
             checkOutDateDisplay.textContent = instance.formatDate(selectedDates[1], "d. M Y");
@@ -371,7 +375,6 @@ document.addEventListener("DOMContentLoaded", () => {
             openModalButton.style.display = 'none';
           }
         } else {
-          clearDateButton.style.display = 'none';
           checkInDateDisplay.textContent = "- Vyberte -";
           checkOutDateDisplay.textContent = "- Vyberte -";
           openModalButton.style.display = 'none';
@@ -400,7 +403,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function loadReservations() {
-    if (reservationsListDiv) reservationsListDiv.innerHTML = "<div class='spinner'></div>";
+    if (reservationsListDiv) reservationsListDiv.innerHTML = "<p><i>Aktualizuji rezervace...</i></p>";
     
     const token = getToken();
     if (!token) {
@@ -505,6 +508,19 @@ document.addEventListener("DOMContentLoaded", () => {
                 bookingMessage.style.color = "red";
                 return;
             }
+
+            const myId = reservationIdInput.value;
+            const overlap = window.currentReservations.some(r => {
+                if (r.id === myId) return false;
+                const resStart = new Date(r.from);
+                const resEnd = new Date(r.to);
+                return fromDate <= resEnd && toDate >= resStart;
+            });
+            if (overlap) {
+                bookingMessage.textContent = "Chyba: Termín zasahuje do jiné rezervace.";
+                bookingMessage.style.color = "red";
+                return;
+            }
             bodyData.from = fromInput.value;
             bodyData.to = toInput.value;
         } else {
@@ -541,8 +557,7 @@ document.addEventListener("DOMContentLoaded", () => {
             await loadReservations();
         } catch (error) {
             console.error("Error submitting reservation:", error);
-            bookingMessage.textContent = `Chyba: ${error.message}`;
-            bookingMessage.style.color = 'red';
+            alert(`Chyba: ${error.message}`);
         }
     });
   }
@@ -554,15 +569,15 @@ document.addEventListener("DOMContentLoaded", () => {
     
     reservationsTitle.textContent = `Přehled v ${monthNames[month]} ${year}`;
 
-    const monthStart = new Date(Date.UTC(year, month, 1));
-    const nextMonth = new Date(Date.UTC(year, month + 1, 1));
-    const monthEnd = new Date(nextMonth.getTime() - 1);
-
+    const monthStart = new Date(year, month, 1);
+    const monthEnd = new Date(year, month + 1, 0);
 
     const filteredReservations = window.currentReservations.filter((r) => {
-        const resStart = new Date(r.from + 'T00:00:00Z');
-        const resEnd = new Date(r.to + 'T00:00:00Z');
+      try {
+        const resStart = new Date(r.from);
+        const resEnd = new Date(r.to);
         return resStart <= monthEnd && resEnd >= monthStart;
+      } catch (e) { return false; }
     });
 
     renderReservationList(filteredReservations, "Pro tento měsíc nejsou žádné rezervace.");
@@ -571,18 +586,20 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderReservationsForSelection(selectedDates) {
     if (!reservationsListDiv || !reservationsTitle || selectedDates.length !== 2) return;
     
-    reservationsTitle.textContent = "Rezervace ve výběru";
+    reservationsTitle.textContent = "Konflikty pro Váš výběr";
 
     const selectionStart = selectedDates[0];
     const selectionEnd = selectedDates[1];
 
     const overlappingReservations = window.currentReservations.filter(r => {
-        const resStart = new Date(r.from);
-        const resEnd = new Date(r.to);
-        return resStart <= selectionEnd && resEnd >= selectionStart;
+        try {
+            const resStart = new Date(r.from);
+            const resEnd = new Date(r.to);
+            return resStart <= selectionEnd && resEnd >= selectionStart;
+        } catch(e) { return false; }
     });
 
-    renderReservationList(overlappingReservations, "Ve vybraném termínu nejsou žádné rezervace.");
+    renderReservationList(overlappingReservations, "Ve vybraném termínu nejsou žádné jiné rezervace.");
   }
 
   
@@ -591,7 +608,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (reservations.length === 0) {
           reservationsListDiv.innerHTML = `<p><i>${emptyMessage}</i></p>`;
       } else {
-          reservations.sort((a, b) => new Date(a.from) - new Date(b.from) || (a.status === 'backup' ? 1 : -1) );
+          reservations.sort((a, b) => new Date(a.from) - new Date(b.from));
           const list = document.createElement("ul");
           const loggedInUserId = localStorage.getItem("userId");
 
@@ -610,18 +627,22 @@ document.addEventListener("DOMContentLoaded", () => {
                   </div>`;
               }
 
-              const statusHTML = r.status === 'backup'
-                  ? `<span class="backup-status">ZÁLOŽNÍ</span>`
-                  : '';
+              let statusBadge = '';
+              if (r.status === 'backup') {
+                  statusBadge = '<span class="status-badge backup">Záložní</span>';
+              } else { // Primary or old data without status
+                  const hasBackups = reservations.some(backup => backup.parentId === r.id);
+                  if (hasBackups) {
+                      statusBadge = '<span class="status-badge primary-with-backup">Má zálohy</span>';
+                  }
+              }
 
               listItem.innerHTML = `
                 ${actionButtonsHTML}
                 <div class="reservation-header">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                      <strong>${r.username}</strong>
-                      ${statusHTML}
-                    </div>
-                    <span class="reservation-dates">
+                    <strong>${r.username}</strong>
+                    ${statusBadge}
+                    <span style="color:#d18b00;font-size:0.95em;margin-left:auto;">
                       ${formatDateForDisplay(r.from)} – ${formatDateForDisplay(r.to)}
                     </span>
                 </div>
@@ -664,6 +685,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         try {
+            // ZMĚNA: Použití metody POST a odeslání ID v těle požadavku
             const response = await fetch(`${backendUrl}/api/reservations/delete`, {
                 method: 'POST',
                 headers: { 
