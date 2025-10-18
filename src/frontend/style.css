@@ -1,62 +1,4 @@
-/* Styl pro input s očíčkem uvnitř */
-.input-eye-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-.input-eye-wrapper input[type="password"],
-.input-eye-wrapper input[type="text"] {
-  width: 100%;
-  padding-right: 36px;
-  box-sizing: border-box;
-}
-.toggle-password {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  cursor: pointer;
-  color: #d18b00;
-  font-size: 1.2em;
-  z-index: 2;
-}
-.spinner-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 20px;
-}
-.spinner {
-  display: inline-block;
-  width: 32px;
-  height: 32px;
-  border: 4px solid #ffe1a6;
-  border-top: 4px solid #d18b00;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 16px auto;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Basic reset and settings */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-body,
-button,
-input,
-textarea,
-select {
-  font-family: "Inter", sans-serif;
-}
-
+/* ... existing code ... -->
 body {
   background-image: url('https://i0.wp.com/www.zazracnestredohori.cz/wp-content/uploads/2020/05/Kostalov_vyhled_hrad_panorama_01-05-2020_C.jpg?fit=1600%2C727&ssl=1');
   background-size: cover;
@@ -88,7 +30,7 @@ body::before {
 /* Wrapper for main content */
 .app-wrapper {
   width: 100%;
-  max-width: 1200px; /* Zvětšeno pro nový layout */
+  max-width: 1400px; /* Zvětšeno pro 3 sloupce */
   display: flex;
   flex-direction: column;
   align-items: center; 
@@ -114,14 +56,7 @@ body::before {
     display: flex;
     gap: 20px;
     width: 100%;
-    align-items: flex-start;
-}
-
-.right-column {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    flex: 1;
+    align-items: stretch; /* Zarovná karty na stejnou výšku */
 }
 
 
@@ -135,11 +70,15 @@ body::before {
 }
 
 .calendar-card {
-    min-width: 450px;
+    flex: 1.5;
+    min-width: 400px;
 }
 
 .reservations-list-container {
-    min-width: 300px;
+    flex: 1;
+    min-width: 320px;
+    display: flex;
+    flex-direction: column;
 }
 
 /* Top bar for dates */
@@ -273,8 +212,9 @@ select {
 }
 
 #reservations-list {
-  max-height: 450px;
+  flex-grow: 1; /* Nechá seznam roztáhnout se */
   overflow-y: auto;
+  padding-right: 10px;
 }
 
 #reservations-list ul {
@@ -692,7 +632,7 @@ span.flatpickr-weekday {
 /* --- NOVÉ STYLY PRO NÁKUPNÍ SEZNAM --- */
 .shopping-list-container {
     flex: 1;
-    min-width: 350px;
+    min-width: 320px;
     max-width: 450px;
     display: flex;
     flex-direction: column;
@@ -922,23 +862,46 @@ span.flatpickr-weekday {
 }
 
 /* --- Responsive Design --- */
-@media (max-width: 950px) {
+@media (max-width: 1100px) {
     .main-content {
-        flex-direction: column;
+        flex-wrap: wrap;
+        justify-content: center;
     }
-
+    .calendar-card {
+        order: 1;
+        flex-basis: 100%;
+    }
     .shopping-list-container {
-        max-width: 100%;
+        order: 2;
+        flex-grow: 1;
+        flex-basis: calc(50% - 10px);
     }
-
-    .calendar-card, .reservations-list-container {
-        min-width: 100%;
+    .reservations-list-container {
+        order: 3;
+        flex-grow: 1;
+        flex-basis: calc(50% - 10px);
+        min-width: calc(50% - 10px);
     }
-
     .app-wrapper {
         padding: 10px;
     }
 }
+
+@media (max-width: 768px) {
+    .main-content {
+        flex-direction: column;
+        align-items: center;
+    }
+    .shopping-list-container,
+    .reservations-list-container,
+    .calendar-card {
+        order: 0;
+        flex-basis: auto;
+        width: 100%;
+        min-width: 100%;
+    }
+}
+
 
 @media (max-width: 480px) {
     body {
@@ -957,3 +920,4 @@ span.flatpickr-weekday {
         display: none;
     }
 }
+

@@ -117,50 +117,47 @@
               </div>
             </div>
 
-            <!-- Pravý sloupec s kalendářem a rezervacemi -->
-            <div class="right-column">
-                <!-- Hlavní karta s kalendářem -->
-                <div class="card calendar-card">
-                  <!-- Horní lišta pro výběr datumu -->
-                  <div class="date-display-bar">
-                    <div class="date-part">
-                      <i class="far fa-calendar-alt icon"></i>
-                      <div>
-                        <span class="label">Datum příjezdu</span>
-                        <span class="date-value" id="check-in-date-display"
-                          >- Vyberte -</span
-                        >
-                      </div>
-                    </div>
-                    <span class="date-separator">do</span>
-                    <div class="date-part">
-                      <div>
-                        <span class="label">Datum odjezdu</span>
-                        <span class="date-value" id="check-out-date-display"
-                          >- Vyberte -</span
-                        >
-                      </div>
-                    </div>
+            <!-- Hlavní karta s kalendářem -->
+            <div class="card calendar-card">
+              <!-- Horní lišta pro výběr datumu -->
+              <div class="date-display-bar">
+                <div class="date-part">
+                  <i class="far fa-calendar-alt icon"></i>
+                  <div>
+                    <span class="label">Datum příjezdu</span>
+                    <span class="date-value" id="check-in-date-display"
+                      >- Vyberte -</span
+                    >
                   </div>
-
-                  <!-- Kontejner, kam JS vloží inline Flatpickr -->
-                  <div class="calendar-container">
-                    <!-- Flatpickr se připojí sem pomocí JS -->
+                </div>
+                <span class="date-separator">do</span>
+                <div class="date-part">
+                  <div>
+                    <span class="label">Datum odjezdu</span>
+                    <span class="date-value" id="check-out-date-display"
+                      >- Vyberte -</span
+                    >
                   </div>
-
-                  <!-- Tlačítko pro rezervaci se zobrazí až po výběru datumu -->
-                  <button id="open-booking-modal-button" class="button-primary" style="display: none;">
-                      Pokračovat k rezervaci
-                  </button>
-                  <p id="booking-message"></p>
                 </div>
-                <!-- Konec .calendar-card -->
+              </div>
 
-                <!-- Seznam rezervací (mimo hlavní kartu, ale stále v app-section) -->
-                <div class="reservations-list-container card">
-                  <h2 id="reservations-title">Přehled rezervací</h2>
-                  <div id="reservations-list">Načítám rezervace...</div>
-                </div>
+              <!-- Kontejner, kam JS vloží inline Flatpickr -->
+              <div class="calendar-container">
+                <!-- Flatpickr se připojí sem pomocí JS -->
+              </div>
+
+              <!-- Tlačítko pro rezervaci se zobrazí až po výběru datumu -->
+              <button id="open-booking-modal-button" class="button-primary" style="display: none;">
+                  Pokračovat k rezervaci
+              </button>
+              <p id="booking-message"></p>
+            </div>
+            <!-- Konec .calendar-card -->
+
+            <!-- Seznam rezervací -->
+            <div class="reservations-list-container card">
+              <h2 id="reservations-title">Přehled rezervací</h2>
+              <div id="reservations-list">Načítám rezervace...</div>
             </div>
         </div>
 
@@ -239,3 +236,4 @@
     <script src="script.js"></script>
   </body>
 </html>
+
