@@ -287,17 +287,27 @@ app.post("/api/reservations", protect, async (req: Request, res: Response) => {
   try {
     const allReservations = await loadReservations();
     
-    // Zjistíme, zda existuje PŘEKRÝVAJÍCÍ SE HLAVNÍ rezervace
-    const overlappingPrimary = allReservations.find((existing) => {
-      // Porovnáváme pouze s hlavními (primary) rezervacemi nebo starými daty bez statusu
-      if (existing.status === 'backup') return false;
+    // 1. Validace: Nemůže stejný uživatel vytvořit duplicitní rezervaci na stejný termín
+    const userHasOverlap = allReservations.some(existing => {
+        if (existing.userId !== userId) return false; // Kontrolujeme pouze rezervace aktuálního uživatele
+        const existingOd = new Date(existing.from);
+        const existingDo = new Date(existing.to);
+        const newOd = new Date(from);
+        const newDo = new Date(reservationTo);
+        return newOd <= existingDo && newDo >= existingOd;
+    });
+    
+    if (userHasOverlap) {
+        return res.status(409).json({ message: "Již máte rezervaci v tomto termínu." });
+    }
 
+    // 2. Zjištění, zda existuje primární rezervace v daném termínu od jiného uživatele
+    const primaryOverlap = allReservations.find((existing) => {
+      if (existing.status === 'backup') return false; // Ignorujeme záložní rezervace pro účely blokace
       const existingOd = new Date(existing.from);
       const existingDo = new Date(existing.to);
       const newOd = new Date(from);
       const newDo = new Date(reservationTo);
-      
-      // Podmínka pro překryv: newStart <= oldEnd AND newEnd >= oldStart
       return newOd <= existingDo && newDo >= existingOd;
     });
 
@@ -307,28 +317,17 @@ app.post("/api/reservations", protect, async (req: Request, res: Response) => {
       username: username,
       from,
       to: reservationTo,
-      purpose, // Uložíme účel
-      notes,   // Uložíme poznámky
+      purpose,
+      notes,
+      status: primaryOverlap ? 'backup' : 'primary', // Nastavení statusu
+      parentId: primaryOverlap ? primaryOverlap.id : undefined, // Odkaz na primární rezervaci
     };
-
-    if (overlappingPrimary) {
-      // Pokud existuje překryv, nová rezervace bude záložní
-      newReservation.status = 'backup';
-      newReservation.parentId = overlappingPrimary.id;
-      console.warn(
-        `[POST /api/reservations] Uživatel ${username} vytváří ZÁLOŽNÍ rezervaci pro termín: ${from} - ${reservationTo}`
-      );
-    } else {
-      // Pokud není žádný překryv, je to hlavní rezervace
-      newReservation.status = 'primary';
-    }
-
 
     allReservations.push(newReservation);
     await saveReservation(allReservations);
 
     console.log(
-      `[POST /api/reservace] Uživatel ${username} (ID: ${userId}) vytvořil ${newReservation.status} rezervaci: ${from} - ${reservationTo}`
+      `[POST /api/rezervace] Uživatel ${username} (ID: ${userId}) vytvořil ${newReservation.status} rezervaci: ${from} - ${reservationTo}`
     );
        res.status(201).json(newReservation);
   } catch (error) {
@@ -379,14 +378,13 @@ app.put("/api/reservations/:id", protect, async (req: Request, res: Response) =>
     }
 });
 
-// DELETE /api/reservations/:id - Smazání existující rezervace (chráněno)
-// POST /api/reservations/delete - Smazání existující rezervace (chráněno) - ZMĚNA Z DELETE NA POST
+// POST /api/reservations/delete - Smazání existující rezervace (chráněno)
 app.post("/api/reservations/delete", protect, async (req: Request, res: Response) => {
     if (!req.user) {
         return res.status(401).json({ message: "Neautorizováno." });
     }
 
-  const { id } = req.body; // Získání ID z těla požadavku
+  const { id } = req.body; 
   const { userId, role } = req.user;
 
     if (!id) {
@@ -401,15 +399,24 @@ app.post("/api/reservations/delete", protect, async (req: Request, res: Response
             return res.status(404).json({ message: "Rezervace nenalezena." });
         }
 
-        const reservation = allReservations[reservationIndex];
+        const reservationToDelete = allReservations[reservationIndex];
 
-    // Ověření, zda uživatel může mazat tuto rezervaci
-    if (reservation.userId !== userId && role !== 'admin') {
-      return res.status(403).json({ message: "Nemáte oprávnění smazat tuto rezervaci." });
-    }
+        // Ověření, zda uživatel může mazat tuto rezervaci
+        if (reservationToDelete.userId !== userId && role !== 'admin') {
+          return res.status(403).json({ message: "Nemáte oprávnění smazat tuto rezervaci." });
+        }
 
         // Smazání rezervace
         allReservations.splice(reservationIndex, 1);
+
+        // Pokud byla smazaná rezervace primární, zkusíme povýšit záložní
+        if (reservationToDelete.status !== 'backup') {
+            const backupToPromote = allReservations.find(r => r.parentId === reservationToDelete.id);
+            if (backupToPromote) {
+                backupToPromote.status = 'primary';
+                delete backupToPromote.parentId; // Odebereme odkaz na již neexistující primární rezervaci
+            }
+        }
 
         await saveReservation(allReservations);
 
@@ -427,3 +434,4 @@ app.post("/api/reservations/delete", protect, async (req: Request, res: Response
 app.listen(port, () => {
   console.log(`Backend server naslouchá na http://localhost:${port}`);
 });
+
