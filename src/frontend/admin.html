@@ -7,23 +7,27 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 </head>
-<body>
+<body class="admin-page">
     <div id="app-container">
         <header>
-            <h1>Admin Panel</h1>
+            <div class="header-content">
+                <h1>Admin Panel</h1>
+                <nav>
+                    <a href="index.html"><i class="fas fa-arrow-left"></i> Zpět do aplikace</a>
+                </nav>
+            </div>
             <div id="user-info">
                 <span id="welcome-message"></span>
-                <button id="logout-btn">Odhlásit</button>
+                <button id="logout-btn" class="btn-secondary">Odhlásit</button>
             </div>
         </header>
 
-        <nav>
-            <a href="index.html">Zpět do aplikace</a>
-        </nav>
-
         <main class="admin-main">
             <div class="card">
-                <h2>Přehled uživatelů</h2>
+                <div class="card-header">
+                    <h2>Přehled uživatelů</h2>
+                    <p>Spravujte uživatelské účty a jejich oprávnění.</p>
+                </div>
                 <div id="user-list-container">
                     <!-- Tabulka s uživateli se vygeneruje zde -->
                 </div>
@@ -34,23 +38,29 @@
     <!-- Modální okno pro úpravu uživatele -->
     <div id="edit-user-modal" class="modal hidden">
         <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <h3 id="modal-username"></h3>
-            <div class="form-group">
-                <label for="role-select">Role:</label>
-                <select id="role-select">
-                    <option value="user">User</option>
-                    <option value="admin">Admin</option>
-                    <option value="guest">Guest</option>
-                </select>
+            <div class="modal-header">
+                 <h3 id="modal-username"></h3>
+                 <span class="close-button">&times;</span>
             </div>
-            <div class="modal-actions">
-                <h4>Akce:</h4>
-                <button id="reset-password-btn" class="btn-action">Resetovat heslo</button>
-                <button id="delete-reservations-btn" class="btn-action btn-warning">Smazat rezervace</button>
-                <button id="delete-user-btn" class="btn-action btn-danger">Smazat uživatele</button>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="role-select">Změnit roli:</label>
+                    <select id="role-select">
+                        <option value="user">User</option>
+                        <option value="admin">Admin</option>
+                        <option value="guest">Guest</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <h4>Další akce:</h4>
+                    <button id="reset-password-btn" class="btn-action">Resetovat heslo</button>
+                    <button id="delete-reservations-btn" class="btn-action btn-warning">Smazat rezervace</button>
+                    <button id="delete-user-btn" class="btn-action btn-danger">Smazat uživatele</button>
+                </div>
             </div>
-            <button id="save-user-changes-btn">Uložit změny</button>
+            <div class="modal-footer">
+                 <button id="save-user-changes-btn" class="btn-primary">Uložit změny</button>
+            </div>
         </div>
     </div>
     
