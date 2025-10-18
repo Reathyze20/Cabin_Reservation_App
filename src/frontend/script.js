@@ -783,8 +783,8 @@ document.addEventListener("DOMContentLoaded", () => {
   if (addItemForm) {
     addItemForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const name = itemNameInput.value.trim();
-      const icon = itemIconInput.value;
+      const name = (itemNameInput && itemNameInput.value) ? itemNameInput.value.trim() : '';
+      const icon = (itemIconInput && itemIconInput.value) ? itemIconInput.value : 'fas fa-shopping-basket';
       if (!name) return;
       
       const token = getToken();
@@ -797,9 +797,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!response.ok) throw new Error('Chyba při vytváření seznamu.');
         const created = await response.json();
 
-        itemNameInput.value = '';
-        itemIconInput.value = 'fas fa-shopping-basket'; // Reset na výchozí
-        if (openIconModalBtn && openIconModalBtn.querySelector) openIconModalBtn.querySelector('i').className = 'fas fa-shopping-basket';
+  if (itemNameInput) itemNameInput.value = '';
+  if (itemIconInput) itemIconInput.value = 'fas fa-shopping-basket'; // Reset na výchozí
+  if (openIconModalBtn && openIconModalBtn.querySelector) openIconModalBtn.querySelector('i').className = 'fas fa-shopping-basket';
 
         // Open modal for the new list
         await openShoppingListModal(created.id);
