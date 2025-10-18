@@ -46,6 +46,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const iconSelectModal = document.getElementById("icon-select-modal");
   const iconGrid = document.getElementById("icon-grid");
+
+  const priceSplitModal = document.getElementById('price-split-modal');
+  const priceSplitForm = document.getElementById('price-split-form');
+  const userSplitList = document.getElementById('user-split-list');
+  const splitModalInfo = document.getElementById('split-modal-info');
   
   document.querySelectorAll('.modal-close-button').forEach(button => {
     button.addEventListener('click', () => {
@@ -86,6 +91,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Global variables
   let flatpickrInstance = null;
   window.currentReservations = [];
+  let allUsers = [];
   let reservationIdToDelete = null; 
   const backendUrl = "";
 
@@ -103,11 +109,13 @@ document.addEventListener("DOMContentLoaded", () => {
     if(registerMessage) registerMessage.textContent = "";
   }
 
-  function showApp(username) {
+  async function showApp(username) {
     loginSection.style.display = "none";
     registerSection.style.display = "none";
     appSection.style.display = "flex";
     loggedInUsernameSpan.textContent = username;
+    
+    await fetchUsers(); // Načteme uživatele pro split funkci
     loadReservations();
     loadShoppingList();
     
@@ -638,9 +646,24 @@ document.addEventListener("DOMContentLoaded", () => {
       if (event.target === bookingModal) closeBookingModal();
       if (event.target === confirmDeleteModal) closeConfirmDeleteModal();
       if (event.target === iconSelectModal) iconSelectModal.style.display = 'none';
+      if (event.target === priceSplitModal) priceSplitModal.style.display = 'none';
   });
 
   // --- Shopping List Logic ---
+
+  async function fetchUsers() {
+    try {
+      const token = getToken();
+      const response = await fetch(`${backendUrl}/api/users`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error('Nepodařilo se načíst uživatele.');
+      allUsers = await response.json();
+    } catch (error) {
+      console.error("Chyba při načítání uživatelů:", error);
+      allUsers = [];
+    }
+  }
 
   async function loadShoppingList() {
     shoppingListDiv.innerHTML = `<div class="spinner-container"><div class="spinner"></div></div>`;
@@ -663,20 +686,36 @@ document.addEventListener("DOMContentLoaded", () => {
     const purchasedList = document.createElement('ul');
 
     items.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    const loggedInUserId = localStorage.getItem('userId');
+    const isAdmin = localStorage.getItem('role') === 'admin';
 
     items.forEach(item => {
       const li = document.createElement('li');
       li.className = `shopping-list-item ${item.purchased ? 'purchased' : ''}`;
       li.dataset.id = item.id;
       
-      const isAdmin = localStorage.getItem('role') === 'admin';
-      const deleteBtn = isAdmin ? `<button class="delete-item-btn" title="Smazat"><i class="fas fa-times"></i></button>` : '';
+      const canDelete = isAdmin || (item.addedById === loggedInUserId);
+      const deleteBtn = canDelete ? `<button class="delete-item-btn" title="Smazat"><i class="fas fa-times"></i></button>` : '';
 
       const detailsHTML = `<span class="added-by">Přidal: ${item.addedBy}</span>`;
       
-      const priceHTML = item.purchased && item.price
-          ? `<div class="price-info">Zaplatil(a): <strong>${item.purchasedBy} ${item.price} Kč</strong></div>`
-          : '';
+      let priceHTML = '';
+      if (item.purchased && item.price) {
+          let splitHTML = '';
+          if (item.splitWith && item.splitWith.length > 0) {
+              const allSharers = [item.purchasedById, ...item.splitWith];
+              const pricePerPerson = (item.price / allSharers.length).toFixed(2);
+              const splitUsernames = item.splitWith.map(userId => allUsers.find(u => u.id === userId)?.username).filter(Boolean);
+              splitHTML = `<div class="split-info">Rozděleno s: ${splitUsernames.join(', ')} (${pricePerPerson} Kč/os.)</div>`;
+          }
+          priceHTML = `
+            <div class="price-info">
+              <div class="paid-by">Zaplatil(a): <strong>${item.purchasedBy} ${item.price} Kč</strong></div>
+              ${splitHTML}
+            </div>`;
+      }
+
 
       li.innerHTML = `
         <div class="item-main-info">
@@ -688,8 +727,9 @@ document.addEventListener("DOMContentLoaded", () => {
         <div class="item-details">${detailsHTML}</div>
         ${priceHTML}
         <div class="purchase-form">
-            <input type="number" class="price-input" placeholder="Cena (Kč)">
+            <input type="number" class="price-input" placeholder="Cena (Kč)" min="0" step="0.01">
             <button class="save-purchase-btn">Uložit</button>
+            <button class="split-purchase-btn">Rozdělit</button>
         </div>
       `;
       
@@ -755,32 +795,81 @@ document.addEventListener("DOMContentLoaded", () => {
         li.querySelector('.price-input').focus();
       } else {
         purchaseForm.style.display = 'none';
-        updatePurchaseStatus(li.dataset.id, false);
+        updatePurchaseStatus(li.dataset.id, false, null, []);
       }
     }
   });
 
   shoppingListDiv.addEventListener('click', e => {
-    if(e.target.closest('.save-purchase-btn')) {
-      const li = e.target.closest('.shopping-list-item');
+    const target = e.target;
+    if(target.closest('.save-purchase-btn')) {
+      const li = target.closest('.shopping-list-item');
       const priceInput = li.querySelector('.price-input');
-      updatePurchaseStatus(li.dataset.id, true, priceInput.value || null);
+      const price = priceInput.value ? parseFloat(priceInput.value) : null;
+      updatePurchaseStatus(li.dataset.id, true, price, []);
     }
-    if(e.target.closest('.delete-item-btn')) {
-      const li = e.target.closest('.shopping-list-item');
+    if(target.closest('.split-purchase-btn')) {
+      const li = target.closest('.shopping-list-item');
+      const priceInput = li.querySelector('.price-input');
+      const price = priceInput.value ? parseFloat(priceInput.value) : null;
+      if (price === null || price <= 0) {
+        alert("Prosím, zadejte platnou cenu před rozdělením.");
+        return;
+      }
+      openPriceSplitModal(li.dataset.id, price);
+    }
+    if(target.closest('.delete-item-btn')) {
+      const li = target.closest('.shopping-list-item');
       if(confirm('Opravdu chcete smazat tuto položku?')) {
         deleteShoppingItem(li.dataset.id);
       }
     }
   });
 
-  async function updatePurchaseStatus(id, purchased, price = null) {
+  function openPriceSplitModal(itemId, price) {
+    userSplitList.innerHTML = '';
+    const loggedInUserId = localStorage.getItem('userId');
+
+    allUsers.forEach(user => {
+      if (user.id !== loggedInUserId) {
+        const div = document.createElement('div');
+        div.className = 'user-split-item';
+        div.innerHTML = `
+          <input type="checkbox" id="user-split-${user.id}" value="${user.id}">
+          <label for="user-split-${user.id}">${user.username}</label>
+        `;
+        userSplitList.appendChild(div);
+      }
+    });
+    
+    splitModalInfo.textContent = `Rozdělit ${price} Kč mezi vybrané uživatele:`
+    priceSplitForm.dataset.itemId = itemId;
+    priceSplitForm.dataset.price = price;
+    priceSplitModal.style.display = 'flex';
+  }
+
+  if (priceSplitForm) {
+    priceSplitForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const itemId = e.target.dataset.itemId;
+      const price = parseFloat(e.target.dataset.price);
+      
+      const selectedUsers = Array.from(userSplitList.querySelectorAll('input:checked')).map(input => input.value);
+      
+      await updatePurchaseStatus(itemId, true, price, selectedUsers);
+      
+      priceSplitModal.style.display = 'none';
+    });
+  }
+
+
+  async function updatePurchaseStatus(id, purchased, price = null, splitWith = []) {
       const token = getToken();
       try {
           const response = await fetch(`${backendUrl}/api/shopping-list/${id}/purchase`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-              body: JSON.stringify({ purchased, price: price })
+              body: JSON.stringify({ purchased, price, splitWith })
           });
           if (!response.ok) throw new Error('Chyba při aktualizaci.');
           loadShoppingList();
@@ -797,7 +886,10 @@ document.addEventListener("DOMContentLoaded", () => {
               method: 'DELETE',
               headers: { 'Authorization': `Bearer ${token}` }
           });
-          if (!response.ok) throw new Error('Chyba při mazání položky.');
+          if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.message || 'Chyba při mazání položky.');
+          }
           loadShoppingList();
       } catch (error) {
           alert(error.message);
@@ -845,3 +937,4 @@ document.addEventListener("DOMContentLoaded", () => {
     showLogin();
   }
 });
+

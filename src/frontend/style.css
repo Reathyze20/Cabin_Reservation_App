@@ -861,18 +861,27 @@ span.flatpickr-weekday {
 
 .price-info {
     font-size: 0.9em;
-    font-weight: 600;
-    color: #166534;
     padding-left: 37px;
     margin-top: 8px;
+}
+.price-info .paid-by {
+    font-weight: 600;
+    color: #166534;
 }
 .price-info strong {
     color: #1f2937;
 }
+.split-info {
+    font-size: 0.8em;
+    color: #4b5563;
+    margin-top: 4px;
+}
+
 
 .purchase-form {
     display: none; /* Skryto defaultně, ukáže se přes JS */
     gap: 8px;
+    align-items: center;
     margin-top: 10px;
     padding-left: 37px;
 }
@@ -883,16 +892,23 @@ span.flatpickr-weekday {
     margin: 0;
     border-radius: 6px;
 }
-.save-purchase-btn {
+.save-purchase-btn, .split-purchase-btn {
     height: 32px;
     background-color: #fff7d6;
     color: #d18b00;
     padding: 0 12px;
     font-size: 0.9em;
 }
-.save-purchase-btn:hover {
+.save-purchase-btn:hover, .split-purchase-btn:hover {
     background: #ffe1a6;
     color: #a86c00;
+}
+.split-purchase-btn {
+    background-color: #f3f4f6;
+    color: #4b5563;
+}
+.split-purchase-btn:hover {
+    background-color: #e5e7eb;
 }
 
 #icon-grid {
@@ -915,6 +931,40 @@ span.flatpickr-weekday {
     background-color: #e5e7eb;
     color: #d18b00;
 }
+
+/* --- Price Split Modal Styles --- */
+.user-split-list {
+  max-height: 250px;
+  overflow-y: auto;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 10px;
+  margin-top: 10px;
+}
+.user-split-item {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  border-radius: 6px;
+}
+.user-split-item:hover {
+  background-color: #f9fafb;
+}
+.user-split-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin-right: 12px;
+}
+.user-split-item label {
+  font-weight: 500;
+}
+#split-modal-info {
+    font-weight: 600;
+    text-align: center;
+    color: #333;
+    margin-bottom: 10px;
+}
+
 
 /* --- Responsive Design --- */
 @media (max-width: 1100px) {
