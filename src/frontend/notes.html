@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nástěnka - Rezervace chaty</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+</head>
+<body>
+    <div id="app-container" class="hidden">
+        <header>
+            <h1>Rezervace chaty Třebenice</h1>
+            <div id="user-info">
+                <span id="welcome-message"></span>
+                <button id="logout-btn">Odhlásit</button>
+                <button id="admin-panel-btn" class="hidden">Admin Panel</button>
+            </div>
+        </header>
+
+        <nav>
+            <a href="index.html">Rezervace & Nákupy</a>
+            <a href="notes.html" class="active">Nástěnka</a>
+        </nav>
+
+        <div class="main-content-notes">
+             <div id="notes-section" class="card">
+                <h2>Nástěnka (rychlé vzkazy)</h2>
+                <div id="notes-list">
+                    <!-- Vzkazy se generují dynamicky -->
+                </div>
+                <form id="add-note-form">
+                    <textarea id="note-message" placeholder="Napište vzkaz pro ostatní..." required></textarea>
+                    <button type="submit">Přidat vzkaz</button>
+                </form>
+            </div>
+        </div>
+    </div>
+     <!-- Zobrazí se, pokud uživatel není přihlášen -->
+    <div id="auth-container">
+        <h2>Přihlášení</h2>
+        <p>Pro zobrazení nástěnky se prosím <a href="index.html">přihlaste</a>.</p>
+    </div>
+
+    <script src="notes.js"></script>
+</body>
+</html>
