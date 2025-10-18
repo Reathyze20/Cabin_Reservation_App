@@ -498,6 +498,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         let bodyData = { purpose, notes };
 
+        // Store current view before action
+        const monthToReturnTo = flatpickrInstance.currentMonth;
+        const yearToReturnTo = flatpickrInstance.currentYear;
+
         if (isEditMode) {
             const fromInput = document.getElementById('edit-from-date');
             const toInput = document.getElementById('edit-to-date');
@@ -560,6 +564,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 openModalButton.style.display = 'none';
             }
             await loadReservations();
+            
+            // After reservations are loaded, jump to the stored month
+            if (flatpickrInstance) {
+                flatpickrInstance.jumpToDate(new Date(yearToReturnTo, monthToReturnTo));
+            }
+
         } catch (error) {
             console.error("Error submitting reservation:", error);
             alert(`Chyba: ${error.message}`);
@@ -730,3 +740,4 @@ document.addEventListener("DOMContentLoaded", () => {
     showLogin();
   }
 });
+

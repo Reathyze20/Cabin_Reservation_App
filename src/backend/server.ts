@@ -145,7 +145,7 @@ app.post("/api/login", async (req: Request, res: Response) => {
 
   try {
     const users = await loadUsers();
-    const user = users.find((u) => u.username === username);
+    const user = users.find((u) => u.username.toLowerCase() === username.toLowerCase());
 
     if (!user) {
       return res.status(401).json({ message: "Neplatné přihlašovací údaje." });
@@ -434,4 +434,3 @@ app.post("/api/reservations/delete", protect, async (req: Request, res: Response
 app.listen(port, () => {
   console.log(`Backend server naslouchá na http://localhost:${port}`);
 });
-
