@@ -19,6 +19,18 @@ export interface Reservation {
   parentId?: string; // ID hlavní rezervace, pokud je tato záložní
 }
 
+export interface ShoppingListItem {
+  id: string;
+  name: string;
+  addedBy: string;
+  addedById: string;
+  createdAt: string;
+  purchased: boolean;
+  purchasedBy?: string;
+  purchasedById?: string;
+  price?: number;
+}
+
 export interface JwtPayload {
   userId: string;
   username: string;

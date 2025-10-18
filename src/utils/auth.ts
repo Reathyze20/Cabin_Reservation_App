@@ -1,12 +1,17 @@
 import fs from "fs";
 import path from "path";
-import { Reservation, User } from "../types";
+import { Reservation, User, ShoppingListItem } from "../types";
 
 const usersFilePath = path.join(__dirname, "../../data/users.json");
 const reservationsFilePath = path.join(
   __dirname,
   "../../data/reservations.json"
 );
+const shoppingListFilePath = path.join(
+  __dirname,
+  "../../data/shopping-list.json"
+);
+
 
 export async function loadUsers(): Promise<User[]> {
   try {
@@ -54,5 +59,29 @@ export async function saveReservation(reservations: Reservation[]) {
   } catch (error) {
     console.error("Chyba při ukládání rezervací:", error);
     throw new Error("Chyba při ukládání rezervací.");
+  }
+}
+
+export async function loadShoppingList(): Promise<ShoppingListItem[]> {
+  try {
+    const data = await fs.promises.readFile(shoppingListFilePath, "utf-8");
+    return JSON.parse(data) as ShoppingListItem[];
+  } catch (error) {
+     if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+      await saveShoppingList([]); // Vytvoří prázdný soubor, pokud neexistuje
+      return [];
+    }
+    console.error("Chyba při načítání nákupního seznamu:", error);
+    return [];
+  }
+}
+
+export async function saveShoppingList(items: ShoppingListItem[]) {
+  try {
+    const data = JSON.stringify(items, null, 2);
+    await fs.promises.writeFile(shoppingListFilePath, data, "utf-8");
+  } catch (error) {
+    console.error("Chyba při ukládání nákupního seznamu:", error);
+    throw new Error("Chyba při ukládání nákupního seznamu.");
   }
 }
