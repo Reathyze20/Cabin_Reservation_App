@@ -217,6 +217,18 @@ button[type="submit"]:hover {
   background-color: #ef4444;
 }
 
+.button-secondary {
+  background-color: #f3f4f6;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+.button-secondary:hover {
+  background-color: #e9ecef;
+}
+
 /* Form elements */
 input[type="text"],
 input[type="password"],

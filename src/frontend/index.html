@@ -160,9 +160,12 @@
               </div>
 
               <!-- Tlačítko pro rezervaci se zobrazí až po výběru datumu -->
-              <button id="open-booking-modal-button" class="button-primary" style="display: none;">
-                  Pokračovat k rezervaci
-              </button>
+              <div style="display:flex; gap:8px; align-items:center;">
+                <button id="open-booking-modal-button" class="button-primary" style="display: none;">
+                    Pokračovat k rezervaci
+                </button>
+                <button id="clear-selection-button" class="button-secondary" style="display:none;">Vymazat výběr</button>
+              </div>
               <p id="booking-message"></p>
             </div>
             <!-- Konec .calendar-card -->

@@ -30,6 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const bookingModal = document.getElementById("booking-modal");
   const openModalButton = document.getElementById("open-booking-modal-button");
+  const clearSelectionButton = document.getElementById('clear-selection-button');
   const bookingForm = document.getElementById("booking-form");
   const bookingMessage = document.getElementById("booking-message");
   const modalDateRangeSpan = document.getElementById("modal-date-range");
@@ -361,8 +362,10 @@ document.addEventListener("DOMContentLoaded", () => {
         
         if (selectedDates.length === 2) {
             renderReservationsForSelection(selectedDates);
+      if (clearSelectionButton) clearSelectionButton.style.display = 'inline-block';
         } else {
             renderReservationsOverview(instance.currentMonth, instance.currentYear);
+      if (clearSelectionButton) clearSelectionButton.style.display = 'none';
         }
       },
       onMonthChange: function(selectedDates, dateStr, instance) {
@@ -379,6 +382,19 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (e) {
       console.error("Critical error initializing flatpickr:", e);
     }
+  }
+
+  if (clearSelectionButton) {
+    clearSelectionButton.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (!flatpickrInstance) return;
+      flatpickrInstance.clear();
+      document.getElementById("check-in-date-display").textContent = "- Vyberte -";
+      document.getElementById("check-out-date-display").textContent = "- Vyberte -";
+      if (openModalButton) openModalButton.style.display = 'none';
+      clearSelectionButton.style.display = 'none';
+      renderReservationsOverview(flatpickrInstance.currentMonth, flatpickrInstance.currentYear);
+    });
   }
 
   async function loadReservations() {
