@@ -127,7 +127,7 @@
 }
 /* style.css */
 
-/* Základní reset a nastavení */
+/* Basic reset and settings */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -139,39 +139,38 @@ button,
 input,
 textarea,
 select {
-  font-family: "Inter", sans-serif; /* Nebo tvůj vybraný font */
+  font-family: "Inter", sans-serif;
 }
 
 body {
-  font-family: "Inter", sans-serif; /* Použití načteného fontu */
   background: linear-gradient(135deg, #fde68a, #fca5a5);
   min-height: 100vh;
   display: flex;
   justify-content: center; 
-  align-items: flex-start; /* Zarovnání nahoru */
+  align-items: flex-start;
   padding: 20px;
-  color: #374151; /* Mírně tmavší text - Tailwind gray-700 */
+  color: #374151;
   line-height: 1.6;
 }
 
-/* Obalovač pro hlavní obsah */
+/* Wrapper for main content */
 .app-wrapper {
   width: 100%;
-  max-width: 1000px; /* Širší layout pro dva sloupce */
+  max-width: 1000px;
   display: flex;
   flex-direction: column;
   align-items: center; 
   gap: 20px;
 }
 
-/* Kontejner pro přihlášení */
+/* Login container */
 .login-container {
   width: 100%;
   max-width: 400px;
-  margin-top: 50px; /* Odsazení shora pro přihlašovací formulář */
+  margin-top: 50px;
 }
 
-/* Kontejner pro hlavní aplikaci */
+/* Main application container */
 .app-container {
   width: 100%;
   display: flex;
@@ -183,50 +182,50 @@ body {
     display: flex;
     gap: 20px;
     width: 100%;
-    align-items: flex-start; /* Důležité pro zarovnání karet nahoře */
+    align-items: flex-start;
 }
 
 
-/* Společný styl pro "karty" */
+/* Common style for "cards" */
 .card {
   background-color: white;
-  border-radius: 16px; /* Zaoblení rohů */
+  border-radius: 16px;
   padding: 24px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); /* Stín */
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   width: 100%;
 }
 
 .calendar-card {
-    flex: 2; /* Kalendář bude širší */
+    flex: 2;
     min-width: 450px;
 }
 
 .reservations-list-container {
-    flex: 1; /* Seznam bude užší */
+    flex: 1;
     min-width: 300px;
 }
 
 
-/* Horní lišta pro datumy */
+/* Top bar for dates */
 .date-display-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border: 1px solid #eee; /* Jemný okraj */
-  border-radius: 12px; /* Zaoblení */
+  border: 1px solid #eee;
+  border-radius: 12px;
   padding: 12px 16px;
-  margin-bottom: 20px; /* Odsazení od kalendáře */
+  margin-bottom: 20px;
 }
 
 .date-part {
   display: flex;
   align-items: center;
-  gap: 10px; /* Mezera mezi ikonou a textem */
+  gap: 10px;
 }
 
 .date-part .icon {
-  font-size: 1.5em; /* Velikost ikony */
-  color: #fbbf24; /* Tailwind Amber 400 */
+  font-size: 1.5em;
+  color: #fbbf24;
 }
 
 .date-part .label {
@@ -246,12 +245,13 @@ body {
   font-size: 0.9em;
 }
 
-/* Kontejner pro kalendář - zde bude Flatpickr */
+/* Container for calendar - Flatpickr will be here */
 .calendar-container {
   margin-bottom: 20px;
+  position: relative; /* Allow absolute strips inside */
 }
 
-/* Tlačítka */
+/* Buttons */
 button {
   padding: 10px 15px;
   border: none;
@@ -262,26 +262,25 @@ button {
 }
 
 button[type="submit"] {
-  background-color: #fbbf24; /* Hlavní barva */
+  background-color: #fbbf24;
   color: white;
 }
 button[type="submit"]:hover {
-  background-color: #f59e0b; /* Tmavší při najetí */
+  background-color: #f59e0b;
 }
 
 .button-primary {
-  /* Specifické tlačítko pro rezervaci */
-  background-color: #f87171; /* Červeno-oranžová */
+  background-color: #f87171;
   color: white;
-  width: 100%; /* Plná šířka */
+  width: 100%;
   padding: 12px;
   font-size: 1em;
 }
 .button-primary:hover {
-  background-color: #ef4444; /* Tmavší červená */
+  background-color: #ef4444;
 }
 
-/* Formulářové prvky */
+/* Form elements */
 input[type="text"],
 input[type="password"],
 textarea,
@@ -293,15 +292,15 @@ select {
   margin-top: 4px;
 }
 
-/* Info o uživateli a odhlášení */
+/* User info and logout */
 .user-info {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0 10px;
   font-size: 0.9em;
-  color: #fff; /* Bílý text na gradientu */
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2); /* Lehký stín pro čitelnost */
+  color: #fff;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
 }
 .user-info strong {
   font-weight: 700;
@@ -323,7 +322,7 @@ select {
   margin-right: 5px;
 }
 
-/* Seznam rezervací */
+/* Reservation list */
 .reservations-list-container h2 {
   margin-bottom: 15px;
   padding-bottom: 10px;
@@ -334,7 +333,7 @@ select {
 }
 
 #reservations-list {
-  max-height: 450px; /* Výška odpovídající přibližně kalendáři */
+  max-height: 450px;
   overflow-y: auto;
 }
 
@@ -344,15 +343,15 @@ select {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 15px; /* Mezera mezi položkami */
+  gap: 15px;
 }
 
 #reservations-list li {
   padding: 12px;
-  border: 1px solid #f3f4f6; /* Světle šedý okraj */
-  border-radius: 8px; /* Zaoblení */
+  border: 1px solid #f3f4f6;
+  border-radius: 8px;
   background-color: #fafafa;
-  position: relative; /* Pro pozicování edit tlačítka */
+  position: relative;
 }
 
 .action-buttons {
@@ -360,7 +359,7 @@ select {
     top: 8px;
     right: 8px;
     display: flex;
-    flex-direction: row; /* Změna na řádek */
+    flex-direction: row;
     gap: 4px;
 }
 
@@ -386,12 +385,12 @@ select {
 }
 
 .delete-btn {
-    color: #ef4444; /* Červená barva pro smazání */
+    color: #ef4444;
 }
 
 .delete-btn:hover {
-    background-color: #fee2e2; /* Světle červené pozadí */
-    color: #b91c1c; /* Tmavě červená */
+    background-color: #fee2e2;
+    color: #b91c1c;
 }
 
 
@@ -400,8 +399,8 @@ select {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 8px;
-    flex-wrap: wrap; /* Pro menší šířky */
-    padding-right: 60px; /* Větší mezera pro dvě tlačítka */
+    flex-wrap: wrap;
+    padding-right: 60px;
 }
 
 .reservation-header strong {
@@ -435,14 +434,14 @@ select {
 }
 
 
-/* Chybové zprávy */
+/* Error messages */
 .error-message {
   color: red;
   font-size: 0.9em;
   margin-top: 5px;
 }
 
-/* Zprávy z rezervace */
+/* Booking messages */
 #booking-message {
   margin-top: 15px;
   font-weight: 600;
@@ -472,7 +471,7 @@ select {
 }
 
 
-/* --- Styly pro Flatpickr --- */
+/* --- Flatpickr Styles --- */
 .flatpickr-calendar {
   background-color: white; 
   box-shadow: none; 
@@ -535,7 +534,7 @@ span.flatpickr-weekday {
   text-transform: uppercase; 
 }
 
-/* Jednotlivé dny */
+/* Individual days */
 .flatpickr-day {
   border: none; 
   font-weight: 500;
@@ -570,7 +569,7 @@ span.flatpickr-weekday {
   margin-bottom: 15px;
 }
 
-/* --- Vybraný rozsah --- */
+/* --- Selected range --- */
 .flatpickr-day.selected,
 .flatpickr-day.startRange,
 .flatpickr-day.endRange,
@@ -589,7 +588,6 @@ span.flatpickr-weekday {
   border-color: #ffedd5;
 }
 
-/* Začátek a konec rozsahu - výraznější */
 .flatpickr-day.startRange,
 .flatpickr-day.endRange {
   background: #fdba74;
@@ -620,80 +618,48 @@ span.flatpickr-weekday {
   border-bottom-right-radius: 50%;
 }
 
-/* Pokud je vybrán jen jeden den (ne rozsah) */
 .flatpickr-day.selected:not(.inRange) {
   background: #fdba74;
   border-color: #fdba74;
   color: #a16207;
 }
 
-/* REZERVOVANÉ DNY (Mají barvu podle uživatele) */
-  .flatpickr-day.flatpickr-disabled.booked-day,
-  .flatpickr-day.flatpickr-disabled.booked-day:hover {
-    text-decoration: none !important; 
-    opacity: 1 !important; 
-    cursor: not-allowed !important; 
-    font-weight: bold !important; 
-    border-radius: 50% !important; 
-    border: 1px solid transparent !important; 
-    background-color: #e9ecef !important; 
-    color: #495057 !important;
-  }
-
-  .flatpickr-day.flatpickr-disabled.booked-day.user-user1,
-  .flatpickr-day.flatpickr-disabled.booked-day.user-user1:hover {
-    background-color: #FFD700 !important;
-    color: #333 !important;
-  }
-
-  .flatpickr-day.flatpickr-disabled.booked-day.user-user2,
-  .flatpickr-day.flatpickr-disabled.booked-day.user-user2:hover {
-    background-color: #FFA500 !important; 
-    color: white !important;
-  }
-  
-/* Fallback pro neznámé uživatele */
-.flatpickr-day.flatpickr-disabled.booked-day.booked-unknown-user,
-.flatpickr-day.flatpickr-disabled.booked-day.booked-unknown-user:hover {
-    background-color: #e9ecef !important;
-    color: #495057 !important;
+/* --- NEW: BOOKED DAYS (Color is set by JS) --- */
+.flatpickr-day.booked-day,
+.flatpickr-day.booked-day:hover {
+  text-decoration: none;
+  opacity: 1;
+  cursor: not-allowed;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  box-shadow: inset 0 0 5px rgba(0,0,0,0.1);
 }
 
-/* Reservation strip that spans range under calendar days */
-.calendar-container {
-  position: relative; /* allow absolute strips inside */
-}
+/* --- NEW: Reservation strip under calendar days --- */
 .reservation-strip {
   position: absolute;
-  height: 28px;
-  border-radius: 8px;
-  background: #e9ecef;
+  height: 24px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 4px 8px;
+  justify-content: flex-start;
+  padding: 0 8px;
   box-sizing: border-box;
   pointer-events: none;
   z-index: 5;
+  overflow: hidden;
+  border: 1px solid;
 }
 .reservation-strip-label {
-  position: absolute;
-  top: -18px; /* place bubble above the segment */
-  left: 50%;
-  transform: translateX(-50%);
-  background: #fff;
-  padding: 4px 8px;
-  border-radius: 999px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   font-size: 13px;
   color: #333;
-  font-weight: 700;
+  font-weight: 600;
   white-space: nowrap;
-  pointer-events: auto;
+  text-shadow: 0 0 4px rgba(255,255,255,0.8);
 }
 
 
-/* --- Styly pro modální okno --- */
+/* --- Modal Window Styles --- */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -785,7 +751,7 @@ span.flatpickr-weekday {
     background-color: #d1d5db;
 }
 
-/* --- Responzivní design --- */
+/* --- Responsive Design --- */
 @media (max-width: 850px) {
     .main-content {
         flex-direction: column;
@@ -820,8 +786,7 @@ span.flatpickr-weekday {
 
 #admin-link {
     font-size: 0.9em;
-    color: #fff; /* Tailwind Amber 400 */
+    color: #fff;
     text-decoration: none;
     font-weight: 600;
 }
-
