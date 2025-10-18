@@ -29,7 +29,17 @@ export interface ShoppingListItem {
   purchased: boolean;
   purchasedBy?: string;
   purchasedById?: string;
+  purchasedAt?: string;
   price?: number;
+  splitWith?: string[]; // Pole s ID uživatelů, se kterými se dělí cena
+}
+
+export interface Note {
+  id: string;
+  userId: string;
+  username: string;
+  message: string;
+  createdAt: string;
 }
 
 export interface JwtPayload {
@@ -40,4 +50,3 @@ export interface JwtPayload {
   iat: number; // Čas vydání tokenu
   exp: number; // Čas expirace tokenu
 }
-

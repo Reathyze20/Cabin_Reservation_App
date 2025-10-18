@@ -8,9 +8,11 @@ import {
   saveReservation,
   saveUsers,
   loadShoppingList,
-  saveShoppingList
+  saveShoppingList,
+  loadNotes,
+  saveNotes,
 } from "../utils/auth";
-import { User, Reservation, ShoppingListItem } from "../types";
+import { User, Reservation, ShoppingListItem, Note } from "../types";
 import { JWT_SECRET } from "../config/config";
 import { protect } from "../middleware/authMiddleware";
 import { v4 as uuidv4 } from "uuid";
@@ -30,19 +32,18 @@ app.use(express.static(frontendPath));
 // --- Endpointy ---
 // Admin: Získání seznamu uživatelů
 app.get('/api/users', protect, async (req: Request, res: Response) => {
-  if (!req.user || req.user.role !== 'admin') {
-    return res.status(403).json({ message: 'Přístup pouze pro administrátora.' });
-  }
+  // Oproti původní verzi vracíme jen bezpečná data, aby se hesla nedostala na frontend
   try {
     const users = await loadUsers();
-    res.json(users);
+    const safeUsers = users.map(({ id, username, color, role }) => ({ id, username, color, role }));
+    res.json(safeUsers);
   } catch (error) {
     console.error('Chyba při načítání uživatelů:', error);
     res.status(500).json({ message: 'Chyba při načítání uživatelů.' });
   }
 });
 
-// Admin: Smazání uživatele
+
 // Admin: Smazání všech rezervací uživatele
 app.delete('/api/users/:id/reservations', protect, async (req: Request, res: Response) => {
   if (!req.user || req.user.role !== 'admin') {
@@ -110,6 +111,8 @@ app.put('/api/users/:id/password', protect, async (req: Request, res: Response) 
     res.status(500).json({ message: 'Chyba při změně hesla.' });
   }
 });
+
+// Admin: Smazání uživatele
 app.delete('/api/users/:id', protect, async (req: Request, res: Response) => {
   if (!req.user || req.user.role !== 'admin') {
     return res.status(403).json({ message: 'Přístup pouze pro administrátora.' });
@@ -166,7 +169,7 @@ app.post("/api/login", async (req: Request, res: Response) => {
       color: user.color,
     };
 
-    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "1h" });
+    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "24h" }); // Prodloužení tokenu
 
   res.json({ token, username: user.username, userId: user.id, role: user.role || 'user', color: user.color });
   } catch (error) {
@@ -211,12 +214,13 @@ app.post("/api/register", async (req: Request, res: Response) => {
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
-    // 4. Vytvoření nového uživatele
+    // 4. Vytvoření nového uživatele - první uživatel je admin
     const newUser: User = {
       id: uuidv4(),
       username,
       passwordHash,
       color,
+      role: users.length === 0 ? 'admin' : 'user'
     };
 
     // 5. Přidání a uložení uživatele
@@ -331,7 +335,7 @@ app.post("/api/reservations", protect, async (req: Request, res: Response) => {
     console.log(
       `[POST /api/rezervace] Uživatel ${username} (ID: ${userId}) vytvořil ${newReservation.status} rezervaci: ${from} - ${reservationTo}`
     );
-       res.status(201).json(newReservation);
+        res.status(201).json(newReservation);
   } catch (error) {
     console.error("Chyba při vytváření rezervace (POST):", error);
     res.status(500).json({ message: "Chyba při vytváření rezervace." });
@@ -346,7 +350,7 @@ app.put("/api/reservations/:id", protect, async (req: Request, res: Response) =>
 
     const { id } = req.params;
   const { purpose, notes, from, to } = req.body;
-    const { userId } = req.user;
+    const { userId, role } = req.user;
 
     try {
         const allReservations = await loadReservations();
@@ -358,16 +362,16 @@ app.put("/api/reservations/:id", protect, async (req: Request, res: Response) =>
 
         const reservation = allReservations[reservationIndex];
 
-        // Ověření, zda uživatel může editovat tuto rezervaci
-        if (reservation.userId !== userId) {
+        // Ověření, zda uživatel může editovat tuto rezervaci (vlastník nebo admin)
+        if (reservation.userId !== userId && role !== 'admin') {
             return res.status(403).json({ message: "Nemáte oprávnění upravit tuto rezervaci." });
         }
 
-  // Aktualizace dat
-  if (from) reservation.from = from;
-  if (to) reservation.to = to;
-  reservation.purpose = purpose;
-  reservation.notes = notes;
+      // Aktualizace dat
+      if (from) reservation.from = from;
+      if (to) reservation.to = to;
+      reservation.purpose = purpose;
+      reservation.notes = notes;
 
         await saveReservation(allReservations);
 
@@ -475,7 +479,7 @@ app.put('/api/shopping-list/:id/purchase', protect, async (req, res) => {
     if (!req.user) return res.status(401).json({ message: 'Neautorizováno.' });
     
     const { id } = req.params;
-    const { purchased, price } = req.body;
+    const { purchased, price, splitWith } = req.body;
 
     if (typeof purchased !== 'boolean') {
         return res.status(400).json({ message: 'Chybí stav "zakoupeno".' });
@@ -493,11 +497,15 @@ app.put('/api/shopping-list/:id/purchase', protect, async (req, res) => {
         if (purchased) {
             item.purchasedBy = req.user.username;
             item.purchasedById = req.user.userId;
+            item.purchasedAt = new Date().toISOString();
             item.price = price ? parseFloat(price) : undefined;
+            item.splitWith = Array.isArray(splitWith) ? splitWith : [];
         } else {
             delete item.purchasedBy;
             delete item.purchasedById;
             delete item.price;
+            delete item.purchasedAt;
+            delete item.splitWith;
         }
 
         await saveShoppingList(items);
@@ -509,17 +517,27 @@ app.put('/api/shopping-list/:id/purchase', protect, async (req, res) => {
 
 // DELETE /api/shopping-list/:id
 app.delete('/api/shopping-list/:id', protect, async (req, res) => {
-    if (!req.user || req.user.role !== 'admin') {
-        return res.status(403).json({ message: 'Pouze admin může mazat položky.' });
-    }
+    if (!req.user) return res.status(401).json({ message: 'Neautorizováno.' });
+    
     const { id } = req.params;
+    const { userId, role } = req.user;
+
     try {
         let items = await loadShoppingList();
-        const initialLength = items.length;
-        items = items.filter(item => item.id !== id);
-        if (items.length === initialLength) {
+        const itemIndex = items.findIndex(item => item.id === id);
+
+        if (itemIndex === -1) {
             return res.status(404).json({ message: 'Položka nenalezena.' });
         }
+        
+        const itemToDelete = items[itemIndex];
+
+        // Uživatel může smazat položku, pokud je admin NEBO ji sám přidal
+        if (role !== 'admin' && itemToDelete.addedById !== userId) {
+            return res.status(403).json({ message: 'Nemáte oprávnění smazat tuto položku.' });
+        }
+
+        items.splice(itemIndex, 1);
         await saveShoppingList(items);
         res.status(200).json({ message: 'Položka smazána.' });
     } catch (error) {
@@ -527,6 +545,77 @@ app.delete('/api/shopping-list/:id', protect, async (req, res) => {
     }
 });
 
+// --- Notes (Nástěnka) Endpoints ---
+
+// GET /api/notes
+app.get('/api/notes', protect, async (req, res) => {
+    try {
+        const notes = await loadNotes();
+        res.json(notes);
+    } catch (error) {
+        res.status(500).json({ message: 'Chyba při načítání vzkazů.' });
+    }
+});
+
+// POST /api/notes
+app.post('/api/notes', protect, async (req, res) => {
+    if (!req.user) return res.status(401).json({ message: 'Neautorizováno.' });
+    const { message } = req.body;
+    if (!message || typeof message !== 'string' || message.trim().length === 0) {
+        return res.status(400).json({ message: 'Vzkaz nemůže být prázdný.' });
+    }
+
+    try {
+        const notes = await loadNotes();
+        const newNote: Note = {
+            id: uuidv4(),
+            message: message.trim(),
+            username: req.user.username,
+            userId: req.user.userId,
+            createdAt: new Date().toISOString(),
+        };
+        notes.push(newNote);
+        await saveNotes(notes);
+        res.status(201).json(newNote);
+    } catch (error) {
+        res.status(500).json({ message: 'Chyba při ukládání vzkazu.' });
+    }
+});
+
+// DELETE /api/notes/:id
+app.delete('/api/notes/:id', protect, async (req, res) => {
+    if (!req.user) return res.status(401).json({ message: 'Neautorizováno.' });
+    
+    const { id } = req.params;
+    const { userId, role } = req.user;
+
+    try {
+        let notes = await loadNotes();
+        const noteIndex = notes.findIndex(note => note.id === id);
+
+        if (noteIndex === -1) {
+            return res.status(404).json({ message: 'Vzkaz nenalezen.' });
+        }
+        
+        const noteToDelete = notes[noteIndex];
+
+        if (role !== 'admin' && noteToDelete.userId !== userId) {
+            return res.status(403).json({ message: 'Nemáte oprávnění smazat tento vzkaz.' });
+        }
+
+        notes.splice(noteIndex, 1);
+        await saveNotes(notes);
+        res.status(200).json({ message: 'Vzkaz smazán.' });
+    } catch (error) {
+        res.status(500).json({ message: 'Chyba při mazání vzkazu.' });
+    }
+});
+
+
+// --- Serve frontend ---
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../../src/frontend/index.html'));
+});
 
 
 // --- Start serveru ---

@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { Reservation, User, ShoppingListItem } from "../types";
+import { Reservation, User, ShoppingListItem, Note } from "../types";
 
 const usersFilePath = path.join(__dirname, "../../data/users.json");
 const reservationsFilePath = path.join(
@@ -11,6 +11,7 @@ const shoppingListFilePath = path.join(
   __dirname,
   "../../data/shopping-list.json"
 );
+const notesFilePath = path.join(__dirname, "../../data/notes.json");
 
 
 export async function loadUsers(): Promise<User[]> {
@@ -19,6 +20,10 @@ export async function loadUsers(): Promise<User[]> {
     const users: User[] = JSON.parse(data);
     return users;
   } catch (error) {
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+      await saveUsers([]);
+      return [];
+    }
     console.error("Chyba při načítání uživatelů:", error);
     return [];
   }
@@ -41,7 +46,7 @@ export async function loadReservations(): Promise<Reservation[]> {
     return reservations;
   } catch (error) {
     if (error instanceof Error && "code" in error && error.code === "ENOENT") {
-      console.warn("Soubor reservations.json nenalezen, vracím prázdné pole.");
+      await saveReservation([]);
       return [];
     }
     console.error(
@@ -83,5 +88,29 @@ export async function saveShoppingList(items: ShoppingListItem[]) {
   } catch (error) {
     console.error("Chyba při ukládání nákupního seznamu:", error);
     throw new Error("Chyba při ukládání nákupního seznamu.");
+  }
+}
+
+export async function loadNotes(): Promise<Note[]> {
+  try {
+    const data = await fs.promises.readFile(notesFilePath, "utf-8");
+    return JSON.parse(data) as Note[];
+  } catch (error) {
+     if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+      await saveNotes([]);
+      return [];
+    }
+    console.error("Chyba při načítání vzkazů:", error);
+    return [];
+  }
+}
+
+export async function saveNotes(notes: Note[]) {
+  try {
+    const data = JSON.stringify(notes, null, 2);
+    await fs.promises.writeFile(notesFilePath, data, "utf-8");
+  } catch (error) {
+    console.error("Chyba při ukládání vzkazů:", error);
+    throw new Error("Chyba při ukládání vzkazů.");
   }
 }
