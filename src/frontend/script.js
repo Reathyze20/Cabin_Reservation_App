@@ -682,13 +682,14 @@ document.addEventListener("DOMContentLoaded", () => {
         const r2 = last.getBoundingClientRect();
         const left = r1.left - containerRect.left;
         const width = r2.right - r1.left;
-        const top = r1.top - containerRect.top + r1.height + 4;
+        const top = r1.top - containerRect.top;
 
         const seg = document.createElement('div');
         seg.className = 'reservation-strip';
         seg.style.left = `${left}px`;
         seg.style.width = `${Math.max(12, width)}px`;
         seg.style.top = `${top}px`;
+        seg.style.height = `${r1.height}px`;
         seg.dataset.reservationId = first.dataset.reservationId;
         
         const label = document.createElement('span');

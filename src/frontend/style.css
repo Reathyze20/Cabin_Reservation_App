@@ -647,7 +647,7 @@ span.flatpickr-weekday {
   z-index: 5;
   overflow: hidden;
   border: 1px solid;
-  margin-top: -10px; /* Moves the strip up */
+  /* margin-top: -10px; Moves the strip up */
   /* background-color and border-color are set in JS */
 }
 .reservation-strip-label {
@@ -790,5 +790,4 @@ span.flatpickr-weekday {
     text-decoration: none;
     font-weight: 600;
 }
-
 
