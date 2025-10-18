@@ -1,422 +1,1104 @@
-/* Základní styly a proměnné */
-:root {
-    --primary-color: #d18b00; /* Oranžová */
-    --secondary-color: #ffe1a6; /* Světle oranžová */
-    --background-color: #fdfaf5;
-    --text-color: #333;
-    --card-bg-color: #ffffff;
-    --border-color: #e0e0e0;
-    --shadow-color: rgba(0, 0, 0, 0.1);
-    --danger-color: #e53935;
-    --success-color: #43a047;
+/* Styl pro input s očíčkem uvnitř */
+.input-eye-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
 }
-
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: var(--background-color);
-    color: var(--text-color);
-    margin: 0;
-    padding: 20px;
-    line-height: 1.6;
+.input-eye-wrapper input[type="password"],
+.input-eye-wrapper input[type="text"] {
+  width: 100%;
+  padding-right: 36px;
+  box-sizing: border-box;
 }
-
-/* Skrytí/Zobrazení elementů */
-.hidden {
-    display: none !important;
+.toggle-password {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #d18b00;
+  font-size: 1.2em;
+  z-index: 2;
 }
-
-/* Kontejner aplikace */
-#app-container, #auth-container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-/* Hlavička */
-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    border-bottom: 2px solid var(--primary-color);
-    padding-bottom: 10px;
-}
-
-header h1 {
-    color: var(--primary-color);
-    margin: 0;
-}
-
-#user-info {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-/* Navigační menu */
-nav {
-    display: flex;
-    gap: 10px;
-    background-color: var(--card-bg-color);
-    padding: 10px 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px var(--shadow-color);
-    margin-bottom: 25px;
-}
-
-nav a {
-    text-decoration: none;
-    color: var(--primary-color);
-    padding: 8px 15px;
-    border-radius: 6px;
-    font-weight: 500;
-    transition: background-color 0.3s, color 0.3s;
-}
-
-nav a:hover {
-    background-color: var(--secondary-color);
-}
-
-nav a.active {
-    background-color: var(--primary-color);
-    color: white;
-}
-
-/* --- Hlavní obsah --- */
-.main-content {
-    display: grid;
-    grid-template-columns: 350px 1fr 350px; /* Levý sloupec | Střed | Pravý sloupec */
-    gap: 20px;
-    align-items: flex-start;
-}
-.main-content-notes {
-    max-width: 800px;
-    margin: 0 auto;
-}
-
-
-/* Sloupce */
-.column {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-/* Karta - obecný styl */
-.card {
-    background-color: var(--card-bg-color);
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 4px 12px var(--shadow-color);
-    border: 1px solid var(--border-color);
-}
-
-.card h2 {
-    margin-top: 0;
-    color: var(--primary-color);
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 10px;
-}
-
-/* --- Formuláře a tlačítka --- */
-form {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-input[type="text"],
-input[type="password"],
-input[type="date"],
-textarea {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    box-sizing: border-box;
-    transition: border-color 0.3s, box-shadow 0.3s;
-}
-
-input:focus, textarea:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 2px var(--secondary-color);
-}
-
-textarea {
-    min-height: 80px;
-    resize: vertical;
-}
-
-button {
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    font-size: 1em;
-}
-
-button:hover {
-    background-color: #a76b00;
-}
-
-.delete-btn {
-    background: none;
-    border: none;
-    color: var(--danger-color);
-    cursor: pointer;
-    font-size: 1.1em;
-    padding: 5px;
-    opacity: 0.7;
-    transition: opacity 0.3s;
-}
-.delete-btn:hover {
-    opacity: 1;
-}
-
-/* --- Kalendář --- */
-#calendar {
-    margin-top: 20px;
-}
-.calendar-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-}
-.calendar-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 5px;
-    text-align: center;
-}
-.calendar-day {
-    padding: 10px 5px;
-    border-radius: 50%;
-    position: relative;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-.calendar-day.other-month {
-    color: #aaa;
-}
-.calendar-day:not(.other-month):hover {
-    background-color: var(--secondary-color);
-}
-.calendar-day.today {
-    font-weight: bold;
-    border: 2px solid var(--primary-color);
-}
-
-/* Styly pro rezervace v kalendáři */
-.reservation-dot {
-    position: absolute;
-    bottom: 5px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-}
-.day-has-reservation {
-    background-color: var(--secondary-color);
-}
-.day-has-backup {
-    background-image: linear-gradient(135deg, var(--secondary-color) 50%, #e0e0e0 50%);
-}
-
-/* --- Seznam rezervací --- */
-.reservation-item {
-    padding: 15px;
-    border-bottom: 1px solid var(--border-color);
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-}
-.reservation-item:last-child {
-    border-bottom: none;
-}
-.reservation-info {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-.reservation-color-bar {
-    width: 6px;
-    height: 50px;
-    border-radius: 3px;
-}
-.reservation-details p {
-    margin: 0;
-}
-.reservation-details strong {
-    font-size: 1.1em;
-}
-.reservation-status-badge {
-    padding: 3px 8px;
-    border-radius: 12px;
-    font-size: 0.8em;
-    color: white;
-}
-.status-confirmed, .status-primary {
-    background-color: var(--success-color);
-}
-.status-backup {
-    background-color: #757575;
-}
-
-/* --- Nákupní seznam --- */
-.shopping-list-item {
-    display: flex;
-    align-items: center;
-    padding: 12px 5px;
-    border-bottom: 1px solid var(--border-color);
-    transition: background-color 0.2s;
-}
-.shopping-list-item.purchased {
-    opacity: 0.6;
-}
-.shopping-list-item.purchased .item-name {
-    text-decoration: line-through;
-}
-.shopping-list-item .item-icon {
-    margin-right: 15px;
-    color: var(--primary-color);
-    width: 20px;
-    text-align: center;
-}
-.item-details {
-    flex-grow: 1;
-}
-.item-meta, .item-price-info {
-    font-size: 0.8em;
-    color: #777;
-    margin-top: 3px;
-}
-.item-name {
-    font-size: 1.1em;
-}
-.shopping-list-item input[type="checkbox"] {
-    margin-left: auto;
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
-}
-.price-input-container {
-    display: flex;
-    gap: 10px;
-    margin-top: 10px;
-    align-items: center;
-}
-.price-input-container input {
-    max-width: 100px;
-}
-
-/* --- Nástěnka --- */
-#notes-list {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    margin-bottom: 20px;
-}
-
-.note-item {
-    background-color: #fffbef;
-    border-left: 5px solid var(--secondary-color);
-    padding: 15px;
-    border-radius: 0 8px 8px 0;
-    position: relative;
-}
-
-.note-item p {
-    margin: 0;
-}
-
-.note-meta {
-    font-size: 0.8em;
-    color: #777;
-    margin-top: 8px;
-}
-
-.note-item .delete-btn {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-}
-
-
-/* Modální okno */
-.modal {
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+.spinner-container {
     display: flex;
     justify-content: center;
     align-items: center;
+    padding: 20px;
 }
-.modal-content {
-    background-color: white;
-    padding: 25px;
-    border-radius: 12px;
-    width: 90%;
-    max-width: 400px;
-    position: relative;
-}
-.close-button {
-    position: absolute;
-    top: 10px;
-    right: 15px;
-    font-size: 1.8em;
-    cursor: pointer;
-}
-#split-user-list .user-split-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 0;
+.spinner {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  border: 4px solid #ffe1a6;
+  border-top: 4px solid #d18b00;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 16px auto;
 }
 
-/* Responzivita */
-@media (max-width: 1200px) {
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Basic reset and settings */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body,
+button,
+input,
+textarea,
+select {
+  font-family: "Inter", sans-serif;
+}
+
+body {
+  background-image: url('https://i0.wp.com/www.zazracnestredohori.cz/wp-content/uploads/2020/05/Kostalov_vyhled_hrad_panorama_01-05-2020_C.jpg?fit=1600%2C727&ssl=1');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center; 
+  align-items: flex-start;
+  padding: 20px;
+  color: #374151;
+  line-height: 1.6;
+  position: relative;
+  z-index: 0;
+}
+
+body::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: -1;
+}
+
+/* Wrapper for main content */
+.app-wrapper {
+  width: 100%;
+  max-width: 1400px; /* Zvětšeno pro 3 sloupce */
+  display: flex;
+  flex-direction: column;
+  align-items: center; 
+  gap: 20px;
+}
+
+/* Login container */
+.login-container {
+  width: 100%;
+  max-width: 400px;
+  margin-top: 50px;
+}
+
+/* Main application container */
+.app-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 15px; 
+}
+
+.main-content {
+    display: flex;
+    flex-direction: row; /* Explicitně nastaveno pro jistotu */
+    gap: 20px;
+    width: 100%;
+    align-items: stretch; /* Zarovná karty na stejnou výšku */
+}
+
+
+/* Common style for "cards" */
+.card {
+  background-color: white;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.shopping-list-container {
+    flex: 1 1 320px; /* grow, shrink, basis */
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+}
+.calendar-card {
+    flex: 2 1 450px;
+}
+.reservations-list-container {
+    flex: 1 1 320px;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Top bar for dates */
+.date-display-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+}
+
+.date-part {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.date-part .icon {
+  font-size: 1.5em;
+  color: #fbbf24;
+}
+
+.date-part .label {
+  display: block;
+  font-size: 0.8em;
+  color: #666;
+}
+
+.date-part .date-value {
+  font-weight: 600;
+  font-size: 1em;
+  color: #333;
+}
+
+.date-separator {
+  color: #999;
+  font-size: 0.9em;
+}
+
+/* Container for calendar - Flatpickr will be here */
+.calendar-container {
+  margin-bottom: 20px;
+  position: relative; /* Allow absolute labels inside */
+}
+
+/* Buttons */
+button {
+  padding: 10px 15px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.2s ease;
+}
+
+button[type="submit"] {
+  background-color: #fbbf24;
+  color: white;
+}
+button[type="submit"]:hover {
+  background-color: #f59e0b;
+}
+
+.button-primary {
+  background-color: #f87171;
+  color: white;
+  width: 100%;
+  padding: 12px;
+  font-size: 1em;
+}
+.button-primary:hover {
+  background-color: #ef4444;
+}
+
+/* Form elements */
+input[type="text"],
+input[type="password"],
+textarea,
+select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-top: 4px;
+}
+
+/* User info and logout */
+.user-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  font-size: 1em;
+  background-color: rgba(255, 255, 255, 0.85);
+  color: #1f2937;
+  height: 50px;
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+
+}
+.user-info strong {
+  font-weight: 700;
+}
+
+.button-logout {
+  background: none;
+  border: none;
+  color: #1f2937;
+  font-size: 0.9em;
+  cursor: pointer;
+  opacity: 0.9;
+}
+.button-logout:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+.button-logout i {
+  margin-right: 5px;
+}
+
+/* Reservation list */
+.reservations-list-container h2 {
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+  font-size: 1.1em;
+  font-weight: 600;
+  color: #555;
+}
+
+#reservations-list {
+  flex-grow: 1; /* Nechá seznam roztáhnout se */
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+#reservations-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+#reservations-list li {
+  padding: 12px;
+  border: 1px solid #f3f4f6;
+  border-radius: 8px;
+  background-color: #fafafa;
+  position: relative;
+}
+
+.action-buttons {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+}
+
+.edit-btn, .delete-btn {
+    background: none;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    font-size: 0.9em;
+    padding: 5px;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.edit-btn:hover {
+    background-color: #e5e7eb;
+    color: #374151;
+}
+
+.delete-btn {
+    color: #ef4444;
+}
+
+.delete-btn:hover {
+    background-color: #fee2e2;
+    color: #b91c1c;
+}
+
+
+.reservation-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+    padding-right: 60px;
+}
+
+.reservation-header strong {
+    color: #1f2937;
+    font-size: 1em;
+}
+
+.reservation-header span {
+    font-size: 0.9em;
+    color: #6b7280;
+    white-space: nowrap;
+}
+
+.reservation-body p {
+    margin: 4px 0 0;
+    font-size: 0.85em;
+    color: #4b5563;
+    line-height: 1.5;
+}
+
+.reservation-body p strong {
+    color: #374151;
+}
+
+.reservation-body em {
+    color: #9ca3af;
+}
+
+#reservations-list i {
+    color: #9ca3af;
+}
+
+
+/* Error messages */
+.error-message {
+  color: red;
+  font-size: 0.9em;
+  margin-top: 5px;
+}
+
+/* Booking messages */
+#booking-message {
+  margin-top: 15px;
+  font-weight: 600;
+}
+
+.toggle-form-text {
+  text-align: center;
+  margin-top: 16px;
+  font-size: 0.9em;
+  color: #666;
+}
+
+.toggle-form-text a {
+  color: #f59e0b;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.toggle-form-text a:hover {
+  text-decoration: underline;
+}
+
+.message {
+    margin-top: 10px;
+    font-weight: 500;
+    text-align: center;
+}
+
+
+/* --- Flatpickr Styles --- */
+.flatpickr-calendar {
+  background-color: white; 
+  box-shadow: none; 
+  width: 100% !important; 
+  font-family: inherit; 
+}
+
+.flatpickr-months {
+  background-color: transparent; 
+  padding: 10px 0;
+  border-bottom: 1px solid #eee; 
+  margin-bottom: 10px;
+}
+
+.flatpickr-months .flatpickr-prev-month,
+.flatpickr-months .flatpickr-next-month {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background-color: #fff7ed; 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0; 
+  top: 8px;
+}
+.flatpickr-months .flatpickr-prev-month:hover,
+.flatpickr-months .flatpickr-next-month:hover {
+  background-color: #ffedd5; 
+}
+
+.flatpickr-months .flatpickr-prev-month svg,
+.flatpickr-months .flatpickr-next-month svg {
+  width: 14px;
+  height: 14px;
+  fill: #fb923c;
+}
+
+.flatpickr-current-month {
+  font-size: 1.1em;
+  font-weight: 600;
+  color: #333;
+  padding-top: 5px;
+}
+.flatpickr-current-month .flatpickr-monthDropdown-months,
+.flatpickr-current-month .numInputWrapper {
+  font-weight: 600; 
+}
+.flatpickr-current-month input.cur-year {
+  font-weight: 600;
+}
+
+.flatpickr-weekdays {
+  background-color: transparent;
+}
+span.flatpickr-weekday {
+  color: #f97316; 
+  font-weight: 600;
+  font-size: 0.8em;
+  text-transform: uppercase; 
+}
+
+/* Individual days */
+.flatpickr-day {
+  border: none; 
+  font-weight: 500;
+  color: #555;
+  max-width: 38px;
+  height: 38px;
+  line-height: 38px;
+  border-radius: 50%; 
+  margin: 1px;
+}
+.flatpickr-day:hover {
+  background-color: #f3f4f6; 
+}
+
+.flatpickr-day.prevMonthDay,
+.flatpickr-day.nextMonthDay {
+  color: #ccc;
+  opacity: 0.7;
+}
+
+.flatpickr-day.today {
+  border-color: #fbbf24;
+  border: 1px solid #fbbf24;
+  color: #d97706; 
+}
+.flatpickr-day.today:hover {
+  background-color: #fef3c7; 
+}
+
+.flatpickr-innerContainer {
+  justify-content: center;
+  margin-bottom: 15px;
+}
+
+/* --- Selected range (oval shape) --- */
+.flatpickr-day.selected,
+.flatpickr-day.startRange,
+.flatpickr-day.endRange {
+    background: #f87171;
+    border-color: #f87171;
+    color: #fff;
+}
+.flatpickr-day.inRange {
+    background: #fecaca;
+    border-color: #fecaca;
+    color: #b91c1c;
+    border-radius: 50%;
+}
+.flatpickr-day.startRange {
+    border-radius: 50%;
+}
+.flatpickr-day.endRange {
+    border-radius: 50%;
+}
+.flatpickr-day.startRange.endRange {
+    border-radius: 50%;
+}
+
+
+/* --- BOOKED DAYS (circles) --- */
+.flatpickr-day.booked-day {
+  text-decoration: none;
+  opacity: 1;
+  cursor: pointer;
+  border: none;
+  color: white;
+  box-shadow: none;
+  border-radius: 50%;
+}
+
+/* --- Modal Window Styles --- */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-content {
+  background: white;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  max-width: 500px;
+  position: relative;
+  animation: modal-fade-in 0.3s ease-out;
+}
+
+@keyframes modal-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-close-button {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  font-size: 1.8em;
+  color: #aaa;
+  cursor: pointer;
+  line-height: 1;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.modal-close-button:hover {
+  color: #333;
+}
+
+.modal-content h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #333;
+}
+.modal-content p {
+    margin-bottom: 20px;
+}
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #555;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.button-danger {
+    background-color: #ef4444;
+    color: white;
+}
+.button-danger:hover {
+    background-color: #dc2626;
+}
+
+.button-secondary {
+    background-color: #e5e7eb;
+    color: #374151;
+}
+.button-secondary:hover {
+    background-color: #d1d5db;
+}
+
+/* --- Status Badges in Reservation List --- */
+.status-badge {
+    font-size: 0.8em;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+    margin-left: 8px;
+    vertical-align: middle;
+}
+
+.status-badge.primary-with-backup {
+    background-color: #dcfce7; /* Light green */
+    color: #166534;
+}
+
+.status-badge.backup {
+    background-color: #ffedd5; /* Light orange */
+    color: #9a3412;
+}
+
+/* --- Warning message in modal --- */
+.backup-warning {
+  background-color: #fffbeb;
+  border: 1px solid #facc15;
+  color: #854d0e;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  font-size: 0.9em;
+}
+.backup-warning p {
+  margin: 0;
+}
+.backup-warning strong {
+  color: #713f12;
+}
+
+#admin-link {
+    font-size: 0.9em;
+    color: #1f2937;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+#admin-link:hover {
+    color: #d18b00;
+}
+
+
+/* --- NOVÉ STYLY PRO NÁKUPNÍ SEZNAM --- */
+.shopping-list-container h2 {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+    font-size: 1.1em;
+    font-weight: 600;
+    color: #555;
+}
+
+.add-item-form {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+.button-icon-select {
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    background-color: #f9f9f9;
+    font-size: 1.2em;
+    color: #555;
+    padding: 0;
+}
+#item-name-input {
+    flex-grow: 1;
+    margin-top: 0;
+    height: 42px;
+}
+.button-add-item {
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    background-color: #d18b00;
+    color: white;
+    font-size: 1.2em;
+    padding: 0;
+}
+.button-add-item:hover {
+    background-color: #a86c00;
+}
+
+.shopping-list-content {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+.shopping-list-content h3 {
+    margin-top: 15px;
+    margin-bottom: 10px;
+    font-size: 1em;
+    color: #a86c00;
+    font-weight: 600;
+    border-bottom: 1px solid #ffe1a6;
+    padding-bottom: 5px;
+}
+.shopping-list-content ul {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.shopping-list-item {
+    background-color: #fff;
+    border-radius: 12px;
+    padding: 12px 15px;
+    border: 1px solid #f3e2c0;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s ease;
+}
+
+.item-main-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.item-icon {
+    font-size: 1.4em;
+    color: #d18b00;
+    width: 25px;
+    text-align: center;
+}
+.item-name {
+    flex-grow: 1;
+    font-weight: 500;
+    color: #374151;
+}
+
+.purchase-checkbox {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 22px;
+    height: 22px;
+    border: 2px solid #ffe1a6;
+    border-radius: 6px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+.purchase-checkbox:hover {
+    border-color: #d18b00;
+}
+.purchase-checkbox:checked {
+    background-color: #d18b00;
+    border-color: #d18b00;
+}
+.purchase-checkbox:checked::after {
+    content: '\f00c'; /* Font Awesome check icon */
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    color: white;
+    font-size: 14px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.delete-item-btn {
+    background: none;
+    border: none;
+    color: #d1d5db;
+    font-size: 1.1em;
+    padding: 5px;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+}
+.delete-item-btn:hover {
+    color: #ef4444;
+    background-color: #fee2e2;
+}
+
+
+/* --- Styl pro zakoupenou položku --- */
+.shopping-list-item.purchased {
+    background-color: #f9fafb;
+    border-color: #e5e7eb;
+}
+.shopping-list-item.purchased .item-name {
+    text-decoration: line-through;
+    color: #9ca3af;
+}
+.shopping-list-item.purchased .item-icon {
+    color: #9ca3af;
+}
+
+/* --- Detaily a formulář pro cenu --- */
+.item-details {
+    font-size: 0.8em;
+    color: #6b7280;
+    padding: 8px 0 0 37px; /* (icon width + gap) */
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+.item-details span {
+    background-color: #f3f4f6;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.price-info {
+    font-size: 0.9em;
+    padding-left: 37px;
+    margin-top: 8px;
+}
+.price-info .paid-by {
+    font-weight: 600;
+    color: #166534;
+}
+.price-info strong {
+    color: #1f2937;
+}
+.split-info {
+    font-size: 0.8em;
+    color: #4b5563;
+    margin-top: 4px;
+}
+
+
+.purchase-form {
+    display: none; /* Skryto defaultně, ukáže se přes JS */
+    gap: 8px;
+    align-items: center;
+    margin-top: 10px;
+    padding-left: 37px;
+}
+.price-input {
+    width: 100px;
+    height: 32px;
+    padding: 5px 8px;
+    margin: 0;
+    border-radius: 6px;
+}
+.save-purchase-btn, .split-purchase-btn {
+    height: 32px;
+    background-color: #fff7d6;
+    color: #d18b00;
+    padding: 0 12px;
+    font-size: 0.9em;
+}
+.save-purchase-btn:hover, .split-purchase-btn:hover {
+    background: #ffe1a6;
+    color: #a86c00;
+}
+.split-purchase-btn {
+    background-color: #f3f4f6;
+    color: #4b5563;
+}
+.split-purchase-btn:hover {
+    background-color: #e5e7eb;
+}
+
+#icon-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+    gap: 10px;
+}
+.icon-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 50px;
+    border-radius: 8px;
+    background-color: #f3f4f6;
+    font-size: 1.5em;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.icon-wrapper:hover {
+    background-color: #e5e7eb;
+    color: #d18b00;
+}
+
+/* --- Price Split Modal Styles --- */
+.user-split-list {
+  max-height: 250px;
+  overflow-y: auto;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 10px;
+  margin-top: 10px;
+}
+.user-split-item {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  border-radius: 6px;
+}
+.user-split-item:hover {
+  background-color: #f9fafb;
+}
+.user-split-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin-right: 12px;
+}
+.user-split-item label {
+  font-weight: 500;
+}
+#split-modal-info {
+    font-weight: 600;
+    text-align: center;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+/* --- Nástěnka --- */
+.notice-board-container {
+    width: 100%;
+}
+.notice-board-container h2 {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+    font-size: 1.1em;
+    font-weight: 600;
+    color: #555;
+}
+.notes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 15px;
+    max-height: 200px; /* Omezí výšku a přidá scrollbar */
+    overflow-y: auto;
+    padding: 5px;
+}
+.note-item {
+    background-color: #fffbeb;
+    border-left: 4px solid #facc15;
+    padding: 12px 15px;
+    border-radius: 4px;
+    position: relative;
+}
+.note-content {
+    margin: 0;
+    color: #4b5563;
+    line-height: 1.5;
+}
+.note-meta {
+    font-size: 0.8em;
+    color: #9ca3af;
+    margin-top: 8px;
+}
+.delete-note-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: none;
+    border: none;
+    color: #d1d5db;
+    cursor: pointer;
+    font-size: 1em;
+    padding: 5px;
+}
+.delete-note-btn:hover {
+    color: #ef4444;
+}
+.add-note-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.add-note-form textarea {
+    width: 100%;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    padding: 10px;
+    resize: vertical;
+    margin: 0;
+}
+.add-note-form button {
+    align-self: flex-end; /* Tlačítko vpravo */
+    background-color: #fbbf24;
+    color: white;
+    font-weight: 500;
+    padding: 8px 15px;
+}
+.add-note-form button:hover {
+    background-color: #f59e0b;
+}
+
+
+/* --- Responsive Design --- */
+@media (max-width: 1100px) {
     .main-content {
-        grid-template-columns: 1fr 1fr; /* Dva sloupce */
+        flex-wrap: wrap;
+        justify-content: center;
     }
-    .shopping-column {
-        grid-column: 1 / 2;
-        grid-row: 1 / 2;
+    .calendar-card {
+        order: 1;
+        flex-basis: 100%;
+        min-width: 100%;
     }
-    .calendar-column {
-        grid-column: 2 / 3;
-        grid-row: 1 / 2;
+    .shopping-list-container {
+        order: 2;
+        flex-grow: 1;
+        flex-basis: calc(50% - 10px);
+        max-width: none;
     }
-    .reservations-column {
-        grid-column: 1 / -1; /* Přes oba sloupce */
-        grid-row: 2 / 3;
+    .reservations-list-container {
+        order: 3;
+        flex-grow: 1;
+        flex-basis: calc(50% - 10px);
+        min-width: calc(50% - 10px);
+        max-width: none;
     }
 }
 
 @media (max-width: 768px) {
-    body {
-        padding: 10px;
-    }
     .main-content {
-        grid-template-columns: 1fr; /* Jeden sloupec */
+        flex-direction: column;
+        align-items: center;
     }
-    .shopping-column, .calendar-column, .reservations-column {
-        grid-column: auto;
-        grid-row: auto;
+    .shopping-list-container,
+    .reservations-list-container,
+    .calendar-card {
+        order: 0; /* Reset order */
+        flex-basis: auto;
+        width: 100%;
+        min-width: 100%;
     }
-    header {
+}
+
+
+@media (max-width: 480px) {
+    body {
+        padding: 10px 5px;
+        align-items: flex-start;
+    }
+    .card {
+        padding: 15px;
+    }
+    .date-display-bar {
         flex-direction: column;
         align-items: flex-start;
         gap: 10px;
+    }
+    .date-separator {
+        display: none;
     }
 }
 
