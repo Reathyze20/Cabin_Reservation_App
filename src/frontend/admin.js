@@ -67,6 +67,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     role: payload.role,
                 };
                 showAdminPanel();
+                // Safety: ensure modal is hidden on initial load
+                if (modal) {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('open');
+                }
                 loadUsers();
             } catch (e) {
                 logout();
@@ -145,11 +150,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         modalUsername.textContent = `Úprava uživatele: ${user.username}`;
         roleSelect.value = user.role || 'user';
+        // Use .open to show modal (CSS controls visibility)
         modal.classList.remove('hidden');
+        modal.classList.add('open');
     }
 
     function closeEditModal() {
         modal.classList.add('hidden');
+        modal.classList.remove('open');
         selectedUserId = null;
     }
 

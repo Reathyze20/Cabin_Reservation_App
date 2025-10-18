@@ -1216,17 +1216,34 @@ body.admin-page {
 
 /* Admin Modal */
 .admin-page .modal {
-    display: flex; /* Changed from none to flex for centering */
-    align-items: center;
-    justify-content: center;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0,0,0,0.6);
+  display: none; /* Hidden by default; use .open to display */
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: rgba(0,0,0,0.6);
+}
+
+.admin-page .modal.open {
+  display: flex;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Strong override to ensure admin modal is hidden by default (prevents accidental show) */
+#edit-user-modal {
+  display: none !important;
+}
+
+#edit-user-modal.open {
+  display: flex !important;
 }
 
 .admin-page .modal-content {
