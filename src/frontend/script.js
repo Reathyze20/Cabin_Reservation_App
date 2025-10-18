@@ -70,17 +70,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- Helper functions for colors ---
 
   /**
-   * Generates a palette of visually distinct colors.
-   * @returns {string[]} An array of hex color codes.
-   */
-  function generateColorPalette() {
-    return [
-      '#FFB300','#FF7043','#AB47BC','#5C6BC0','#29B6F6','#26A69A','#9CCC65','#D4E157','#FFCA28','#8D6E63',
-      '#F06292','#4DB6AC','#BA68C8','#B39DDB','#90CAF9','#A1887F','#AED581','#FFD54F','#FF8A65','#4FC3F7'
-    ];
-  }
-
-  /**
    * Converts a HEX color to an RGBA color.
    * @param {string} hex The hex color code (e.g., "#FF5733").
    * @param {number} alpha The opacity value from 0 to 1.
@@ -94,33 +83,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     c = '0x' + c.join('');
     return `rgba(${(c >> 16) & 255}, ${(c >> 8) & 255}, ${c & 255}, ${alpha})`;
-  }
-
-
-  /**
-   * Gets a persistent, unique color for a given user ID.
-   * @param {string} userId The user's unique ID.
-   * @returns {string|null} The hex color code for the user.
-   */
-  function getUserColor(userId) {
-    if (!userId) return null;
-    try {
-      const key = 'userColorMap_v1';
-      const raw = localStorage.getItem(key);
-      let map = raw ? JSON.parse(raw) : {};
-      if (map[userId]) return map[userId];
-
-      const palette = generateColorPalette();
-      const used = new Set(Object.values(map));
-      const available = palette.filter(c => !used.has(c));
-      const color = (available.length > 0) ? available[Math.floor(Math.random() * available.length)] : palette[Math.floor(Math.random() * palette.length)];
-      map[userId] = color;
-      localStorage.setItem(key, JSON.stringify(map));
-      return color;
-    } catch (e) {
-      console.error("Failed to get user color:", e);
-      return null;
-    }
   }
 
   // Global variables
@@ -210,6 +172,7 @@ document.addEventListener("DOMContentLoaded", () => {
         registerMessage.textContent = "";
         const username = document.getElementById("register-username").value;
         const password = document.getElementById("register-password").value;
+        const color = document.getElementById("register-color").value;
 
         if (username.length < 3 || username.length > 20) {
             registerMessage.textContent = "Uživatelské jméno musí mít 3-20 znaků.";
@@ -231,7 +194,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const response = await fetch(`${backendUrl}/api/register`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username, password }),
+                body: JSON.stringify({ username, password, color }),
             });
 
             const data = await response.json();
@@ -365,7 +328,7 @@ document.addEventListener("DOMContentLoaded", () => {
           dayElem.title = `Rezervováno: ${matchingReservation.username}`;
           dayElem.classList.add("booked-day");
           
-          const assignedColor = getUserColor(matchingReservation.userId);
+          const assignedColor = matchingReservation.userColor;
           if (assignedColor) {
             dayElem.style.backgroundColor = hexToRgba(assignedColor, 0.8);
             dayElem.style.color = '#fff';
@@ -724,4 +687,3 @@ document.addEventListener("DOMContentLoaded", () => {
     showLogin();
   }
 });
-

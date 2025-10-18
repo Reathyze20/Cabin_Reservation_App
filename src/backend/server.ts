@@ -161,11 +161,12 @@ app.post("/api/login", async (req: Request, res: Response) => {
       userId: user.id,
       username: user.username,
       role: user.role || 'user',
+      color: user.color,
     };
 
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: "1h" });
 
-  res.json({ token, username: user.username, userId: user.id, role: user.role || 'user' });
+  res.json({ token, username: user.username, userId: user.id, role: user.role || 'user', color: user.color });
   } catch (error) {
     console.error("Chyba při přihlašování:", error);
     res.status(500).json({ message: "Došlo k chybě na serveru." });
@@ -174,18 +175,21 @@ app.post("/api/login", async (req: Request, res: Response) => {
 
 // Register endpoint
 app.post("/api/register", async (req: Request, res: Response) => {
-  const { username, password } = req.body;
+  const { username, password, color } = req.body;
 
   // 1. Základní validace
-  if (!username || !password) {
+  if (!username || !password || !color) {
     return res
       .status(400)
-      .json({ message: "Chybí uživatelské jméno nebo heslo." });
+      .json({ message: "Chybí uživatelské jméno, heslo nebo barva." });
   }
   if (password.length < 6) {
     return res
       .status(400)
       .json({ message: "Heslo musí mít alespoň 6 znaků." });
+  }
+  if (!/^#[0-9A-F]{6}$/i.test(color)) {
+      return res.status(400).json({ message: "Neplatný formát barvy." });
   }
 
   try {
@@ -210,6 +214,7 @@ app.post("/api/register", async (req: Request, res: Response) => {
       id: uuidv4(),
       username,
       passwordHash,
+      color,
     };
 
     // 5. Přidání a uložení uživatele
@@ -237,8 +242,16 @@ app.post("/api/register", async (req: Request, res: Response) => {
 app.get("/api/reservations", protect, async (req, res) => {
   try {
     const reservations = await loadReservations();
-    // Vracíme všechna data, včetně nových polí purpose a notes
-    res.json(reservations);
+    const users = await loadUsers();
+
+    const userColorMap = new Map(users.map(u => [u.id, u.color]));
+
+    const reservationsWithColors = reservations.map(r => ({
+      ...r,
+      userColor: userColorMap.get(r.userId) || '#808080' // Default grey if user has no color
+    }));
+
+    res.json(reservationsWithColors);
   } catch (error) {
     console.error("Chyba při načítání rezervací (GET):", error);
     res.status(500).json({ message: "Chyba při načítání rezervací." });
@@ -398,4 +411,3 @@ app.delete("/api/reservations/:id", protect, async (req: Request, res: Response)
 app.listen(port, () => {
   console.log(`Backend server naslouchá na http://localhost:${port}`);
 });
-

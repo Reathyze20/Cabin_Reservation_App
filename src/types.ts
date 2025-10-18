@@ -3,6 +3,7 @@ export interface User {
   username: string;
   passwordHash: string;
   role?: 'admin' | 'user' | 'guest';
+  color?: string;
 }
 
 export interface Reservation {
@@ -13,12 +14,14 @@ export interface Reservation {
   to: string;
   purpose?: string; // Účel návštěvy (nepovinné)
   notes?: string;   // Poznámky (nepovinné)
+  userColor?: string;
 }
 
 export interface JwtPayload {
   userId: string;
   username: string;
   role?: 'admin' | 'user' | 'guest';
+  color?: string;
   iat: number; // Čas vydání tokenu
   exp: number; // Čas expirace tokenu
 }
