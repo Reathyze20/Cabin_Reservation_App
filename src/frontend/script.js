@@ -353,7 +353,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const matchingReservation = window.currentReservations.find((r) => {
           try {
-            // FIX: Parse dates as UTC to avoid timezone issues
             const startTs = new Date(r.from + 'T00:00:00Z').getTime();
             const endTs = new Date(r.to + 'T00:00:00Z').getTime();
             return currentTimestamp >= startTs && currentTimestamp <= endTs;
@@ -371,20 +370,27 @@ document.addEventListener("DOMContentLoaded", () => {
           dayElem.dataset.userId = matchingReservation.userId || '';
           dayElem.dataset.dateIso = date.toISOString().slice(0,10);
 
-          // FIX: Parse dates as UTC here as well for correct pill shape class application
           const fromTs = new Date(matchingReservation.from + 'T00:00:00Z').getTime();
           const toTs = new Date(matchingReservation.to + 'T00:00:00Z').getTime();
 
-          if (currentTimestamp === fromTs) dayElem.classList.add('range-start');
-          if (currentTimestamp === toTs) dayElem.classList.add('range-end');
-          if (currentTimestamp > fromTs && currentTimestamp < toTs) dayElem.classList.add('range-middle');
+          const dayOfWeek = date.getUTCDay(); 
+
+          if (currentTimestamp === fromTs || dayOfWeek === 1) dayElem.classList.add('range-start');
+          if (currentTimestamp === toTs || dayOfWeek === 0) dayElem.classList.add('range-end');
+          
+          if (currentTimestamp > fromTs && currentTimestamp < toTs) {
+            dayElem.classList.add('range-middle');
+          }
+          // If a day is both start and end of a week, it should be rounded on both sides
+          if ((currentTimestamp === fromTs || dayOfWeek === 1) && (currentTimestamp === toTs || dayOfWeek === 0)) {
+              dayElem.classList.add('range-start', 'range-end');
+          }
 
 
           const assignedColor = getUserColor(matchingReservation.userId);
           if (assignedColor) {
             const bgColor = hexToRgba(assignedColor, 0.8);
             dayElem.style.backgroundColor = bgColor;
-            // Set CSS variable for box-shadow in range-middle
             dayElem.style.setProperty('--day-bg-color', bgColor);
             dayElem.style.color = '#fff';
             dayElem.style.fontWeight = 'bold';
@@ -810,3 +816,4 @@ document.addEventListener("DOMContentLoaded", () => {
     showLogin();
   }
 });
+
