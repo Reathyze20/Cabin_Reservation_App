@@ -598,7 +598,7 @@ span.flatpickr-weekday {
 .flatpickr-day.booked-day {
   text-decoration: none;
   opacity: 1;
-  cursor: not-allowed;
+  cursor: pointer;
   border: none;
   color: white;
   box-shadow: none;
@@ -773,3 +773,4 @@ span.flatpickr-weekday {
 .backup-warning strong {
   color: #713f12;
 }
+
