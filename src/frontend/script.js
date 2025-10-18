@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-  // Query all DOM elements up front to avoid TDZ and redeclaration issues
+  // Query all DOM elements up front
   const loginSection = document.getElementById("login-section");
   const appSection = document.getElementById("app-section");
   const loginForm = document.getElementById("login-form");
@@ -19,7 +19,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const calendarContainer = document.querySelector(".calendar-container");
   const reservationsTitle = document.getElementById("reservations-title");
 
-  // Elements for the booking modal
   const bookingModal = document.getElementById("booking-modal");
   const openModalButton = document.getElementById("open-booking-modal-button");
   const bookingForm = document.getElementById("booking-form");
@@ -35,67 +34,45 @@ document.addEventListener("DOMContentLoaded", () => {
   const notesTextarea = document.getElementById("notes-textarea");
   const backupWarningMessage = document.getElementById("backup-warning-message");
 
-  // Elements for the confirm delete modal
   const confirmDeleteModal = document.getElementById('confirm-delete-modal');
   const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
   const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
   
-  // Shopping list elements
   const shoppingListDiv = document.getElementById("shopping-list");
   const addItemForm = document.getElementById("add-item-form");
   const itemNameInput = document.getElementById("item-name-input");
   const itemIconInput = document.getElementById("item-icon-input");
   const openIconModalBtn = document.getElementById("open-icon-modal-btn");
 
-  // Icon modal elements
   const iconSelectModal = document.getElementById("icon-select-modal");
   const iconGrid = document.getElementById("icon-grid");
   
-  // --- Close buttons for all modals ---
   document.querySelectorAll('.modal-close-button').forEach(button => {
     button.addEventListener('click', () => {
       button.closest('.modal-overlay').style.display = 'none';
     });
   });
 
-
-  // Password toggle elements
   const togglePasswordLogin = document.getElementById('toggle-password-login');
   const registerPasswordInput = document.getElementById('register-password');
   const togglePasswordRegister = document.getElementById('toggle-password-register');
 
-  // Add a button to clear the date selection (guarded)
-  const clearDateButton = document.createElement('button');
-  clearDateButton.id = 'clear-date-button';
-  clearDateButton.textContent = 'Vymazat výběr datumu';
-  clearDateButton.className = 'button-secondary';
-  clearDateButton.style.margin = '8px 0';
-  clearDateButton.style.display = 'none'; // Initially hide the button
   const _calendarContainer = calendarContainer || document.querySelector('.calendar-container');
-  if (_calendarContainer && _calendarContainer.parentNode) {
-    _calendarContainer.parentNode.insertBefore(clearDateButton, _calendarContainer.nextSibling);
-  }
 
-  clearDateButton.addEventListener('click', () => {
-    if (typeof flatpickrInstance !== 'undefined' && flatpickrInstance) {
-      flatpickrInstance.clear();
-      const inEl = document.getElementById("check-in-date-display");
-      const outEl = document.getElementById("check-out-date-display");
-      if (inEl) inEl.textContent = "- Vyberte -";
-      if (outEl) outEl.textContent = "- Vyberte -";
-      if (openModalButton) openModalButton.style.display = 'none';
-      clearDateButton.style.display = 'none'; // Hide button on clear
-    }
-  });
+  // Helper for password toggle
+  const setupPasswordToggle = (toggleBtn, passwordField) => {
+    if (!toggleBtn || !passwordField) return;
+    toggleBtn.addEventListener('click', () => {
+      const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+      passwordField.setAttribute('type', type);
+      toggleBtn.classList.toggle('fa-eye');
+      toggleBtn.classList.toggle('fa-eye-slash');
+    });
+  };
+
+  setupPasswordToggle(togglePasswordLogin, passwordInput);
+  setupPasswordToggle(togglePasswordRegister, registerPasswordInput);
   
-  // --- Helper functions for colors ---
-
-  /**
-   * Converts a HEX color to an RGBA color.
-   * @param {string} hex The hex color code (e.g., "#FF5733").
-   * @param {number} alpha The opacity value from 0 to 1.
-   * @returns {string|null} The RGBA color string or null if hex is invalid.
-   */
   function hexToRgba(hex, alpha = 1) {
     if (!hex || !/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)) return null;
     let c = hex.substring(1).split('');
@@ -112,19 +89,18 @@ document.addEventListener("DOMContentLoaded", () => {
   let reservationIdToDelete = null; 
   const backendUrl = "";
 
-  // --- Functions for showing/hiding sections ---
   function showLogin() {
     loginSection.style.display = "block";
     registerSection.style.display = "none";
     appSection.style.display = "none";
-    loginError.textContent = "";
+    if(loginError) loginError.textContent = "";
   }
 
   function showRegister() {
     loginSection.style.display = "none";
     registerSection.style.display = "block";
     appSection.style.display = "none";
-    registerMessage.textContent = "";
+    if(registerMessage) registerMessage.textContent = "";
   }
 
   function showApp(username) {
@@ -142,18 +118,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // --- Form Switching Logic ---
-  showRegisterLink.addEventListener("click", (e) => {
-    e.preventDefault();
-    showRegister();
-  });
+  if(showRegisterLink) showRegisterLink.addEventListener("click", (e) => { e.preventDefault(); showRegister(); });
+  if(showLoginLink) showLoginLink.addEventListener("click", (e) => { e.preventDefault(); showLogin(); });
 
-  showLoginLink.addEventListener("click", (e) => {
-    e.preventDefault();
-    showLogin();
-  });
-
-  // --- Login Logic ---
   if (loginForm) {
     loginForm.addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -188,7 +155,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // --- Registration Logic ---
   if(registerForm) {
     registerForm.addEventListener("submit", async (event) => {
         event.preventDefault();
@@ -196,22 +162,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const username = document.getElementById("register-username").value;
         const password = document.getElementById("register-password").value;
         const color = document.getElementById("register-color").value;
-
-        if (username.length < 3 || username.length > 20) {
-            registerMessage.textContent = "Uživatelské jméno musí mít 3-20 znaků.";
-            registerMessage.style.color = "red";
-            return;
-        }
-        if (!/^[a-zA-Z0-9._-]+$/.test(username) || /^[._-]/.test(username) || /[._-]$/.test(username) || /([._-])\1+/.test(username) || username.includes(' ')) {
-            registerMessage.textContent = "Jméno obsahuje neplatné znaky nebo formátování.";
-            registerMessage.style.color = "red";
-            return;
-        }
-        if (password.length < 6) {
-            registerMessage.textContent = "Heslo musí mít alespoň 6 znaků.";
-            registerMessage.style.color = "red";
-            return;
-        }
 
         try {
             const response = await fetch(`${backendUrl}/api/register`, {
@@ -236,7 +186,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // --- Logout Logic ---
   if(logoutButton) {
     logoutButton.addEventListener("click", () => {
         localStorage.clear();
@@ -249,14 +198,13 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
   
-  // --- MODAL WINDOW LOGIC ---
   function openBookingModal(isEdit = false, reservation = null) {
       bookingForm.reset();
       otherPurposeGroup.style.display = 'none';
       reservationIdInput.value = '';
       modalDeleteButton.style.display = 'none';
       modalDeleteButton.onclick = null;
-      backupWarningMessage.style.display = 'none'; // Skrýt varování ve výchozím stavu
+      backupWarningMessage.style.display = 'none';
 
       if (isEdit && reservation) {
         modalTitle.textContent = "Upravit rezervaci";
@@ -290,9 +238,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const to = flatpickrInstance.selectedDates[1];
             modalDateRangeSpan.textContent = `${formatDateForDisplay(from)} - ${formatDateForDisplay(to)}`;
 
-            // Zkontrolovat překryv a zobrazit varování, pokud je to nutné
             const isOverlapping = window.currentReservations.some(r => {
-                // Kontrolujeme pouze proti hlavním rezervacím
                 if (r.status === 'backup') return false;
                 const resStart = new Date(r.from);
                 const resEnd = new Date(r.to);
@@ -330,13 +276,11 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-
-  // --- Application Initialization ---
   function getToken() {
     return localStorage.getItem("authToken");
   }
 
-  function initializeDatePicker(disabledDates = []) {
+  function initializeDatePicker() {
     const flatpickrConfig = {
       mode: "range",
       dateFormat: "Y-m-d",
@@ -360,17 +304,8 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         const primaryReservation = reservationsForDay.find(r => r.status !== 'backup');
-        const backupReservation = reservationsForDay.find(r => r.status === 'backup');
-
-        if (primaryReservation && backupReservation) {
-            const primaryColor = primaryReservation.userColor || '#808080';
-            const backupColor = backupReservation.userColor || '#cccccc';
-            
-            dayElem.style.backgroundImage = `linear-gradient(to right, ${hexToRgba(primaryColor, 0.8)} 50%, ${hexToRgba(backupColor, 0.8)} 50%)`;
-            dayElem.classList.add("booked-day");
-            dayElem.title = `Hlavní: ${primaryReservation.username}\nZáložní: ${backupReservation.username}`;
-
-        } else if (primaryReservation) {
+        
+        if (primaryReservation) {
             dayElem.title = `Rezervováno: ${primaryReservation.username}`;
             dayElem.classList.add("booked-day");
             
@@ -385,11 +320,9 @@ document.addEventListener("DOMContentLoaded", () => {
       onChange: function (selectedDates, dateStr, instance) {
         const checkInDateDisplay = document.getElementById("check-in-date-display");
         const checkOutDateDisplay = document.getElementById("check-out-date-display");
-        const clearBtn = document.getElementById('clear-date-button');
-
+       
         if (selectedDates.length >= 1) {
           checkInDateDisplay.textContent = instance.formatDate(selectedDates[0], "d. M Y");
-          if(clearBtn) clearBtn.style.display = 'block';
           if (selectedDates.length === 2) {
             checkOutDateDisplay.textContent = instance.formatDate(selectedDates[1], "d. M Y");
             openModalButton.style.display = 'block';
@@ -401,7 +334,6 @@ document.addEventListener("DOMContentLoaded", () => {
           checkInDateDisplay.textContent = "- Vyberte -";
           checkOutDateDisplay.textContent = "- Vyberte -";
           openModalButton.style.display = 'none';
-          if(clearBtn) clearBtn.style.display = 'none';
         }
         
         if (selectedDates.length === 2) {
@@ -427,7 +359,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function loadReservations() {
-    if (reservationsListDiv) reservationsListDiv.innerHTML = "<p><i>Aktualizuji rezervace...</i></p>";
+    if (reservationsListDiv) reservationsListDiv.innerHTML = `<div class="spinner-container"><div class="spinner"></div></div>`;
     
     const token = getToken();
     if (!token) {
@@ -495,19 +427,7 @@ document.addEventListener("DOMContentLoaded", () => {
             purpose = otherPurposeInput.value.trim();
         }
 
-        if (!purpose || purpose.length > 50 || /[<>]/.test(purpose)) {
-            bookingMessage.textContent = "Účel návštěvy: max. 50 znaků, bez < >.";
-            bookingMessage.style.color = "red";
-            return;
-        }
-
         const notes = notesTextarea.value.trim();
-        if (notes.length > 200 || /[<>]/.test(notes) || /script/i.test(notes)) {
-            bookingMessage.textContent = "Poznámka: max. 200 znaků, bez < > nebo 'script'.";
-            bookingMessage.style.color = "red";
-            return;
-        }
-
         const token = getToken();
         if (!token) {
             bookingMessage.textContent = "Chyba: Vypršelo přihlášení.";
@@ -526,31 +446,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (isEditMode) {
             const fromInput = document.getElementById('edit-from-date');
             const toInput = document.getElementById('edit-to-date');
-            if (!fromInput || !toInput || !fromInput.value || !toInput.value) {
-                bookingMessage.textContent = "Chyba: Chybí datum od/do.";
-                bookingMessage.style.color = "red";
-                return;
-            }
-            const fromDate = new Date(fromInput.value);
-            const toDate = new Date(toInput.value);
-            if (toDate < fromDate) {
-                bookingMessage.textContent = "Chyba: Datum 'do' nesmí být před datem 'od'.";
-                bookingMessage.style.color = "red";
-                return;
-            }
-
-            const myId = reservationIdInput.value;
-            const overlap = window.currentReservations.some(r => {
-                if (r.id === myId) return false;
-                const resStart = new Date(r.from);
-                const resEnd = new Date(r.to);
-                return fromDate <= resEnd && toDate >= resStart;
-            });
-            if (overlap) {
-                bookingMessage.textContent = "Chyba: Termín zasahuje do jiné rezervace.";
-                bookingMessage.style.color = "red";
-                return;
-            }
             bodyData.from = fromInput.value;
             bodyData.to = toInput.value;
         } else {
@@ -578,11 +473,11 @@ document.addEventListener("DOMContentLoaded", () => {
         
             closeBookingModal();
         
-            if (!isEditMode) {
+            if (!isEditMode && flatpickrInstance) {
                 flatpickrInstance.clear();
                 document.getElementById("check-in-date-display").textContent = "- Vyberte -";
                 document.getElementById("check-out-date-display").textContent = "- Vyberte -";
-                openModalButton.style.display = 'none';
+                if(openModalButton) openModalButton.style.display = 'none';
             }
             
             await loadReservations();
@@ -648,6 +543,8 @@ document.addEventListener("DOMContentLoaded", () => {
           reservations.sort((a, b) => new Date(a.from) - new Date(b.from));
           const list = document.createElement("ul");
           const loggedInUserId = localStorage.getItem("userId");
+          const userIsAdmin = localStorage.getItem('role') === 'admin';
+
 
           reservations.forEach((r) => {
               const listItem = document.createElement("li");
@@ -656,7 +553,7 @@ document.addEventListener("DOMContentLoaded", () => {
                   : '';
               
               let actionButtonsHTML = '';
-              if (loggedInUserId === r.userId) {
+              if (loggedInUserId === r.userId || userIsAdmin) {
                   actionButtonsHTML = `
                   <div class="action-buttons">
                       <button class="edit-btn" data-id="${r.id}" title="Upravit rezervaci"><i class="fas fa-pencil-alt"></i></button>
@@ -667,13 +564,7 @@ document.addEventListener("DOMContentLoaded", () => {
               let statusBadge = '';
               if (r.status === 'backup') {
                   statusBadge = '<span class="status-badge backup">Záložní</span>';
-              } else { // Primary or old data without status
-                  const hasBackups = reservations.some(backup => backup.parentId === r.id);
-                  if (hasBackups) {
-                      statusBadge = '<span class="status-badge primary-with-backup">Má zálohy</span>';
-                  }
-              }
-
+              } 
               listItem.innerHTML = `
                 ${actionButtonsHTML}
                 <div class="reservation-header">
@@ -694,7 +585,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
   }
 
-  // Delegated event listeners for actions in the reservations list
   reservationsListDiv.addEventListener('click', (event) => {
     const button = event.target.closest('button');
     if (!button) return;
@@ -708,7 +598,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Listeners for confirmation modal
   if(cancelDeleteBtn) cancelDeleteBtn.addEventListener('click', closeConfirmDeleteModal);
   if(confirmDeleteBtn) {
     confirmDeleteBtn.addEventListener('click', async () => {
@@ -722,7 +611,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         try {
-            // ZMĚNA: Použití metody POST a odeslání ID v těle požadavku
             const response = await fetch(`${backendUrl}/api/reservations/delete`, {
                 method: 'POST',
                 headers: { 
@@ -746,7 +634,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Close modals by clicking on the background
   window.addEventListener('click', (event) => {
       if (event.target === bookingModal) closeBookingModal();
       if (event.target === confirmDeleteModal) closeConfirmDeleteModal();
@@ -756,7 +643,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- Shopping List Logic ---
 
   async function loadShoppingList() {
-    shoppingListDiv.innerHTML = "<p><i>Načítám...</i></p>";
+    shoppingListDiv.innerHTML = `<div class="spinner-container"><div class="spinner"></div></div>`;
     const token = getToken();
     try {
       const response = await fetch(`${backendUrl}/api/shopping-list`, {
@@ -785,18 +672,22 @@ document.addEventListener("DOMContentLoaded", () => {
       const isAdmin = localStorage.getItem('role') === 'admin';
       const deleteBtn = isAdmin ? `<button class="delete-item-btn" title="Smazat"><i class="fas fa-times"></i></button>` : '';
 
+      const detailsHTML = `<span class="added-by">Přidal: ${item.addedBy}</span>`;
+      
+      const priceHTML = item.purchased && item.price
+          ? `<div class="price-info">Zaplatil(a): <strong>${item.purchasedBy} ${item.price} Kč</strong></div>`
+          : '';
+
       li.innerHTML = `
         <div class="item-main-info">
-          <input type="checkbox" class="purchase-checkbox" ${item.purchased ? 'checked' : ''}>
-          <i class="${item.icon || 'fas fa-shopping-basket'}"></i>
+          <i class="${item.icon || 'fas fa-shopping-basket'} item-icon"></i>
           <span class="item-name">${item.name}</span>
           ${deleteBtn}
+          <input type="checkbox" class="purchase-checkbox" ${item.purchased ? 'checked' : ''} title="Označit jako koupené">
         </div>
-        <div class="item-details">
-            <span class="added-by">Přidal: ${item.addedBy}</span>
-            ${item.purchased ? `<span class="purchased-by"> | Koupil: ${item.purchasedBy} ${item.price ? `(${item.price} Kč)` : ''}</span>` : ''}
-        </div>
-        <div class="purchase-form" style="display: none;">
+        <div class="item-details">${detailsHTML}</div>
+        ${priceHTML}
+        <div class="purchase-form">
             <input type="number" class="price-input" placeholder="Cena (Kč)">
             <button class="save-purchase-btn">Uložit</button>
         </div>
@@ -848,7 +739,7 @@ document.addEventListener("DOMContentLoaded", () => {
         itemIconInput.value = 'fas fa-shopping-basket'; // Reset na výchozí
         openIconModalBtn.querySelector('i').className = 'fas fa-shopping-basket';
         
-        loadShoppingList(); // Refresh list after adding
+        loadShoppingList();
       } catch (error) {
         alert(error.message);
       }
@@ -861,6 +752,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const purchaseForm = li.querySelector('.purchase-form');
       if (e.target.checked) {
         purchaseForm.style.display = 'flex';
+        li.querySelector('.price-input').focus();
       } else {
         purchaseForm.style.display = 'none';
         updatePurchaseStatus(li.dataset.id, false);
@@ -872,7 +764,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if(e.target.closest('.save-purchase-btn')) {
       const li = e.target.closest('.shopping-list-item');
       const priceInput = li.querySelector('.price-input');
-      updatePurchaseStatus(li.dataset.id, true, priceInput.value);
+      updatePurchaseStatus(li.dataset.id, true, priceInput.value || null);
     }
     if(e.target.closest('.delete-item-btn')) {
       const li = e.target.closest('.shopping-list-item');
@@ -888,12 +780,13 @@ document.addEventListener("DOMContentLoaded", () => {
           const response = await fetch(`${backendUrl}/api/shopping-list/${id}/purchase`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-              body: JSON.stringify({ purchased, price: price || undefined })
+              body: JSON.stringify({ purchased, price: price })
           });
           if (!response.ok) throw new Error('Chyba při aktualizaci.');
           loadShoppingList();
       } catch (error) {
           alert(error.message);
+          loadShoppingList(); // Re-render to revert checkbox state on failure
       }
   }
 
@@ -911,7 +804,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
   }
 
-  // --- Icon Modal ---
   const icons = [
       'fas fa-shopping-basket', 'fas fa-utensils', 'fas fa-wine-glass-alt', 'fas fa-beer', 'fas fa-coffee',
       'fas fa-seedling', 'fas fa-hammer', 'fas fa-paint-roller', 'fas fa-lightbulb', 'fas fa-broom',
@@ -945,8 +837,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-
-  // --- Run on page load ---
   const initialToken = getToken();
   const initialUsername = localStorage.getItem("username");
   if (initialToken && initialUsername) {
@@ -955,4 +845,3 @@ document.addEventListener("DOMContentLoaded", () => {
     showLogin();
   }
 });
-

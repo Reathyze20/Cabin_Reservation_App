@@ -20,6 +20,12 @@
   font-size: 1.2em;
   z-index: 2;
 }
+.spinner-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
 .spinner {
   display: inline-block;
   width: 32px;
@@ -35,97 +41,6 @@
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
-
-.admin-user-table {
-  width: 100%;
-  max-width: 700px;
-  margin: 32px auto 16px auto;
-  border-collapse: separate;
-  border-spacing: 0;
-  background: #fff;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.07);
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.admin-user-table th, .admin-user-table td {
-  padding: 12px 18px;
-  text-align: left;
-}
-.admin-user-table th {
-  background: #fff7d6;
-  color: #d18b00;
-  font-weight: 700;
-  border-bottom: 2px solid #ffe1a6;
-}
-.admin-user-table tr:not(:last-child) td {
-  border-bottom: 1px solid #f3e2c0;
-}
-.admin-user-table td {
-  font-size: 1rem;
-}
-.admin-user-table .user-role-label {
-  display: inline-block;
-  background: #ffe1a6;
-  color: #a86c00;
-  border-radius: 6px;
-  padding: 2px 10px;
-  font-size: 0.95em;
-}
-.admin-user-table button {
-  background: #fff7d6;
-  color: #d18b00;
-  border: none;
-  border-radius: 6px;
-  padding: 6px 16px;
-  margin-right: 6px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s;
-}
-.admin-user-table button:hover {
-  background: #ffe1a6;
-  color: #a86c00;
-}
-#admin-user-detail {
-  max-width: 500px;
-  margin: 24px auto;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.07);
-  padding: 24px 32px;
-}
-#admin-user-detail h2 {
-  margin-top: 0;
-  color: #d18b00;
-}
-#admin-user-detail p {
-  margin: 10px 0;
-}
-#admin-user-detail select {
-  padding: 4px 12px;
-  border-radius: 6px;
-  border: 1px solid #ffe1a6;
-  background: #fff7d6;
-  color: #a86c00;
-  font-weight: 600;
-}
-#admin-user-detail button {
-  background: #fff7d6;
-  color: #d18b00;
-  border: none;
-  border-radius: 6px;
-  padding: 8px 18px;
-  margin: 8px 8px 0 0;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s;
-}
-#admin-user-detail button:hover {
-  background: #ffe1a6;
-  color: #a86c00;
-}
-/* style.css */
 
 /* Basic reset and settings */
 * {
@@ -151,7 +66,7 @@ body {
   min-height: 100vh;
   display: flex;
   justify-content: center; 
-  align-items: center; /* Změněno pro vertikální centrování */
+  align-items: flex-start;
   padding: 20px;
   color: #374151;
   line-height: 1.6;
@@ -173,7 +88,7 @@ body::before {
 /* Wrapper for main content */
 .app-wrapper {
   width: 100%;
-  max-width: 1000px;
+  max-width: 1200px; /* Zvětšeno pro nový layout */
   display: flex;
   flex-direction: column;
   align-items: center; 
@@ -184,7 +99,7 @@ body::before {
 .login-container {
   width: 100%;
   max-width: 400px;
-  /* Odebráno: margin-top: 50px; */
+  margin-top: 50px;
 }
 
 /* Main application container */
@@ -202,6 +117,13 @@ body::before {
     align-items: flex-start;
 }
 
+.right-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    flex: 1;
+}
+
 
 /* Common style for "cards" */
 .card {
@@ -213,15 +135,12 @@ body::before {
 }
 
 .calendar-card {
-    flex: 2;
     min-width: 450px;
 }
 
 .reservations-list-container {
-    flex: 1;
     min-width: 300px;
 }
-
 
 /* Top bar for dates */
 .date-display-bar {
@@ -314,13 +233,11 @@ select {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 10px;
-  font-size: 0.9em;
+  padding: 0 20px;
   font-size: 1em;
   background-color: rgba(255, 255, 255, 0.85);
   color: #1f2937;
   height: 50px;
-  text-shadow: none;
   backdrop-filter: blur(10px);
   border-radius: 16px;
 
@@ -673,6 +590,9 @@ span.flatpickr-weekday {
   color: #aaa;
   cursor: pointer;
   line-height: 1;
+  background: none;
+  border: none;
+  padding: 0;
 }
 
 .modal-close-button:hover {
@@ -720,46 +640,6 @@ span.flatpickr-weekday {
     background-color: #d1d5db;
 }
 
-/* --- Responsive Design --- */
-@media (max-width: 850px) {
-    .main-content {
-        flex-direction: column;
-    }
-
-    .calendar-card, .reservations-list-container {
-        min-width: 100%;
-    }
-
-    .app-wrapper {
-        padding: 10px;
-    }
-}
-
-@media (max-width: 480px) {
-    body {
-        padding: 5px;
-    }
-    .card {
-        padding: 15px;
-    }
-    .date-display-bar {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-    }
-    .date-separator {
-        display: none;
-    }
-}
-
-
-#admin-link {
-    font-size: 0.9em;
-    color: #1f2937;
-    text-decoration: none;
-    font-weight: 600;
-}
-
 /* --- Status Badges in Reservation List --- */
 .status-badge {
     font-size: 0.8em;
@@ -797,3 +677,283 @@ span.flatpickr-weekday {
   color: #713f12;
 }
 
+#admin-link {
+    font-size: 0.9em;
+    color: #1f2937;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+#admin-link:hover {
+    color: #d18b00;
+}
+
+
+/* --- NOVÉ STYLY PRO NÁKUPNÍ SEZNAM --- */
+.shopping-list-container {
+    flex: 1;
+    min-width: 350px;
+    max-width: 450px;
+    display: flex;
+    flex-direction: column;
+}
+.shopping-list-container h2 {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+    font-size: 1.1em;
+    font-weight: 600;
+    color: #555;
+}
+
+.add-item-form {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+.button-icon-select {
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    background-color: #f9f9f9;
+    font-size: 1.2em;
+    color: #555;
+    padding: 0;
+}
+#item-name-input {
+    flex-grow: 1;
+    margin-top: 0;
+    height: 42px;
+}
+.button-add-item {
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    background-color: #d18b00;
+    color: white;
+    font-size: 1.2em;
+    padding: 0;
+}
+.button-add-item:hover {
+    background-color: #a86c00;
+}
+
+.shopping-list-content {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+.shopping-list-content h3 {
+    margin-top: 15px;
+    margin-bottom: 10px;
+    font-size: 1em;
+    color: #a86c00;
+    font-weight: 600;
+    border-bottom: 1px solid #ffe1a6;
+    padding-bottom: 5px;
+}
+.shopping-list-content ul {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.shopping-list-item {
+    background-color: #fff;
+    border-radius: 12px;
+    padding: 12px 15px;
+    border: 1px solid #f3e2c0;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s ease;
+}
+
+.item-main-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.item-icon {
+    font-size: 1.4em;
+    color: #d18b00;
+    width: 25px;
+    text-align: center;
+}
+.item-name {
+    flex-grow: 1;
+    font-weight: 500;
+    color: #374151;
+}
+
+.purchase-checkbox {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 22px;
+    height: 22px;
+    border: 2px solid #ffe1a6;
+    border-radius: 6px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+.purchase-checkbox:hover {
+    border-color: #d18b00;
+}
+.purchase-checkbox:checked {
+    background-color: #d18b00;
+    border-color: #d18b00;
+}
+.purchase-checkbox:checked::after {
+    content: '\f00c'; /* Font Awesome check icon */
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    color: white;
+    font-size: 14px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.delete-item-btn {
+    background: none;
+    border: none;
+    color: #d1d5db;
+    font-size: 1.1em;
+    padding: 5px;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+}
+.delete-item-btn:hover {
+    color: #ef4444;
+    background-color: #fee2e2;
+}
+
+
+/* --- Styl pro zakoupenou položku --- */
+.shopping-list-item.purchased {
+    background-color: #f9fafb;
+    border-color: #e5e7eb;
+}
+.shopping-list-item.purchased .item-name {
+    text-decoration: line-through;
+    color: #9ca3af;
+}
+.shopping-list-item.purchased .item-icon {
+    color: #9ca3af;
+}
+
+/* --- Detaily a formulář pro cenu --- */
+.item-details {
+    font-size: 0.8em;
+    color: #6b7280;
+    padding: 8px 0 0 37px; /* (icon width + gap) */
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+.item-details span {
+    background-color: #f3f4f6;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.price-info {
+    font-size: 0.9em;
+    font-weight: 600;
+    color: #166534;
+    padding-left: 37px;
+    margin-top: 8px;
+}
+.price-info strong {
+    color: #1f2937;
+}
+
+.purchase-form {
+    display: none; /* Skryto defaultně, ukáže se přes JS */
+    gap: 8px;
+    margin-top: 10px;
+    padding-left: 37px;
+}
+.price-input {
+    width: 100px;
+    height: 32px;
+    padding: 5px 8px;
+    margin: 0;
+    border-radius: 6px;
+}
+.save-purchase-btn {
+    height: 32px;
+    background-color: #fff7d6;
+    color: #d18b00;
+    padding: 0 12px;
+    font-size: 0.9em;
+}
+.save-purchase-btn:hover {
+    background: #ffe1a6;
+    color: #a86c00;
+}
+
+#icon-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+    gap: 10px;
+}
+.icon-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 50px;
+    border-radius: 8px;
+    background-color: #f3f4f6;
+    font-size: 1.5em;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.icon-wrapper:hover {
+    background-color: #e5e7eb;
+    color: #d18b00;
+}
+
+/* --- Responsive Design --- */
+@media (max-width: 950px) {
+    .main-content {
+        flex-direction: column;
+    }
+
+    .shopping-list-container {
+        max-width: 100%;
+    }
+
+    .calendar-card, .reservations-list-container {
+        min-width: 100%;
+    }
+
+    .app-wrapper {
+        padding: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 5px;
+        align-items: flex-start;
+    }
+    .card {
+        padding: 15px;
+    }
+    .date-display-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    .date-separator {
+        display: none;
+    }
+}

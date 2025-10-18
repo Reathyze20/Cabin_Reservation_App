@@ -44,7 +44,10 @@
           <br />
           <div>
             <label for="password">Heslo:</label><br />
-            <input type="password" id="login-password" name="password" required />
+            <div class="input-eye-wrapper">
+              <input type="password" id="login-password" name="password" required />
+              <i class="fas fa-eye toggle-password" id="toggle-password-login"></i>
+            </div>
           </div>
           <br />
           <button type="submit">Přihlásit se</button>
@@ -64,7 +67,10 @@
             <br />
             <div>
                 <label for="register-password">Heslo (min. 6 znaků):</label><br />
-                <input type="password" id="register-password" name="password" required />
+                <div class="input-eye-wrapper">
+                    <input type="password" id="register-password" name="password" required />
+                    <i class="fas fa-eye toggle-password" id="toggle-password-register"></i>
+                </div>
             </div>
             <br />
             <div>
@@ -85,10 +91,9 @@
         <div class="user-info">
           <span>
             Přihlášen jako: <strong id="logged-in-username"></strong>
-            <a href="admin.html" id="admin-link" class="admin-link" style="display:none;">🛠️ Admin Tool</a>
           </span>
           <div style="display: flex; gap: 12px; align-items: center;">
-            <a href="admin.html" id="admin-link" class="admin-link" style="display:none;"></a>
+            <a href="admin.html" id="admin-link" class="admin-link" style="display:none;">🛠️ Admin Tool</a>
             <button id="logout-button" class="button-logout">
               <i class="fas fa-sign-out-alt"></i> Odhlásit se
             </button>
@@ -99,61 +104,63 @@
             <!-- Nákupní seznam -->
             <div class="card shopping-list-container">
               <h2>Nákupní seznam</h2>
-              <form id="add-item-form">
+              <form id="add-item-form" class="add-item-form">
                   <input type="hidden" id="item-icon-input" value="fas fa-shopping-basket">
                   <button type="button" id="open-icon-modal-btn" class="button-icon-select">
                       <i class="fas fa-shopping-basket"></i>
                   </button>
                   <input type="text" id="item-name-input" placeholder="Co je potřeba koupit?" required />
-                  <button type="submit" class="button-add-item">+</button>
+                  <button type="submit" class="button-add-item"><i class="fas fa-plus"></i></button>
               </form>
-              <div id="shopping-list">Načítám seznam...</div>
+              <div id="shopping-list" class="shopping-list-content">
+                  <div class="spinner-container"><div class="spinner"></div></div>
+              </div>
             </div>
 
-            <!-- Hlavní karta s kalendářem -->
-            <div class="card calendar-card">
-              <!-- Horní lišta pro výběr datumu -->
-              <div class="date-display-bar">
-                <div class="date-part">
-                  <i class="far fa-calendar-alt icon"></i>
-                  <div>
-                    <span class="label">Datum příjezdu</span>
-                    <span class="date-value" id="check-in-date-display"
-                      >- Vyberte -</span
-                    >
+            <!-- Pravý sloupec s kalendářem a rezervacemi -->
+            <div class="right-column">
+                <!-- Hlavní karta s kalendářem -->
+                <div class="card calendar-card">
+                  <!-- Horní lišta pro výběr datumu -->
+                  <div class="date-display-bar">
+                    <div class="date-part">
+                      <i class="far fa-calendar-alt icon"></i>
+                      <div>
+                        <span class="label">Datum příjezdu</span>
+                        <span class="date-value" id="check-in-date-display"
+                          >- Vyberte -</span
+                        >
+                      </div>
+                    </div>
+                    <span class="date-separator">do</span>
+                    <div class="date-part">
+                      <div>
+                        <span class="label">Datum odjezdu</span>
+                        <span class="date-value" id="check-out-date-display"
+                          >- Vyberte -</span
+                        >
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <span class="date-separator">do</span>
-                <div class="date-part">
-                  <div>
-                    <span class="label">Datum odjezdu</span>
-                    <span class="date-value" id="check-out-date-display"
-                      >- Vyberte -</span
-                    >
+
+                  <!-- Kontejner, kam JS vloží inline Flatpickr -->
+                  <div class="calendar-container">
+                    <!-- Flatpickr se připojí sem pomocí JS -->
                   </div>
+
+                  <!-- Tlačítko pro rezervaci se zobrazí až po výběru datumu -->
+                  <button id="open-booking-modal-button" class="button-primary" style="display: none;">
+                      Pokračovat k rezervaci
+                  </button>
+                  <p id="booking-message"></p>
                 </div>
-              </div>
+                <!-- Konec .calendar-card -->
 
-              <!-- Kontejner, kam JS vloží inline Flatpickr -->
-              <div class="calendar-container">
-                <!-- Flatpickr se připojí sem pomocí JS -->
-              </div>
-
-              <!-- Skrytý input pro Flatpickr (může být potřeba pro některé funkce) -->
-              <input type="hidden" id="date-picker" />
-
-              <!-- Tlačítko pro rezervaci se zobrazí až po výběru datumu -->
-              <button id="open-booking-modal-button" class="button-primary" style="display: none;">
-                  Pokračovat k rezervaci
-              </button>
-              <p id="booking-message"></p>
-            </div>
-            <!-- Konec .calendar-card -->
-
-            <!-- Seznam rezervací (mimo hlavní kartu, ale stále v app-section) -->
-            <div class="reservations-list-container card">
-              <h2 id="reservations-title">Přehled rezervací</h2>
-              <div id="reservations-list">Načítám rezervace...</div>
+                <!-- Seznam rezervací (mimo hlavní kartu, ale stále v app-section) -->
+                <div class="reservations-list-container card">
+                  <h2 id="reservations-title">Přehled rezervací</h2>
+                  <div id="reservations-list">Načítám rezervace...</div>
+                </div>
             </div>
         </div>
 
@@ -232,4 +239,3 @@
     <script src="script.js"></script>
   </body>
 </html>
-
