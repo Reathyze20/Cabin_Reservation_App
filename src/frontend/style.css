@@ -248,7 +248,7 @@ body {
 /* Container for calendar - Flatpickr will be here */
 .calendar-container {
   margin-bottom: 20px;
-  position: relative; /* Allow absolute strips inside */
+  position: relative; /* Allow absolute labels inside */
 }
 
 /* Buttons */
@@ -601,7 +601,7 @@ span.flatpickr-weekday {
 }
 
 
-/* --- BOOKED DAYS (oval shape) --- */
+/* --- BOOKED DAYS (pill shape) --- */
 .flatpickr-day.booked-day {
   text-decoration: none;
   opacity: 1;
@@ -609,11 +609,11 @@ span.flatpickr-weekday {
   border: none;
   color: white;
   box-shadow: none;
-  border-radius: 0; /* Default to square */
+  border-radius: 0; /* Default to square for middle parts */
 }
 
 .flatpickr-day.booked-day.range-middle {
-    /* Fill gaps between days */
+    /* Fill gaps between days using the color variable from JS */
     box-shadow: -5px 0 0 var(--day-bg-color), 5px 0 0 var(--day-bg-color);
 }
 
@@ -633,29 +633,20 @@ span.flatpickr-weekday {
 }
 
 
-/* --- Reservation strip ("noodle") under calendar days --- */
-.reservation-strip {
+/* --- Reservation Label (Username) under the range --- */
+.reservation-label {
   position: absolute;
-  height: 28px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 12px;
-  box-sizing: border-box;
+  z-index: 3;
   pointer-events: none;
-  z-index: 5;
-  overflow: hidden;
-  border: 1px solid;
-  /* margin-top: -10px; Moves the strip up */
-  /* background-color and border-color are set in JS */
-}
-.reservation-strip-label {
-  font-size: 13px;
-  color: #1f2937;
+  font-size: 11px;
   font-weight: 600;
+  padding: 0 4px;
+  line-height: 1;
+  text-shadow: 0px 0px 4px white, 0px 0px 4px white, 0px 0px 4px white;
   white-space: nowrap;
-  text-shadow: 0 0 6px rgba(255, 255, 255, 0.7);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* barva se nastavuje v JS */
 }
 
 
@@ -790,4 +781,3 @@ span.flatpickr-weekday {
     text-decoration: none;
     font-weight: 600;
 }
-

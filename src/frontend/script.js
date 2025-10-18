@@ -347,17 +347,15 @@ document.addEventListener("DOMContentLoaded", () => {
       locale: "cs",
       onDayCreate: function (dObj, dStr, fp, dayElem) {
         const date = dayElem.dateObj;
-        // Use UTC to avoid timezone issues when comparing dates
         const currentTimestamp = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
 
         if (!window.currentReservations || window.currentReservations.length === 0) return;
 
         const matchingReservation = window.currentReservations.find((r) => {
           try {
-            const resStart = new Date(r.from);
-            const resEnd = new Date(r.to);
-            const startTs = Date.UTC(resStart.getUTCFullYear(), resStart.getUTCMonth(), resStart.getUTCDate());
-            const endTs = Date.UTC(resEnd.getUTCFullYear(), resEnd.getUTCMonth(), resEnd.getUTCDate());
+            // FIX: Parse dates as UTC to avoid timezone issues
+            const startTs = new Date(r.from + 'T00:00:00Z').getTime();
+            const endTs = new Date(r.to + 'T00:00:00Z').getTime();
             return currentTimestamp >= startTs && currentTimestamp <= endTs;
           } catch (e) {
             return false;
@@ -373,11 +371,9 @@ document.addEventListener("DOMContentLoaded", () => {
           dayElem.dataset.userId = matchingReservation.userId || '';
           dayElem.dataset.dateIso = date.toISOString().slice(0,10);
 
-          // Add classes for start/middle/end of range for oval styling
-          const fromD = new Date(matchingReservation.from);
-          const toD = new Date(matchingReservation.to);
-          const fromTs = Date.UTC(fromD.getUTCFullYear(), fromD.getUTCMonth(), fromD.getUTCDate());
-          const toTs = Date.UTC(toD.getUTCFullYear(), toD.getUTCMonth(), toD.getUTCDate());
+          // FIX: Parse dates as UTC here as well for correct pill shape class application
+          const fromTs = new Date(matchingReservation.from + 'T00:00:00Z').getTime();
+          const toTs = new Date(matchingReservation.to + 'T00:00:00Z').getTime();
 
           if (currentTimestamp === fromTs) dayElem.classList.add('range-start');
           if (currentTimestamp === toTs) dayElem.classList.add('range-end');
@@ -388,6 +384,7 @@ document.addEventListener("DOMContentLoaded", () => {
           if (assignedColor) {
             const bgColor = hexToRgba(assignedColor, 0.8);
             dayElem.style.backgroundColor = bgColor;
+            // Set CSS variable for box-shadow in range-middle
             dayElem.style.setProperty('--day-bg-color', bgColor);
             dayElem.style.color = '#fff';
             dayElem.style.fontWeight = 'bold';
@@ -470,7 +467,7 @@ document.addEventListener("DOMContentLoaded", () => {
         initializeDatePicker(disabledRanges);
       }
       
-      // Always render overview and strips after data is loaded
+      // Always render overview and labels after data is loaded
       setTimeout(() => {
         if (flatpickrInstance) {
             renderReservationsOverview(flatpickrInstance.currentMonth, flatpickrInstance.currentYear);
@@ -619,8 +616,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     renderReservationList(filteredReservations, "Pro tento měsíc nejsou žádné rezervace.");
-    // draw strips under calendar for visible reservations
-    setTimeout(() => renderReservationStrips(), 50);
+    // draw labels under calendar for visible reservations
+    setTimeout(() => renderReservationLabels(), 50);
   }
   
   function renderReservationsForSelection(selectedDates) {
@@ -640,76 +637,71 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     renderReservationList(overlappingReservations, "Ve vybraném termínu nejsou žádné jiné rezervace.");
-    setTimeout(() => renderReservationStrips(), 50);
+    setTimeout(() => renderReservationLabels(), 50);
   }
 
-  function renderReservationStrips() {
+  function renderReservationLabels() {
     if (!calendarContainer) return;
-    
-    const existing = calendarContainer.querySelectorAll('.reservation-strip');
-    existing.forEach(n => n.remove());
 
-    const dayElems = Array.from(calendarContainer.querySelectorAll('.flatpickr-day[data-reservation-id]'));
-    if (dayElems.length === 0) return;
+    // 1. Clear previous labels
+    const existingLabels = calendarContainer.querySelectorAll('.reservation-label');
+    existingLabels.forEach(label => label.remove());
 
-    const groups = dayElems.reduce((acc, de) => {
-      const id = de.dataset.reservationId;
-      if (!id) return acc;
-      acc[id] = acc[id] || [];
-      acc[id].push(de);
-      return acc;
+    // 2. Get all visible booked day elements
+    const dayElements = Array.from(calendarContainer.querySelectorAll('.flatpickr-day[data-reservation-id]'));
+    if (dayElements.length === 0) return;
+
+    // 3. Group days by reservation ID
+    const reservationsOnScreen = dayElements.reduce((acc, dayElem) => {
+        const id = dayElem.dataset.reservationId;
+        if (!id) return acc;
+        if (!acc[id]) {
+            acc[id] = {
+                username: dayElem.dataset.username,
+                userId: dayElem.dataset.userId,
+                elements: []
+            };
+        }
+        acc[id].elements.push(dayElem);
+        return acc;
     }, {});
 
-    const containerRect = calendarContainer.getBoundingClientRect();
-
-    Object.values(groups).forEach(daysInReservation => {
-      if (daysInReservation.length === 0) return;
-
-      const rowGroups = daysInReservation.reduce((acc, day) => {
-        const topKey = Math.round(day.getBoundingClientRect().top);
-        if (!acc[topKey]) acc[topKey] = [];
-        acc[topKey].push(day);
-        return acc;
-      }, {});
-
-      Object.values(rowGroups).forEach(segDays => {
-        segDays.sort((a,b) => (a.dataset.dateIso > b.dataset.dateIso) ? 1 : -1);
-        const first = segDays[0];
-        const last = segDays[segDays.length - 1];
-        if (!first || !last) return;
-
-        const r1 = first.getBoundingClientRect();
-        const r2 = last.getBoundingClientRect();
-        const left = r1.left - containerRect.left;
-        const width = r2.right - r1.left;
-        const top = r1.top - containerRect.top;
-
-        const seg = document.createElement('div');
-        seg.className = 'reservation-strip';
-        seg.style.left = `${left}px`;
-        seg.style.width = `${Math.max(12, width)}px`;
-        seg.style.top = `${top}px`;
-        seg.style.height = `${r1.height}px`;
-        seg.dataset.reservationId = first.dataset.reservationId;
+    // 4. For each reservation, create labels for each week
+    for (const id in reservationsOnScreen) {
+        const reservation = reservationsOnScreen[id];
         
-        const label = document.createElement('span');
-        label.className = 'reservation-strip-label';
-        label.textContent = first.dataset.username || 'Rezervace';
-        seg.appendChild(label);
+        // Group days of a single reservation by their row (top position)
+        const rows = reservation.elements.reduce((acc, dayElem) => {
+            const top = dayElem.offsetTop; // Use offsetTop relative to parent
+            if (!acc[top]) acc[top] = [];
+            acc[top].push(dayElem);
+            return acc;
+        }, {});
 
-        const userId = first.dataset.userId;
-        const assignedColor = getUserColor(userId);
-        if (assignedColor) {
-          seg.style.background = hexToRgba(assignedColor, 0.35);
-          seg.style.borderColor = hexToRgba(assignedColor, 0.6);
-        } else {
-          seg.style.background = '#e9ecef';
-          seg.style.borderColor = '#d0d3d6';
+        // 5. Create one label per row for this reservation
+        for (const top in rows) {
+            const daysInRow = rows[top];
+            if (daysInRow.length === 0) continue;
+
+            daysInRow.sort((a, b) => a.offsetLeft - b.offsetLeft);
+            const firstDayInRow = daysInRow[0];
+
+            const label = document.createElement('div');
+            label.className = 'reservation-label';
+            label.textContent = reservation.username;
+            
+            // Position the label below the first day of the segment
+            label.style.left = `${firstDayInRow.offsetLeft}px`;
+            label.style.top = `${firstDayInRow.offsetTop + firstDayInRow.offsetHeight - 4}px`;
+            
+            const userColor = getUserColor(reservation.userId);
+            if(userColor) {
+              label.style.color = userColor;
+            }
+
+            calendarContainer.appendChild(label);
         }
-
-        calendarContainer.appendChild(seg);
-      });
-    });
+    }
   }
   
   function renderReservationList(reservations, emptyMessage) {
@@ -818,4 +810,3 @@ document.addEventListener("DOMContentLoaded", () => {
     showLogin();
   }
 });
-
