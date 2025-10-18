@@ -166,7 +166,7 @@ body::before {
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(255, 255, 255, 0.5);
+    background-color: rgba(0, 0, 0, 0.4);
     z-index: -1;
 }
 
@@ -755,7 +755,7 @@ span.flatpickr-weekday {
 
 #admin-link {
     font-size: 0.9em;
-    color: #1f2937;
+    color: #fff;
     text-decoration: none;
     font-weight: 600;
 }
@@ -796,3 +796,4 @@ span.flatpickr-weekday {
 .backup-warning strong {
   color: #713f12;
 }
+
