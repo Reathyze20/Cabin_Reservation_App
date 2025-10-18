@@ -221,6 +221,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Event Listeners ---
     logoutBtn.addEventListener('click', logout);
     closeModalBtn.addEventListener('click', closeEditModal);
+    // Back to app button (preserve session)
+    const backToAppBtn = document.getElementById('back-to-app-btn');
+    if (backToAppBtn) {
+        backToAppBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.location.href = 'index.html';
+        });
+    }
     window.addEventListener('click', (e) => {
         if (e.target === modal) closeEditModal();
     });
