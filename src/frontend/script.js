@@ -365,33 +365,9 @@ document.addEventListener("DOMContentLoaded", () => {
           dayElem.title = `Rezervováno: ${matchingReservation.username}`;
           dayElem.classList.add("booked-day");
           
-          dayElem.dataset.reservationId = matchingReservation.id;
-          dayElem.dataset.username = matchingReservation.username || '';
-          dayElem.dataset.userId = matchingReservation.userId || '';
-          dayElem.dataset.dateIso = date.toISOString().slice(0,10);
-
-          const fromTs = new Date(matchingReservation.from + 'T00:00:00Z').getTime();
-          const toTs = new Date(matchingReservation.to + 'T00:00:00Z').getTime();
-
-          const dayOfWeek = date.getUTCDay(); 
-
-          if (currentTimestamp === fromTs || dayOfWeek === 1) dayElem.classList.add('range-start');
-          if (currentTimestamp === toTs || dayOfWeek === 0) dayElem.classList.add('range-end');
-          
-          if (currentTimestamp > fromTs && currentTimestamp < toTs) {
-            dayElem.classList.add('range-middle');
-          }
-          // If a day is both start and end of a week, it should be rounded on both sides
-          if ((currentTimestamp === fromTs || dayOfWeek === 1) && (currentTimestamp === toTs || dayOfWeek === 0)) {
-              dayElem.classList.add('range-start', 'range-end');
-          }
-
-
           const assignedColor = getUserColor(matchingReservation.userId);
           if (assignedColor) {
-            const bgColor = hexToRgba(assignedColor, 0.8);
-            dayElem.style.backgroundColor = bgColor;
-            dayElem.style.setProperty('--day-bg-color', bgColor);
+            dayElem.style.backgroundColor = hexToRgba(assignedColor, 0.8);
             dayElem.style.color = '#fff';
             dayElem.style.fontWeight = 'bold';
           }
@@ -473,7 +449,6 @@ document.addEventListener("DOMContentLoaded", () => {
         initializeDatePicker(disabledRanges);
       }
       
-      // Always render overview and labels after data is loaded
       setTimeout(() => {
         if (flatpickrInstance) {
             renderReservationsOverview(flatpickrInstance.currentMonth, flatpickrInstance.currentYear);
@@ -489,7 +464,6 @@ document.addEventListener("DOMContentLoaded", () => {
   function formatDateForDisplay(date) {
     if(!date) return "";
     const dateObj = (typeof date === 'string') ? new Date(date) : date;
-    // Fix timezone offset for display
     const userTimezoneOffset = dateObj.getTimezoneOffset() * 60000;
     const correctedDate = new Date(dateObj.getTime() + userTimezoneOffset);
     return `${correctedDate.getDate()}.${correctedDate.getMonth() + 1}.${correctedDate.getFullYear()}`;
@@ -622,8 +596,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     renderReservationList(filteredReservations, "Pro tento měsíc nejsou žádné rezervace.");
-    // draw labels under calendar for visible reservations
-    setTimeout(() => renderReservationLabels(), 50);
   }
   
   function renderReservationsForSelection(selectedDates) {
@@ -643,72 +615,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     renderReservationList(overlappingReservations, "Ve vybraném termínu nejsou žádné jiné rezervace.");
-    setTimeout(() => renderReservationLabels(), 50);
   }
 
-  function renderReservationLabels() {
-    if (!calendarContainer) return;
-
-    // 1. Clear previous labels
-    const existingLabels = calendarContainer.querySelectorAll('.reservation-label');
-    existingLabels.forEach(label => label.remove());
-
-    // 2. Get all visible booked day elements
-    const dayElements = Array.from(calendarContainer.querySelectorAll('.flatpickr-day[data-reservation-id]'));
-    if (dayElements.length === 0) return;
-
-    // 3. Group days by reservation ID
-    const reservationsOnScreen = dayElements.reduce((acc, dayElem) => {
-        const id = dayElem.dataset.reservationId;
-        if (!id) return acc;
-        if (!acc[id]) {
-            acc[id] = {
-                username: dayElem.dataset.username,
-                userId: dayElem.dataset.userId,
-                elements: []
-            };
-        }
-        acc[id].elements.push(dayElem);
-        return acc;
-    }, {});
-
-    // 4. For each reservation, create labels for each week
-    for (const id in reservationsOnScreen) {
-        const reservation = reservationsOnScreen[id];
-        
-        // Group days of a single reservation by their row (top position)
-        const rows = reservation.elements.reduce((acc, dayElem) => {
-            const top = dayElem.offsetTop; // Use offsetTop relative to parent
-            if (!acc[top]) acc[top] = [];
-            acc[top].push(dayElem);
-            return acc;
-        }, {});
-
-        // 5. Create one label per row for this reservation
-        for (const top in rows) {
-            const daysInRow = rows[top];
-            if (daysInRow.length === 0) continue;
-
-            daysInRow.sort((a, b) => a.offsetLeft - b.offsetLeft);
-            const firstDayInRow = daysInRow[0];
-
-            const label = document.createElement('div');
-            label.className = 'reservation-label';
-            label.textContent = reservation.username;
-            
-            // Position the label below the first day of the segment
-            label.style.left = `${firstDayInRow.offsetLeft}px`;
-            label.style.top = `${firstDayInRow.offsetTop + firstDayInRow.offsetHeight - 4}px`;
-            
-            const userColor = getUserColor(reservation.userId);
-            if(userColor) {
-              label.style.color = userColor;
-            }
-
-            calendarContainer.appendChild(label);
-        }
-    }
-  }
   
   function renderReservationList(reservations, emptyMessage) {
       reservationsListDiv.innerHTML = "";

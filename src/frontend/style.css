@@ -609,46 +609,8 @@ span.flatpickr-weekday {
   border: none;
   color: white;
   box-shadow: none;
-  border-radius: 0; /* Default to square for middle parts */
+  border-radius: 50%; /* Reverted back to circle */
 }
-
-.flatpickr-day.booked-day.range-middle {
-    /* Fill gaps between days using the color variable from JS */
-    box-shadow: -5px 0 0 var(--day-bg-color), 5px 0 0 var(--day-bg-color);
-}
-
-.flatpickr-day.booked-day.range-start {
-  border-top-left-radius: 20px;
-  border-bottom-left-radius: 20px;
-}
-
-.flatpickr-day.booked-day.range-end {
-  border-top-right-radius: 20px;
-  border-bottom-right-radius: 20px;
-}
-
-/* For a single day that is both start and end */
-.flatpickr-day.booked-day.range-start.range-end {
-  border-radius: 20px;
-}
-
-
-/* --- Reservation Label (Username) under the range --- */
-.reservation-label {
-  position: absolute;
-  z-index: 3;
-  pointer-events: none;
-  font-size: 11px;
-  font-weight: 600;
-  padding: 0 4px;
-  line-height: 1;
-  text-shadow: 0px 0px 4px white, 0px 0px 4px white, 0px 0px 4px white;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  /* barva se nastavuje v JS */
-}
-
 
 /* --- Modal Window Styles --- */
 .modal-overlay {
