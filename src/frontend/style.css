@@ -581,27 +581,20 @@ span.flatpickr-weekday {
     background: #fecaca;
     border-color: #fecaca;
     color: #b91c1c;
-    border-radius: 0;
-    box-shadow: -5px 0 0 #fecaca, 5px 0 0 #fecaca;
+    border-radius: 50%;
 }
 .flatpickr-day.startRange {
-    border-top-left-radius: 20px;
-    border-bottom-left-radius: 20px;
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
+    border-radius: 50%;
 }
 .flatpickr-day.endRange {
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-    border-top-right-radius: 20px;
-    border-bottom-right-radius: 20px;
+    border-radius: 50%;
 }
 .flatpickr-day.startRange.endRange {
-    border-radius: 20px;
+    border-radius: 50%;
 }
 
 
-/* --- BOOKED DAYS (pill shape) --- */
+/* --- BOOKED DAYS (circles) --- */
 .flatpickr-day.booked-day {
   text-decoration: none;
   opacity: 1;
@@ -609,7 +602,7 @@ span.flatpickr-weekday {
   border: none;
   color: white;
   box-shadow: none;
-  border-radius: 50%; /* Reverted back to circle */
+  border-radius: 50%;
 }
 
 /* --- Modal Window Styles --- */
