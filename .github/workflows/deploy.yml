@@ -25,9 +25,21 @@ jobs:
           # Navigate to the app directory
           cd ${{ secrets.SERVER_PATH }}
 
+          # Backup the data directory if it exists
+          if [ -d "data" ]; then
+            echo "Backing up data directory..."
+            cp -R data /tmp/cabin_data_backup
+          fi
+
           # Update the code
           git reset --hard
           git pull
+
+          # Restore the data directory if a backup exists
+          if [ -d "/tmp/cabin_data_backup" ]; then
+            echo "Restoring data directory..."
+            mv /tmp/cabin_data_backup data
+          fi
 
           # Install dependencies and build the project
           npm install
