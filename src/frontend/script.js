@@ -72,6 +72,36 @@ document.addEventListener("DOMContentLoaded", () => {
     user2: "#FFA500",
   };
 
+  // Deterministic color assignment per userId stored in localStorage
+  function generateColorPalette() {
+    // a set of visually distinct colors
+    return [
+      '#FFB300','#FF7043','#AB47BC','#5C6BC0','#29B6F6','#26A69A','#9CCC65','#D4E157','#FFCA28','#8D6E63',
+      '#F06292','#4DB6AC','#BA68C8','#B39DDB','#90CAF9','#A1887F','#AED581','#FFD54F','#FF8A65','#4FC3F7'
+    ];
+  }
+
+  function getUserColor(userId) {
+    if (!userId) return null;
+    try {
+      const key = 'userColorMap_v1';
+      const raw = localStorage.getItem(key);
+      let map = raw ? JSON.parse(raw) : {};
+      if (map[userId]) return map[userId];
+
+      // choose a color not yet used
+      const palette = generateColorPalette();
+      const used = new Set(Object.values(map));
+      const available = palette.filter(c => !used.has(c));
+      const color = (available.length > 0) ? available[Math.floor(Math.random() * available.length)] : palette[Math.floor(Math.random() * palette.length)];
+      map[userId] = color;
+      localStorage.setItem(key, JSON.stringify(map));
+      return color;
+    } catch (e) {
+      return null;
+    }
+  }
+
 
 
   // Globální proměnné
@@ -364,9 +394,12 @@ document.addEventListener("DOMContentLoaded", () => {
             // silent
           }
           dayElem.classList.add(userClass);
-          
-          if(!userColors[matchingReservation.userId]) {
-              dayElem.classList.add("booked-unknown-user");
+          const assigned = getUserColor(matchingReservation.userId);
+          if (assigned) {
+            dayElem.style.backgroundColor = assigned;
+            dayElem.style.color = '#111';
+          } else {
+            dayElem.classList.add("booked-unknown-user");
           }
         }
       },
@@ -723,8 +756,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // color accent (light) based on user
         const userId = segDays[0].dataset.userId;
-        if (userId && userColors[userId]) {
-          seg.style.background = userColors[userId];
+        const assigned = getUserColor(userId);
+        if (assigned) {
+          seg.style.background = assigned;
           seg.style.opacity = '0.18';
         } else {
           seg.style.background = '#e9ecef';
