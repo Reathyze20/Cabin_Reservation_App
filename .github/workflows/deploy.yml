@@ -32,7 +32,6 @@ jobs:
           fi
 
           # Update the code
-          git reset --hard
           git pull
 
           # Restore the data directory if a backup exists
@@ -47,3 +46,4 @@ jobs:
 
           # Restart the app with PM2
           pm2 restart chata-app
+
