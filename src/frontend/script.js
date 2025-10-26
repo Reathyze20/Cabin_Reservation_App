@@ -47,7 +47,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const confirmDeleteModal = document.getElementById('confirm-delete-modal');
   const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
   const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
-  
+
   const shoppingListDiv = document.getElementById("shopping-list");
   const addItemForm = document.getElementById("add-item-form");
   const itemNameInput = document.getElementById("item-name-input");
@@ -61,7 +61,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const priceSplitForm = document.getElementById('price-split-form');
   const userSplitList = document.getElementById('user-split-list');
   const splitModalInfo = document.getElementById('split-modal-info');
-  
+
   const notesListDiv = document.getElementById('notes-list');
   const addNoteForm = document.getElementById('add-note-form');
   const noteMessageInput = document.getElementById('note-message-input');
@@ -92,7 +92,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   setupPasswordToggle(togglePasswordLogin, passwordInput);
   setupPasswordToggle(togglePasswordRegister, registerPasswordInput);
-  
+
   function hexToRgba(hex, alpha = 1) {
     if (!hex || !/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)) return null;
     let c = hex.substring(1).split('');
@@ -107,7 +107,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let flatpickrInstance = null;
   window.currentReservations = [];
   let allUsers = [];
-  let reservationIdToDelete = null; 
+  let reservationIdToDelete = null;
   const backendUrl = "";
 
   // Toast Notifikace (pokud ji nemáš, můžeš nahradit za alert())
@@ -136,12 +136,12 @@ document.addEventListener("DOMContentLoaded", () => {
     registerSection.style.display = "none";
     appSection.style.display = "flex";
     loggedInUsernameSpan.textContent = username;
-    
+
     await fetchUsers(); // Načteme uživatele pro split funkci
     loadReservations();
     loadShoppingList();
     loadNotes();
-    
+
     const adminLink = document.getElementById('admin-link');
     const role = localStorage.getItem('role');
     if (adminLink) {
@@ -203,11 +203,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const data = await response.json();
             if (!response.ok) throw new Error(data.message || `Chyba ${response.status}`);
-            
+
             registerMessage.textContent = data.message;
             registerMessage.style.color = "green";
             registerForm.reset();
-            
+
             setTimeout(() => { showLogin(); }, 2000);
         } catch (error) {
             console.error("Registration error:", error);
@@ -228,7 +228,7 @@ document.addEventListener("DOMContentLoaded", () => {
         showLogin();
     });
   }
-  
+
   function openBookingModal(isEdit = false, reservation = null) {
       bookingForm.reset();
       otherPurposeGroup.style.display = 'none';
@@ -250,7 +250,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <label>Do: <input type="date" id="edit-to-date" value="${reservation.to}" /></label>
         `;
         reservationIdInput.value = reservation.id;
-        
+
         const isOtherPurpose = !['Relax', 'Práce na zahradě', 'Údržba chaty'].includes(reservation.purpose);
         if (isOtherPurpose) {
             purposeSelect.value = 'Jiný';
@@ -260,7 +260,7 @@ document.addEventListener("DOMContentLoaded", () => {
             purposeSelect.value = reservation.purpose || 'Relax';
         }
         notesTextarea.value = reservation.notes || '';
-        
+
       } else {
         modalTitle.textContent = "Detail rezervace";
         modalSubmitButton.textContent = "Potvrdit rezervaci";
@@ -288,7 +288,7 @@ document.addEventListener("DOMContentLoaded", () => {
     bookingModal.style.display = "none";
     bookingMessage.textContent = "";
   }
-  
+
   function openConfirmDeleteModal(id) {
     reservationIdToDelete = id;
     confirmDeleteModal.style.display = 'flex';
@@ -300,7 +300,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   if(openModalButton) openModalButton.addEventListener('click', () => openBookingModal(false));
-  
+
   if(purposeSelect) {
     purposeSelect.addEventListener('change', () => {
         otherPurposeGroup.style.display = (purposeSelect.value === 'Jiný') ? 'block' : 'none';
@@ -311,7 +311,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return localStorage.getItem("authToken");
   }
 
-  // Funkce pro získání barvy uživatele (přidána pro úplnost)
+  // Funkce pro získání barvy uživatele (přidána pro úplnost) - ale už ji nepoužíváme pro jméno
   function getUserColor(userId) {
     if (!allUsers) return '#808080'; // Default
     const user = allUsers.find(u => u.id === userId);
@@ -342,11 +342,11 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         const primaryReservation = reservationsForDay.find(r => r.status !== 'backup');
-        
+
         if (primaryReservation) {
             dayElem.title = `Rezervováno: ${primaryReservation.username}`;
             dayElem.classList.add("booked-day");
-            
+
             const assignedColor = primaryReservation.userColor;
             if (assignedColor) {
               dayElem.style.backgroundColor = hexToRgba(assignedColor, 0.8);
@@ -358,7 +358,7 @@ document.addEventListener("DOMContentLoaded", () => {
       onChange: function (selectedDates, dateStr, instance) {
         const checkInDateDisplay = document.getElementById("check-in-date-display");
         const checkOutDateDisplay = document.getElementById("check-out-date-display");
-       
+
         if (selectedDates.length >= 1) {
           checkInDateDisplay.textContent = instance.formatDate(selectedDates[0], "d. M Y");
           if (selectedDates.length === 2) {
@@ -373,7 +373,7 @@ document.addEventListener("DOMContentLoaded", () => {
           checkOutDateDisplay.textContent = "- Vyberte -";
           openModalButton.style.display = 'none';
         }
-        
+
         if (selectedDates.length === 2) {
             renderReservationsForSelection(selectedDates);
       if (clearSelectionButton) clearSelectionButton.style.display = 'inline-block';
@@ -413,7 +413,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function loadReservations() {
     if (reservationsListDiv) reservationsListDiv.innerHTML = `<div class="spinner-container"><div class="spinner"></div></div>`;
-    
+
     const token = getToken();
     if (!token) {
       showLogin();
@@ -436,7 +436,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const reservations = await response.json();
       window.currentReservations = reservations;
-      
+
       if (flatpickrInstance) {
         flatpickrInstance.redraw();
         renderReservationsOverview(flatpickrInstance.currentMonth, flatpickrInstance.currentYear);
@@ -448,7 +448,7 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         }, 50);
       }
-      
+
     } catch (error) {
       console.error("Error loading/refreshing reservations:", error);
       if (reservationsListDiv) reservationsListDiv.innerHTML = `<p style="color: red;">Nepodařilo se aktualizovat rezervace.</p>`;
@@ -487,9 +487,9 @@ document.addEventListener("DOMContentLoaded", () => {
             bookingMessage.style.color = "red";
             return;
         }
-        
+
         const isEditMode = !!reservationIdInput.value;
-        const url = isEditMode 
+        const url = isEditMode
             ? `${backendUrl}/api/reservations/${reservationIdInput.value}`
             : `${backendUrl}/api/reservations`;
         const method = isEditMode ? "PUT" : "POST";
@@ -539,18 +539,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const result = await response.json();
             if (!response.ok) throw new Error(result.message || `Chyba ${response.status}`);
-        
+
             closeBookingModal();
-        
+
             if (!isEditMode && flatpickrInstance) {
                 flatpickrInstance.clear();
                 document.getElementById("check-in-date-display").textContent = "- Vyberte -";
                 document.getElementById("check-out-date-display").textContent = "- Vyberte -";
                 if(openModalButton) openModalButton.style.display = 'none';
             }
-            
+
             await loadReservations();
-            
+
             if(flatpickrInstance && currentMonth !== undefined && currentYear !== undefined) {
               flatpickrInstance.changeMonth(currentMonth, false);
               flatpickrInstance.jumpToDate(new Date(currentYear, currentMonth));
@@ -562,12 +562,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
   }
-  
+
   const monthNames = ["ledna", "února", "března", "dubna", "května", "června", "července", "srpna", "září", "října", "listopadu", "prosince"];
 
   function renderReservationsOverview(month, year) {
     if (!reservationsListDiv || !reservationsTitle) return;
-    
+
     reservationsTitle.textContent = `Přehled v ${monthNames[month]} ${year}`;
 
     const monthStart = new Date(year, month, 1);
@@ -583,10 +583,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     renderReservationList(filteredReservations, "Pro tento měsíc nejsou žádné rezervace.");
   }
-  
+
   function renderReservationsForSelection(selectedDates) {
     if (!reservationsListDiv || !reservationsTitle || selectedDates.length !== 2) return;
-    
+
     reservationsTitle.textContent = "Konflikty pro Váš výběr";
 
     const selectionStart = selectedDates[0];
@@ -603,7 +603,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderReservationList(overlappingReservations, "Ve vybraném termínu nejsou žádné jiné rezervace.");
   }
 
-  
+
   function renderReservationList(reservations, emptyMessage) {
       reservationsListDiv.innerHTML = "";
       if (reservations.length === 0) {
@@ -617,10 +617,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
           reservations.forEach((r) => {
               const listItem = document.createElement("li");
-              const notesHTML = r.notes 
-                  ? `<p><strong>Poznámka:</strong> ${r.notes.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>` 
+              const notesHTML = r.notes
+                  ? `<p><strong>Poznámka:</strong> ${r.notes.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>`
                   : '';
-              
+
             let actionButtonsHTML = '';
             if (loggedInUserId === r.userId || userIsAdmin) {
               actionButtonsHTML = `
@@ -636,12 +636,10 @@ document.addEventListener("DOMContentLoaded", () => {
               statusBadge = '<span class="status-badge backup">Záložní</span>';
             }
 
-            // Získání barvy uživatele pro zobrazení v seznamu
-            const userColor = getUserColor(r.userId); // Použití pomocné funkce
-
+            // ZDE JE ZMĚNA: Odstranění inline stylu pro barvu jména
             listItem.innerHTML = `
             <div class="reservation-header">
-              <strong title="${r.username}" style="color: ${userColor}; border-bottom: 2px solid ${userColor};">${r.username}</strong>
+              <strong title="${r.username}">${r.username}</strong>
             </div>
             <div class="reservation-body">
               <div class="reservation-dates-row">
@@ -689,16 +687,16 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             const response = await fetch(`${backendUrl}/api/reservations/delete`, {
                 method: 'POST',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}` 
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({ id: reservationIdToDelete })
             });
-            
+
             const result = await response.json();
             if (!response.ok) throw new Error(result.message || `Chyba ${response.status}`);
-            
+
             closeConfirmDeleteModal();
             await loadReservations();
 
@@ -811,7 +809,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const name = (itemNameInput && itemNameInput.value) ? itemNameInput.value.trim() : '';
       const icon = (itemIconInput && itemIconInput.value) ? itemIconInput.value : 'fas fa-shopping-basket';
       if (!name) return;
-      
+
       const token = getToken();
       try {
         const response = await fetch(`${backendUrl}/api/shopping-list`, {
@@ -1007,7 +1005,7 @@ document.addEventListener("DOMContentLoaded", () => {
         userSplitList.appendChild(div);
       }
     });
-    
+
     splitModalInfo.textContent = `Rozdělit ${price} Kč mezi vybrané uživatele:`
     priceSplitForm.dataset.itemId = itemId;
     priceSplitForm.dataset.price = price;
@@ -1019,11 +1017,11 @@ document.addEventListener("DOMContentLoaded", () => {
       e.preventDefault();
       const itemId = e.target.dataset.itemId;
       const price = parseFloat(e.target.dataset.price);
-      
+
       const selectedUsers = Array.from(userSplitList.querySelectorAll('input:checked')).map(input => input.value);
-      
+
       await updatePurchaseStatus(itemId, true, price, selectedUsers);
-      
+
       priceSplitModal.style.display = 'none';
     });
   }
@@ -1067,7 +1065,7 @@ document.addEventListener("DOMContentLoaded", () => {
       'fas fa-seedling', 'fas fa-hammer', 'fas fa-paint-roller', 'fas fa-lightbulb', 'fas fa-broom',
       'fas fa-soap', 'fas fa-toilet-paper', 'fas fa-bed', 'fas fa-gamepad', 'fas fa-book', 'fas fa-first-aid'
   ];
-  
+
   if(iconGrid) {
       icons.forEach(iconClass => {
           const iconWrapper = document.createElement('div');
@@ -1120,7 +1118,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     notes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    
+
     const loggedInUserId = localStorage.getItem('userId');
     const isAdmin = localStorage.getItem('role') === 'admin';
 
@@ -1145,7 +1143,7 @@ document.addEventListener("DOMContentLoaded", () => {
         notesListDiv.appendChild(noteEl);
     });
   }
-  
+
   if(addNoteForm) {
     addNoteForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -1160,7 +1158,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 body: JSON.stringify({ message })
             });
             if (!response.ok) throw new Error('Chyba při přidávání vzkazu.');
-            
+
             noteMessageInput.value = '';
             await loadNotes();
         } catch (error) {
@@ -1176,7 +1174,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const noteItem = deleteBtn.closest('.note-item');
         const noteId = noteItem.dataset.id;
-        
+
         if (confirm('Opravdu chcete smazat tento vzkaz?')) {
             const token = getToken();
             try {
@@ -1221,7 +1219,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Naplnění dropdownu uživateli
     assignSelect.innerHTML = '<option value="">-- Vyberte uživatele --</option>';
-    
+
     // Použijeme globální proměnnou `allUsers`, kterou již načítáš
     // Filtrujeme uživatele:
     // 1. Nesmí to být admin
@@ -1261,7 +1259,7 @@ document.addEventListener("DOMContentLoaded", () => {
     assignForm.addEventListener('submit', async (event) => {
       event.preventDefault();
       assignErrorMsg.textContent = '';
-      
+
       const reservationId = assignReservationIdInput.value;
       const newOwnerId = assignSelect.value;
       const token = getToken();
@@ -1274,7 +1272,7 @@ document.addEventListener("DOMContentLoaded", () => {
         assignErrorMsg.textContent = 'Došlo k chybě, obnovte stránku.';
         return;
       }
-      
+
       const submitButton = assignForm.querySelector('button[type="submit"]');
       submitButton.disabled = true;
       submitButton.textContent = 'Přiřazuji...';
@@ -1288,7 +1286,7 @@ document.addEventListener("DOMContentLoaded", () => {
           },
           body: JSON.stringify({ newOwnerId })
         });
-        
+
         const result = await response.json();
         if (!response.ok) throw new Error(result.message || `Chyba ${response.status}`);
 

@@ -65,7 +65,7 @@ body {
   background-attachment: fixed;
   min-height: 100vh;
   display: flex;
-  justify-content: center; 
+  justify-content: center;
   align-items: flex-start;
   padding: 20px;
   color: #374151;
@@ -91,7 +91,7 @@ body::before {
   max-width: 1400px; /* Zvětšeno pro 3 sloupce */
   display: flex;
   flex-direction: column;
-  align-items: center; 
+  align-items: center;
   gap: 20px;
 }
 
@@ -107,7 +107,7 @@ body::before {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 15px; 
+  gap: 15px;
 }
 
 .main-content {
@@ -338,7 +338,7 @@ select {
     color: #374151;
 }
 
-/* Nový styl pro přiřazení */
+/* Styl pro přiřazení */
 .assign-btn {
   color: #3b82f6; /* Modrá barva */
 }
@@ -365,9 +365,10 @@ select {
   padding-right: 60px; /* space for action buttons */
 }
 
-/* Allow the username to shrink and show ellipsis if too long so the date stays visible */
+/* Username style in reservation list */
 .reservation-header > strong {
-  color: #1f2937;
+  /* ZDE ODEBRÁNY STYLY PRO BARVU */
+  color: #1f2937; /* Default text color */
   font-size: 1em;
   display: block; /* put username on its own line */
   margin-bottom: 6px;
@@ -377,6 +378,7 @@ select {
   overflow: visible;
   text-overflow: clip;
   white-space: normal; /* allow wrapping so the full name is visible */
+  border-bottom: none; /* Removed border */
 }
 
 /* Status badge (backup etc.) should not force wrapping */
@@ -415,9 +417,11 @@ select {
   margin-bottom: 6px;
 }
 
+/* Date range element */
 .dates-left {
   color: #4b5563;
   font-size: 0.95em;
+  white-space: nowrap; /* Ensure date range stays on one line */
 }
 
 .dates-actions {
@@ -526,16 +530,16 @@ select {
 
 /* --- Flatpickr Styles --- */
 .flatpickr-calendar {
-  background-color: white; 
-  box-shadow: none; 
-  width: 100% !important; 
-  font-family: inherit; 
+  background-color: white;
+  box-shadow: none;
+  width: 100% !important;
+  font-family: inherit;
 }
 
 .flatpickr-months {
-  background-color: transparent; 
+  background-color: transparent;
   padding: 10px 0;
-  border-bottom: 1px solid #eee; 
+  border-bottom: 1px solid #eee;
   margin-bottom: 10px;
 }
 
@@ -544,16 +548,16 @@ select {
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background-color: #fff7ed; 
+  background-color: #fff7ed;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 0; 
+  padding: 0;
   top: 8px;
 }
 .flatpickr-months .flatpickr-prev-month:hover,
 .flatpickr-months .flatpickr-next-month:hover {
-  background-color: #ffedd5; 
+  background-color: #ffedd5;
 }
 
 .flatpickr-months .flatpickr-prev-month svg,
@@ -571,7 +575,7 @@ select {
 }
 .flatpickr-current-month .flatpickr-monthDropdown-months,
 .flatpickr-current-month .numInputWrapper {
-  font-weight: 600; 
+  font-weight: 600;
 }
 .flatpickr-current-month input.cur-year {
   font-weight: 600;
@@ -581,25 +585,25 @@ select {
   background-color: transparent;
 }
 span.flatpickr-weekday {
-  color: #f97316; 
+  color: #f97316;
   font-weight: 600;
   font-size: 0.8em;
-  text-transform: uppercase; 
+  text-transform: uppercase;
 }
 
 /* Individual days */
 .flatpickr-day {
-  border: none; 
+  border: none;
   font-weight: 500;
   color: #555;
   max-width: 38px;
   height: 38px;
   line-height: 38px;
-  border-radius: 50%; 
+  border-radius: 50%;
   margin: 1px;
 }
 .flatpickr-day:hover {
-  background-color: #f3f4f6; 
+  background-color: #f3f4f6;
 }
 
 .flatpickr-day.prevMonthDay,
@@ -611,10 +615,10 @@ span.flatpickr-weekday {
 .flatpickr-day.today {
   border-color: #fbbf24;
   border: 1px solid #fbbf24;
-  color: #d97706; 
+  color: #d97706;
 }
 .flatpickr-day.today:hover {
-  background-color: #fef3c7; 
+  background-color: #fef3c7;
 }
 
 .flatpickr-innerContainer {
