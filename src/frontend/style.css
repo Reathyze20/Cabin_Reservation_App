@@ -349,23 +349,36 @@ select {
 
 
 .reservation-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-    flex-wrap: wrap;
-    padding-right: 60px;
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  gap: 8px;
+  padding-right: 60px; /* space for action buttons */
 }
 
-.reservation-header strong {
-    color: #1f2937;
-    font-size: 1em;
+/* Allow the username to shrink and show ellipsis if too long so the date stays visible */
+.reservation-header > strong {
+  color: #1f2937;
+  font-size: 1em;
+  flex: 0 1 auto;
+  min-width: 0; /* allow flex children to shrink properly */
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Status badge (backup etc.) should not force wrapping */
+.reservation-header .status-badge {
+  flex: 0 0 auto;
+  margin-left: 6px;
 }
 
 .reservation-header span {
-    font-size: 0.9em;
-    color: #6b7280;
-    white-space: nowrap;
+  font-size: 0.9em;
+  color: #6b7280;
+  white-space: nowrap;
+  margin-left: auto; /* keep dates right-aligned */
 }
 
 .reservation-body p {
