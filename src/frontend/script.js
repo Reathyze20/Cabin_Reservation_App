@@ -624,10 +624,12 @@ document.addEventListener("DOMContentLoaded", () => {
             listItem.innerHTML = `
             <div class="reservation-header">
               <strong title="${r.username}">${r.username}</strong>
-              <div class="reservation-actions">${statusBadge}${actionButtonsHTML}</div>
             </div>
             <div class="reservation-body">
-              <p><strong>Od–do:</strong> ${formatDateForDisplay(r.from)} – ${formatDateForDisplay(r.to)}</p>
+              <div class="reservation-dates-row">
+                <div class="dates-left"><strong>Od–do:</strong> ${formatDateForDisplay(r.from)} – ${formatDateForDisplay(r.to)}</div>
+                <div class="dates-actions">${statusBadge}${actionButtonsHTML}</div>
+              </div>
               <p><strong>Účel:</strong> ${r.purpose || '<em>Nespecifikováno</em>'}</p>
               ${notesHTML}
             </div>

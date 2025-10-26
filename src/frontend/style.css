@@ -398,6 +398,44 @@ select {
   white-space: normal;
 }
 
+/* Row that contains the date on the left and actions on the right */
+.reservation-dates-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.dates-left {
+  color: #4b5563;
+  font-size: 0.95em;
+}
+
+.dates-actions {
+  margin-left: auto; /* push actions to the right */
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.action-buttons-inline .edit-btn, .action-buttons-inline .delete-btn {
+  width: 26px;
+  height: 26px;
+  padding: 4px;
+  font-size: 0.9em;
+}
+
+/* Make the trash/delete button visually red */
+.action-buttons-inline .delete-btn,
+.dates-actions .delete-btn {
+  color: #ef4444;
+}
+.action-buttons-inline .delete-btn:hover,
+.dates-actions .delete-btn:hover {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
 .reservation-actions {
   margin-left: auto;
   display: flex;
