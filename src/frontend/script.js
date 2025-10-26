@@ -110,6 +110,13 @@ document.addEventListener("DOMContentLoaded", () => {
   let reservationIdToDelete = null; 
   const backendUrl = "";
 
+  // Toast Notifikace (pokud ji nemáš, můžeš nahradit za alert())
+  function showToast(message, type = 'info') {
+      console.log(`Toast (${type}): ${message}`);
+      // Můžeš zde implementovat hezčí notifikaci
+      alert(message);
+  }
+
   function showLogin() {
     loginSection.style.display = "block";
     registerSection.style.display = "none";
@@ -302,6 +309,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function getToken() {
     return localStorage.getItem("authToken");
+  }
+
+  // Funkce pro získání barvy uživatele (přidána pro úplnost)
+  function getUserColor(userId) {
+    if (!allUsers) return '#808080'; // Default
+    const user = allUsers.find(u => u.id === userId);
+    return user ? (user.color || '#808080') : '#808080';
   }
 
   function initializeDatePicker() {
@@ -612,6 +626,7 @@ document.addEventListener("DOMContentLoaded", () => {
               actionButtonsHTML = `
               <div class="action-buttons-inline">
                 <button class="edit-btn" data-id="${r.id}" title="Upravit rezervaci"><i class="fas fa-pencil-alt"></i></button>
+                <button class="assign-btn" data-id="${r.id}" title="Přiřadit jinému uživateli"><i class="fas fa-user-plus"></i></button>
                 <button class="delete-btn" data-id="${r.id}" title="Smazat rezervaci"><i class="fas fa-trash-alt"></i></button>
               </div>`;
             }
@@ -621,9 +636,12 @@ document.addEventListener("DOMContentLoaded", () => {
               statusBadge = '<span class="status-badge backup">Záložní</span>';
             }
 
+            // Získání barvy uživatele pro zobrazení v seznamu
+            const userColor = getUserColor(r.userId); // Použití pomocné funkce
+
             listItem.innerHTML = `
             <div class="reservation-header">
-              <strong title="${r.username}">${r.username}</strong>
+              <strong title="${r.username}" style="color: ${userColor}; border-bottom: 2px solid ${userColor};">${r.username}</strong>
             </div>
             <div class="reservation-body">
               <div class="reservation-dates-row">
@@ -650,6 +668,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if (reservation) openBookingModal(true, reservation);
     } else if (button.classList.contains('delete-btn')) {
         openConfirmDeleteModal(reservationId);
+    } else if (button.classList.contains('assign-btn')) {
+      // ZDE JE NOVÁ ČÁST
+      openAssignModal(reservationId);
     }
   });
 
@@ -689,11 +710,15 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Získání nového modálu pro přiřazení
+  const assignModal = document.getElementById('assign-reservation-modal');
+
   window.addEventListener('click', (event) => {
       if (event.target === bookingModal) closeBookingModal();
       if (event.target === confirmDeleteModal) closeConfirmDeleteModal();
       if (event.target === iconSelectModal) iconSelectModal.style.display = 'none';
       if (event.target === priceSplitModal) priceSplitModal.style.display = 'none';
+      if (event.target === assignModal) closeAssignModal(); // <-- PŘIDÁN TENTO ŘÁDEK
   });
 
   // --- Shopping List Logic ---
@@ -1168,7 +1193,123 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // --- Logika pro PŘIŘAZENÍ REZERVACE ---
 
+  // 1. Získání elementů nového modálu
+  // const assignModal = document.getElementById('assign-reservation-modal'); // Již definováno výše
+  const assignForm = document.getElementById('assign-reservation-form');
+  const assignSelect = document.getElementById('assign-user-select');
+  const assignReservationIdInput = document.getElementById('assign-reservation-id-input');
+  const cancelAssignBtn = document.getElementById('cancel-assign-btn');
+  const assignErrorMsg = document.getElementById('assign-error-message');
+  const assignModalText = document.getElementById('assign-modal-text');
+  const assignModalCloseBtn = assignModal.querySelector('.modal-close-button');
+
+
+  // 2. Funkce pro otevření modálu
+  function openAssignModal(reservationId) {
+    const reservation = window.currentReservations.find(r => r.id === reservationId);
+    if (!reservation) {
+      // Místo alert() použijeme náš vlastní systém
+      showToast("Chyba: Rezervace nenalezena.", "error");
+      return;
+    }
+
+    assignReservationIdInput.value = reservationId;
+    assignErrorMsg.textContent = '';
+    assignModalText.textContent = `Přiřazujete rezervaci na termín: ${formatDateForDisplay(reservation.from)} - ${formatDateForDisplay(reservation.to)}.`;
+
+    // Naplnění dropdownu uživateli
+    assignSelect.innerHTML = '<option value="">-- Vyberte uživatele --</option>';
+    
+    // Použijeme globální proměnnou `allUsers`, kterou již načítáš
+    // Filtrujeme uživatele:
+    // 1. Nesmí to být admin
+    // 2. Nesmí to být aktuální vlastník (pro kterého otevíráme modal)
+    const eligibleUsers = allUsers.filter(user => {
+        return user.role !== 'admin' && user.id !== reservation.userId;
+    });
+
+    if (eligibleUsers.length === 0) {
+        assignSelect.innerHTML = '<option value="">Žádní dostupní uživatelé k přiřazení.</option>';
+        assignForm.querySelector('button[type="submit"]').disabled = true;
+    } else {
+        eligibleUsers.forEach(user => {
+            const option = document.createElement('option');
+            option.value = user.id;
+            option.textContent = user.username;
+            assignSelect.appendChild(option);
+        });
+        assignForm.querySelector('button[type="submit"]').disabled = false;
+    }
+
+    assignModal.style.display = 'flex';
+  }
+
+  // 3. Funkce pro zavření modálu
+  function closeAssignModal() {
+    assignModal.style.display = 'none';
+    assignForm.reset();
+  }
+
+  // 4. Listenery pro zavírací tlačítka modálu (již řešeno v krocích výše)
+  if (cancelAssignBtn) cancelAssignBtn.addEventListener('click', closeAssignModal);
+  if (assignModalCloseBtn) assignModalCloseBtn.addEventListener('click', closeAssignModal);
+
+  // 5. Listener pro odeslání formuláře
+  if (assignForm) {
+    assignForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      assignErrorMsg.textContent = '';
+      
+      const reservationId = assignReservationIdInput.value;
+      const newOwnerId = assignSelect.value;
+      const token = getToken();
+
+      if (!newOwnerId) {
+        assignErrorMsg.textContent = 'Musíte vybrat uživatele.';
+        return;
+      }
+      if (!reservationId || !token) {
+        assignErrorMsg.textContent = 'Došlo k chybě, obnovte stránku.';
+        return;
+      }
+      
+      const submitButton = assignForm.querySelector('button[type="submit"]');
+      submitButton.disabled = true;
+      submitButton.textContent = 'Přiřazuji...';
+
+      try {
+        const response = await fetch(`${backendUrl}/api/reservations/${reservationId}/assign`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ newOwnerId })
+        });
+        
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message || `Chyba ${response.status}`);
+
+        // Úspěch!
+        closeAssignModal();
+        showToast("Rezervace byla úspěšně přiřazena.", "success");
+        await loadReservations(); // Znovu načteme rezervace (zobrazí se nové jméno)
+
+      } catch (error) {
+        console.error("Chyba při přiřazování:", error);
+        assignErrorMsg.textContent = error.message;
+      } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = 'Potvrdit přiřazení';
+      }
+    });
+  }
+  // --- Konec logiky pro PŘIŘAZENÍ REZERVACE ---
+
+
+  // Načtení dat při startu
   const initialToken = getToken();
   const initialUsername = localStorage.getItem("username");
   if (initialToken && initialUsername) {

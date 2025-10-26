@@ -317,7 +317,7 @@ select {
     gap: 4px;
 }
 
-.edit-btn, .delete-btn {
+.edit-btn, .delete-btn, .assign-btn {
     background: none;
     border: none;
     color: #9ca3af;
@@ -336,6 +336,15 @@ select {
 .edit-btn:hover {
     background-color: #e5e7eb;
     color: #374151;
+}
+
+/* Nový styl pro přiřazení */
+.assign-btn {
+  color: #3b82f6; /* Modrá barva */
+}
+.assign-btn:hover {
+  background-color: #dbeafe; /* Světle modrá */
+  color: #2563eb;
 }
 
 .delete-btn {
@@ -418,7 +427,7 @@ select {
   gap: 6px;
 }
 
-.action-buttons-inline .edit-btn, .action-buttons-inline .delete-btn {
+.action-buttons-inline .edit-btn, .action-buttons-inline .delete-btn, .action-buttons-inline .assign-btn {
   width: 26px;
   height: 26px;
   padding: 4px;
@@ -435,6 +444,15 @@ select {
   background-color: #fee2e2;
   color: #b91c1c;
 }
+/* Styl pro assign button v seznamu */
+.action-buttons-inline .assign-btn {
+  color: #3b82f6;
+}
+.action-buttons-inline .assign-btn:hover {
+  background-color: #dbeafe;
+  color: #2563eb;
+}
+
 
 .reservation-actions {
   margin-left: auto;
@@ -850,6 +868,103 @@ span.flatpickr-weekday {
     gap: 12px;
 }
 
+/* Specific styles for list overview */
+.shopping-lists-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.shopping-list-card {
+  background: #fdfcf9;
+  border: 1px solid #f3e2c0;
+  border-radius: 8px;
+  padding: 12px 15px;
+}
+.list-header strong {
+  font-weight: 600;
+  color: #a86c00;
+}
+.list-meta {
+  font-size: 0.85em;
+  color: #78716c;
+  margin-top: 4px;
+}
+.list-actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+}
+.btn-open-list, .btn-delete-list {
+  padding: 5px 10px;
+  font-size: 0.85em;
+  border-radius: 6px;
+}
+.btn-open-list {
+  background-color: #d18b00;
+  color: white;
+}
+.btn-delete-list {
+  background: none;
+  border: 1px solid #e5e7eb;
+  color: #ef4444;
+}
+
+/* Modal specific shopping list */
+#shopping-list-modal .modal-content {
+  max-width: 450px;
+}
+#shopping-modal-body {
+  padding-top: 10px;
+}
+#shopping-modal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 40vh;
+  overflow-y: auto;
+  padding: 5px;
+}
+.modal-item {
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  border-radius: 8px;
+  background-color: #f9fafb;
+}
+.modal-item.purchased {
+  background-color: #f3f4f6;
+}
+.modal-item-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.modal-purchase-checkbox {
+  width: 20px;
+  height: 20px;
+}
+.modal-item-name {
+  flex-grow: 1;
+  font-weight: 500;
+}
+.modal-item.purchased .modal-item-name {
+  text-decoration: line-through;
+  color: #9ca3af;
+}
+.modal-delete-item {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+.modal-delete-item:hover {
+  color: #ef4444;
+}
+
+
+/* Fallback for old list */
 .shopping-list-item {
     background-color: #fff;
     border-radius: 12px;
@@ -1494,5 +1609,4 @@ body.admin-page {
   justify-content: center;
 }
 .admin-main .card { width: 100%; }
-
 

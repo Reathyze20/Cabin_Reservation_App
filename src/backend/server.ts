@@ -436,6 +436,94 @@ app.post("/api/reservations/delete", protect, async (req: Request, res: Response
     }
 });
 
+// --- Endpoint pro PŘIŘAZENÍ REZERVACE ---
+app.post(
+  "/api/reservations/:reservationId/assign",
+  protect,
+  async (req: Request, res: Response) => {
+    if (!req.user) {
+      return res.status(401).json({ message: "Neautorizováno." });
+    }
+
+    // 1. Získání dat
+    const { reservationId } = req.params;
+    const { newOwnerId } = req.body;
+    const { userId: loggedInUserId, role: loggedInUserRole } = req.user;
+    const isLoggedAdmin = loggedInUserRole === "admin";
+
+    // 2. Validace vstupu
+    if (!newOwnerId) {
+      return res
+        .status(400)
+        .json({ message: "Chybí ID nového vlastníka (newOwnerId)." });
+    }
+    if (newOwnerId === loggedInUserId) {
+      return res
+        .status(400)
+        .json({ message: "Nelze přiřadit rezervaci sám sobě." });
+    }
+
+    try {
+      // 3. Načtení dat
+      const allReservations = await loadReservations();
+      const allUsers = await loadUsers();
+
+      // 4. Nalezení zdrojů
+      const reservationIndex = allReservations.findIndex(
+        (r) => r.id === reservationId
+      );
+      if (reservationIndex === -1) {
+        return res.status(404).json({ message: "Rezervace nenalezena." });
+      }
+      const reservation = allReservations[reservationIndex];
+
+      const newOwner = allUsers.find((u) => u.id === newOwnerId);
+      if (!newOwner) {
+        return res.status(404).json({ message: "Cílový uživatel nenalezen." });
+      }
+
+      // 5. Validace oprávnění a pravidel
+      // Akci může provést pouze vlastník rezervace NEBO admin
+      if (reservation.userId !== loggedInUserId && !isLoggedAdmin) {
+        return res
+          .status(403)
+          .json({ message: "Nemáte oprávnění přiřadit tuto rezervaci." });
+      }
+
+      // Kritické omezení: Nový vlastník nesmí být admin
+      if (newOwner.role === "admin") {
+        return res
+          .status(400)
+          .json({ message: "Rezervaci nelze přiřadit administrátorovi." });
+      }
+
+      // 6. Provedení akce
+      // Aktualizujeme rezervaci o nového vlastníka
+      allReservations[reservationIndex].userId = newOwner.id;
+      allReservations[reservationIndex].username = newOwner.username;
+      
+      // Poznámka: `userColor` se nemusí aktualizovat zde.
+      // Tvůj stávající endpoint GET /api/reservations dynamicky mapuje barvy 
+      // při každém načtení, takže se barva v kalendáři a seznamu
+      // automaticky aktualizuje po změně userId.
+
+      // 7. Uložení a odpověď
+      await saveReservation(allReservations);
+
+      console.log(
+        `[POST /api/reservations/.../assign] Uživatel ${req.user.username} přiřadil rezervaci ${reservationId} uživateli ${newOwner.username}`
+      );
+      res.status(200).json(allReservations[reservationIndex]);
+    } catch (error) {
+      console.error("Chyba při přiřazování rezervace:", error);
+      res
+        .status(500)
+        .json({ message: "Došlo k interní chybě serveru." });
+    }
+  }
+);
+
+
 // --- Shopping List Endpoints ---
 
 // GET /api/shopping-list
