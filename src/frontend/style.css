@@ -360,12 +360,14 @@ select {
 .reservation-header > strong {
   color: #1f2937;
   font-size: 1em;
-  flex: 0 1 auto;
-  min-width: 0; /* allow flex children to shrink properly */
-  max-width: 60%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: block; /* put username on its own line */
+  margin-bottom: 6px;
+  flex: none;
+  min-width: 0;
+  max-width: 100%;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal; /* allow wrapping so the full name is visible */
 }
 
 /* Status badge (backup etc.) should not force wrapping */
@@ -390,10 +392,10 @@ select {
 }
 
 .reservation-dates {
-  color: #d18b00;
-  font-weight: 600;
-  font-size: 0.95em;
-  white-space: nowrap;
+  color: #4b5563; /* match reservation body text color */
+  font-weight: 400;
+  font-size: 0.85em; /* same as .reservation-body */
+  white-space: normal;
 }
 
 .reservation-actions {
