@@ -381,6 +381,34 @@ select {
   margin-left: auto; /* keep dates right-aligned */
 }
 
+/* Reservation meta line (dates + actions) */
+.reservation-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.reservation-dates {
+  color: #d18b00;
+  font-weight: 600;
+  font-size: 0.95em;
+  white-space: nowrap;
+}
+
+.reservation-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Inline action buttons used in the reservation meta */
+.action-buttons-inline {
+  display: flex;
+  gap: 6px;
+}
+
 .reservation-body p {
     margin: 4px 0 0;
     font-size: 0.85em;

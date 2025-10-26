@@ -607,33 +607,33 @@ document.addEventListener("DOMContentLoaded", () => {
                   ? `<p><strong>Poznámka:</strong> ${r.notes.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>` 
                   : '';
               
-              let actionButtonsHTML = '';
-              if (loggedInUserId === r.userId || userIsAdmin) {
-                  actionButtonsHTML = `
-                  <div class="action-buttons">
-                      <button class="edit-btn" data-id="${r.id}" title="Upravit rezervaci"><i class="fas fa-pencil-alt"></i></button>
-                      <button class="delete-btn" data-id="${r.id}" title="Smazat rezervaci"><i class="fas fa-trash-alt"></i></button>
-                  </div>`;
-              }
+            let actionButtonsHTML = '';
+            if (loggedInUserId === r.userId || userIsAdmin) {
+              actionButtonsHTML = `
+              <div class="action-buttons-inline">
+                <button class="edit-btn" data-id="${r.id}" title="Upravit rezervaci"><i class="fas fa-pencil-alt"></i></button>
+                <button class="delete-btn" data-id="${r.id}" title="Smazat rezervaci"><i class="fas fa-trash-alt"></i></button>
+              </div>`;
+            }
 
-              let statusBadge = '';
-              if (r.status === 'backup') {
-                  statusBadge = '<span class="status-badge backup">Záložní</span>';
-              } 
-              listItem.innerHTML = `
-                ${actionButtonsHTML}
-                <div class="reservation-header">
-                    <strong>${r.username}</strong>
-                    ${statusBadge}
-                    <span style="color:#d18b00;font-size:0.95em;margin-left:auto;">
-                      ${formatDateForDisplay(r.from)} – ${formatDateForDisplay(r.to)}
-                    </span>
-                </div>
-                <div class="reservation-body">
-                    <p><strong>Účel:</strong> ${r.purpose || '<em>Nespecifikováno</em>'}</p>
-                    ${notesHTML}
-                </div>
-              `;
+            let statusBadge = '';
+            if (r.status === 'backup') {
+              statusBadge = '<span class="status-badge backup">Záložní</span>';
+            }
+
+            listItem.innerHTML = `
+            <div class="reservation-header">
+              <strong title="${r.username}">${r.username}</strong>
+              <div class="reservation-meta">
+                <div class="reservation-dates">Od–do: <span class="dates">${formatDateForDisplay(r.from)} – ${formatDateForDisplay(r.to)}</span></div>
+                <div class="reservation-actions">${statusBadge}${actionButtonsHTML}</div>
+              </div>
+            </div>
+            <div class="reservation-body">
+              <p><strong>Účel:</strong> ${r.purpose || '<em>Nespecifikováno</em>'}</p>
+              ${notesHTML}
+            </div>
+            `;
               list.appendChild(listItem);
           });
           reservationsListDiv.appendChild(list);
