@@ -87,16 +87,24 @@
 
       <!-- Hlavní sekce aplikace -->
       <div id="app-section" class="app-container" style="display: none;">
-        <!-- Informace o uživateli a odhlášení -->
-        <div class="user-info">
-          <span>
-            Přihlášen jako: <strong id="logged-in-username"></strong>
-          </span>
-          <div style="display: flex; gap: 12px; align-items: center;">
-            <a href="admin.html" id="admin-link" class="admin-link" style="display:none;">🛠️ Admin Tool</a>
-            <button id="logout-button" class="button-logout">
-              <i class="fas fa-sign-out-alt"></i> Odhlásit se
-            </button>
+        <!-- Horní lišta: navigace + informace o uživateli (zobrazí se, když je uživatel přihlášen) -->
+        <div class="top-bar">
+          <nav class="app-nav">
+            <a href="index.html" class="nav-link active">Rezervace</a>
+            <a href="notes.html" class="nav-link">Nástěnka</a>
+            <a href="gallery.html" class="nav-link">Galerie</a>
+          </nav>
+
+          <div class="user-info">
+            <span>
+              Přihlášen jako: <strong id="logged-in-username"></strong>
+            </span>
+            <div style="display: flex; gap: 12px; align-items: center;">
+              <a href="admin.html" id="admin-link" class="admin-link" style="display:none;">🛠️ Admin Tool</a>
+              <button id="logout-button" class="button-logout">
+                <i class="fas fa-sign-out-alt"></i> Odhlásit se
+              </button>
+            </div>
           </div>
         </div>
 
