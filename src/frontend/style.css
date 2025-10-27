@@ -1645,3 +1645,26 @@ body.admin-page {
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
 }
 
+/* Navigation button styles */
+.nav-button {
+    padding: 10px 20px;
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+.nav-button:hover {
+    background-color: white;
+}
+
+.nav-button.active {
+    background-color: orange;
+}
+
+/* Username padding */
+.username-display {
+    padding-right: 15px;
+}
+
