@@ -286,7 +286,7 @@ select {
   background: rgba(255,255,255,1);
 }
 .app-nav .nav-link.active {
-  background: #fbbf24;
+  background-color: orange;
   color: white;
 }
 
