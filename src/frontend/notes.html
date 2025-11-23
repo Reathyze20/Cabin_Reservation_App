@@ -8,10 +8,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 </head>
 <body>
-    <!-- Přidán app-wrapper pro sjednocení šířky a centrování -->
     <div class="app-wrapper">
         <div id="app-container" class="app-container hidden">
-            <!-- Odstraněn <header>, ponechán pouze .top-bar pro konzistenci s index.html -->
             <div class="top-bar">
                 <nav class="app-nav">
                     <a href="index.html" class="nav-link">Rezervace</a>
@@ -27,22 +25,35 @@
             </div>
 
             <div class="main-content-notes">
-                <div id="notes-section" class="card">
-                    <h2><i class="fas fa-thumbtack"></i> Nástěnka (rychlé vzkazy)</h2>
+                <!-- Upraven style pro roztažení na výšku -->
+                <div id="notes-section" class="card" style="min-height: 85vh; display: flex; flex-direction: column;">
+                    
+                    <!-- Hlavička s nadpisem a filtrem -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px;">
+                        <h2 style="margin: 0;"><i class="fas fa-thumbtack"></i> Nástěnka</h2>
+                        
+                        <div class="filter-wrapper" style="display: flex; align-items: center; gap: 8px;">
+                            <label for="author-filter" style="font-weight: 500; color: #555;"><i class="fas fa-filter"></i> Autor:</label>
+                            <select id="author-filter" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #ddd; outline: none; background-color: white;">
+                                <option value="">Všichni autoři</option>
+                                <!-- Možnosti se načtou dynamicky -->
+                            </select>
+                        </div>
+                    </div>
                     
                     <form id="add-note-form" class="add-note-form">
                         <textarea id="note-message-input" placeholder="Napište vzkaz pro ostatní..." required rows="2"></textarea>
                         <button type="submit">Přidat vzkaz</button>
                     </form>
 
-                    <div id="notes-list" class="notes-list">
+                    <!-- Seznam vzkazů se roztáhne do zbytku místa -->
+                    <div id="notes-list" class="notes-list" style="flex-grow: 1;">
                         <!-- Vzkazy se generují dynamicky -->
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Zobrazí se, pokud uživatel není přihlášen -->
         <div id="auth-container" class="login-container card hidden">
             <h2>Přihlášení</h2>
             <p>Pro zobrazení nástěnky se prosím <a href="index.html">přihlaste</a>.</p>
