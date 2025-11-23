@@ -44,11 +44,11 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- State ---
     let currentFolderId = null;
     let currentPage = 1;
-    const photosPerPage = 12;
+    let photosPerPage = 12; // Bude se dynamicky měnit
     let currentPhotos = [];
     let currentLightboxIndex = 0;
 
-    const backendUrl = ""; // Relativní cesta
+    const backendUrl = ""; 
 
     // --- Auth Check ---
     const loggedInUsername = localStorage.getItem("username");
@@ -71,6 +71,48 @@ document.addEventListener("DOMContentLoaded", () => {
             window.location.href = "index.html";
         });
     }
+
+    // --- Dynamic Layout Logic (2 Řádky) ---
+    function calculatePhotosPerPage() {
+        if (!photosGrid) return;
+        
+        // Získáme šířku kontejneru pro fotky
+        const gridWidth = photosGrid.clientWidth;
+        if (gridWidth === 0) return; // Grid není vidět
+
+        // CSS Grid má minmax(250px, 1fr) a gap 15px
+        const minItemWidth = 250; 
+        const gap = 15;
+
+        // Vypočítáme, kolik sloupců se vejde na řádek
+        // (width + gap) / (item + gap) je zjednodušený vzorec pro auto-fill
+        let columns = Math.floor((gridWidth + gap) / (minItemWidth + gap));
+        if (columns < 1) columns = 1;
+
+        // Chceme VŽDY přesně 2 řady
+        const newPerPage = columns * 2;
+
+        if (newPerPage !== photosPerPage) {
+            photosPerPage = newPerPage;
+            // Pokud jsme na stránce, která už neexistuje, posuneme se na poslední
+            const totalPages = Math.ceil(currentPhotos.length / photosPerPage);
+            if (currentPage > totalPages && totalPages > 0) currentPage = totalPages;
+            
+            // Překreslíme fotky s novým limitem
+            if (currentFolderId) {
+                renderPhotos(currentPhotos); 
+            }
+        }
+    }
+
+    // Sledování změny velikosti okna
+    const resizeObserver = new ResizeObserver(() => {
+        if (photosView.style.display !== 'none') {
+            calculatePhotosPerPage();
+        }
+    });
+    if (photosGrid) resizeObserver.observe(photosGrid);
+
 
     // --- API Helpers ---
     async function apiFetch(url, options = {}) {
@@ -164,6 +206,9 @@ document.addEventListener("DOMContentLoaded", () => {
         foldersView.style.display = 'none';
         photosView.style.display = 'block';
 
+        // Přepočítat layout hned po zobrazení
+        setTimeout(calculatePhotosPerPage, 0);
+
         loadPhotos(folderId);
     }
 
@@ -176,18 +221,19 @@ document.addEventListener("DOMContentLoaded", () => {
     async function loadPhotos(folderId) {
         const photos = await apiFetch(`${backendUrl}/api/gallery/photos?folderId=${folderId}`);
         if (photos) {
-            // Seřadit od nejnovějších
             photos.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-            renderPhotos(photos);
+            currentPhotos = photos; // Uložit data
+            renderPhotos(photos);   // Vykreslit
         }
     }
 
     function renderPhotos(photos) {
         photosGrid.innerHTML = '';
-        currentPhotos = photos; 
-
+        
+        // Použití dynamického photosPerPage
         const totalPages = Math.ceil(photos.length / photosPerPage);
         if (currentPage > totalPages && totalPages > 0) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
         
         const start = (currentPage - 1) * photosPerPage;
         const end = start + photosPerPage;
@@ -214,23 +260,41 @@ document.addEventListener("DOMContentLoaded", () => {
             photosGrid.appendChild(photoEl);
         });
 
+        // --- Vylepšené Stránkování ---
         if (totalPages > 1) {
             paginationControls.style.display = 'flex';
-            pageInfo.textContent = `Strana ${currentPage} z ${totalPages}`;
+            pageInfo.textContent = `${currentPage} / ${totalPages}`; // Zjednodušený formát
             prevPageBtn.disabled = currentPage === 1;
             nextPageBtn.disabled = currentPage === totalPages;
             
-            prevPageBtn.style.opacity = currentPage === 1 ? '0.5' : '1';
-            nextPageBtn.style.opacity = currentPage === totalPages ? '0.5' : '1';
+            // Vizuální stavy tlačítek
+            updateButtonState(prevPageBtn, currentPage === 1);
+            updateButtonState(nextPageBtn, currentPage === totalPages);
         } else {
             paginationControls.style.display = 'none';
+        }
+    }
+
+    function updateButtonState(btn, isDisabled) {
+        if (isDisabled) {
+            btn.style.opacity = '0.5';
+            btn.style.cursor = 'default';
+            btn.style.backgroundColor = '#f3f4f6';
+            btn.style.color = '#ccc';
+            btn.style.borderColor = '#e5e7eb';
+        } else {
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+            btn.style.backgroundColor = ''; // Reset na CSS hover efekty
+            btn.style.color = '';
+            btn.style.borderColor = '';
         }
     }
 
     prevPageBtn.addEventListener('click', () => {
         if (currentPage > 1) {
             currentPage--;
-            loadPhotos(currentFolderId);
+            renderPhotos(currentPhotos);
         }
     });
 
@@ -238,7 +302,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const totalPages = Math.ceil(currentPhotos.length / photosPerPage);
         if (currentPage < totalPages) {
             currentPage++;
-            loadPhotos(currentFolderId);
+            renderPhotos(currentPhotos);
         }
     });
 
@@ -253,17 +317,13 @@ document.addEventListener("DOMContentLoaded", () => {
         const files = photoFileInput.files;
         if (!files.length) return;
 
-        // Nahrajeme fotky postupně
         const uploadButton = uploadPhotoForm.querySelector('button[type="submit"]');
         uploadButton.disabled = true;
         uploadButton.textContent = "Nahrávám...";
 
         for (const file of Array.from(files)) {
             try {
-                // Převedeme na Base64
                 const base64 = await toBase64(file);
-                
-                // Pošleme na server
                 await apiFetch(`${backendUrl}/api/gallery/photos`, {
                     method: 'POST',
                     body: JSON.stringify({
@@ -284,7 +344,6 @@ document.addEventListener("DOMContentLoaded", () => {
         loadPhotos(currentFolderId);
     });
 
-    // Helper pro převod souboru na Base64 string
     const toBase64 = file => new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);

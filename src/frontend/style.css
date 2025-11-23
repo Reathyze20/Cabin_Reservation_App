@@ -7,9 +7,12 @@
 }
 
 .gallery-card {
-    min-height: 85vh;
+    /* Fixní výška není nutná, necháme obsah roztáhnout kartu, 
+       ale s min-height aby to nevypadalo prázdně */
+    min-height: 85vh; 
     display: flex;
     flex-direction: column;
+    position: relative; /* Pro pozicování stránkování */
 }
 
 .gallery-header {
@@ -24,13 +27,13 @@
 .gallery-header h2 {
     font-size: 1.5em;
     color: #333;
-    border: none; /* Reset border from generic style */
+    border: none; 
     margin: 0;
     padding: 0;
 }
 
 .small-btn {
-    width: auto; /* Override full width */
+    width: auto; 
     padding: 8px 16px;
     font-size: 0.9em;
 }
@@ -85,16 +88,18 @@
 /* --- Photos Grid --- */
 .photos-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Responzivní grid */
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Responzivní sloupce */
     gap: 15px;
-    flex-grow: 1; /* Vyplní místo */
+    flex-grow: 1; 
+    align-content: start; /* Zamezí roztažení řádků, pokud je jich málo */
+    margin-bottom: 20px; /* Mezera od stránkování */
 }
 
 .photo-card {
     position: relative;
     border-radius: 8px;
     overflow: hidden;
-    aspect-ratio: 1 / 1; /* Čtvercové náhledy */
+    aspect-ratio: 1 / 1; /* Čtverec */
     cursor: pointer;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
@@ -131,46 +136,64 @@
     opacity: 1;
 }
 
-/* --- Pagination --- */
+/* --- Pagination Styling (Vylepšeno) --- */
 .pagination-controls {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 20px;
+    gap: 30px; /* Větší mezera mezi tlačítky */
     margin-top: 20px;
-    padding-top: 15px;
+    margin-bottom: 20px;
+    padding-top: 20px;
     border-top: 1px solid #eee;
 }
 
 .nav-arrow {
-    background: none;
-    border: 1px solid #ddd;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
+    background-color: white;
+    border: 2px solid #d18b00; /* Oranžový rámeček */
+    border-radius: 50px; /* Kulatá tlačítka */
+    width: auto;
+    min-width: 50px;
+    height: 50px;
+    padding: 0 25px; /* Širší tlačítko */
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 1.2em;
-    color: #555;
+    font-size: 1.5em; /* Větší ikona */
+    color: #d18b00;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
 .nav-arrow:hover:not(:disabled) {
-    background-color: #fbbf24;
+    background-color: #d18b00;
     color: white;
-    border-color: #fbbf24;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 10px rgba(209, 139, 0, 0.3);
+}
+
+.nav-arrow:active:not(:disabled) {
+    transform: translateY(0);
 }
 
 .nav-arrow:disabled {
+    border-color: #e5e7eb;
     color: #ccc;
-    cursor: default;
+    background-color: #f9fafb;
+    cursor: not-allowed;
+    box-shadow: none;
 }
 
 #page-info {
-    font-weight: 600;
-    color: #555;
+    font-weight: 700;
+    font-size: 1.2em; /* Větší text */
+    color: #374151;
+    letter-spacing: 1px;
+    background-color: #fff7ed; /* Jemné podbarvení */
+    padding: 8px 20px;
+    border-radius: 20px;
+    border: 1px solid #ffedd5;
 }
 
 /* --- Lightbox (Full Screen Detail) --- */
