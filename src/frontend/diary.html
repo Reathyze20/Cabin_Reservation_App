@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deník - Rezervace chaty</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+</head>
+<body>
+    <div class="app-wrapper">
+        <div id="app-container" class="app-container hidden">
+            <!-- HEADER (Stejný jako všude) -->
+            <div class="top-bar">
+                <nav class="app-nav">
+                    <a href="index.html" class="nav-link">Rezervace</a>
+                    <a href="notes.html" class="nav-link">Nástěnka</a>
+                    <a href="gallery.html" class="nav-link">Galerie</a>
+                    <a href="diary.html" class="nav-link active">Deník</a>
+                </nav>
+                <div class="user-info">
+                    <span class="username-display">Přihlášen jako: <strong id="logged-in-username"></strong></span>
+                    <button id="logout-button" class="button-logout">
+                        <i class="fas fa-sign-out-alt"></i> Odhlásit se
+                    </button>
+                </div>
+            </div>
+
+            <!-- HLAVNÍ OBSAH -->
+            <div class="main-content-gallery"> <!-- Používáme podobný layout class jako galerie -->
+                <div class="card gallery-card">
+                    
+                    <!-- 1. POHLED: SEZNAM OBDOBÍ (SLOŽKY) -->
+                    <div id="diary-folders-view" style="display: flex; flex-direction: column; height: 100%;">
+                        <div class="gallery-header">
+                            <h2><i class="fas fa-book-open"></i> Deník zážitků</h2>
+                        </div>
+                        
+                        <div class="gallery-content-wrapper">
+                            <div id="diary-folders-grid" class="folders-grid">
+                                <!-- Zde se načtou složky/období -->
+                            </div>
+                        </div>
+
+                        <div class="gallery-footer">
+                            <div class="footer-left"></div>
+                            <div class="footer-right">
+                                <button id="create-diary-folder-btn" class="gallery-btn gallery-btn-primary">
+                                    <i class="fas fa-plus"></i> Nové období
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. POHLED: ZÁPISY (UVNITŘ SLOŽKY) -->
+                    <div id="diary-entries-view" style="display: none; flex-direction: column; height: 100%;">
+                        <div class="gallery-header" style="justify-content: space-between;">
+                            <h2 id="current-diary-title">Název období</h2>
+                            <button id="delete-diary-folder-btn" class="gallery-btn gallery-btn-danger-outline" title="Smazat celé období">
+                                <i class="fas fa-trash-alt"></i> Smazat
+                            </button>
+                        </div>
+
+                        <div class="gallery-content-wrapper" style="background-color: #fdfcf8;">
+                            <!-- Seznam zápisů -->
+                            <div id="diary-entries-list" class="diary-entries-list">
+                                <!-- Zápisy se načtou dynamicky -->
+                            </div>
+                        </div>
+
+                        <div class="gallery-footer">
+                            <div class="footer-left">
+                                <button id="back-to-diary-folders-btn" class="gallery-btn gallery-btn-secondary">
+                                    Zpět
+                                </button>
+                            </div>
+                            <div class="footer-right">
+                                <button id="add-entry-btn" class="gallery-btn gallery-btn-primary">
+                                    <i class="fas fa-pen-nib"></i> Zapsat zážitek
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Login Container -->
+        <div id="auth-container" class="login-container card hidden">
+            <h2>Přihlášení</h2>
+            <p>Pro zobrazení deníku se prosím <a href="index.html">přihlaste</a>.</p>
+        </div>
+    </div>
+
+    <!-- MODAL: VYTVOŘIT OBDOBÍ -->
+    <div id="create-diary-folder-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <span class="modal-close-button">&times;</span>
+            <h2>Nové období</h2>
+            <form id="create-diary-folder-form">
+                <div class="form-group">
+                    <label for="diary-folder-name-input">Název (např. Prázdniny 2024):</label>
+                    <input type="text" id="diary-folder-name-input" required>
+                </div>
+                <div class="modal-buttons">
+                    <button type="submit" class="gallery-btn gallery-btn-primary" style="width: 100%;">Vytvořit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: NOVÝ ZÁPIS -->
+    <div id="create-entry-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="modal-close-button">&times;</span>
+            <h2>Milý deníčku...</h2>
+            <form id="create-entry-form">
+                <div class="form-group">
+                    <label for="entry-date-input">Datum:</label>
+                    <input type="date" id="entry-date-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="entry-content-input">Co se dnes stalo?</label>
+                    <textarea id="entry-content-input" rows="8" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd;" required></textarea>
+                </div>
+                <div class="modal-buttons">
+                    <button type="submit" class="gallery-btn gallery-btn-primary" style="width: 100%;">Uložit do deníku</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="diary.js"></script>
+</body>
+</html>
