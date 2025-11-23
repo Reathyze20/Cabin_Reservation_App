@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const uploadPhotoForm = document.getElementById("upload-photo-form");
     const photoFileInput = document.getElementById("photo-file-input");
 
-    // Lightbox
+    // Lightbox Elements
     const lightboxModal = document.getElementById("lightbox-modal");
     const lightboxImg = document.getElementById("lightbox-img");
     const lightboxClose = document.getElementById("lightbox-close");
@@ -40,6 +40,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const lightboxPrev = document.getElementById("lightbox-prev");
     const lightboxNext = document.getElementById("lightbox-next");
     const lightboxDelete = document.getElementById("lightbox-delete");
+    
+    // Lightbox Description Elements
+    const lightboxDescription = document.getElementById("lightbox-description");
+    const addDescriptionBtn = document.getElementById("add-description-btn");
+    const descriptionForm = document.getElementById("description-form");
+    const descriptionInput = document.getElementById("description-input");
+    const saveDescriptionBtn = document.getElementById("save-description-btn");
 
     // --- State ---
     let currentFolderId = null;
@@ -50,39 +57,25 @@ document.addEventListener("DOMContentLoaded", () => {
     const backendUrl = ""; 
 
     // --- DEFINICE LAYOUTŮ (Perfect Fit) ---
-    // Mřížka je 4 sloupce x 3 řádky = 12 buněk celkem.
-    // g-big = 4 buňky, g-wide = 2 buňky, g-tall = 2 buňky, normal = 1 buňka.
-    // Každý pattern musí mít součet buněk přesně 12.
-    
     const layouts = [
         {
-            // Layout A: "Hero" - Jedna velká, zbytek malé a široké
-            // 1x Big (4) + 2x Wide (4) + 4x Small (4) = 12
             classes: ['g-big', 'g-wide', 'g-wide', '', '', '', ''],
             itemsCount: 7
         },
         {
-            // Layout B: "Sloupce" - Vysoké fotky vedle sebe
-            // 4x Tall (8) + 4x Small (4) = 12
             classes: ['g-tall', 'g-tall', 'g-tall', 'g-tall', '', '', '', ''],
             itemsCount: 8
         },
         {
-            // Layout C: "Panoráma" - Samé široké
-            // 6x Wide (12) = 12
             classes: ['g-wide', 'g-wide', 'g-wide', 'g-wide', 'g-wide', 'g-wide'],
             itemsCount: 6
         },
         {
-            // Layout D: "Mozaika" - Mix
-            // 1x Big (4) + 1x Tall (2) + 1x Wide (2) + 4x Small (4) = 12
-            // Pozor na pořadí kvůli dense flow
             classes: ['g-big', 'g-tall', '', '', 'g-wide', '', ''],
             itemsCount: 7
         },
         {
-            // Layout E: "Klasika" - Jen mřížka
-            classes: [], // Žádné speciální třídy
+            classes: [],
             itemsCount: 12
         }
     ];
@@ -213,7 +206,6 @@ document.addEventListener("DOMContentLoaded", () => {
     async function loadPhotos(folderId) {
         const photos = await apiFetch(`${backendUrl}/api/gallery/photos?folderId=${folderId}`);
         if (photos) {
-            // Seřadit od nejnovějších
             photos.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
             currentPhotos = photos; 
             renderPhotos(); 
@@ -229,12 +221,9 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        // 1. Určit aktuální layout podle čísla stránky
         const layoutIndex = (currentPage - 1) % layouts.length;
         const currentLayout = layouts[layoutIndex];
         
-        // 2. Vypočítat offsety (kde začíná aktuální stránka v poli všech fotek)
-        // Musíme projít předchozí stránky a sečíst jejich kapacitu, protože každá stránka má jinou kapacitu
         let startIndex = 0;
         for (let i = 1; i < currentPage; i++) {
             const prevLayout = layouts[(i - 1) % layouts.length];
@@ -244,8 +233,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const endIndex = startIndex + currentLayout.itemsCount;
         const pagePhotos = currentPhotos.slice(startIndex, endIndex);
 
-        // 3. Zjistit celkový počet stránek
-        // To je složitější, protože kapacita se mění. Uděláme simulaci průchodu.
         let tempIndex = 0;
         let totalPages = 0;
         while (tempIndex < currentPhotos.length) {
@@ -254,14 +241,12 @@ document.addEventListener("DOMContentLoaded", () => {
             totalPages++;
         }
 
-        // --- Render ---
         pagePhotos.forEach((photo, index) => {
             const globalIndex = startIndex + index;
             const photoEl = document.createElement('div');
             
             photoEl.className = 'photo-card';
             
-            // Aplikovat třídu z layoutu, pokud existuje
             if (index < currentLayout.classes.length) {
                 const spanClass = currentLayout.classes[index];
                 if (spanClass) {
@@ -280,20 +265,6 @@ document.addEventListener("DOMContentLoaded", () => {
             photosGrid.appendChild(photoEl);
         });
 
-        // Vyplnění prázdnými divy, pokud fotek není dost na naplnění layoutu (poslední stránka)
-        // Aby grid "neskákal"
-        if (pagePhotos.length < currentLayout.itemsCount) {
-             const missingCount = currentLayout.itemsCount - pagePhotos.length;
-             for(let i=0; i<missingCount; i++) {
-                 const filler = document.createElement('div');
-                 // filler.className = 'photo-card'; // Bez stylů, jen placeholder, nebo průhledný
-                 // Nebudeme přidávat nic, grid-auto-flow: dense to nějak srovná, 
-                 // ale pro perfektní mřížku by to chtělo placeholder.
-                 // Prozatím necháme tak, na poslední stránce je prázdno akceptovatelné.
-             }
-        }
-
-        // --- Stránkování ---
         if (totalPages > 1) {
             paginationControls.style.display = 'flex';
             pageInfo.textContent = `${currentPage} / ${totalPages}`;
@@ -312,7 +283,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     nextPageBtn.addEventListener('click', () => {
-        // Znovu spočítáme total pages pro validaci
         let tempIndex = 0;
         let totalPages = 0;
         while (tempIndex < currentPhotos.length) {
@@ -362,7 +332,6 @@ document.addEventListener("DOMContentLoaded", () => {
         uploadButton.textContent = "Nahrát";
         uploadPhotoModal.style.display = 'none';
         photoFileInput.value = '';
-        // Po uploadu reload
         loadPhotos(currentFolderId);
     });
 
@@ -389,6 +358,21 @@ document.addEventListener("DOMContentLoaded", () => {
         lightboxDownload.href = photo.src;
         lightboxDownload.setAttribute('download', `foto.jpg`);
 
+        // -- Zobrazení popisu (Vzpomínky) --
+        // Reset zobrazení formuláře
+        descriptionForm.style.display = 'none';
+        
+        if (photo.description) {
+            lightboxDescription.textContent = photo.description;
+            lightboxDescription.style.display = 'block';
+            addDescriptionBtn.style.display = 'none';
+        } else {
+            lightboxDescription.textContent = '';
+            lightboxDescription.style.display = 'none';
+            addDescriptionBtn.style.display = 'block';
+        }
+
+        // Ovládání pro mazání
         const isOwner = photo.uploadedBy === loggedInUsername;
         const isAdmin = userRole === 'admin';
         
@@ -399,6 +383,49 @@ document.addEventListener("DOMContentLoaded", () => {
             lightboxDelete.style.display = 'none';
         }
     }
+
+    // --- Přidání/Editace popisu ---
+    
+    // Kliknutí na text "Vzpomínky" otevře editaci
+    lightboxDescription.addEventListener('click', () => {
+        showDescriptionForm();
+    });
+
+    // Kliknutí na tlačítko "Přidat vzpomínku"
+    addDescriptionBtn.addEventListener('click', () => {
+        showDescriptionForm();
+    });
+
+    function showDescriptionForm() {
+        const photo = currentPhotos[currentLightboxIndex];
+        descriptionInput.value = photo.description || '';
+        
+        lightboxDescription.style.display = 'none';
+        addDescriptionBtn.style.display = 'none';
+        descriptionForm.style.display = 'flex';
+        descriptionInput.focus();
+    }
+
+    // Uložení popisu
+    saveDescriptionBtn.addEventListener('click', async () => {
+        const newDescription = descriptionInput.value.trim();
+        const photo = currentPhotos[currentLightboxIndex];
+
+        // 1. Optimistický update v UI
+        photo.description = newDescription;
+        updateLightboxContent(); // Překreslí lightbox s novým textem
+
+        // 2. Odeslání na server (pokud existuje API endpoint)
+        try {
+            await apiFetch(`${backendUrl}/api/gallery/photos/${photo.id}`, {
+                method: 'PATCH', // nebo PUT
+                body: JSON.stringify({ description: newDescription })
+            });
+        } catch (e) {
+            console.warn("Nepodařilo se uložit popis na server (backend možná nepodporuje PATCH). Popis zůstane jen lokálně.");
+        }
+    });
+
 
     async function deletePhoto(photoId) {
         if(!confirm("Opravdu smazat tuto fotku?")) return;

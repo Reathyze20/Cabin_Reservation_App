@@ -41,7 +41,7 @@
                             </div>
                         </div>
 
-                        <!-- Patička s ovládáním -->
+                        <!-- Patička s tlačítky -->
                         <div class="gallery-footer">
                             <div class="footer-left">
                                 <!-- Zde nic není, ale drží místo pro zarovnání -->
@@ -143,6 +143,19 @@
         <div class="lightbox-content">
             <img id="lightbox-img" src="" alt="Detail fotky">
             
+            <!-- Sekce pro popisek (Vzpomínky) -->
+            <div class="lightbox-caption-container">
+                <p id="lightbox-description" class="lightbox-description" title="Klikni pro úpravu"></p>
+                <button id="add-description-btn" class="add-description-btn" style="display: none;">
+                    <i class="fas fa-pen"></i> Napsat vzpomínku...
+                </button>
+                
+                <div id="description-form" class="description-form" style="display: none;">
+                    <input type="text" id="description-input" class="description-input" placeholder="Napiš, co se na fotce děje..." maxlength="150">
+                    <button id="save-description-btn" class="save-description-btn">Uložit</button>
+                </div>
+            </div>
+
             <!-- Ovládání v detailu (Nerušivé) -->
             <div class="lightbox-controls">
                 <a id="lightbox-download" href="#" download class="lightbox-btn">
