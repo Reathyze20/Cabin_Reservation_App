@@ -44,7 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- State ---
     let currentFolderId = null;
     let currentPage = 1;
-    let photosPerPage = 12; // Defaultně 12
+    let photosPerPage = 12; // Default, ale bude se moci měnit
     let currentPhotos = [];
     let currentLightboxIndex = 0;
 
@@ -162,14 +162,14 @@ document.addEventListener("DOMContentLoaded", () => {
         currentPage = 1;
 
         foldersView.style.display = 'none';
-        photosView.style.display = 'block';
+        photosView.style.display = 'flex'; // Změna na flex pro layout
 
         loadPhotos(folderId);
     }
 
     backToFoldersBtn.addEventListener('click', () => {
         photosView.style.display = 'none';
-        foldersView.style.display = 'block';
+        foldersView.style.display = 'flex'; // Zpět na flex
         currentFolderId = null;
     });
 
@@ -185,7 +185,8 @@ document.addEventListener("DOMContentLoaded", () => {
     function renderPhotos(photos) {
         photosGrid.innerHTML = '';
         
-        // Pevný počet fotek na stránku pro konzistentní layout
+        // FIXNÍ POČET NA STRÁNKU PRO CSS GRID (4 sloupce * 3 řádky = 12 políček)
+        // Vzory se musí vejít do 12 políček
         photosPerPage = 12; 
 
         const totalPages = Math.ceil(photos.length / photosPerPage);
@@ -203,16 +204,18 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         // --- DEFINICE VZORŮ (LAYOUT PATTERNS) ---
-        // 'g-big' = 2x2, 'g-wide' = 2x1, 'g-tall' = 1x2, '' nebo 'g-normal' = 1x1
+        // Vzory jsou optimalizované pro mřížku 4x3 (celkem 12 buněk)
         const layouts = [
-            // Layout 1: Důraz na velké fotky
-            ['g-big', '', 'g-tall', '', 'g-wide', '', '', 'g-big', '', 'g-tall'],
+            // Layout 1: 
+            // 2x2 (4 buňky) + 1x2 (2 buňky) + 1x2 (2 buňky) ... zbytek 1x1
+            ['g-big', 'g-tall', 'g-tall', '', '', '', ''],
             
-            // Layout 2: Panoramatický styl (více wide)
-            ['g-wide', 'g-wide', '', '', 'g-big', '', '', 'g-wide', '', ''],
+            // Layout 2:
+            // 2x1 (2 buňky) + 2x1 (2 buňky) + 2x2 (4 buňky) ...
+            ['g-wide', 'g-wide', 'g-big', '', '', ''],
             
-            // Layout 3: Vertikální rytmus
-            ['g-tall', '', '', 'g-big', '', 'g-wide', 'g-tall', '', '', '']
+            // Layout 3: Standardní masonry mix
+            ['g-tall', '', 'g-wide', 'g-tall', '', '', '', '']
         ];
 
         // Vybereme layout podle čísla stránky (cyklování 0, 1, 2)
@@ -225,11 +228,12 @@ document.addEventListener("DOMContentLoaded", () => {
             // Základní třída
             photoEl.className = 'photo-card';
             
-            // Aplikace moderní třídy podle vzoru
-            // Použijeme index v rámci stránky (0 až 11) a modulo délkou vzoru, aby se nevyčerpal
-            const spanClass = currentLayoutPattern[index % currentLayoutPattern.length];
-            if (spanClass) {
-                photoEl.classList.add(spanClass);
+            // Aplikace třídy podle vzoru, pokud existuje pro tento index
+            if (index < currentLayoutPattern.length) {
+                const spanClass = currentLayoutPattern[index];
+                if (spanClass) {
+                    photoEl.classList.add(spanClass);
+                }
             }
 
             photoEl.onclick = () => openLightbox(globalIndex);
@@ -261,15 +265,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if (isDisabled) {
             btn.style.opacity = '0.5';
             btn.style.cursor = 'default';
-            btn.style.backgroundColor = '#f3f4f6';
-            btn.style.color = '#ccc';
-            btn.style.borderColor = '#e5e7eb';
         } else {
             btn.style.opacity = '1';
             btn.style.cursor = 'pointer';
-            btn.style.backgroundColor = ''; 
-            btn.style.color = '';
-            btn.style.borderColor = '';
         }
     }
 
@@ -277,8 +275,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (currentPage > 1) {
             currentPage--;
             renderPhotos(currentPhotos);
-            // Scroll nahoru při změně stránky
-            document.querySelector('.gallery-card').scrollIntoView({ behavior: 'smooth' });
         }
     });
 
@@ -287,7 +283,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (currentPage < totalPages) {
             currentPage++;
             renderPhotos(currentPhotos);
-            document.querySelector('.gallery-card').scrollIntoView({ behavior: 'smooth' });
         }
     });
 
@@ -356,7 +351,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const isAdmin = userRole === 'admin';
         
         if (isOwner || isAdmin) {
-            lightboxDelete.style.display = 'inline-block';
+            lightboxDelete.style.display = 'inline-flex'; // flex pro ikonu a text
             lightboxDelete.onclick = () => deletePhoto(photo.id);
         } else {
             lightboxDelete.style.display = 'none';
