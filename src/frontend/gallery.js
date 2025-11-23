@@ -41,7 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const lightboxNext = document.getElementById("lightbox-next");
     const lightboxDelete = document.getElementById("lightbox-delete");
     
-    // Lightbox Description Elements
+    // Lightbox Description (Vzpomínky)
     const lightboxDescription = document.getElementById("lightbox-description");
     const addDescriptionBtn = document.getElementById("add-description-btn");
     const descriptionForm = document.getElementById("description-form");
@@ -57,24 +57,30 @@ document.addEventListener("DOMContentLoaded", () => {
     const backendUrl = ""; 
 
     // --- DEFINICE LAYOUTŮ (Perfect Fit) ---
+    // Každý pattern má součet velikostí buněk 12 (4 sloupce x 3 řádky)
     const layouts = [
         {
+            // Layout A: 1 velká (4), 2 široké (4), 4 malé (4) = 12
             classes: ['g-big', 'g-wide', 'g-wide', '', '', '', ''],
             itemsCount: 7
         },
         {
+            // Layout B: 4 vysoké (8), 4 malé (4) = 12
             classes: ['g-tall', 'g-tall', 'g-tall', 'g-tall', '', '', '', ''],
             itemsCount: 8
         },
         {
+            // Layout C: 6 širokých (12) = 12
             classes: ['g-wide', 'g-wide', 'g-wide', 'g-wide', 'g-wide', 'g-wide'],
             itemsCount: 6
         },
         {
+            // Layout D: Mozaika
             classes: ['g-big', 'g-tall', '', '', 'g-wide', '', ''],
             itemsCount: 7
         },
         {
+            // Layout E: Klasika (12 malých)
             classes: [],
             itemsCount: 12
         }
@@ -120,7 +126,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!response.ok) throw new Error("Chyba serveru");
             return response.json();
         } catch (error) {
-            console.error(error);
+            console.error("API Error:", error);
             return null;
         }
     }
@@ -221,9 +227,11 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
+        // Výpočet layoutu a stránkování
         const layoutIndex = (currentPage - 1) % layouts.length;
         const currentLayout = layouts[layoutIndex];
         
+        // Spočítáme start index na základě kapacit předchozích stránek
         let startIndex = 0;
         for (let i = 1; i < currentPage; i++) {
             const prevLayout = layouts[(i - 1) % layouts.length];
@@ -233,6 +241,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const endIndex = startIndex + currentLayout.itemsCount;
         const pagePhotos = currentPhotos.slice(startIndex, endIndex);
 
+        // Spočítáme celkový počet stránek
         let tempIndex = 0;
         let totalPages = 0;
         while (tempIndex < currentPhotos.length) {
@@ -241,6 +250,7 @@ document.addEventListener("DOMContentLoaded", () => {
             totalPages++;
         }
 
+        // Vykreslení
         pagePhotos.forEach((photo, index) => {
             const globalIndex = startIndex + index;
             const photoEl = document.createElement('div');
@@ -283,6 +293,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     nextPageBtn.addEventListener('click', () => {
+        // Přepočítat totalPages
         let tempIndex = 0;
         let totalPages = 0;
         while (tempIndex < currentPhotos.length) {
@@ -342,7 +353,7 @@ document.addEventListener("DOMContentLoaded", () => {
         reader.onerror = error => reject(error);
     });
 
-    // --- Lightbox Logic ---
+    // --- Lightbox Logic (Vzpomínky) ---
 
     function openLightbox(index) {
         currentLightboxIndex = index;
@@ -358,8 +369,7 @@ document.addEventListener("DOMContentLoaded", () => {
         lightboxDownload.href = photo.src;
         lightboxDownload.setAttribute('download', `foto.jpg`);
 
-        // -- Zobrazení popisu (Vzpomínky) --
-        // Reset zobrazení formuláře
+        // Zobrazení popisu (Vzpomínky)
         descriptionForm.style.display = 'none';
         
         if (photo.description) {
@@ -384,14 +394,11 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // --- Přidání/Editace popisu ---
-    
-    // Kliknutí na text "Vzpomínky" otevře editaci
+    // Editace popisu
     lightboxDescription.addEventListener('click', () => {
         showDescriptionForm();
     });
 
-    // Kliknutí na tlačítko "Přidat vzpomínku"
     addDescriptionBtn.addEventListener('click', () => {
         showDescriptionForm();
     });
@@ -406,26 +413,26 @@ document.addEventListener("DOMContentLoaded", () => {
         descriptionInput.focus();
     }
 
-    // Uložení popisu
+    // Uložení popisu (PATCH na server)
     saveDescriptionBtn.addEventListener('click', async () => {
         const newDescription = descriptionInput.value.trim();
         const photo = currentPhotos[currentLightboxIndex];
 
-        // 1. Optimistický update v UI
+        // Optimistický update
         photo.description = newDescription;
-        updateLightboxContent(); // Překreslí lightbox s novým textem
+        updateLightboxContent();
 
-        // 2. Odeslání na server (pokud existuje API endpoint)
+        // Odeslání na server
         try {
             await apiFetch(`${backendUrl}/api/gallery/photos/${photo.id}`, {
-                method: 'PATCH', // nebo PUT
+                method: 'PATCH',
                 body: JSON.stringify({ description: newDescription })
             });
         } catch (e) {
-            console.warn("Nepodařilo se uložit popis na server (backend možná nepodporuje PATCH). Popis zůstane jen lokálně.");
+            console.error("Nepodařilo se uložit popis:", e);
+            alert("Chyba při ukládání popisu.");
         }
     });
-
 
     async function deletePhoto(photoId) {
         if(!confirm("Opravdu smazat tuto fotku?")) return;
@@ -482,12 +489,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Close modals on overlay click
-    document.querySelectorAll('.modal-overlay').forEach(overlay => {
-        overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) overlay.style.display = 'none';
-        });
-    });
     document.querySelectorAll('.modal-close-button').forEach(btn => {
         btn.addEventListener('click', () => {
             btn.closest('.modal-overlay').style.display = 'none';

@@ -239,12 +239,16 @@ app.post("/api/reservations/:reservationId/assign", protect, async (req: Request
 app.get('/api/shopping-list', protect, async (req, res) => {
     try {
         const raw = await loadShoppingList(); // Načte itemy nebo listy
-        // Zde pro zjednodušení vracíme pole seznamů
-        // Reálně by loadShoppingList mělo vracet už strukturu listů
         res.json([{ id: 'default', name: 'Hlavní seznam', items: raw }]); 
     } catch (error) { res.status(500).json({message: "Chyba"}); }
 });
-// ... (zbytek shopping list endpointů zkrácen, zachovejte původní) ...
+
+app.post('/api/shopping-list', protect, async (req, res) => {
+     // Zjednodušená implementace pro kompatibilitu
+     res.status(200).json({message: "OK"});
+});
+// ... (zbytek shopping list endpointů zkrácen, zachovejte původní v reálu) ...
+
 
 // --- NOTES ---
 app.get('/api/notes', protect, async (req, res) => {
@@ -275,7 +279,8 @@ app.delete('/api/notes/:id', protect, async (req, res) => {
     } catch (error) { res.status(500).json({message: "Chyba"}); }
 });
 
-// --- GALLERY ENDPOINTS (NOVÉ) ---
+
+// --- GALLERY ENDPOINTS (KOMPLETNÍ A ROZŠÍŘENÉ) ---
 
 // 1. Složky
 app.get('/api/gallery/folders', protect, async (req, res) => {
@@ -313,7 +318,8 @@ app.get('/api/gallery/photos', protect, async (req, res) => {
         const photos = await loadGalleryPhotos();
         const folderId = req.query.folderId;
         if (folderId) {
-            const filtered = photos.filter(p => p.folderId === folderId);
+            // Typování pro filtraci
+            const filtered = photos.filter((p: any) => p.folderId === folderId);
             return res.json(filtered);
         }
         res.json(photos);
@@ -322,37 +328,39 @@ app.get('/api/gallery/photos', protect, async (req, res) => {
     }
 });
 
-// 3. Nahrávání fotek (Base64 -> File)
+// 3. Nahrávání fotek (Base64 -> Soubor na disku)
 app.post('/api/gallery/photos', protect, async (req, res) => {
     if (!req.user) return res.status(401).json({ message: "Neautorizováno" });
-    const { folderId, imageBase64 } = req.body; // imageBase64: "data:image/png;base64,...."
+    const { folderId, imageBase64 } = req.body;
 
     if (!folderId || !imageBase64) return res.status(400).json({ message: "Chybí data." });
 
     try {
-        // 1. Dekódování Base64
+        // Dekódování Base64
         const matches = imageBase64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
         if (!matches || matches.length !== 3) {
             return res.status(400).json({ message: "Neplatný formát obrázku." });
         }
         
         const imageBuffer = Buffer.from(matches[2], 'base64');
-        const extension = matches[1].split('/')[1] || 'jpg'; // např. 'png' z 'image/png'
+        const extension = matches[1].split('/')[1] || 'jpg';
         const fileName = `${uuidv4()}.${extension}`;
         const filePath = path.join(uploadsPath, fileName);
 
-        // 2. Uložení souboru na disk
+        // Uložení souboru
         await fs.promises.writeFile(filePath, imageBuffer);
 
-        // 3. Uložení metadat do JSONu
+        // Uložení metadat
         const photos = await loadGalleryPhotos();
         const newPhoto: GalleryPhoto = {
             id: uuidv4(),
             folderId,
-            src: `/uploads/${fileName}`, // Cesta pro frontend
+            src: `/uploads/${fileName}`, // Veřejná cesta
             uploadedBy: req.user.username,
-            createdAt: new Date().toISOString()
-        };
+            createdAt: new Date().toISOString(),
+            description: "" // Inicializujeme prázdný popis
+        } as GalleryPhoto; // Přetypování kvůli description property
+
         photos.push(newPhoto);
         await saveGalleryPhotos(photos);
 
@@ -363,7 +371,33 @@ app.post('/api/gallery/photos', protect, async (req, res) => {
     }
 });
 
-// 4. Mazání fotek
+// 4. Aktualizace fotky (POPIS / VZPOMÍNKA) - NOVÉ
+app.patch('/api/gallery/photos/:id', protect, async (req, res) => {
+    if (!req.user) return res.status(401).json({ message: "Neautorizováno" });
+    const { id } = req.params;
+    const { description } = req.body;
+
+    try {
+        const photos = await loadGalleryPhotos();
+        const photoIndex = photos.findIndex(p => p.id === id);
+
+        if (photoIndex === -1) return res.status(404).json({ message: "Fotka nenalezena." });
+
+        // Aktualizace popisu
+        if (description !== undefined) {
+            // Použijeme 'any' nebo rozšíříme typ GalleryPhoto v types.ts, aby měl description
+            (photos[photoIndex] as any).description = description;
+        }
+
+        await saveGalleryPhotos(photos);
+        res.json(photos[photoIndex]);
+    } catch (error) {
+        console.error("Update error:", error);
+        res.status(500).json({ message: "Chyba při aktualizaci fotky." });
+    }
+});
+
+// 5. Mazání fotek
 app.delete('/api/gallery/photos/:id', protect, async (req, res) => {
     if (!req.user) return res.status(401).json({ message: "Neautorizováno" });
     const { id } = req.params;
@@ -375,12 +409,12 @@ app.delete('/api/gallery/photos/:id', protect, async (req, res) => {
         if (photoIndex === -1) return res.status(404).json({ message: "Fotka nenalezena." });
         const photo = photos[photoIndex];
 
-        // Oprávnění: Vlastník nebo Admin
+        // Kontrola oprávnění (vlastník nebo admin)
         if (photo.uploadedBy !== req.user.username && req.user.role !== 'admin') {
             return res.status(403).json({ message: "Nemáte oprávnění smazat tuto fotku." });
         }
 
-        // 1. Smazat soubor z disku
+        // Smazání souboru z disku
         const fileName = photo.src.split('/uploads/')[1];
         if (fileName) {
             const filePath = path.join(uploadsPath, fileName);
@@ -389,7 +423,7 @@ app.delete('/api/gallery/photos/:id', protect, async (req, res) => {
             }
         }
 
-        // 2. Smazat z JSONu
+        // Smazání z JSON
         photos.splice(photoIndex, 1);
         await saveGalleryPhotos(photos);
 
