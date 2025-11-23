@@ -1,66 +1,143 @@
-import fs from "fs/promises";
+import fs from "fs";
 import path from "path";
-import { User, Reservation, ShoppingListItem, Note, GalleryFolder, GalleryPhoto, DiaryFolder, DiaryEntry } from "../types";
+import { Reservation, User, ShoppingListItem, Note, GalleryFolder, GalleryPhoto } from "../types";
 
-const DATA_DIR = path.join(__dirname, "../../data");
-const USERS_FILE = path.join(DATA_DIR, "users.json");
-const RESERVATIONS_FILE = path.join(DATA_DIR, "reservations.json");
-const SHOPPING_LIST_FILE = path.join(DATA_DIR, "shopping-list.json");
-const NOTES_FILE = path.join(DATA_DIR, "notes.json");
-const GALLERY_FOLDERS_FILE = path.join(DATA_DIR, "gallery_folders.json");
-const GALLERY_PHOTOS_FILE = path.join(DATA_DIR, "gallery_photos.json");
+const usersFilePath = path.join(__dirname, "../../data/users.json");
+const reservationsFilePath = path.join(__dirname, "../../data/reservations.json");
+const shoppingListFilePath = path.join(__dirname, "../../data/shopping-list.json");
+const notesFilePath = path.join(__dirname, "../../data/notes.json");
+const galleryFoldersPath = path.join(__dirname, "../../data/gallery-folders.json");
+const galleryPhotosPath = path.join(__dirname, "../../data/gallery-photos.json");
 
-// Nové soubory pro deník
-const DIARY_FOLDERS_FILE = path.join(DATA_DIR, "diary_folders.json");
-const DIARY_ENTRIES_FILE = path.join(DATA_DIR, "diary_entries.json");
-
-// Helper to ensure file exists
-async function ensureFile(filePath: string, defaultContent: any[]) {
+// --- Users ---
+export async function loadUsers(): Promise<User[]> {
   try {
-    await fs.access(filePath);
-  } catch {
-    await fs.mkdir(path.dirname(filePath), { recursive: true });
-    await fs.writeFile(filePath, JSON.stringify(defaultContent, null, 2));
+    const data = await fs.promises.readFile(usersFilePath, "utf-8");
+    return JSON.parse(data);
+  } catch (error) {
+    // Pokud soubor neexistuje, vytvoříme prázdný
+    if (error instanceof Error && "code" in error && (error as any).code === "ENOENT") {
+      await saveUsers([]);
+      return [];
+    }
+    console.error("Chyba při načítání uživatelů:", error);
+    return [];
   }
 }
 
-// Generic Load/Save
-async function loadData<T>(filePath: string): Promise<T[]> {
-  await ensureFile(filePath, []);
-  const data = await fs.readFile(filePath, "utf-8");
-  return JSON.parse(data);
+export async function saveUsers(users: User[]) {
+  const data = JSON.stringify(users, null, 2);
+  await fs.promises.writeFile(usersFilePath, data, "utf-8");
 }
 
-async function saveData<T>(filePath: string, data: T[]): Promise<void> {
-  await fs.writeFile(filePath, JSON.stringify(data, null, 2));
+// --- Reservations ---
+export async function loadReservations(): Promise<Reservation[]> {
+  try {
+    const data = await fs.promises.readFile(reservationsFilePath, "utf-8");
+    return JSON.parse(data);
+  } catch (error) {
+    if (error instanceof Error && "code" in error && (error as any).code === "ENOENT") {
+      await saveReservation([]);
+      return [];
+    }
+    console.error("Chyba při načítání rezervací:", error);
+    return [];
+  }
 }
 
-// Users
-export const loadUsers = () => loadData<User>(USERS_FILE);
-export const saveUsers = (users: User[]) => saveData(USERS_FILE, users);
+export async function saveReservation(reservations: Reservation[]) {
+  const data = JSON.stringify(reservations, null, 2);
+  await fs.promises.writeFile(reservationsFilePath, data, "utf-8");
+}
 
-// Reservations
-export const loadReservations = () => loadData<Reservation>(RESERVATIONS_FILE);
-export const saveReservation = (res: Reservation[]) => saveData(RESERVATIONS_FILE, res);
+// --- Shopping List ---
+export async function loadShoppingList(): Promise<ShoppingListItem[]> {
+    try {
+      const data = await fs.promises.readFile(shoppingListFilePath, "utf-8");
+      const parsed = JSON.parse(data);
+      if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].name && !parsed[0].items) {
+        const defaultList = {
+          id: 'default',
+          name: 'Hlavní seznam',
+          addedBy: 'system',
+          addedById: 'system',
+          createdAt: new Date().toISOString(),
+          items: parsed as ShoppingListItem[],
+        };
+        await saveShoppingLists([defaultList]);
+        return parsed as ShoppingListItem[];
+      }
+      const lists = (parsed as any[]) || [];
+      return lists.flatMap(l => (Array.isArray(l.items) ? l.items : [])) as ShoppingListItem[];
+    } catch (error) {
+     if (error instanceof Error && "code" in error && (error as any).code === "ENOENT") {
+      await saveShoppingLists([]);
+      return [];
+    }
+    console.error("Chyba při načítání nákupního seznamu:", error);
+    return [];
+  }
+}
 
-// Shopping List
-export const loadShoppingList = () => loadData<ShoppingListItem>(SHOPPING_LIST_FILE);
-export const saveShoppingLists = (list: ShoppingListItem[]) => saveData(SHOPPING_LIST_FILE, list);
+export async function saveShoppingLists(lists: any[]) {
+  const data = JSON.stringify(lists, null, 2);
+  await fs.promises.writeFile(shoppingListFilePath, data, "utf-8");
+}
 
-// Notes
-export const loadNotes = () => loadData<Note>(NOTES_FILE);
-export const saveNotes = (notes: Note[]) => saveData(NOTES_FILE, notes);
+// --- Notes ---
+export async function loadNotes(): Promise<Note[]> {
+  try {
+    const data = await fs.promises.readFile(notesFilePath, "utf-8");
+    return JSON.parse(data) as Note[];
+  } catch (error) {
+     if (error instanceof Error && "code" in error && (error as any).code === "ENOENT") {
+      await saveNotes([]);
+      return [];
+    }
+    console.error("Chyba při načítání vzkazů:", error);
+    return [];
+  }
+}
 
-// Gallery
-export const loadGalleryFolders = () => loadData<GalleryFolder>(GALLERY_FOLDERS_FILE);
-export const saveGalleryFolders = (folders: GalleryFolder[]) => saveData(GALLERY_FOLDERS_FILE, folders);
+export async function saveNotes(notes: Note[]) {
+  const data = JSON.stringify(notes, null, 2);
+  await fs.promises.writeFile(notesFilePath, data, "utf-8");
+}
 
-export const loadGalleryPhotos = () => loadData<GalleryPhoto>(GALLERY_PHOTOS_FILE);
-export const saveGalleryPhotos = (photos: GalleryPhoto[]) => saveData(GALLERY_PHOTOS_FILE, photos);
+// --- Gallery Folders ---
+export async function loadGalleryFolders(): Promise<GalleryFolder[]> {
+  try {
+    const data = await fs.promises.readFile(galleryFoldersPath, "utf-8");
+    return JSON.parse(data) as GalleryFolder[];
+  } catch (error) {
+    if (error instanceof Error && "code" in error && (error as any).code === "ENOENT") {
+      await saveGalleryFolders([]);
+      return [];
+    }
+    return [];
+  }
+}
 
-// --- DIARY UTILS ---
-export const loadDiaryFolders = () => loadData<DiaryFolder>(DIARY_FOLDERS_FILE);
-export const saveDiaryFolders = (folders: DiaryFolder[]) => saveData(DIARY_FOLDERS_FILE, folders);
+export async function saveGalleryFolders(folders: GalleryFolder[]) {
+  const data = JSON.stringify(folders, null, 2);
+  await fs.promises.writeFile(galleryFoldersPath, data, "utf-8");
+}
 
-export const loadDiaryEntries = () => loadData<DiaryEntry>(DIARY_ENTRIES_FILE);
-export const saveDiaryEntries = (entries: DiaryEntry[]) => saveData(DIARY_ENTRIES_FILE, entries);
+// --- Gallery Photos ---
+export async function loadGalleryPhotos(): Promise<GalleryPhoto[]> {
+  try {
+    const data = await fs.promises.readFile(galleryPhotosPath, "utf-8");
+    return JSON.parse(data) as GalleryPhoto[];
+  } catch (error) {
+    if (error instanceof Error && "code" in error && (error as any).code === "ENOENT") {
+      await saveGalleryPhotos([]);
+      return [];
+    }
+    return [];
+  }
+}
+
+export async function saveGalleryPhotos(photos: GalleryPhoto[]) {
+  const data = JSON.stringify(photos, null, 2);
+  await fs.promises.writeFile(galleryPhotosPath, data, "utf-8");
+}
