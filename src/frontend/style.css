@@ -2490,3 +2490,296 @@ body.admin-page {
 .username-display {
     padding-right: 15px;
 }
+
+/* --- TOAST NOTIFICATION (ZELENÉ OKNO VLEVO DOLE) --- */
+.toast {
+    position: fixed;
+    bottom: 30px;
+    left: 30px;
+    background-color: #10b981; /* Svěží zelená */
+    color: white;
+    padding: 15px 25px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 3000; /* Musí být nad modálem i ostatním obsahem */
+    
+    /* Stav: Skrytý */
+    transform: translateY(100px) scale(0.9);
+    opacity: 0;
+    pointer-events: none;
+    
+    /* Animace */
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+
+/* Stav: Zobrazený */
+.toast.show {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.toast i {
+    font-size: 1.4em;
+    color: #ecfdf5; /* Velmi světlá zelená pro ikonu */
+}
+
+.toast span {
+    font-weight: 600;
+    font-size: 0.95em;
+    letter-spacing: 0.3px;
+}
+
+/* --- OPRAVENÉ LIGHTBOX STYLY --- */
+.lightbox-content {
+    max-width: 95%;
+    max-height: 90vh; /* Zvětšeno pro lepší využití místa */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center; /* Centrování obsahu */
+    position: relative;
+}
+
+.lightbox-content img {
+    display: block;
+    max-width: 100%;
+    max-height: 80vh; /* Omezení výšky, aby zbylo místo na popisky */
+    width: auto;      /* Důležité: Zachová poměr stran šířky */
+    height: auto;     /* Důležité: Zachová poměr stran výšky */
+    object-fit: contain; /* Zajistí, že se obrázek vejde a neořízne */
+    border-radius: 4px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+}
+
+/* Popisek pod fotkou */
+.lightbox-caption-container {
+    width: 100%;
+    max-width: 800px;
+    margin-top: 15px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.9);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 30px;
+}
+
+/* ... existing code (tlačítka a zbytek stylů zůstává) ... */
+
+/* --- OPRAVENÉ LIGHTBOX STYLY (NAHRADIT STARÉ) --- */
+
+.lightbox-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(10, 10, 10, 0.95); /* Tmavší pozadí pro lepší kontrast */
+    z-index: 2000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    backdrop-filter: blur(5px);
+}
+
+.lightbox-content {
+    /* Kontejner se přizpůsobí obsahu, ale nepřesáhne 90% okna */
+    width: auto;
+    max-width: 90%; 
+    max-height: 90vh; 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.lightbox-content img {
+    display: block;
+    /* Obrázek se nesmí roztáhnout víc, než je jeho originál, a musí se vejít do okna */
+    max-width: 100%;
+    max-height: 75vh; /* Omezíme výšku na 75% obrazovky, aby zbylo místo pro text */
+    width: auto;      /* Automatická šířka podle poměru stran */
+    height: auto;     /* Automatická výška podle poměru stran */
+    object-fit: contain; /* Zajistí, že celý obrázek bude vidět */
+    border-radius: 4px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    margin: 0 auto;
+}
+
+/* Popisek pod fotkou */
+.lightbox-caption-container {
+    width: 100%;
+    max-width: 800px;
+    margin-top: 15px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.9);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 30px;
+    flex-shrink: 0; /* Zabrání smrsknutí popisku */
+}
+
+.lightbox-description {
+    font-size: 1.1em;
+    font-style: italic;
+    font-weight: 300;
+    line-height: 1.5;
+    position: relative;
+    padding: 0 25px;
+    margin: 0;
+    cursor: pointer; 
+    transition: color 0.2s;
+}
+
+.lightbox-description:hover {
+    color: #fff;
+}
+
+/* Uvozovky u popisu */
+.lightbox-description::before {
+    content: '\201C'; 
+    font-family: serif;
+    font-size: 2em;
+    position: absolute;
+    left: -10px;
+    top: -10px;
+    color: rgba(255,255,255,0.4);
+}
+
+.lightbox-description::after {
+    content: '\201D'; 
+    font-family: serif;
+    font-size: 2em;
+    position: absolute;
+    right: -10px;
+    bottom: -20px;
+    color: rgba(255,255,255,0.4);
+}
+
+/* Tlačítko pro přidání popisu */
+.add-description-btn {
+    background: none;
+    border: 1px dashed rgba(255,255,255,0.3);
+    color: rgba(255,255,255,0.5);
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.8em;
+    cursor: pointer;
+    margin-top: 5px;
+    transition: all 0.2s;
+}
+
+.add-description-btn:hover {
+    border-color: rgba(255,255,255,0.6);
+    color: white;
+    background: rgba(255,255,255,0.1);
+}
+
+/* Formulář pro editaci */
+.description-form {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    justify-content: center;
+    margin-top: 5px;
+}
+
+.description-input {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 20px;
+    width: 300px;
+}
+
+.save-description-btn {
+    background: rgba(255,255,255,0.9);
+    color: #333;
+    border: none;
+    padding: 0 15px;
+    border-radius: 20px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Ovládací prvky (tlačítka stáhnout/smazat) */
+.lightbox-controls {
+    margin-top: 15px;
+    display: flex;
+    gap: 15px;
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+}
+
+.lightbox-content:hover .lightbox-controls,
+.lightbox-controls:hover { opacity: 1; }
+
+.lightbox-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.9);
+    padding: 8px 20px;
+    border-radius: 50px;
+    font-size: 0.9em;
+    font-weight: 500;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.lightbox-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+}
+
+.lightbox-btn-danger:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: #ef4444;
+    color: #fca5a5;
+}
+
+/* Šipky a zavírání */
+.lightbox-close {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    color: rgba(255,255,255,0.5);
+    background: none;
+    border: none;
+    font-size: 3em;
+    cursor: pointer;
+    transition: all 0.3s;
+    z-index: 2010;
+}
+.lightbox-close:hover { color: white; transform: rotate(90deg); }
+
+.lightbox-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: rgba(255,255,255,0.3);
+    font-size: 3.5em;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+    z-index: 2010;
+}
+.lightbox-arrow:hover {
+    color: white;
+    transform: translateY(-50%) scale(1.2);
+}
+.lightbox-arrow.left { left: 20px; }
+.lightbox-arrow.right { right: 20px; }

@@ -31,8 +31,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const uploadPhotoModal = document.getElementById("upload-photo-modal");
     const uploadPhotoForm = document.getElementById("upload-photo-form");
     const photoFileInput = document.getElementById("photo-file-input");
-    const fileChosenText = document.getElementById("file-chosen-text"); // Nový element
-    const uploadLoadingOverlay = document.getElementById("upload-loading-overlay"); // Spinner overlay
+    
+    // NOVÉ ELEMENTY PRO UPLOAD
+    const fileChosenText = document.getElementById("file-chosen-text");
+    const uploadLoadingOverlay = document.getElementById("upload-loading-overlay");
+
+    // Toast Element
+    const successToast = document.getElementById("success-toast");
 
     // Lightbox Elements
     const lightboxModal = document.getElementById("lightbox-modal");
@@ -43,7 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const lightboxNext = document.getElementById("lightbox-next");
     const lightboxDelete = document.getElementById("lightbox-delete");
     
-    // Lightbox Description (Vzpomínky)
+    // Lightbox Description
     const lightboxDescription = document.getElementById("lightbox-description");
     const addDescriptionBtn = document.getElementById("add-description-btn");
     const descriptionForm = document.getElementById("description-form");
@@ -58,34 +63,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const backendUrl = ""; 
 
-    // --- DEFINICE LAYOUTŮ (Perfect Fit) ---
-    // Každý pattern má součet velikostí buněk 12 (4 sloupce x 3 řádky)
+    // Layouty pro mřížku
     const layouts = [
-        {
-            // Layout A: 1 velká (4), 2 široké (4), 4 malé (4) = 12
-            classes: ['g-big', 'g-wide', 'g-wide', '', '', '', ''],
-            itemsCount: 7
-        },
-        {
-            // Layout B: 4 vysoké (8), 4 malé (4) = 12
-            classes: ['g-tall', 'g-tall', 'g-tall', 'g-tall', '', '', '', ''],
-            itemsCount: 8
-        },
-        {
-            // Layout C: 6 širokých (12) = 12
-            classes: ['g-wide', 'g-wide', 'g-wide', 'g-wide', 'g-wide', 'g-wide'],
-            itemsCount: 6
-        },
-        {
-            // Layout D: Mozaika
-            classes: ['g-big', 'g-tall', '', '', 'g-wide', '', ''],
-            itemsCount: 7
-        },
-        {
-            // Layout E: Klasika (12 malých)
-            classes: [],
-            itemsCount: 12
-        }
+        { classes: ['g-big', 'g-wide', 'g-wide', '', '', '', ''], itemsCount: 7 },
+        { classes: ['g-tall', 'g-tall', 'g-tall', 'g-tall', '', '', '', ''], itemsCount: 8 },
+        { classes: ['g-wide', 'g-wide', 'g-wide', 'g-wide', 'g-wide', 'g-wide'], itemsCount: 6 },
+        { classes: ['g-big', 'g-tall', '', '', 'g-wide', '', ''], itemsCount: 7 },
+        { classes: [], itemsCount: 12 }
     ];
 
     // --- Auth Check ---
@@ -134,31 +118,23 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // --- Logic: Folders ---
-
     async function loadFolders() {
         const folders = await apiFetch(`${backendUrl}/api/gallery/folders`);
-        if (folders) {
-            renderFolders(folders);
-        }
+        if (folders) renderFolders(folders);
     }
 
     function renderFolders(folders) {
         foldersGrid.innerHTML = '';
-        
         if (folders.length === 0) {
             foldersGrid.innerHTML = '<p class="empty-state">Zatím tu nejsou žádná alba. Vytvořte první!</p>';
             return;
         }
-
         folders.forEach(folder => {
             const folderEl = document.createElement('div');
             folderEl.className = 'folder-card';
             folderEl.onclick = () => openFolder(folder.id, folder.name);
-            
             folderEl.innerHTML = `
-                <div class="folder-icon">
-                    <i class="fas fa-folder"></i>
-                </div>
+                <div class="folder-icon"><i class="fas fa-folder"></i></div>
                 <div class="folder-info">
                     <h3>${folder.name}</h3>
                     <span class="folder-date">Vytvořeno: ${new Date(folder.createdAt).toLocaleDateString()}</span>
@@ -177,12 +153,10 @@ document.addEventListener("DOMContentLoaded", () => {
         e.preventDefault();
         const name = folderNameInput.value.trim();
         if (!name) return;
-
         const result = await apiFetch(`${backendUrl}/api/gallery/folders`, {
             method: 'POST',
             body: JSON.stringify({ name })
         });
-
         if (result) {
             createFolderModal.style.display = 'none';
             folderNameInput.value = '';
@@ -193,15 +167,12 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // --- Logic: Photos ---
-
     async function openFolder(folderId, folderName) {
         currentFolderId = folderId;
         currentFolderTitle.textContent = folderName;
         currentPage = 1;
-
         foldersView.style.display = 'none';
         photosView.style.display = 'flex'; 
-
         loadPhotos(folderId);
     }
 
@@ -222,7 +193,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function renderPhotos() {
         photosGrid.innerHTML = '';
-
         if (currentPhotos.length === 0) {
             photosGrid.innerHTML = '<p class="empty-state">Toto album je prázdné. Nahrajte první fotky!</p>';
             paginationControls.style.display = 'none';
@@ -232,7 +202,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const layoutIndex = (currentPage - 1) % layouts.length;
         const currentLayout = layouts[layoutIndex];
         
-        // Vypočítat, které fotky patří na tuto stránku
         let startIndex = 0;
         for (let i = 1; i < currentPage; i++) {
             const prevLayout = layouts[(i - 1) % layouts.length];
@@ -242,7 +211,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const endIndex = startIndex + currentLayout.itemsCount;
         const pagePhotos = currentPhotos.slice(startIndex, endIndex);
 
-        // Spočítat celkový počet stránek
         let tempIndex = 0;
         let totalPages = 0;
         while (tempIndex < currentPhotos.length) {
@@ -251,27 +219,18 @@ document.addEventListener("DOMContentLoaded", () => {
             totalPages++;
         }
 
-        // Vykreslení
         pagePhotos.forEach((photo, index) => {
             const globalIndex = startIndex + index;
             const photoEl = document.createElement('div');
-            
             photoEl.className = 'photo-card';
-            
             if (index < currentLayout.classes.length) {
                 const spanClass = currentLayout.classes[index];
-                if (spanClass) {
-                    photoEl.classList.add(spanClass);
-                }
+                if (spanClass) photoEl.classList.add(spanClass);
             }
-
             photoEl.onclick = () => openLightbox(globalIndex);
-
             photoEl.innerHTML = `
                 <img src="${photo.src}" alt="Foto" loading="lazy">
-                <div class="photo-overlay">
-                    <i class="fas fa-search-plus"></i>
-                </div>
+                <div class="photo-overlay"><i class="fas fa-search-plus"></i></div>
             `;
             photosGrid.appendChild(photoEl);
         });
@@ -287,14 +246,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     prevPageBtn.addEventListener('click', () => {
-        if (currentPage > 1) {
-            currentPage--;
-            renderPhotos();
-        }
+        if (currentPage > 1) { currentPage--; renderPhotos(); }
     });
 
     nextPageBtn.addEventListener('click', () => {
-        // Přepočítat totalPages
         let tempIndex = 0;
         let totalPages = 0;
         while (tempIndex < currentPhotos.length) {
@@ -302,24 +257,19 @@ document.addEventListener("DOMContentLoaded", () => {
             tempIndex += l.itemsCount;
             totalPages++;
         }
-
-        if (currentPage < totalPages) {
-            currentPage++;
-            renderPhotos();
-        }
+        if (currentPage < totalPages) { currentPage++; renderPhotos(); }
     });
 
-    // --- Upload Logic ---
-
+    // --- Upload Logic (NOVÉ) ---
     uploadPhotoBtn.addEventListener('click', () => {
         uploadPhotoModal.style.display = 'flex';
-        // Reset inputs
+        // Reset
         photoFileInput.value = '';
         fileChosenText.textContent = 'Nevybrán žádný soubor';
         uploadLoadingOverlay.style.display = 'none';
     });
 
-    // Změna textu "Nevybrán žádný soubor" na počet souborů
+    // Aktualizace textu po výběru souboru
     photoFileInput.addEventListener('change', function() {
         if (this.files && this.files.length > 0) {
             if (this.files.length === 1) {
@@ -332,17 +282,27 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    // Funkce pro zobrazení notifikace
+    function showSuccessToast() {
+        successToast.classList.add("show");
+        // Skrýt po 3 sekundách
+        setTimeout(() => {
+            successToast.classList.remove("show");
+        }, 3000);
+    }
+
     uploadPhotoForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const files = photoFileInput.files;
         if (!files.length) return;
 
-        // 1. Zobrazit spinner a zablokovat tlačítko
+        // Zobrazit spinner
         uploadLoadingOverlay.style.display = 'flex';
         const uploadButton = uploadPhotoForm.querySelector('button[type="submit"]');
         uploadButton.disabled = true;
 
-        // 2. Upload proces
+        let successCount = 0;
+
         for (const file of Array.from(files)) {
             try {
                 const base64 = await toBase64(file);
@@ -353,21 +313,25 @@ document.addEventListener("DOMContentLoaded", () => {
                         imageBase64: base64
                     })
                 });
+                successCount++;
             } catch (err) {
                 console.error("Chyba při uploadu:", err);
                 alert(`Nepodařilo se nahrát soubor ${file.name}`);
             }
         }
 
-        // 3. Reset a skrytí spinneru
+        // Skrýt spinner a modal
         uploadButton.disabled = false;
         uploadLoadingOverlay.style.display = 'none';
         uploadPhotoModal.style.display = 'none';
         photoFileInput.value = '';
-        fileChosenText.textContent = 'Nevybrán žádný soubor';
         
-        // 4. Obnovit fotky
         loadPhotos(currentFolderId);
+
+        // Zobrazit toast notifikaci pokud se nahrálo alespoň něco
+        if (successCount > 0) {
+            showSuccessToast();
+        }
     });
 
     const toBase64 = file => new Promise((resolve, reject) => {
@@ -377,8 +341,7 @@ document.addEventListener("DOMContentLoaded", () => {
         reader.onerror = error => reject(error);
     });
 
-    // --- Lightbox Logic (Vzpomínky) ---
-
+    // --- Lightbox Logic ---
     function openLightbox(index) {
         currentLightboxIndex = index;
         updateLightboxContent();
@@ -393,9 +356,7 @@ document.addEventListener("DOMContentLoaded", () => {
         lightboxDownload.href = photo.src;
         lightboxDownload.setAttribute('download', `foto.jpg`);
 
-        // Zobrazení popisu (Vzpomínky)
         descriptionForm.style.display = 'none';
-        
         if (photo.description) {
             lightboxDescription.textContent = photo.description;
             lightboxDescription.style.display = 'block';
@@ -406,7 +367,6 @@ document.addEventListener("DOMContentLoaded", () => {
             addDescriptionBtn.style.display = 'block';
         }
 
-        // Ovládání pro mazání
         const isOwner = photo.uploadedBy === loggedInUsername;
         const isAdmin = userRole === 'admin';
         
@@ -418,53 +378,34 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Editace popisu
-    lightboxDescription.addEventListener('click', () => {
-        showDescriptionForm();
-    });
-
-    addDescriptionBtn.addEventListener('click', () => {
-        showDescriptionForm();
-    });
+    lightboxDescription.addEventListener('click', showDescriptionForm);
+    addDescriptionBtn.addEventListener('click', showDescriptionForm);
 
     function showDescriptionForm() {
         const photo = currentPhotos[currentLightboxIndex];
         descriptionInput.value = photo.description || '';
-        
         lightboxDescription.style.display = 'none';
         addDescriptionBtn.style.display = 'none';
         descriptionForm.style.display = 'flex';
         descriptionInput.focus();
     }
 
-    // Uložení popisu (PATCH na server)
     saveDescriptionBtn.addEventListener('click', async () => {
         const newDescription = descriptionInput.value.trim();
         const photo = currentPhotos[currentLightboxIndex];
-
-        // Optimistický update
         photo.description = newDescription;
         updateLightboxContent();
-
-        // Odeslání na server
         try {
             await apiFetch(`${backendUrl}/api/gallery/photos/${photo.id}`, {
                 method: 'PATCH',
                 body: JSON.stringify({ description: newDescription })
             });
-        } catch (e) {
-            console.error("Nepodařilo se uložit popis:", e);
-            alert("Chyba při ukládání popisu.");
-        }
+        } catch (e) { console.error(e); }
     });
 
     async function deletePhoto(photoId) {
         if(!confirm("Opravdu smazat tuto fotku?")) return;
-        
-        const result = await apiFetch(`${backendUrl}/api/gallery/photos/${photoId}`, {
-            method: 'DELETE'
-        });
-
+        const result = await apiFetch(`${backendUrl}/api/gallery/photos/${photoId}`, { method: 'DELETE' });
         if (result) {
             closeLightbox();
             loadPhotos(currentFolderId);
@@ -479,43 +420,19 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     lightboxClose.addEventListener('click', closeLightbox);
-    lightboxModal.addEventListener('click', (e) => {
-        if (e.target === lightboxModal) closeLightbox();
-    });
-
-    lightboxPrev.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (currentLightboxIndex > 0) {
-            currentLightboxIndex--;
-            updateLightboxContent();
-        }
-    });
-
-    lightboxNext.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (currentLightboxIndex < currentPhotos.length - 1) {
-            currentLightboxIndex++;
-            updateLightboxContent();
-        }
-    });
+    lightboxModal.addEventListener('click', (e) => { if (e.target === lightboxModal) closeLightbox(); });
+    lightboxPrev.addEventListener('click', (e) => { e.stopPropagation(); if (currentLightboxIndex > 0) { currentLightboxIndex--; updateLightboxContent(); } });
+    lightboxNext.addEventListener('click', (e) => { e.stopPropagation(); if (currentLightboxIndex < currentPhotos.length - 1) { currentLightboxIndex++; updateLightboxContent(); } });
 
     document.addEventListener('keydown', (e) => {
         if (lightboxModal.style.display === 'flex') {
             if (e.key === 'Escape') closeLightbox();
-            if (e.key === 'ArrowLeft' && currentLightboxIndex > 0) {
-                currentLightboxIndex--;
-                updateLightboxContent();
-            }
-            if (e.key === 'ArrowRight' && currentLightboxIndex < currentPhotos.length - 1) {
-                currentLightboxIndex++;
-                updateLightboxContent();
-            }
+            if (e.key === 'ArrowLeft' && currentLightboxIndex > 0) { currentLightboxIndex--; updateLightboxContent(); }
+            if (e.key === 'ArrowRight' && currentLightboxIndex < currentPhotos.length - 1) { currentLightboxIndex++; updateLightboxContent(); }
         }
     });
 
     document.querySelectorAll('.modal-close-button').forEach(btn => {
-        btn.addEventListener('click', () => {
-            btn.closest('.modal-overlay').style.display = 'none';
-        });
+        btn.addEventListener('click', () => { btn.closest('.modal-overlay').style.display = 'none'; });
     });
 });
