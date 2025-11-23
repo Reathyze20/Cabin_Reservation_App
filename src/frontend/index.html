@@ -87,10 +87,10 @@
 
       <!-- Hlavní sekce aplikace -->
       <div id="app-section" class="app-container" style="display: none;">
-        <!-- Horní lišta: navigace + informace o uživateli (zobrazí se, když je uživatel přihlášen) -->
+        <!-- Horní lišta: navigace + informace o uživateli -->
         <div class="top-bar">
           <nav class="app-nav">
-            <a href="index.html" class="nav-link">Rezervace</a>
+            <a href="index.html" class="nav-link active">Rezervace</a>
             <a href="notes.html" class="nav-link">Nástěnka</a>
             <a href="gallery.html" class="nav-link">Galerie</a>
           </nav>
@@ -101,19 +101,6 @@
             </button>
           </div>
         </div>
-
-        <!-- Nástěnka -->
-        <div class="card notice-board-container">
-          <h2><i class="fas fa-thumbtack"></i> Nástěnka</h2>
-          <div id="notes-list" class="notes-list">
-            <!-- Vzkazy se načtou zde -->
-          </div>
-          <form id="add-note-form" class="add-note-form">
-            <textarea id="note-message-input" placeholder="Napište rychlý vzkaz pro ostatní..." required rows="2"></textarea>
-            <button type="submit">Přidat vzkaz</button>
-          </form>
-        </div>
-
 
         <div class="main-content">
             <!-- Nákupní seznam -->
@@ -308,9 +295,7 @@
 
     <!-- JS Knihovny a náš skript -->
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <!-- Přidání češtiny pro Flatpickr -->
     <script src="https://npmcdn.com/flatpickr/dist/l10n/cs.js"></script>
     <script src="script.js"></script>
   </body>
 </html>
-

@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const calendarContainer = document.querySelector(".calendar-container");
   const reservationsTitle = document.getElementById("reservations-title");
 
-  // Oprava: Admin Tool link - pouze přesměrování, neodhlašovat
+  // Oprava: Admin Tool link
   const adminLink = document.getElementById('admin-link');
   if (adminLink) {
     adminLink.addEventListener('click', function(e) {
@@ -61,10 +61,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const priceSplitForm = document.getElementById('price-split-form');
   const userSplitList = document.getElementById('user-split-list');
   const splitModalInfo = document.getElementById('split-modal-info');
-
-  const notesListDiv = document.getElementById('notes-list');
-  const addNoteForm = document.getElementById('add-note-form');
-  const noteMessageInput = document.getElementById('note-message-input');
 
 
   document.querySelectorAll('.modal-close-button').forEach(button => {
@@ -110,10 +106,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let reservationIdToDelete = null;
   const backendUrl = "";
 
-  // Toast Notifikace (pokud ji nemáš, můžeš nahradit za alert())
   function showToast(message, type = 'info') {
       console.log(`Toast (${type}): ${message}`);
-      // Můžeš zde implementovat hezčí notifikaci
       alert(message);
   }
 
@@ -140,7 +134,7 @@ document.addEventListener("DOMContentLoaded", () => {
     await fetchUsers(); // Načteme uživatele pro split funkci
     loadReservations();
     loadShoppingList();
-    loadNotes();
+    // loadNotes() odstraněno - přesunuto do notes.js
 
     const adminLink = document.getElementById('admin-link');
     const role = localStorage.getItem('role');
@@ -311,9 +305,8 @@ document.addEventListener("DOMContentLoaded", () => {
     return localStorage.getItem("authToken");
   }
 
-  // Funkce pro získání barvy uživatele (přidána pro úplnost) - ale už ji nepoužíváme pro jméno
   function getUserColor(userId) {
-    if (!allUsers) return '#808080'; // Default
+    if (!allUsers) return '#808080';
     const user = allUsers.find(u => u.id === userId);
     return user ? (user.color || '#808080') : '#808080';
   }
@@ -497,21 +490,17 @@ document.addEventListener("DOMContentLoaded", () => {
         let bodyData = { purpose, notes };
 
     if (isEditMode) {
-      // The edit inputs are injected into the modal when opening in edit mode.
-      // Guard in case they are missing (e.g., modal DOM changed) and fallback to stored reservation data.
       const fromInput = document.getElementById('edit-from-date');
       const toInput = document.getElementById('edit-to-date');
       if (fromInput && toInput) {
         bodyData.from = fromInput.value;
         bodyData.to = toInput.value;
       } else {
-        // Fallback: find the original reservation in memory
         const original = window.currentReservations && window.currentReservations.find(r => r.id === reservationIdInput.value);
         if (original) {
           bodyData.from = original.from;
           bodyData.to = original.to;
         } else {
-          // As a last resort, return an error to the user rather than throwing a runtime exception
           bookingMessage.textContent = 'Chyba: Nelze získat data pro úpravu rezervace.';
           bookingMessage.style.color = 'red';
           return;
@@ -636,7 +625,6 @@ document.addEventListener("DOMContentLoaded", () => {
               statusBadge = '<span class="status-badge backup">Záložní</span>';
             }
 
-            // ZDE JE ZMĚNA: Odstranění inline stylu pro barvu jména
             listItem.innerHTML = `
             <div class="reservation-header">
               <strong title="${r.username}">${r.username}</strong>
@@ -667,7 +655,6 @@ document.addEventListener("DOMContentLoaded", () => {
     } else if (button.classList.contains('delete-btn')) {
         openConfirmDeleteModal(reservationId);
     } else if (button.classList.contains('assign-btn')) {
-      // ZDE JE NOVÁ ČÁST
       openAssignModal(reservationId);
     }
   });
@@ -708,7 +695,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Získání nového modálu pro přiřazení
   const assignModal = document.getElementById('assign-reservation-modal');
 
   window.addEventListener('click', (event) => {
@@ -716,10 +702,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (event.target === confirmDeleteModal) closeConfirmDeleteModal();
       if (event.target === iconSelectModal) iconSelectModal.style.display = 'none';
       if (event.target === priceSplitModal) priceSplitModal.style.display = 'none';
-      if (event.target === assignModal) closeAssignModal(); // <-- PŘIDÁN TENTO ŘÁDEK
+      if (event.target === assignModal) closeAssignModal();
   });
-
-  // --- Shopping List Logic ---
 
   async function fetchUsers() {
     try {
@@ -821,10 +805,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const created = await response.json();
 
   if (itemNameInput) itemNameInput.value = '';
-  if (itemIconInput) itemIconInput.value = 'fas fa-shopping-basket'; // Reset na výchozí
+  if (itemIconInput) itemIconInput.value = 'fas fa-shopping-basket';
   if (openIconModalBtn && openIconModalBtn.querySelector) openIconModalBtn.querySelector('i').className = 'fas fa-shopping-basket';
 
-        // Open modal for the new list
         await openShoppingListModal(created.id);
         await loadShoppingList();
       } catch (error) {
@@ -889,7 +872,6 @@ document.addEventListener("DOMContentLoaded", () => {
       shoppingModalList.appendChild(li);
     });
 
-    // attach listeners
     shoppingModalList.querySelectorAll('.modal-purchase-checkbox').forEach(ch => {
       ch.addEventListener('change', async (e) => {
         const id = e.target.closest('.modal-item').dataset.id;
@@ -1039,7 +1021,7 @@ document.addEventListener("DOMContentLoaded", () => {
           loadShoppingList();
       } catch (error) {
           alert(error.message);
-          loadShoppingList(); // Re-render to revert checkbox state on failure
+          loadShoppingList(); 
       }
   }
 
@@ -1093,108 +1075,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // --- Notes (Nástěnka) Logic ---
-
-  async function loadNotes() {
-    notesListDiv.innerHTML = `<div class="spinner-container"><div class="spinner"></div></div>`;
-    const token = getToken();
-    try {
-        const response = await fetch(`${backendUrl}/api/notes`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!response.ok) throw new Error('Nepodařilo se načíst vzkazy.');
-        const notes = await response.json();
-        renderNotes(notes);
-    } catch (error) {
-        notesListDiv.innerHTML = `<p style="color:red;">${error.message}</p>`;
-    }
-  }
-
-  function renderNotes(notes) {
-    notesListDiv.innerHTML = '';
-    if (notes.length === 0) {
-        notesListDiv.innerHTML = '<p><i>Zatím tu nejsou žádné vzkazy.</i></p>';
-        return;
-    }
-
-    notes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-    const loggedInUserId = localStorage.getItem('userId');
-    const isAdmin = localStorage.getItem('role') === 'admin';
-
-    notes.forEach(note => {
-        const noteEl = document.createElement('div');
-        noteEl.className = 'note-item';
-        noteEl.dataset.id = note.id;
-
-        const canDelete = isAdmin || (note.userId === loggedInUserId);
-        const deleteBtn = canDelete ? `<button class="delete-note-btn" title="Smazat vzkaz"><i class="fas fa-times"></i></button>` : '';
-
-        const date = new Date(note.createdAt);
-        const formattedDate = `${date.getDate()}. ${date.getMonth() + 1}. ${date.getFullYear()} v ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
-
-        noteEl.innerHTML = `
-            ${deleteBtn}
-            <p class="note-content">${note.message.replace(/\n/g, '<br>')}</p>
-            <div class="note-meta">
-                <strong>${note.username}</strong>, ${formattedDate}
-            </div>
-        `;
-        notesListDiv.appendChild(noteEl);
-    });
-  }
-
-  if(addNoteForm) {
-    addNoteForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const message = noteMessageInput.value.trim();
-        if (!message) return;
-
-        const token = getToken();
-        try {
-            const response = await fetch(`${backendUrl}/api/notes`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ message })
-            });
-            if (!response.ok) throw new Error('Chyba při přidávání vzkazu.');
-
-            noteMessageInput.value = '';
-            await loadNotes();
-        } catch (error) {
-            alert(error.message);
-        }
-    });
-  }
-
-  if (notesListDiv) {
-    notesListDiv.addEventListener('click', async (e) => {
-        const deleteBtn = e.target.closest('.delete-note-btn');
-        if (!deleteBtn) return;
-
-        const noteItem = deleteBtn.closest('.note-item');
-        const noteId = noteItem.dataset.id;
-
-        if (confirm('Opravdu chcete smazat tento vzkaz?')) {
-            const token = getToken();
-            try {
-                const response = await fetch(`${backendUrl}/api/notes/${noteId}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (!response.ok) throw new Error('Chyba při mazání vzkazu.');
-                await loadNotes();
-            } catch (error) {
-                alert(error.message);
-            }
-        }
-    });
-  }
-
-  // --- Logika pro PŘIŘAZENÍ REZERVACE ---
-
-  // 1. Získání elementů nového modálu
-  // const assignModal = document.getElementById('assign-reservation-modal'); // Již definováno výše
   const assignForm = document.getElementById('assign-reservation-form');
   const assignSelect = document.getElementById('assign-user-select');
   const assignReservationIdInput = document.getElementById('assign-reservation-id-input');
@@ -1204,11 +1084,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const assignModalCloseBtn = assignModal.querySelector('.modal-close-button');
 
 
-  // 2. Funkce pro otevření modálu
   function openAssignModal(reservationId) {
     const reservation = window.currentReservations.find(r => r.id === reservationId);
     if (!reservation) {
-      // Místo alert() použijeme náš vlastní systém
       showToast("Chyba: Rezervace nenalezena.", "error");
       return;
     }
@@ -1217,13 +1095,8 @@ document.addEventListener("DOMContentLoaded", () => {
     assignErrorMsg.textContent = '';
     assignModalText.textContent = `Přiřazujete rezervaci na termín: ${formatDateForDisplay(reservation.from)} - ${formatDateForDisplay(reservation.to)}.`;
 
-    // Naplnění dropdownu uživateli
     assignSelect.innerHTML = '<option value="">-- Vyberte uživatele --</option>';
 
-    // Použijeme globální proměnnou `allUsers`, kterou již načítáš
-    // Filtrujeme uživatele:
-    // 1. Nesmí to být admin
-    // 2. Nesmí to být aktuální vlastník (pro kterého otevíráme modal)
     const eligibleUsers = allUsers.filter(user => {
         return user.role !== 'admin' && user.id !== reservation.userId;
     });
@@ -1244,17 +1117,14 @@ document.addEventListener("DOMContentLoaded", () => {
     assignModal.style.display = 'flex';
   }
 
-  // 3. Funkce pro zavření modálu
   function closeAssignModal() {
     assignModal.style.display = 'none';
     assignForm.reset();
   }
 
-  // 4. Listenery pro zavírací tlačítka modálu (již řešeno v krocích výše)
   if (cancelAssignBtn) cancelAssignBtn.addEventListener('click', closeAssignModal);
   if (assignModalCloseBtn) assignModalCloseBtn.addEventListener('click', closeAssignModal);
 
-  // 5. Listener pro odeslání formuláře
   if (assignForm) {
     assignForm.addEventListener('submit', async (event) => {
       event.preventDefault();
@@ -1290,10 +1160,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const result = await response.json();
         if (!response.ok) throw new Error(result.message || `Chyba ${response.status}`);
 
-        // Úspěch!
         closeAssignModal();
         showToast("Rezervace byla úspěšně přiřazena.", "success");
-        await loadReservations(); // Znovu načteme rezervace (zobrazí se nové jméno)
+        await loadReservations();
 
       } catch (error) {
         console.error("Chyba při přiřazování:", error);
@@ -1304,10 +1173,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-  // --- Konec logiky pro PŘIŘAZENÍ REZERVACE ---
 
-
-  // Načtení dat při startu
   const initialToken = getToken();
   const initialUsername = localStorage.getItem("username");
   if (initialToken && initialUsername) {
@@ -1316,4 +1182,3 @@ document.addEventListener("DOMContentLoaded", () => {
     showLogin();
   }
 });
-
