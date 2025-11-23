@@ -227,11 +227,10 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        // Výpočet layoutu a stránkování
         const layoutIndex = (currentPage - 1) % layouts.length;
         const currentLayout = layouts[layoutIndex];
         
-        // Spočítáme start index na základě kapacit předchozích stránek
+        // Vypočítat, které fotky patří na tuto stránku
         let startIndex = 0;
         for (let i = 1; i < currentPage; i++) {
             const prevLayout = layouts[(i - 1) % layouts.length];
@@ -241,7 +240,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const endIndex = startIndex + currentLayout.itemsCount;
         const pagePhotos = currentPhotos.slice(startIndex, endIndex);
 
-        // Spočítáme celkový počet stránek
+        // Spočítat celkový počet stránek
         let tempIndex = 0;
         let totalPages = 0;
         while (tempIndex < currentPhotos.length) {

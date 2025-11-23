@@ -15,6 +15,7 @@ export async function loadUsers(): Promise<User[]> {
     const data = await fs.promises.readFile(usersFilePath, "utf-8");
     return JSON.parse(data);
   } catch (error) {
+    // Pokud soubor neexistuje, vytvoříme prázdný
     if (error instanceof Error && "code" in error && (error as any).code === "ENOENT") {
       await saveUsers([]);
       return [];
@@ -54,7 +55,6 @@ export async function loadShoppingList(): Promise<ShoppingListItem[]> {
     try {
       const data = await fs.promises.readFile(shoppingListFilePath, "utf-8");
       const parsed = JSON.parse(data);
-      // Migrace starého formátu
       if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].name && !parsed[0].items) {
         const defaultList = {
           id: 'default',

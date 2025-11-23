@@ -26,11 +26,12 @@ import path from "path";
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Zvýšení limitu pro JSON body, aby šly nahrávat obrázky (Base64 je velký)
+// --- DŮLEŽITÉ: Zvýšení limitu pro nahrávání fotek (Base64) ---
 app.use(express.json({ limit: '50mb' }));
 app.use(cors());
 
 const frontendPath = path.join(__dirname, "../../src/frontend");
+// Cesta pro ukládání nahraných fotek
 const uploadsPath = path.join(__dirname, "../../data/uploads");
 
 // Zajistíme, že složka pro uploady existuje
@@ -43,7 +44,10 @@ app.use(express.static(frontendPath));
 app.use('/uploads', express.static(uploadsPath));
 
 
-// --- USERS Endpoints ---
+// ============================================================================
+//                                 USERS API
+// ============================================================================
+
 app.get('/api/users', protect, async (req: Request, res: Response) => {
   try {
     const users = await loadUsers();
@@ -113,7 +117,10 @@ app.delete('/api/users/:id', protect, async (req: Request, res: Response) => {
   }
 });
 
-// --- AUTH Endpoints ---
+// ============================================================================
+//                                 AUTH API
+// ============================================================================
+
 app.post("/api/login", async (req: Request, res: Response) => {
   const { username, password } = req.body;
   try {
@@ -152,7 +159,11 @@ app.post("/api/register", async (req: Request, res: Response) => {
   }
 });
 
-// --- RESERVATIONS Endpoints ---
+
+// ============================================================================
+//                             RESERVATIONS API
+// ============================================================================
+
 app.get("/api/reservations", protect, async (req, res) => {
   try {
     const reservations = await loadReservations();
@@ -172,7 +183,19 @@ app.post("/api/reservations", protect, async (req: Request, res: Response) => {
   
   try {
     const allReservations = await loadReservations();
-    // ... (zde by byla validace kolizí, zkráceno pro přehlednost) ...
+    
+    // Detekce kolizí
+    const newStart = new Date(from);
+    const newEnd = new Date(to);
+    
+    const collision = allReservations.some(r => {
+        const rStart = new Date(r.from);
+        const rEnd = new Date(r.to);
+        return (newStart <= rEnd && newEnd >= rStart) && r.status !== 'backup';
+    });
+
+    const status = collision ? 'backup' : 'primary';
+
     const newReservation: Reservation = {
       id: uuidv4(),
       userId: req.user.userId,
@@ -181,7 +204,7 @@ app.post("/api/reservations", protect, async (req: Request, res: Response) => {
       to,
       purpose,
       notes,
-      status: 'primary' // zjednodušeno
+      status
     };
     allReservations.push(newReservation);
     await saveReservation(allReservations);
@@ -231,26 +254,153 @@ app.post("/api/reservations/delete", protect, async (req: Request, res: Response
 });
 
 app.post("/api/reservations/:reservationId/assign", protect, async (req: Request, res: Response) => {
-    // ... (implementace přiřazení, zkráceno) ...
-    res.status(501).json({message: "Not implemented in this snippet"});
+    if (!req.user || req.user.role !== 'admin') return res.status(403).json({ message: "Pouze admin." });
+    const { reservationId } = req.params;
+    const { newOwnerId } = req.body;
+
+    try {
+      const allReservations = await loadReservations();
+      const resIdx = allReservations.findIndex(r => r.id === reservationId);
+      if (resIdx === -1) return res.status(404).json({ message: "Nenalezeno." });
+
+      const users = await loadUsers();
+      const newOwner = users.find(u => u.id === newOwnerId);
+      if (!newOwner) return res.status(404).json({ message: "Nový vlastník nenalezen." });
+
+      allReservations[resIdx].userId = newOwner.id;
+      allReservations[resIdx].username = newOwner.username;
+      
+      await saveReservation(allReservations);
+      res.json({ message: "Přiřazeno." });
+    } catch (error) {
+      res.status(500).json({ message: "Chyba." });
+    }
 });
 
-// --- SHOPPING LIST ---
+
+// ============================================================================
+//                             SHOPPING LIST API
+// ============================================================================
+
 app.get('/api/shopping-list', protect, async (req, res) => {
     try {
-        const raw = await loadShoppingList(); // Načte itemy nebo listy
+        const raw = await loadShoppingList(); 
+        // Zabalíme do pole seznamů pro zpětnou kompatibilitu
         res.json([{ id: 'default', name: 'Hlavní seznam', items: raw }]); 
     } catch (error) { res.status(500).json({message: "Chyba"}); }
 });
 
 app.post('/api/shopping-list', protect, async (req, res) => {
-     // Zjednodušená implementace pro kompatibilitu
-     res.status(200).json({message: "OK"});
+    // Vytvoření nového seznamu - zjednodušeno, pokud používáte jen jeden seznam v `shopping-list.json`
+    // Pokud chcete víc, museli byste změnit strukturu JSONu.
+    // Pro zachování kompatibility s vaším frontendem vracím success
+    res.status(200).json({ id: 'default', name: 'Hlavní seznam', items: [] });
 });
-// ... (zbytek shopping list endpointů zkrácen, zachovejte původní v reálu) ...
+
+app.post('/api/shopping-list/:listId/items', protect, async (req, res) => {
+  const { name } = req.body;
+  if(!name) return res.status(400).json({message:"Chyba"});
+  try {
+    let items = await loadShoppingList();
+    const newItem: ShoppingListItem = {
+      id: uuidv4(),
+      name,
+      addedBy: req.user?.username || '?',
+      addedById: req.user?.userId || '?',
+      createdAt: new Date().toISOString(),
+      purchased: false
+    };
+    items.push(newItem);
+    await saveShoppingLists(items); // Ukládá pole itemů do souboru
+    res.status(201).json(newItem);
+  } catch(e) { res.status(500).json({message:"Chyba"}); }
+});
+
+app.put('/api/shopping-list/:listId/items/:itemId/purchase', protect, async (req, res) => {
+  const { itemId } = req.params;
+  const { purchased } = req.body; // boolean
+  try {
+    let items = await loadShoppingList();
+    const idx = items.findIndex(i => i.id === itemId);
+    if(idx > -1) {
+      items[idx].purchased = purchased;
+      if(purchased) {
+        items[idx].purchasedBy = req.user?.username;
+        items[idx].purchasedById = req.user?.userId;
+        items[idx].purchasedAt = new Date().toISOString();
+      } else {
+        items[idx].purchasedBy = undefined;
+        items[idx].purchasedById = undefined;
+        items[idx].purchasedAt = undefined;
+        items[idx].price = undefined;
+        items[idx].splitWith = undefined;
+      }
+      await saveShoppingLists(items);
+      res.json(items[idx]);
+    } else {
+      res.status(404).json({message:"Nenalezeno"});
+    }
+  } catch(e) { res.status(500).json({message:"Chyba"}); }
+});
+
+app.put('/api/shopping-list/:itemId/purchase', protect, async (req, res) => {
+  // Alternativní endpoint bez listId
+  const { itemId } = req.params;
+  const { purchased, price, splitWith } = req.body;
+  try {
+    let items = await loadShoppingList();
+    const idx = items.findIndex(i => i.id === itemId);
+    if(idx > -1) {
+      items[idx].purchased = purchased;
+      if(purchased) {
+        items[idx].purchasedBy = req.user?.username;
+        items[idx].purchasedById = req.user?.userId;
+        items[idx].purchasedAt = new Date().toISOString();
+        if(price) items[idx].price = price;
+        if(splitWith) items[idx].splitWith = splitWith;
+      } else {
+         // reset
+         items[idx].purchasedBy = undefined;
+         items[idx].purchasedById = undefined;
+         items[idx].purchasedAt = undefined;
+         items[idx].price = undefined;
+         items[idx].splitWith = undefined;
+      }
+      await saveShoppingLists(items);
+      res.json(items[idx]);
+    } else {
+       res.status(404).json({message:"Nenalezeno"});
+    }
+  } catch(e) { res.status(500).json({message:"Chyba"}); }
+});
 
 
-// --- NOTES ---
+app.delete('/api/shopping-list/:listId/items/:itemId', protect, async (req, res) => {
+  const { itemId } = req.params;
+  try {
+    let items = await loadShoppingList();
+    items = items.filter(i => i.id !== itemId);
+    await saveShoppingLists(items);
+    res.json({success:true});
+  } catch(e) { res.status(500).json({message:"Chyba"}); }
+});
+
+app.delete('/api/shopping-list/:itemId', protect, async (req, res) => {
+    // Alternativní endpoint
+    const { itemId } = req.params;
+    try {
+        let items = await loadShoppingList();
+        items = items.filter(i => i.id !== itemId);
+        await saveShoppingLists(items);
+        res.json({success:true});
+    } catch(e) { res.status(500).json({message:"Chyba"}); }
+});
+
+
+// ============================================================================
+//                                NOTES API
+// ============================================================================
+
 app.get('/api/notes', protect, async (req, res) => {
     try {
         const notes = await loadNotes();
@@ -262,7 +412,13 @@ app.post('/api/notes', protect, async (req, res) => {
     const { message } = req.body;
     try {
         const notes = await loadNotes();
-        const newNote = { id: uuidv4(), userId: req.user.userId, username: req.user.username, message, createdAt: new Date().toISOString() };
+        const newNote: Note = { 
+            id: uuidv4(), 
+            userId: req.user.userId, 
+            username: req.user.username, 
+            message, 
+            createdAt: new Date().toISOString() 
+        };
         notes.push(newNote);
         await saveNotes(notes);
         res.status(201).json(newNote);
@@ -273,6 +429,14 @@ app.delete('/api/notes/:id', protect, async (req, res) => {
     const { id } = req.params;
     try {
         let notes = await loadNotes();
+        // Admin může mazat vše, user jen své
+        const noteToDelete = notes.find(n => n.id === id);
+        if (!noteToDelete) return res.status(404).json({message: "Nenalezeno"});
+        
+        if (req.user.role !== 'admin' && noteToDelete.userId !== req.user.userId) {
+            return res.status(403).json({message: "Nemáte oprávnění."});
+        }
+
         notes = notes.filter(n => n.id !== id);
         await saveNotes(notes);
         res.json({message: "Smazáno"});
@@ -280,9 +444,11 @@ app.delete('/api/notes/:id', protect, async (req, res) => {
 });
 
 
-// --- GALLERY ENDPOINTS (KOMPLETNÍ A ROZŠÍŘENÉ) ---
+// ============================================================================
+//                             GALLERY API (KOMPLETNÍ)
+// ============================================================================
 
-// 1. Složky
+// 1. Získat seznam složek
 app.get('/api/gallery/folders', protect, async (req, res) => {
     try {
         const folders = await loadGalleryFolders();
@@ -292,6 +458,7 @@ app.get('/api/gallery/folders', protect, async (req, res) => {
     }
 });
 
+// 2. Vytvořit složku
 app.post('/api/gallery/folders', protect, async (req, res) => {
     if (!req.user) return res.status(401).json({ message: "Neautorizováno" });
     const { name } = req.body;
@@ -312,7 +479,7 @@ app.post('/api/gallery/folders', protect, async (req, res) => {
     }
 });
 
-// 2. Fotky (získání)
+// 3. Získat fotky (filtr podle složky)
 app.get('/api/gallery/photos', protect, async (req, res) => {
     try {
         const photos = await loadGalleryPhotos();
@@ -328,38 +495,40 @@ app.get('/api/gallery/photos', protect, async (req, res) => {
     }
 });
 
-// 3. Nahrávání fotek (Base64 -> Soubor na disku)
+// 4. Nahrát fotku (Base64 -> Soubor na disku)
 app.post('/api/gallery/photos', protect, async (req, res) => {
     if (!req.user) return res.status(401).json({ message: "Neautorizováno" });
-    const { folderId, imageBase64 } = req.body;
+    const { folderId, imageBase64 } = req.body; // imageBase64 string
 
     if (!folderId || !imageBase64) return res.status(400).json({ message: "Chybí data." });
 
     try {
         // Dekódování Base64
+        // Očekáváme string typu: "data:image/png;base64,iVBORw0KGgo..."
         const matches = imageBase64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
         if (!matches || matches.length !== 3) {
             return res.status(400).json({ message: "Neplatný formát obrázku." });
         }
         
         const imageBuffer = Buffer.from(matches[2], 'base64');
-        const extension = matches[1].split('/')[1] || 'jpg';
+        const type = matches[1]; // např. image/jpeg
+        const extension = type.split('/')[1] || 'jpg'; 
         const fileName = `${uuidv4()}.${extension}`;
         const filePath = path.join(uploadsPath, fileName);
 
-        // Uložení souboru
+        // Uložení souboru na disk
         await fs.promises.writeFile(filePath, imageBuffer);
 
-        // Uložení metadat
+        // Uložení metadat do JSONu
         const photos = await loadGalleryPhotos();
         const newPhoto: GalleryPhoto = {
             id: uuidv4(),
             folderId,
-            src: `/uploads/${fileName}`, // Veřejná cesta
+            src: `/uploads/${fileName}`, // URL cesta pro frontend
             uploadedBy: req.user.username,
             createdAt: new Date().toISOString(),
             description: "" // Inicializujeme prázdný popis
-        } as GalleryPhoto; // Přetypování kvůli description property
+        } as GalleryPhoto; 
 
         photos.push(newPhoto);
         await saveGalleryPhotos(photos);
@@ -371,7 +540,7 @@ app.post('/api/gallery/photos', protect, async (req, res) => {
     }
 });
 
-// 4. Aktualizace fotky (POPIS / VZPOMÍNKA) - NOVÉ
+// 5. Aktualizace fotky (POPIS / VZPOMÍNKA)
 app.patch('/api/gallery/photos/:id', protect, async (req, res) => {
     if (!req.user) return res.status(401).json({ message: "Neautorizováno" });
     const { id } = req.params;
@@ -385,7 +554,7 @@ app.patch('/api/gallery/photos/:id', protect, async (req, res) => {
 
         // Aktualizace popisu
         if (description !== undefined) {
-            // Použijeme 'any' nebo rozšíříme typ GalleryPhoto v types.ts, aby měl description
+            // TypeScript hack, pokud GalleryPhoto nemá description v types.ts definováno
             (photos[photoIndex] as any).description = description;
         }
 
@@ -397,7 +566,7 @@ app.patch('/api/gallery/photos/:id', protect, async (req, res) => {
     }
 });
 
-// 5. Mazání fotek
+// 6. Mazání fotek
 app.delete('/api/gallery/photos/:id', protect, async (req, res) => {
     if (!req.user) return res.status(401).json({ message: "Neautorizováno" });
     const { id } = req.params;
@@ -414,7 +583,8 @@ app.delete('/api/gallery/photos/:id', protect, async (req, res) => {
             return res.status(403).json({ message: "Nemáte oprávnění smazat tuto fotku." });
         }
 
-        // Smazání souboru z disku
+        // Smazání fyzického souboru
+        // Z URL "/uploads/soubor.jpg" získáme "soubor.jpg"
         const fileName = photo.src.split('/uploads/')[1];
         if (fileName) {
             const filePath = path.join(uploadsPath, fileName);
@@ -423,7 +593,7 @@ app.delete('/api/gallery/photos/:id', protect, async (req, res) => {
             }
         }
 
-        // Smazání z JSON
+        // Smazání záznamu z DB
         photos.splice(photoIndex, 1);
         await saveGalleryPhotos(photos);
 
@@ -435,6 +605,7 @@ app.delete('/api/gallery/photos/:id', protect, async (req, res) => {
 });
 
 
+// --- FALLBACK PRO SPA ---
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../../src/frontend/index.html'));
 });

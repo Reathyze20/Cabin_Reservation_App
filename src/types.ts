@@ -70,7 +70,8 @@ export interface GalleryFolder {
 export interface GalleryPhoto {
   id: string;
   folderId: string;
-  src: string; // Cesta k souboru na serveru (/uploads/...)
+  src: string; 
   uploadedBy: string;
   createdAt: string;
+  description?: string; // Nové pole pro popis
 }
