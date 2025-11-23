@@ -12,11 +12,11 @@ export interface Reservation {
   username: string;
   from: string;
   to: string;
-  purpose?: string; // Účel návštěvy (nepovinné)
-  notes?: string;   // Poznámky (nepovinné)
+  purpose?: string;
+  notes?: string;
   userColor?: string;
-  status?: 'primary' | 'backup'; // "primary" je hlavní, "backup" je záložní
-  parentId?: string; // ID hlavní rezervace, pokud je tato záložní
+  status?: 'primary' | 'backup';
+  parentId?: string;
 }
 
 export interface ShoppingListItem {
@@ -31,7 +31,7 @@ export interface ShoppingListItem {
   purchasedById?: string;
   purchasedAt?: string;
   price?: number;
-  splitWith?: string[]; // Pole s ID uživatelů, se kterými se dělí cena
+  splitWith?: string[];
 }
 
 export interface ShoppingList {
@@ -56,6 +56,21 @@ export interface JwtPayload {
   username: string;
   role?: 'admin' | 'user' | 'guest';
   color?: string;
-  iat: number; // Čas vydání tokenu
-  exp: number; // Čas expirace tokenu
+  iat: number;
+  exp: number;
+}
+
+// --- NOVÉ TYPY PRO GALERII ---
+export interface GalleryFolder {
+  id: string;
+  name: string;
+  createdAt: string;
+}
+
+export interface GalleryPhoto {
+  id: string;
+  folderId: string;
+  src: string; // Cesta k souboru na serveru (/uploads/...)
+  uploadedBy: string;
+  createdAt: string;
 }

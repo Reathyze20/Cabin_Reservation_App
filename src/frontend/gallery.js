@@ -44,21 +44,22 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- State ---
     let currentFolderId = null;
     let currentPage = 1;
-    const photosPerPage = 12; // Počet fotek na stránku
-    let currentPhotos = []; // Data aktuálně zobrazených fotek
+    const photosPerPage = 12;
+    let currentPhotos = [];
     let currentLightboxIndex = 0;
 
-    const backendUrl = ""; 
+    const backendUrl = ""; // Relativní cesta
 
     // --- Auth Check ---
     const loggedInUsername = localStorage.getItem("username");
     const userRole = localStorage.getItem("role");
+    const token = localStorage.getItem("authToken");
 
-    if (loggedInUsername) {
+    if (loggedInUsername && token) {
         appContainer.classList.remove("hidden");
         authContainer.classList.add("hidden");
         if (loggedInUsernameElement) loggedInUsernameElement.textContent = loggedInUsername;
-        loadFolders(); // Start app
+        loadFolders(); 
     } else {
         appContainer.classList.add("hidden");
         authContainer.classList.remove("hidden");
@@ -71,31 +72,36 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // --- Mock Data Helper (Simulace Backendu) ---
-    // Pokud API neexistuje, použijeme localStorage pro ukázku
-    function getMockData(key) {
-        return JSON.parse(localStorage.getItem(key)) || [];
-    }
-    function setMockData(key, data) {
-        localStorage.setItem(key, JSON.stringify(data));
+    // --- API Helpers ---
+    async function apiFetch(url, options = {}) {
+        const headers = {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            ...options.headers
+        };
+        try {
+            const response = await fetch(url, { ...options, headers });
+            if (response.status === 401) {
+                alert("Sezení vypršelo. Přihlaste se znovu.");
+                localStorage.clear();
+                window.location.href = "index.html";
+                return null;
+            }
+            if (!response.ok) throw new Error("Chyba serveru");
+            return response.json();
+        } catch (error) {
+            console.error(error);
+            return null;
+        }
     }
 
     // --- Logic: Folders ---
 
     async function loadFolders() {
-        // Zde by byl fetch(`${backendUrl}/api/gallery/folders`)
-        // Simulace:
-        let folders = getMockData('gallery_folders');
-        if (folders.length === 0) {
-            // Defaultní složky pro demo
-            folders = [
-                { id: '1', name: 'Léto 2024', createdAt: new Date().toISOString() },
-                { id: '2', name: 'Silvestr', createdAt: new Date().toISOString() }
-            ];
-            setMockData('gallery_folders', folders);
+        const folders = await apiFetch(`${backendUrl}/api/gallery/folders`);
+        if (folders) {
+            renderFolders(folders);
         }
-
-        renderFolders(folders);
     }
 
     function renderFolders(folders) {
@@ -129,24 +135,23 @@ document.addEventListener("DOMContentLoaded", () => {
         folderNameInput.focus();
     });
 
-    createFolderForm.addEventListener('submit', (e) => {
+    createFolderForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const name = folderNameInput.value.trim();
         if (!name) return;
 
-        // Simulace vytvoření složky
-        const folders = getMockData('gallery_folders');
-        const newFolder = {
-            id: Date.now().toString(),
-            name: name,
-            createdAt: new Date().toISOString()
-        };
-        folders.push(newFolder);
-        setMockData('gallery_folders', folders);
+        const result = await apiFetch(`${backendUrl}/api/gallery/folders`, {
+            method: 'POST',
+            body: JSON.stringify({ name })
+        });
 
-        createFolderModal.style.display = 'none';
-        folderNameInput.value = '';
-        loadFolders();
+        if (result) {
+            createFolderModal.style.display = 'none';
+            folderNameInput.value = '';
+            loadFolders();
+        } else {
+            alert("Nepodařilo se vytvořit složku.");
+        }
     });
 
     // --- Logic: Photos ---
@@ -169,23 +174,18 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     async function loadPhotos(folderId) {
-        // Zde by byl fetch(`${backendUrl}/api/gallery/folders/${folderId}/photos`)
-        // Simulace:
-        let allPhotos = getMockData('gallery_photos');
-        // Filtrujeme fotky pro aktuální složku
-        let folderPhotos = allPhotos.filter(p => p.folderId === folderId);
-        
-        // Seřadit od nejnovějších
-        folderPhotos.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-        renderPhotos(folderPhotos);
+        const photos = await apiFetch(`${backendUrl}/api/gallery/photos?folderId=${folderId}`);
+        if (photos) {
+            // Seřadit od nejnovějších
+            photos.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            renderPhotos(photos);
+        }
     }
 
     function renderPhotos(photos) {
         photosGrid.innerHTML = '';
-        currentPhotos = photos; // Uložit pro lightbox
+        currentPhotos = photos; 
 
-        // Pagination Logic
         const totalPages = Math.ceil(photos.length / photosPerPage);
         if (currentPage > totalPages && totalPages > 0) currentPage = totalPages;
         
@@ -200,9 +200,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         pagePhotos.forEach((photo, index) => {
-            // index v rámci stránky, potřebujeme globální index pro lightbox
             const globalIndex = start + index;
-
             const photoEl = document.createElement('div');
             photoEl.className = 'photo-card';
             photoEl.onclick = () => openLightbox(globalIndex);
@@ -216,19 +214,14 @@ document.addEventListener("DOMContentLoaded", () => {
             photosGrid.appendChild(photoEl);
         });
 
-        // Render Pagination Controls
         if (totalPages > 1) {
             paginationControls.style.display = 'flex';
             pageInfo.textContent = `Strana ${currentPage} z ${totalPages}`;
             prevPageBtn.disabled = currentPage === 1;
             nextPageBtn.disabled = currentPage === totalPages;
             
-            // Update styles for disabled buttons
             prevPageBtn.style.opacity = currentPage === 1 ? '0.5' : '1';
-            prevPageBtn.style.cursor = currentPage === 1 ? 'default' : 'pointer';
             nextPageBtn.style.opacity = currentPage === totalPages ? '0.5' : '1';
-            nextPageBtn.style.cursor = currentPage === totalPages ? 'default' : 'pointer';
-
         } else {
             paginationControls.style.display = 'none';
         }
@@ -255,35 +248,48 @@ document.addEventListener("DOMContentLoaded", () => {
         uploadPhotoModal.style.display = 'flex';
     });
 
-    uploadPhotoForm.addEventListener('submit', (e) => {
+    uploadPhotoForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const files = photoFileInput.files;
         if (!files.length) return;
 
-        // Simulace nahrávání (konverze na Base64 pro localStorage - pozor na limit!)
-        // V reálu by se posílal FormData na server
-        Array.from(files).forEach(file => {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const allPhotos = getMockData('gallery_photos');
-                allPhotos.push({
-                    id: Date.now() + Math.random().toString(),
-                    folderId: currentFolderId,
-                    src: event.target.result, // Base64
-                    createdAt: new Date().toISOString(),
-                    uploadedBy: loggedInUsername
-                });
-                setMockData('gallery_photos', allPhotos);
+        // Nahrajeme fotky postupně
+        const uploadButton = uploadPhotoForm.querySelector('button[type="submit"]');
+        uploadButton.disabled = true;
+        uploadButton.textContent = "Nahrávám...";
+
+        for (const file of Array.from(files)) {
+            try {
+                // Převedeme na Base64
+                const base64 = await toBase64(file);
                 
-                // Refresh po poslední fotce (zjednodušeně)
-                if (file === files[files.length - 1]) {
-                    uploadPhotoModal.style.display = 'none';
-                    photoFileInput.value = '';
-                    loadPhotos(currentFolderId);
-                }
-            };
-            reader.readAsDataURL(file);
-        });
+                // Pošleme na server
+                await apiFetch(`${backendUrl}/api/gallery/photos`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        folderId: currentFolderId,
+                        imageBase64: base64
+                    })
+                });
+            } catch (err) {
+                console.error("Chyba při uploadu:", err);
+                alert(`Nepodařilo se nahrát soubor ${file.name}`);
+            }
+        }
+
+        uploadButton.disabled = false;
+        uploadButton.textContent = "Nahrát";
+        uploadPhotoModal.style.display = 'none';
+        photoFileInput.value = '';
+        loadPhotos(currentFolderId);
+    });
+
+    // Helper pro převod souboru na Base64 string
+    const toBase64 = file => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
     });
 
     // --- Lightbox Logic ---
@@ -299,10 +305,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!photo) return;
 
         lightboxImg.src = photo.src;
-        lightboxDownload.href = photo.src; // Umožní stažení
-        lightboxDownload.setAttribute('download', `foto_${photo.id}.jpg`);
+        lightboxDownload.href = photo.src;
+        lightboxDownload.setAttribute('download', `foto.jpg`);
 
-        // Mazání povoleno jen adminovi nebo vlastníkovi
         const isOwner = photo.uploadedBy === loggedInUsername;
         const isAdmin = userRole === 'admin';
         
@@ -314,15 +319,19 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    function deletePhoto(photoId) {
+    async function deletePhoto(photoId) {
         if(!confirm("Opravdu smazat tuto fotku?")) return;
         
-        let allPhotos = getMockData('gallery_photos');
-        allPhotos = allPhotos.filter(p => p.id !== photoId);
-        setMockData('gallery_photos', allPhotos);
-        
-        closeLightbox();
-        loadPhotos(currentFolderId);
+        const result = await apiFetch(`${backendUrl}/api/gallery/photos/${photoId}`, {
+            method: 'DELETE'
+        });
+
+        if (result) {
+            closeLightbox();
+            loadPhotos(currentFolderId);
+        } else {
+            alert("Nepodařilo se smazat fotku.");
+        }
     }
 
     function closeLightbox() {
@@ -351,7 +360,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Klávesové zkratky pro galerii
     document.addEventListener('keydown', (e) => {
         if (lightboxModal.style.display === 'flex') {
             if (e.key === 'Escape') closeLightbox();

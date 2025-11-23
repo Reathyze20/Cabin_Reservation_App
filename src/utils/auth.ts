@@ -1,26 +1,21 @@
 import fs from "fs";
 import path from "path";
-import { Reservation, User, ShoppingListItem, Note } from "../types";
+import { Reservation, User, ShoppingListItem, Note, GalleryFolder, GalleryPhoto } from "../types";
 
 const usersFilePath = path.join(__dirname, "../../data/users.json");
-const reservationsFilePath = path.join(
-  __dirname,
-  "../../data/reservations.json"
-);
-const shoppingListFilePath = path.join(
-  __dirname,
-  "../../data/shopping-list.json"
-);
+const reservationsFilePath = path.join(__dirname, "../../data/reservations.json");
+const shoppingListFilePath = path.join(__dirname, "../../data/shopping-list.json");
 const notesFilePath = path.join(__dirname, "../../data/notes.json");
+const galleryFoldersPath = path.join(__dirname, "../../data/gallery-folders.json");
+const galleryPhotosPath = path.join(__dirname, "../../data/gallery-photos.json");
 
-
+// --- Users ---
 export async function loadUsers(): Promise<User[]> {
   try {
     const data = await fs.promises.readFile(usersFilePath, "utf-8");
-    const users: User[] = JSON.parse(data);
-    return users;
+    return JSON.parse(data);
   } catch (error) {
-    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+    if (error instanceof Error && "code" in error && (error as any).code === "ENOENT") {
       await saveUsers([]);
       return [];
     }
@@ -30,50 +25,37 @@ export async function loadUsers(): Promise<User[]> {
 }
 
 export async function saveUsers(users: User[]) {
-  try {
-    const data = JSON.stringify(users, null, 2);
-    await fs.promises.writeFile(usersFilePath, data, "utf-8");
-  } catch (error) {
-    console.error("Chyba při ukládání uživatelů:", error);
-    throw new Error("Chyba při ukládání uživatelů.");
-  }
+  const data = JSON.stringify(users, null, 2);
+  await fs.promises.writeFile(usersFilePath, data, "utf-8");
 }
 
+// --- Reservations ---
 export async function loadReservations(): Promise<Reservation[]> {
   try {
     const data = await fs.promises.readFile(reservationsFilePath, "utf-8");
-    const reservations: Reservation[] = JSON.parse(data);
-    return reservations;
+    return JSON.parse(data);
   } catch (error) {
-    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+    if (error instanceof Error && "code" in error && (error as any).code === "ENOENT") {
       await saveReservation([]);
       return [];
     }
-    console.error(
-      "!!! CHYBA při načítání nebo parsování reservations.json:",
-      error
-    );
+    console.error("Chyba při načítání rezervací:", error);
     return [];
   }
 }
 
 export async function saveReservation(reservations: Reservation[]) {
-  try {
-    const data = JSON.stringify(reservations, null, 2); // Formátování pro lepší čitelnost
-    await fs.promises.writeFile(reservationsFilePath, data, "utf-8");
-  } catch (error) {
-    console.error("Chyba při ukládání rezervací:", error);
-    throw new Error("Chyba při ukládání rezervací.");
-  }
+  const data = JSON.stringify(reservations, null, 2);
+  await fs.promises.writeFile(reservationsFilePath, data, "utf-8");
 }
 
+// --- Shopping List ---
 export async function loadShoppingList(): Promise<ShoppingListItem[]> {
     try {
       const data = await fs.promises.readFile(shoppingListFilePath, "utf-8");
-      // Old format (flat items) might exist — try to detect and migrate
       const parsed = JSON.parse(data);
+      // Migrace starého formátu
       if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].name && !parsed[0].items) {
-        // It's old flat items -> wrap into a default list
         const defaultList = {
           id: 'default',
           name: 'Hlavní seznam',
@@ -85,13 +67,11 @@ export async function loadShoppingList(): Promise<ShoppingListItem[]> {
         await saveShoppingLists([defaultList]);
         return parsed as ShoppingListItem[];
       }
-      // New format: array of ShoppingList
       const lists = (parsed as any[]) || [];
-      // Flatten items for compatibility when calling old functions
       return lists.flatMap(l => (Array.isArray(l.items) ? l.items : [])) as ShoppingListItem[];
     } catch (error) {
-     if (error instanceof Error && "code" in error && error.code === "ENOENT") {
-      await saveShoppingLists([]); // Create empty file
+     if (error instanceof Error && "code" in error && (error as any).code === "ENOENT") {
+      await saveShoppingLists([]);
       return [];
     }
     console.error("Chyba při načítání nákupního seznamu:", error);
@@ -99,23 +79,18 @@ export async function loadShoppingList(): Promise<ShoppingListItem[]> {
   }
 }
 
-// New: save array of ShoppingList (each list contains items)
 export async function saveShoppingLists(lists: any[]) {
-  try {
-    const data = JSON.stringify(lists, null, 2);
-    await fs.promises.writeFile(shoppingListFilePath, data, "utf-8");
-  } catch (error) {
-    console.error("Chyba při ukládání nákupních seznamů:", error);
-    throw new Error("Chyba při ukládání nákupních seznamů.");
-  }
+  const data = JSON.stringify(lists, null, 2);
+  await fs.promises.writeFile(shoppingListFilePath, data, "utf-8");
 }
 
+// --- Notes ---
 export async function loadNotes(): Promise<Note[]> {
   try {
     const data = await fs.promises.readFile(notesFilePath, "utf-8");
     return JSON.parse(data) as Note[];
   } catch (error) {
-     if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+     if (error instanceof Error && "code" in error && (error as any).code === "ENOENT") {
       await saveNotes([]);
       return [];
     }
@@ -125,11 +100,44 @@ export async function loadNotes(): Promise<Note[]> {
 }
 
 export async function saveNotes(notes: Note[]) {
+  const data = JSON.stringify(notes, null, 2);
+  await fs.promises.writeFile(notesFilePath, data, "utf-8");
+}
+
+// --- Gallery Folders ---
+export async function loadGalleryFolders(): Promise<GalleryFolder[]> {
   try {
-    const data = JSON.stringify(notes, null, 2);
-    await fs.promises.writeFile(notesFilePath, data, "utf-8");
+    const data = await fs.promises.readFile(galleryFoldersPath, "utf-8");
+    return JSON.parse(data) as GalleryFolder[];
   } catch (error) {
-    console.error("Chyba při ukládání vzkazů:", error);
-    throw new Error("Chyba při ukládání vzkazů.");
+    if (error instanceof Error && "code" in error && (error as any).code === "ENOENT") {
+      await saveGalleryFolders([]);
+      return [];
+    }
+    return [];
   }
+}
+
+export async function saveGalleryFolders(folders: GalleryFolder[]) {
+  const data = JSON.stringify(folders, null, 2);
+  await fs.promises.writeFile(galleryFoldersPath, data, "utf-8");
+}
+
+// --- Gallery Photos ---
+export async function loadGalleryPhotos(): Promise<GalleryPhoto[]> {
+  try {
+    const data = await fs.promises.readFile(galleryPhotosPath, "utf-8");
+    return JSON.parse(data) as GalleryPhoto[];
+  } catch (error) {
+    if (error instanceof Error && "code" in error && (error as any).code === "ENOENT") {
+      await saveGalleryPhotos([]);
+      return [];
+    }
+    return [];
+  }
+}
+
+export async function saveGalleryPhotos(photos: GalleryPhoto[]) {
+  const data = JSON.stringify(photos, null, 2);
+  await fs.promises.writeFile(galleryPhotosPath, data, "utf-8");
 }
