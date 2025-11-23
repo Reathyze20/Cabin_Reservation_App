@@ -29,12 +29,17 @@
                     
                     <!-- 1. POHLED: SEZNAM SLOŽEK -->
                     <div id="folders-view">
-                        <div class="gallery-header">
+                        <div class="gallery-header centered-header">
                             <h2><i class="fas fa-images"></i> Fotoalba</h2>
-                            <button id="create-folder-btn" class="button-primary small-btn"><i class="fas fa-plus"></i> Nové album</button>
+                        </div>
+                        <!-- Tlačítko pro složky dáme také dolů pro konzistenci, nebo necháme nahoře? 
+                             Zadání mluvilo o "Zpět a Nahrát fotky", což je photo-view. 
+                             U složek necháme tlačítko pod nadpisem nebo v gridu. 
+                             Pro hezčí vzhled ho dám pod nadpis, ale centrovaně. -->
+                        <div style="text-align: center; margin-bottom: 20px;">
+                             <button id="create-folder-btn" class="button-primary nav-btn"><i class="fas fa-plus"></i> Nové album</button>
                         </div>
                         
-                        <!-- Grid pro složky -->
                         <div id="folders-grid" class="folders-grid">
                             <!-- Složky se načtou dynamicky -->
                         </div>
@@ -42,12 +47,9 @@
 
                     <!-- 2. POHLED: OBSAH SLOŽKY (FOTKY) -->
                     <div id="photos-view" style="display: none;">
-                        <div class="gallery-header">
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <button id="back-to-folders-btn" class="button-secondary small-btn"><i class="fas fa-arrow-left"></i> Zpět</button>
-                                <h2 id="current-folder-title" style="border:none; margin:0;">Název alba</h2>
-                            </div>
-                            <button id="upload-photo-btn" class="button-primary small-btn"><i class="fas fa-cloud-upload-alt"></i> Nahrát fotky</button>
+                        <!-- Hlavička pouze s názvem -->
+                        <div class="gallery-header centered-header">
+                            <h2 id="current-folder-title" style="border:none; margin:0;">Název alba</h2>
                         </div>
 
                         <!-- Grid pro fotky -->
@@ -55,11 +57,18 @@
                             <!-- Fotky se načtou dynamicky -->
                         </div>
 
-                        <!-- Stránkování -->
-                        <div id="pagination-controls" class="pagination-controls" style="display: none;">
-                            <button id="prev-page-btn" class="nav-arrow"><i class="fas fa-chevron-left"></i></button>
-                            <span id="page-info">Strana 1</span>
-                            <button id="next-page-btn" class="nav-arrow"><i class="fas fa-chevron-right"></i></button>
+                        <!-- Patička galerie: Tlačítka akcí a pod nimi číslování -->
+                        <div class="gallery-footer">
+                            <div class="gallery-actions">
+                                <button id="back-to-folders-btn" class="button-secondary nav-btn"><i class="fas fa-arrow-left"></i> Zpět</button>
+                                <button id="upload-photo-btn" class="button-primary nav-btn"><i class="fas fa-cloud-upload-alt"></i> Nahrát fotky</button>
+                            </div>
+
+                            <div id="pagination-controls" class="pagination-controls" style="display: none;">
+                                <button id="prev-page-btn" class="nav-arrow"><i class="fas fa-chevron-left"></i></button>
+                                <span id="page-info">1 / 1</span>
+                                <button id="next-page-btn" class="nav-arrow"><i class="fas fa-chevron-right"></i></button>
+                            </div>
                         </div>
                     </div>
 
@@ -113,11 +122,12 @@
         <button id="lightbox-close" class="lightbox-close">&times;</button>
         <div class="lightbox-content">
             <img id="lightbox-img" src="" alt="Detail fotky">
+            <!-- Ovládací prvky přímo pod obrázkem, ale stylově upravené -->
             <div class="lightbox-controls">
-                <a id="lightbox-download" href="#" download class="button-primary download-btn">
+                <a id="lightbox-download" href="#" download class="lightbox-btn">
                     <i class="fas fa-download"></i> Stáhnout
                 </a>
-                <button id="lightbox-delete" class="button-danger delete-photo-btn" style="display: none;">
+                <button id="lightbox-delete" class="lightbox-btn btn-delete">
                     <i class="fas fa-trash"></i> Smazat
                 </button>
             </div>
