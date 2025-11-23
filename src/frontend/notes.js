@@ -12,14 +12,10 @@ document.addEventListener("DOMContentLoaded", () => {
     // Definice Backend URL
     const backendUrl = "";
 
-    // Globální proměnná pro uložení všech vzkazů (pro filtrování na klientovi)
+    // Globální proměnná pro uložení dat (pro klientské filtrování)
     let allNotesData = [];
 
-    // 2. Kontrola přihlášení a helpery
-    function getToken() {
-        return localStorage.getItem("authToken");
-    }
-
+    // 2. Kontrola přihlášení
     const loggedInUsername = localStorage.getItem("username");
 
     if (loggedInUsername) {
@@ -27,7 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (appContainer) appContainer.classList.remove("hidden");
         if (authContainer) authContainer.classList.add("hidden");
         
-        // Vyplnění jména v hlavičce
+        // Vyplnění jména
         if (loggedInUsernameElement) {
             loggedInUsernameElement.textContent = loggedInUsername;
         }
@@ -52,48 +48,49 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- Logika Vzkazů ---
 
     async function loadNotes() {
-        notesList.innerHTML = `<div class="spinner-container" style="text-align:center; padding:20px;"><i class="fas fa-spinner fa-spin fa-2x"></i></div>`;
-        const token = getToken();
+        if (notesList) notesList.innerHTML = `<div class="spinner-container" style="text-align:center; padding:20px;"><div class="spinner"></div></div>`;
+        
+        const token = localStorage.getItem("authToken");
         try {
             const response = await fetch(`${backendUrl}/api/notes`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
+            
             if (!response.ok) throw new Error('Nepodařilo se načíst vzkazy.');
             
-            // Uložíme data do globální proměnné
+            // Uložení dat
             allNotesData = await response.json();
             
-            // Seřadíme data od nejnovějších
+            // Seřazení od nejnovějších
             allNotesData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-            // Naplníme filtr autory
+            // Naplnění filtru a vykreslení
             populateAuthorFilter(allNotesData);
-
-            // Vykreslíme všechny vzkazy (default)
-            renderNotes(allNotesData);
+            
+            // Zkontrolujeme, jestli uživatel už něco vybral (např. před reloadem), jinak zobrazíme vše
+            const currentFilter = authorFilterSelect ? authorFilterSelect.value : "";
+            if (currentFilter) {
+                const filtered = allNotesData.filter(n => n.username === currentFilter);
+                renderNotes(filtered);
+            } else {
+                renderNotes(allNotesData);
+            }
 
         } catch (error) {
-            console.error("Chyba při načítání vzkazů:", error);
-            notesList.innerHTML = `<p style="color:red; text-align:center;">${error.message}</p>`;
+            console.error("Chyba:", error);
+            if (notesList) notesList.innerHTML = `<p style="color:red; text-align:center;">${error.message}</p>`;
         }
     }
 
-    // Funkce pro naplnění dropdown menu autory
     function populateAuthorFilter(notes) {
         if (!authorFilterSelect) return;
 
-        // Uložíme si aktuálně vybranou hodnotu, abychom ji po reloadu neztratili (pokud chceme)
-        // Nebo ji resetujeme, pokud uživatel přišel nově. Zadání říká "nebude vybrán žádný".
-        // Takže vždy začínáme s prázdnou hodnotou (Všichni), pokud to je první načtení.
-        // Pro lepší UX při přidávání příspěvku ale můžeme zachovat výběr, pokud uživatel filtruje.
-        // Zde resetuji pouze možnosti, ne výběr, pokud uživatel neměnil stránku.
-        
         const currentSelection = authorFilterSelect.value;
         
-        // Získání unikátních jmen autorů
+        // Získání unikátních jmen
         const authors = [...new Set(notes.map(note => note.username))].sort();
 
-        // Vyčištění (ponecháme první možnost "Všichni autoři")
+        // Reset možností - vždy začínáme s "Všichni"
         authorFilterSelect.innerHTML = '<option value="">Všichni autoři</option>';
 
         authors.forEach(author => {
@@ -103,13 +100,12 @@ document.addEventListener("DOMContentLoaded", () => {
             authorFilterSelect.appendChild(option);
         });
 
-        // Obnovení výběru, pokud autor stále existuje
-        if (authors.includes(currentSelection)) {
+        // Pokud předchozí výběr stále existuje v datech, obnovíme ho
+        if (currentSelection && authors.includes(currentSelection)) {
             authorFilterSelect.value = currentSelection;
         }
     }
 
-    // Listener pro změnu filtru
     if (authorFilterSelect) {
         authorFilterSelect.addEventListener("change", (e) => {
             const selectedAuthor = e.target.value;
@@ -123,9 +119,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function renderNotes(notes) {
+        if (!notesList) return;
+        
         notesList.innerHTML = '';
         if (notes.length === 0) {
-            notesList.innerHTML = '<p style="text-align:center; color:#666;"><i>Žádné vzkazy k zobrazení.</i></p>';
+            notesList.innerHTML = '<p style="text-align:center; color:#666; margin-top:20px;"><i>Žádné vzkazy k zobrazení.</i></p>';
             return;
         }
 
@@ -145,9 +143,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
             noteEl.innerHTML = `
                 ${deleteBtn}
-                <div class="note-header">
-                    <span class="note-author"><strong>${note.username}</strong></span>
-                    <span class="note-date">${formattedDate}</span>
+                <div class="note-header" style="margin-bottom: 5px;">
+                    <span class="note-author" style="font-weight:bold; color:#d97706;">${note.username}</span>
+                    <span class="note-date" style="font-size:0.85em; color:#777; margin-left:8px;">${formattedDate}</span>
                 </div>
                 <p class="note-content">${note.message.replace(/\n/g, '<br>')}</p>
             `;
@@ -155,14 +153,14 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 4. Přidávání vzkazů
+    // Přidání vzkazu
     if(addNoteForm) {
         addNoteForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const message = noteMessageInput.value.trim();
             if (!message) return;
 
-            const token = getToken();
+            const token = localStorage.getItem("authToken");
             try {
                 const response = await fetch(`${backendUrl}/api/notes`, {
                     method: 'POST',
@@ -173,7 +171,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 noteMessageInput.value = '';
                 
-                // Po přidání resetujeme filtr na "Všichni", aby uživatel viděl svůj nový příspěvěk
+                // Reset filtru na "Všichni", aby uživatel viděl svůj nový příspěvek
                 if(authorFilterSelect) authorFilterSelect.value = "";
                 
                 await loadNotes();
@@ -183,7 +181,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 5. Mazání vzkazů
+    // Mazání vzkazů
     if (notesList) {
         notesList.addEventListener('click', async (e) => {
             const deleteBtn = e.target.closest('.delete-note-btn');
@@ -193,7 +191,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const noteId = noteItem.dataset.id;
 
             if (confirm('Opravdu chcete smazat tento vzkaz?')) {
-                const token = getToken();
+                const token = localStorage.getItem("authToken");
                 try {
                     const response = await fetch(`${backendUrl}/api/notes/${noteId}`, {
                         method: 'DELETE',
