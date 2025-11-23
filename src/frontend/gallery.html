@@ -30,8 +30,12 @@
                     <!-- 1. POHLED: SEZNAM SLOŽEK -->
                     <div id="folders-view">
                         <div class="gallery-header">
-                            <h2><i class="fas fa-images"></i> Fotoalba</h2>
-                            <button id="create-folder-btn" class="button-primary small-btn"><i class="fas fa-plus"></i> Nové album</button>
+                            <div class="gallery-header-left">
+                                <h2><i class="fas fa-images"></i> Fotoalba</h2>
+                            </div>
+                            <button id="create-folder-btn" class="gallery-btn gallery-btn-primary">
+                                <i class="fas fa-plus"></i> Nové album
+                            </button>
                         </div>
                         
                         <!-- Grid pro složky -->
@@ -43,11 +47,15 @@
                     <!-- 2. POHLED: OBSAH SLOŽKY (FOTKY) -->
                     <div id="photos-view" style="display: none;">
                         <div class="gallery-header">
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <button id="back-to-folders-btn" class="button-secondary small-btn"><i class="fas fa-arrow-left"></i> Zpět</button>
-                                <h2 id="current-folder-title" style="border:none; margin:0;">Název alba</h2>
+                            <div class="gallery-header-left">
+                                <button id="back-to-folders-btn" class="gallery-btn gallery-btn-secondary">
+                                    <i class="fas fa-arrow-left"></i> Zpět
+                                </button>
+                                <h2 id="current-folder-title">Název alba</h2>
                             </div>
-                            <button id="upload-photo-btn" class="button-primary small-btn"><i class="fas fa-cloud-upload-alt"></i> Nahrát fotky</button>
+                            <button id="upload-photo-btn" class="gallery-btn gallery-btn-primary">
+                                <i class="fas fa-cloud-upload-alt"></i> Nahrát fotky
+                            </button>
                         </div>
 
                         <!-- Grid pro fotky -->
@@ -85,7 +93,7 @@
                     <input type="text" id="folder-name-input" placeholder="např. Léto 2025" required>
                 </div>
                 <div class="modal-buttons">
-                    <button type="submit" class="button-primary">Vytvořit</button>
+                    <button type="submit" class="gallery-btn gallery-btn-primary" style="width: 100%;">Vytvořit</button>
                 </div>
             </form>
         </div>
@@ -102,7 +110,7 @@
                     <input type="file" id="photo-file-input" accept="image/*" multiple required>
                 </div>
                 <div class="modal-buttons">
-                    <button type="submit" class="button-primary">Nahrát</button>
+                    <button type="submit" class="gallery-btn gallery-btn-primary" style="width: 100%;">Nahrát</button>
                 </div>
             </form>
         </div>
@@ -114,10 +122,10 @@
         <div class="lightbox-content">
             <img id="lightbox-img" src="" alt="Detail fotky">
             <div class="lightbox-controls">
-                <a id="lightbox-download" href="#" download class="button-primary download-btn">
+                <a id="lightbox-download" href="#" download class="gallery-btn gallery-btn-primary">
                     <i class="fas fa-download"></i> Stáhnout
                 </a>
-                <button id="lightbox-delete" class="button-danger delete-photo-btn" style="display: none;">
+                <button id="lightbox-delete" class="gallery-btn gallery-btn-danger" style="display: none;">
                     <i class="fas fa-trash"></i> Smazat
                 </button>
             </div>

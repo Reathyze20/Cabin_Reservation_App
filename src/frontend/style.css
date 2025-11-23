@@ -15,27 +15,104 @@
     position: relative; /* Pro pozicování stránkování */
 }
 
+/* --- Gallery Header (Sjednocený) --- */
 .gallery-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 1px solid #eee;
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #f3e2c0; /* Jemnější barva čáry */
+    height: 70px; /* Fixní výška pro konzistenci */
+}
+
+.gallery-header-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
 }
 
 .gallery-header h2 {
-    font-size: 1.5em;
-    color: #333;
+    font-size: 1.6em;
+    color: #4b5563; /* Tmavě šedá místo černé */
     border: none; 
     margin: 0;
     padding: 0;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.gallery-header h2 i {
+    color: #d97706; /* Ikona v nadpisu oranžová */
 }
 
-.small-btn {
-    width: auto; 
-    padding: 8px 16px;
+
+/* --- UNIFIED GALLERY BUTTONS (Nové styly) --- */
+.gallery-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 24px;
+    border-radius: 50px; /* Pill shape */
+    font-weight: 600;
+    font-size: 0.95em;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border: none;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    text-decoration: none;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.gallery-btn i {
+    font-size: 1.1em;
+}
+
+.gallery-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.gallery-btn:active {
+    transform: translateY(0);
+}
+
+/* Primary Action (New Album, Upload) - Orange Gradient */
+.gallery-btn-primary {
+    background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+    color: white;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+.gallery-btn-primary:hover {
+    background: linear-gradient(135deg, #fcd34d 0%, #b45309 100%);
+}
+
+/* Secondary Action (Back) - Clean White/Gray */
+.gallery-btn-secondary {
+    background-color: white;
+    color: #4b5563;
+    border: 1px solid #e5e7eb;
+    padding: 8px 18px; /* Trochu menší než primary */
     font-size: 0.9em;
+}
+.gallery-btn-secondary:hover {
+    background-color: #f9fafb;
+    border-color: #d1d5db;
+    color: #111827;
+}
+
+/* Danger Action (Delete inside lightbox) */
+.gallery-btn-danger {
+    background-color: white;
+    color: #ef4444;
+    border: 1px solid #fecaca;
+}
+.gallery-btn-danger:hover {
+    background-color: #fef2f2;
+    border-color: #ef4444;
 }
 
 /* --- Folders Grid --- */
@@ -47,9 +124,9 @@
 }
 
 .folder-card {
-    background-color: #fdfcf9;
+    background-color: #ffffff;
     border: 1px solid #f3e2c0;
-    border-radius: 12px;
+    border-radius: 16px;
     padding: 20px;
     text-align: center;
     cursor: pointer;
@@ -58,26 +135,48 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 180px;
+    height: 190px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Dekorativní prvek na pozadí složky */
+.folder-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #fbbf24, #d97706);
+    opacity: 0.5;
+    transition: opacity 0.3s;
 }
 
 .folder-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 15px rgba(217, 119, 6, 0.15);
+    box-shadow: 0 12px 25px rgba(217, 119, 6, 0.1);
     border-color: #d97706;
+}
+.folder-card:hover::after {
+    opacity: 1;
 }
 
 .folder-icon {
-    font-size: 3.5em;
+    font-size: 4em;
     color: #fbbf24; /* Folder color */
     margin-bottom: 15px;
+    transition: transform 0.3s;
+}
+.folder-card:hover .folder-icon {
+    transform: scale(1.1);
 }
 
 .folder-info h3 {
     margin: 0 0 5px 0;
     font-size: 1.1em;
-    color: #4b5563;
-    font-weight: 600;
+    color: #374151;
+    font-weight: 700;
 }
 
 .folder-date {
@@ -100,31 +199,37 @@
 
 .photo-card {
     position: relative;
-    border-radius: 8px;
+    border-radius: 12px;
     overflow: hidden;
     /* Default je čtverec, ale pro wide/tall/big se to přepíše */
     aspect-ratio: 1 / 1; 
     cursor: pointer;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    transition: transform 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .photo-card img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.4s ease;
+    transition: transform 0.5s ease;
+}
+
+.photo-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    z-index: 2; /* Aby při hoveru byla navrchu */
 }
 
 .photo-card:hover img {
-    transform: scale(1.05);
+    transform: scale(1.08);
 }
 
 /* Overlay on hover */
 .photo-overlay {
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.4);
+    background: rgba(0,0,0,0.3);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -134,11 +239,17 @@
 
 .photo-overlay i {
     color: white;
-    font-size: 2em;
+    font-size: 2.5em;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+    transform: scale(0.8);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .photo-card:hover .photo-overlay {
     opacity: 1;
+}
+.photo-card:hover .photo-overlay i {
+    transform: scale(1);
 }
 
 /* --- MODERN GALLERY LAYOUT CLASSES --- */
@@ -173,32 +284,30 @@
     margin-top: 20px;
     margin-bottom: 20px;
     padding-top: 20px;
-    border-top: 1px solid #eee;
+    border-top: 1px solid #f3e2c0;
 }
 
 .nav-arrow {
     background-color: white;
-    border: 2px solid #d18b00; /* Oranžový rámeček */
-    border-radius: 50px; /* Kulatá tlačítka */
-    width: auto;
-    min-width: 50px;
+    border: 2px solid #fbbf24; /* Oranžový rámeček */
+    border-radius: 50%; /* Dokonalý kruh */
+    width: 50px;
     height: 50px;
-    padding: 0 25px; /* Širší tlačítko */
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 1.5em; /* Větší ikona */
-    color: #d18b00;
+    font-size: 1.2em;
+    color: #d97706;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
 }
 
 .nav-arrow:hover:not(:disabled) {
-    background-color: #d18b00;
+    background-color: #fbbf24;
     color: white;
     transform: translateY(-2px);
-    box-shadow: 0 6px 10px rgba(209, 139, 0, 0.3);
+    box-shadow: 0 8px 15px rgba(251, 191, 36, 0.3);
 }
 
 .nav-arrow:active:not(:disabled) {
@@ -215,13 +324,13 @@
 
 #page-info {
     font-weight: 700;
-    font-size: 1.2em; /* Větší text */
-    color: #374151;
-    letter-spacing: 1px;
-    background-color: #fff7ed; /* Jemné podbarvení */
-    padding: 8px 20px;
-    border-radius: 20px;
-    border: 1px solid #ffedd5;
+    font-size: 1.1em;
+    color: #4b5563;
+    letter-spacing: 0.5px;
+    background-color: #fffbeb; 
+    padding: 8px 25px;
+    border-radius: 30px;
+    border: 1px solid #fde68a;
 }
 
 /* --- Lightbox (Full Screen Detail) --- */
@@ -231,12 +340,13 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.9);
+    background-color: rgba(0, 0, 0, 0.95); /* Tmavší pozadí */
     z-index: 2000;
     display: flex;
     justify-content: center;
     align-items: center;
     flex-direction: column;
+    backdrop-filter: blur(5px);
 }
 
 .lightbox-content {
@@ -251,41 +361,27 @@
 .lightbox-content img {
     max-width: 100%;
     max-height: 80vh;
-    border-radius: 4px;
-    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    border-radius: 8px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
 }
 
 .lightbox-controls {
-    margin-top: 15px;
+    margin-top: 20px;
     display: flex;
     gap: 15px;
 }
 
-.download-btn {
-    background-color: white;
-    color: #333;
-    text-decoration: none;
-    padding: 8px 20px;
-    border-radius: 20px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.download-btn:hover {
-    background-color: #f3f4f6;
-}
-
 .lightbox-close {
     position: absolute;
-    top: 20px;
-    right: 30px;
+    top: 30px;
+    right: 40px;
     color: white;
     font-size: 3em;
     background: none;
     border: none;
     cursor: pointer;
-    opacity: 0.7;
+    opacity: 0.6;
+    transition: opacity 0.2s;
 }
 .lightbox-close:hover {
     opacity: 1;
@@ -296,25 +392,42 @@
     top: 50%;
     transform: translateY(-50%);
     background: rgba(255,255,255,0.1);
-    border: none;
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
     color: white;
-    font-size: 2em;
-    padding: 20px;
+    font-size: 1.5em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     cursor: pointer;
-    transition: background 0.3s;
+    transition: all 0.3s;
 }
 .lightbox-arrow:hover {
-    background: rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.25);
+    transform: translateY(-50%) scale(1.1);
 }
-.lightbox-arrow.left { left: 0; }
-.lightbox-arrow.right { right: 0; }
+.lightbox-arrow.left { left: 40px; }
+.lightbox-arrow.right { right: 40px; }
 
 .empty-state {
     grid-column: 1 / -1;
     text-align: center;
     color: #9ca3af;
     font-size: 1.1em;
-    margin-top: 40px;
+    margin-top: 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+.empty-state::before {
+    content: '\f03e'; /* FontAwesome image icon */
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    font-size: 3em;
+    color: #e5e7eb;
 }
 
 @keyframes spin {
