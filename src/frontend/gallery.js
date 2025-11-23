@@ -44,7 +44,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- State ---
     let currentFolderId = null;
     let currentPage = 1;
-    let photosPerPage = 12; // Default, ale bude se moci měnit
+    // Fixní počet fotek 12 odpovídá mřížce 4x3. 
+    // Tím zajistíme, že grid nebude přetékat, pokud budou všechny fotky standardní velikosti.
+    const photosPerPage = 12; 
     let currentPhotos = [];
     let currentLightboxIndex = 0;
 
@@ -162,14 +164,15 @@ document.addEventListener("DOMContentLoaded", () => {
         currentPage = 1;
 
         foldersView.style.display = 'none';
-        photosView.style.display = 'flex'; // Změna na flex pro layout
+        // Používáme flex pro zobrazení (kvůli layoutu s patičkou)
+        photosView.style.display = 'flex'; 
 
         loadPhotos(folderId);
     }
 
     backToFoldersBtn.addEventListener('click', () => {
         photosView.style.display = 'none';
-        foldersView.style.display = 'flex'; // Zpět na flex
+        foldersView.style.display = 'flex';
         currentFolderId = null;
     });
 
@@ -185,10 +188,6 @@ document.addEventListener("DOMContentLoaded", () => {
     function renderPhotos(photos) {
         photosGrid.innerHTML = '';
         
-        // FIXNÍ POČET NA STRÁNKU PRO CSS GRID (4 sloupce * 3 řádky = 12 políček)
-        // Vzory se musí vejít do 12 políček
-        photosPerPage = 12; 
-
         const totalPages = Math.ceil(photos.length / photosPerPage);
         if (currentPage > totalPages && totalPages > 0) currentPage = totalPages;
         if (currentPage < 1) currentPage = 1;
@@ -204,31 +203,30 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         // --- DEFINICE VZORŮ (LAYOUT PATTERNS) ---
-        // Vzory jsou optimalizované pro mřížku 4x3 (celkem 12 buněk)
+        // 12 buněk (4x3). Vzory by měly ideálně zaplnit 12 slotů.
+        // Pokud se položka nevejde (např. kvůli 'g-big'), grid-auto-flow: dense to zkusí přeskládat,
+        // ale fixní výška může způsobit oříznutí. 
+        // Pro "No Scroll" layout je bezpečnější používat mírnější vzory nebo standardní dlaždice.
+        
         const layouts = [
-            // Layout 1: 
-            // 2x2 (4 buňky) + 1x2 (2 buňky) + 1x2 (2 buňky) ... zbytek 1x1
-            ['g-big', 'g-tall', 'g-tall', '', '', '', ''],
-            
-            // Layout 2:
-            // 2x1 (2 buňky) + 2x1 (2 buňky) + 2x2 (4 buňky) ...
-            ['g-wide', 'g-wide', 'g-big', '', '', ''],
-            
-            // Layout 3: Standardní masonry mix
-            ['g-tall', '', 'g-wide', 'g-tall', '', '', '', '']
+            // Vzor A: Mix
+            ['g-big', 'g-wide', 'g-wide', '', '', '', '', ''],
+            // Vzor B: Důraz na výšku
+            ['g-tall', '', 'g-wide', 'g-tall', '', '', '', ''],
+            // Vzor C: Klasika
+            ['', '', '', '', '', '', '', '', '', '', '', '']
         ];
 
-        // Vybereme layout podle čísla stránky (cyklování 0, 1, 2)
+        // Vybereme layout podle čísla stránky
         const currentLayoutPattern = layouts[(currentPage - 1) % layouts.length];
 
         pagePhotos.forEach((photo, index) => {
             const globalIndex = start + index;
             const photoEl = document.createElement('div');
             
-            // Základní třída
             photoEl.className = 'photo-card';
             
-            // Aplikace třídy podle vzoru, pokud existuje pro tento index
+            // Aplikace třídy podle vzoru (pokud existuje pro daný index)
             if (index < currentLayoutPattern.length) {
                 const spanClass = currentLayoutPattern[index];
                 if (spanClass) {
@@ -253,21 +251,8 @@ document.addEventListener("DOMContentLoaded", () => {
             pageInfo.textContent = `${currentPage} / ${totalPages}`;
             prevPageBtn.disabled = currentPage === 1;
             nextPageBtn.disabled = currentPage === totalPages;
-            
-            updateButtonState(prevPageBtn, currentPage === 1);
-            updateButtonState(nextPageBtn, currentPage === totalPages);
         } else {
             paginationControls.style.display = 'none';
-        }
-    }
-
-    function updateButtonState(btn, isDisabled) {
-        if (isDisabled) {
-            btn.style.opacity = '0.5';
-            btn.style.cursor = 'default';
-        } else {
-            btn.style.opacity = '1';
-            btn.style.cursor = 'pointer';
         }
     }
 
@@ -351,7 +336,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const isAdmin = userRole === 'admin';
         
         if (isOwner || isAdmin) {
-            lightboxDelete.style.display = 'inline-flex'; // flex pro ikonu a text
+            lightboxDelete.style.display = 'flex'; 
             lightboxDelete.onclick = () => deletePhoto(photo.id);
         } else {
             lightboxDelete.style.display = 'none';

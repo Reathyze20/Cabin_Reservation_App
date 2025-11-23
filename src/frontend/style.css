@@ -1,41 +1,39 @@
-/* Styl pro input s očíčkem uvnitř */
-/* --- GALERIE STYLY --- */
-
 .main-content-gallery {
     width: 100%;
-    flex-grow: 1;
+    /* Výška okna mínus hlavička aplikace. 
+       Tím zajistíme, že se obsah vejde přesně na obrazovku bez scrollu stránky. */
+    height: calc(100vh - 100px); 
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Žádný scrollbar na hlavní stránce */
 }
 
 .gallery-card {
-    /* Fixní výška není nutná, necháme obsah roztáhnout kartu, 
-       ale s min-height aby to nevypadalo prázdně */
-    min-height: 85vh; 
+    background-color: white;
+    border-radius: 16px;
+    padding: 0; /* Padding dáme vnitřním kontejnerům */
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    height: 100%; /* Roztáhnout na celou výšku main-content-gallery */
     display: flex;
     flex-direction: column;
-    position: relative; /* Pro pozicování stránkování */
+    position: relative;
+    overflow: hidden;
 }
 
-/* --- Gallery Header (Sjednocený) --- */
+/* --- HLAVIČKA GALERIE --- */
 .gallery-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 25px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid #f3e2c0; /* Jemnější barva čáry */
-    height: 70px; /* Fixní výška pro konzistenci */
-}
-
-.gallery-header-left {
+    padding: 15px 25px;
+    border-bottom: 1px solid #f3e2c0;
+    flex-shrink: 0; /* Hlavička se nezmenšuje */
     display: flex;
     align-items: center;
-    gap: 15px;
+    height: 60px;
+    background-color: #fff;
 }
 
 .gallery-header h2 {
-    font-size: 1.6em;
-    color: #4b5563; /* Tmavě šedá místo černé */
-    border: none; 
+    font-size: 1.4em;
+    color: #4b5563;
     margin: 0;
     padding: 0;
     font-weight: 700;
@@ -44,83 +42,30 @@
     gap: 10px;
 }
 .gallery-header h2 i {
-    color: #d97706; /* Ikona v nadpisu oranžová */
+    color: #d97706;
 }
 
-
-/* --- UNIFIED GALLERY BUTTONS (Nové styly) --- */
-.gallery-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 10px 24px;
-    border-radius: 50px; /* Pill shape */
-    font-weight: 600;
-    font-size: 0.95em;
-    cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    border: none;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    text-decoration: none;
-    line-height: 1.2;
-    white-space: nowrap;
+/* --- HLAVNÍ OBSAHOVÁ ČÁST (GRIDY) --- */
+.gallery-content-wrapper {
+    flex-grow: 1; /* Zabere veškeré dostupné místo mezi hlavičkou a patičkou */
+    padding: 20px;
+    overflow: hidden; /* Skryje přetečení, layout se musí vejít */
+    position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
-.gallery-btn i {
-    font-size: 1.1em;
-}
-
-.gallery-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-.gallery-btn:active {
-    transform: translateY(0);
-}
-
-/* Primary Action (New Album, Upload) - Orange Gradient */
-.gallery-btn-primary {
-    background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
-    color: white;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
-}
-.gallery-btn-primary:hover {
-    background: linear-gradient(135deg, #fcd34d 0%, #b45309 100%);
-}
-
-/* Secondary Action (Back) - Clean White/Gray */
-.gallery-btn-secondary {
-    background-color: white;
-    color: #4b5563;
-    border: 1px solid #e5e7eb;
-    padding: 8px 18px; /* Trochu menší než primary */
-    font-size: 0.9em;
-}
-.gallery-btn-secondary:hover {
-    background-color: #f9fafb;
-    border-color: #d1d5db;
-    color: #111827;
-}
-
-/* Danger Action (Delete inside lightbox) */
-.gallery-btn-danger {
-    background-color: white;
-    color: #ef4444;
-    border: 1px solid #fecaca;
-}
-.gallery-btn-danger:hover {
-    background-color: #fef2f2;
-    border-color: #ef4444;
-}
-
-/* --- Folders Grid --- */
+/* --- Grid pro složky --- */
 .folders-grid {
     display: grid;
+    /* Responzivní sloupce */
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-auto-rows: max-content;
     gap: 20px;
-    padding: 10px;
+    overflow-y: auto; /* Složky mohou rolovat, pokud jich je moc */
+    padding: 5px;
+    height: 100%;
+    align-content: start;
 }
 
 .folder-card {
@@ -130,17 +75,17 @@
     padding: 20px;
     text-align: center;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 190px;
+    height: 160px;
     position: relative;
     overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
 }
 
-/* Dekorativní prvek na pozadí složky */
 .folder-card::after {
     content: '';
     position: absolute;
@@ -155,202 +100,196 @@
 
 .folder-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 12px 25px rgba(217, 119, 6, 0.1);
+    box-shadow: 0 12px 25px rgba(217, 119, 6, 0.15);
     border-color: #d97706;
 }
-.folder-card:hover::after {
-    opacity: 1;
-}
+.folder-card:hover::after { opacity: 1; }
 
 .folder-icon {
-    font-size: 4em;
-    color: #fbbf24; /* Folder color */
-    margin-bottom: 15px;
+    font-size: 3.5em;
+    color: #fbbf24;
+    margin-bottom: 10px;
     transition: transform 0.3s;
 }
-.folder-card:hover .folder-icon {
-    transform: scale(1.1);
-}
+.folder-card:hover .folder-icon { transform: scale(1.1); }
 
 .folder-info h3 {
     margin: 0 0 5px 0;
     font-size: 1.1em;
     color: #374151;
-    font-weight: 700;
+    font-weight: 600;
 }
+.folder-date { font-size: 0.8em; color: #9ca3af; }
 
-.folder-date {
-    font-size: 0.8em;
-    color: #9ca3af;
-}
 
-/* --- Photos Grid (Modernizováno) --- */
+/* --- Grid pro fotky (FIXNÍ LAYOUT BEZ SCROLLU) --- */
 .photos-grid {
     display: grid;
-    /* Základní mřížka - sloupce se přizpůsobují, min 200px */
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    /* Dense zajistí, že se menší fotky přesunou do děr po větších */
-    grid-auto-flow: dense; 
-    gap: 15px;
-    flex-grow: 1; 
-    align-content: start; 
-    margin-bottom: 20px;
+    /* Fixní mřížka 4 sloupce x 3 řádky = 12 buněk */
+    /* Roztáhne se přesně na velikost kontejneru */
+    grid-template-columns: repeat(4, 1fr); 
+    grid-template-rows: repeat(3, 1fr);    
+    grid-auto-flow: dense; /* Vyplňování mezer */
+    gap: 12px;
+    width: 100%;
+    height: 100%; 
 }
 
 .photo-card {
     position: relative;
     border-radius: 12px;
     overflow: hidden;
-    /* Default je čtverec, ale pro wide/tall/big se to přepíše */
-    aspect-ratio: 1 / 1; 
     cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+    /* Důležité: karta se roztáhne do buňky gridu */
+    width: 100%;
+    height: 100%; 
 }
 
 .photo-card img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: cover; /* Zajistí, že fotka vyplní celou plochu bez deformace */
     transition: transform 0.5s ease;
 }
 
-.photo-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-    z-index: 2; /* Aby při hoveru byla navrchu */
-}
+.photo-card:hover img { transform: scale(1.05); }
 
-.photo-card:hover img {
-    transform: scale(1.08);
-}
-
-/* Overlay on hover */
+/* Overlay při najetí myší */
 .photo-overlay {
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.3);
+    background: rgba(0,0,0,0.2);
     display: flex;
     justify-content: center;
     align-items: center;
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.2s ease;
 }
-
+.photo-card:hover .photo-overlay { opacity: 1; }
 .photo-overlay i {
     color: white;
-    font-size: 2.5em;
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
-    transform: scale(0.8);
-    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    font-size: 2em;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
 }
 
-.photo-card:hover .photo-overlay {
-    opacity: 1;
-}
-.photo-card:hover .photo-overlay i {
-    transform: scale(1);
-}
+/* Třídy pro moderní layout (spojování buněk) */
+/* Aplikují se jen pokud se vejdou do mřížky */
+.photo-card.g-wide { grid-column: span 2; }
+.photo-card.g-tall { grid-row: span 2; }
+.photo-card.g-big  { grid-column: span 2; grid-row: span 2; }
 
-/* --- MODERN GALLERY LAYOUT CLASSES --- */
-/* Tyto třídy aplikujeme jen na větších obrazovkách */
-@media (min-width: 768px) {
-    /* Široká fotka (přes 2 sloupce) */
-    .photo-card.g-wide {
-        grid-column: span 2;
-        aspect-ratio: 2 / 1; /* Poměr stran 2:1 */
-    }
 
-    /* Vysoká fotka (přes 2 řádky) */
-    .photo-card.g-tall {
-        grid-row: span 2;
-        aspect-ratio: 1 / 2; /* Poměr stran 1:2 */
-    }
-
-    /* Velká fotka (přes 2 sloupce a 2 řádky) */
-    .photo-card.g-big {
-        grid-column: span 2;
-        grid-row: span 2;
-        aspect-ratio: 1 / 1; /* Velký čtverec */
-    }
-}
-
-/* --- Pagination Styling (Vylepšeno) --- */
-.pagination-controls {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 30px; /* Větší mezera mezi tlačítky */
-    margin-top: 20px;
-    margin-bottom: 20px;
-    padding-top: 20px;
+/* --- PATIČKA S TLAČÍTKY --- */
+.gallery-footer {
+    padding: 15px 25px;
     border-top: 1px solid #f3e2c0;
+    background-color: #fff; /* Podbarvení patičky */
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between; /* Rozmístění vlevo/střed/vpravo */
+    align-items: center;
+    height: 70px;
 }
 
-.nav-arrow {
+.footer-left, .footer-center, .footer-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* --- Styly tlačítek v patičce --- */
+.gallery-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 24px;
+    border-radius: 30px; /* Zaoblená "pill" tlačítka */
+    font-weight: 600;
+    font-size: 0.95em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    text-decoration: none;
+    white-space: nowrap;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.gallery-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* Hlavní akce (Nové album, Nahrát) - Oranžová */
+.gallery-btn-primary {
+    background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+    color: white;
+}
+.gallery-btn-primary:hover {
+    background: linear-gradient(135deg, #fcd34d 0%, #b45309 100%);
+}
+
+/* Sekundární akce (Zpět) - Bílá */
+.gallery-btn-secondary {
     background-color: white;
-    border: 2px solid #fbbf24; /* Oranžový rámeček */
-    border-radius: 50%; /* Dokonalý kruh */
-    width: 50px;
-    height: 50px;
+    color: #4b5563;
+    border: 1px solid #e5e7eb;
+}
+.gallery-btn-secondary:hover {
+    background-color: #f9fafb;
+    border-color: #d1d5db;
+    color: #111827;
+}
+
+/* Ovládání stránek (šipky) */
+.nav-arrow {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid #e5e7eb;
+    background: white;
+    color: #6b7280;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 1.2em;
-    color: #d97706;
     cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    transition: all 0.2s;
 }
-
 .nav-arrow:hover:not(:disabled) {
-    background-color: #fbbf24;
-    color: white;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 15px rgba(251, 191, 36, 0.3);
+    border-color: #fbbf24;
+    color: #d97706;
+    background-color: #fffbeb;
 }
-
-.nav-arrow:active:not(:disabled) {
-    transform: translateY(0);
-}
-
 .nav-arrow:disabled {
-    border-color: #e5e7eb;
-    color: #ccc;
-    background-color: #f9fafb;
-    cursor: not-allowed;
-    box-shadow: none;
+    opacity: 0.5;
+    cursor: default;
 }
 
 #page-info {
-    font-weight: 700;
-    font-size: 1.1em;
-    color: #4b5563;
-    letter-spacing: 0.5px;
-    background-color: #fffbeb; 
-    padding: 8px 25px;
-    border-radius: 30px;
-    border: 1px solid #fde68a;
+    font-weight: 600;
+    color: #374151;
+    min-width: 60px;
+    text-align: center;
 }
 
-/* --- Lightbox (Full Screen Detail) --- */
+
+/* --- LIGHTBOX (DETAIL FOTKY) - NERUŠIVÝ DESIGN --- */
 .lightbox-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.95); /* Tmavší pozadí */
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(10, 10, 10, 0.95); /* Tmavé pozadí */
     z-index: 2000;
     display: flex;
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    backdrop-filter: blur(5px);
+    backdrop-filter: blur(8px);
 }
 
 .lightbox-content {
-    max-width: 90%;
+    max-width: 95%;
     max-height: 85vh;
     display: flex;
     flex-direction: column;
@@ -361,55 +300,106 @@
 .lightbox-content img {
     max-width: 100%;
     max-height: 80vh;
-    border-radius: 8px;
+    border-radius: 4px;
     box-shadow: 0 20px 50px rgba(0,0,0,0.5);
 }
 
+/* Ovládací prvky lightboxu - defaultně méně viditelné */
 .lightbox-controls {
     margin-top: 20px;
     display: flex;
     gap: 15px;
+    opacity: 0.4; /* Poloprůhledné, aby nerušily */
+    transition: opacity 0.3s ease;
+}
+.lightbox-content:hover .lightbox-controls,
+.lightbox-controls:hover {
+    opacity: 1; /* Při najetí myší se zvýrazní */
+}
+
+/* Styly tlačítek v lightboxu (Průhledné/Skleněné) */
+.lightbox-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.9);
+    padding: 8px 20px;
+    border-radius: 50px;
+    font-size: 0.9em;
+    font-weight: 500;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.lightbox-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+}
+
+.lightbox-btn-danger:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: #ef4444;
+    color: #fca5a5;
 }
 
 .lightbox-close {
     position: absolute;
-    top: 30px;
-    right: 40px;
-    color: white;
-    font-size: 3em;
+    top: 20px;
+    right: 30px;
+    color: rgba(255,255,255,0.5);
     background: none;
     border: none;
+    font-size: 3em;
     cursor: pointer;
-    opacity: 0.6;
-    transition: opacity 0.2s;
+    transition: all 0.3s;
 }
-.lightbox-close:hover {
-    opacity: 1;
-}
+.lightbox-close:hover { color: white; transform: rotate(90deg); }
 
 .lightbox-arrow {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    background: rgba(255,255,255,0.1);
-    border: 1px solid rgba(255,255,255,0.2);
-    border-radius: 50%;
-    width: 60px;
-    height: 60px;
-    color: white;
-    font-size: 1.5em;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    background: transparent;
+    border: none;
+    color: rgba(255,255,255,0.3);
+    font-size: 3.5em;
+    padding: 20px;
     cursor: pointer;
     transition: all 0.3s;
 }
 .lightbox-arrow:hover {
-    background: rgba(255,255,255,0.25);
-    transform: translateY(-50%) scale(1.1);
+    color: white;
+    transform: translateY(-50%) scale(1.2);
 }
-.lightbox-arrow.left { left: 40px; }
-.lightbox-arrow.right { right: 40px; }
+.lightbox-arrow.left { left: 20px; }
+.lightbox-arrow.right { right: 20px; }
+
+/* Responzivita */
+@media (max-width: 768px) {
+    .photos-grid {
+        /* Na mobilu 2 sloupce x 4 řádky */
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(4, 1fr);
+    }
+    .gallery-footer {
+        height: auto;
+        flex-direction: column;
+        gap: 15px;
+        padding-bottom: 20px;
+    }
+    .footer-center {
+        order: -1; /* Stránkování nahoře v rámci patičky */
+    }
+}
+
+/* Zachování existujících stylů pro zbytek aplikace */
+.hidden { display: none !important; }
 
 .empty-state {
     grid-column: 1 / -1;
