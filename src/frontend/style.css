@@ -1,19 +1,20 @@
+/* --- GLOBÁLNÍ STYLY PRO GALERII --- */
+
 .main-content-gallery {
     width: 100%;
-    /* Výška okna mínus hlavička aplikace. 
-       Tím zajistíme, že se obsah vejde přesně na obrazovku bez scrollu stránky. */
+    /* Výška okna mínus hlavička aplikace. */
     height: calc(100vh - 100px); 
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* Žádný scrollbar na hlavní stránce */
+    overflow: hidden;
 }
 
 .gallery-card {
     background-color: white;
     border-radius: 16px;
-    padding: 0; /* Padding dáme vnitřním kontejnerům */
+    padding: 0; 
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-    height: 100%; /* Roztáhnout na celou výšku main-content-gallery */
+    height: 100%; 
     display: flex;
     flex-direction: column;
     position: relative;
@@ -22,17 +23,18 @@
 
 /* --- HLAVIČKA GALERIE --- */
 .gallery-header {
-    padding: 15px 25px;
+    padding: 10px 20px; /* Menší padding */
     border-bottom: 1px solid #f3e2c0;
-    flex-shrink: 0; /* Hlavička se nezmenšuje */
+    flex-shrink: 0;
     display: flex;
     align-items: center;
-    height: 60px;
+    height: 50px;
     background-color: #fff;
+    z-index: 10;
 }
 
 .gallery-header h2 {
-    font-size: 1.4em;
+    font-size: 1.3em;
     color: #4b5563;
     margin: 0;
     padding: 0;
@@ -47,9 +49,9 @@
 
 /* --- HLAVNÍ OBSAHOVÁ ČÁST (GRIDY) --- */
 .gallery-content-wrapper {
-    flex-grow: 1; /* Zabere veškeré dostupné místo mezi hlavičkou a patičkou */
-    padding: 20px;
-    overflow: hidden; /* Skryje přetečení, layout se musí vejít */
+    flex-grow: 1; 
+    padding: 10px; /* Malý padding kolem fotek */
+    overflow: hidden;
     position: relative;
     display: flex;
     flex-direction: column;
@@ -58,11 +60,10 @@
 /* --- Grid pro složky --- */
 .folders-grid {
     display: grid;
-    /* Responzivní sloupce */
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     grid-auto-rows: max-content;
     gap: 20px;
-    overflow-y: auto; /* Složky mohou rolovat, pokud jich je moc */
+    overflow-y: auto;
     padding: 5px;
     height: 100%;
     align-content: start;
@@ -122,27 +123,28 @@
 .folder-date { font-size: 0.8em; color: #9ca3af; }
 
 
-/* --- Grid pro fotky (FIXNÍ LAYOUT BEZ SCROLLU) --- */
+/* --- Grid pro fotky (PERFECT FIT) --- */
 .photos-grid {
     display: grid;
-    /* Fixní mřížka 4 sloupce x 3 řádky = 12 buněk */
-    /* Roztáhne se přesně na velikost kontejneru */
+    /* Fixní mřížka 4 sloupce x 3 řádky */
     grid-template-columns: repeat(4, 1fr); 
     grid-template-rows: repeat(3, 1fr);    
-    grid-auto-flow: dense; /* Vyplňování mezer */
-    gap: 12px;
+    /* Hustší uspořádání - vyplňování děr */
+    grid-auto-flow: dense; 
+    /* Menší mezera pro "plnější" vzhled */
+    gap: 8px; 
     width: 100%;
     height: 100%; 
 }
 
 .photo-card {
     position: relative;
-    border-radius: 12px;
+    border-radius: 8px; /* Trochu menší rádius pro modernější "dlaždicový" vzhled */
     overflow: hidden;
     cursor: pointer;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    transition: transform 0.3s ease;
-    /* Důležité: karta se roztáhne do buňky gridu */
+    /* Žádný stín defaultně, aby to vypadalo jako celistvá mozaika */
+    box-shadow: none; 
+    transition: transform 0.3s ease, z-index 0s;
     width: 100%;
     height: 100%; 
 }
@@ -150,13 +152,18 @@
 .photo-card img {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Zajistí, že fotka vyplní celou plochu bez deformace */
+    object-fit: cover;
     transition: transform 0.5s ease;
+    display: block; /* Odstraní spodní mezeru inline elementů */
 }
 
-.photo-card:hover img { transform: scale(1.05); }
+.photo-card:hover {
+    z-index: 5; /* Při hoveru vystoupí nad ostatní */
+    transform: scale(1.02); /* Jemné zvětšení */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    border-radius: 12px; /* Zvýraznění rohů při hoveru */
+}
 
-/* Overlay při najetí myší */
 .photo-overlay {
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
@@ -174,8 +181,7 @@
     filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
 }
 
-/* Třídy pro moderní layout (spojování buněk) */
-/* Aplikují se jen pokud se vejdou do mřížky */
+/* Třídy pro moderní layout */
 .photo-card.g-wide { grid-column: span 2; }
 .photo-card.g-tall { grid-row: span 2; }
 .photo-card.g-big  { grid-column: span 2; grid-row: span 2; }
@@ -183,14 +189,15 @@
 
 /* --- PATIČKA S TLAČÍTKY --- */
 .gallery-footer {
-    padding: 15px 25px;
+    padding: 10px 20px;
     border-top: 1px solid #f3e2c0;
-    background-color: #fff; /* Podbarvení patičky */
+    background-color: #fff;
     flex-shrink: 0;
     display: flex;
-    justify-content: space-between; /* Rozmístění vlevo/střed/vpravo */
+    justify-content: space-between;
     align-items: center;
-    height: 70px;
+    height: 60px;
+    z-index: 10;
 }
 
 .footer-left, .footer-center, .footer-right {
@@ -205,16 +212,15 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 10px 24px;
-    border-radius: 30px; /* Zaoblená "pill" tlačítka */
+    padding: 8px 20px;
+    border-radius: 30px;
     font-weight: 600;
-    font-size: 0.95em;
+    font-size: 0.9em;
     cursor: pointer;
     transition: all 0.2s ease;
     border: none;
     text-decoration: none;
     white-space: nowrap;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 
 .gallery-btn:hover {
@@ -222,7 +228,7 @@
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
-/* Hlavní akce (Nové album, Nahrát) - Oranžová */
+/* Primary Action */
 .gallery-btn-primary {
     background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
     color: white;
@@ -231,7 +237,7 @@
     background: linear-gradient(135deg, #fcd34d 0%, #b45309 100%);
 }
 
-/* Sekundární akce (Zpět) - Bílá */
+/* Secondary Action */
 .gallery-btn-secondary {
     background-color: white;
     color: #4b5563;
@@ -243,10 +249,10 @@
     color: #111827;
 }
 
-/* Ovládání stránek (šipky) */
+/* Ovládání stránek */
 .nav-arrow {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     border: 1px solid #e5e7eb;
     background: white;
@@ -270,16 +276,17 @@
 #page-info {
     font-weight: 600;
     color: #374151;
-    min-width: 60px;
+    min-width: 50px;
     text-align: center;
+    font-size: 0.9em;
 }
 
 
-/* --- LIGHTBOX (DETAIL FOTKY) - NERUŠIVÝ DESIGN --- */
+/* --- LIGHTBOX (DETAIL FOTKY) --- */
 .lightbox-overlay {
     position: fixed;
     top: 0; left: 0; width: 100%; height: 100%;
-    background-color: rgba(10, 10, 10, 0.95); /* Tmavé pozadí */
+    background-color: rgba(10, 10, 10, 0.95);
     z-index: 2000;
     display: flex;
     justify-content: center;
@@ -301,23 +308,20 @@
     max-width: 100%;
     max-height: 80vh;
     border-radius: 4px;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.8);
 }
 
-/* Ovládací prvky lightboxu - defaultně méně viditelné */
 .lightbox-controls {
     margin-top: 20px;
     display: flex;
     gap: 15px;
-    opacity: 0.4; /* Poloprůhledné, aby nerušily */
+    opacity: 0.4;
     transition: opacity 0.3s ease;
 }
 .lightbox-content:hover .lightbox-controls,
-.lightbox-controls:hover {
-    opacity: 1; /* Při najetí myší se zvýrazní */
-}
+.lightbox-controls:hover { opacity: 1; }
 
-/* Styly tlačítek v lightboxu (Průhledné/Skleněné) */
+/* Lightbox Buttons */
 .lightbox-btn {
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.2);
@@ -393,32 +397,23 @@
         gap: 15px;
         padding-bottom: 20px;
     }
-    .footer-center {
-        order: -1; /* Stránkování nahoře v rámci patičky */
-    }
+    .footer-center { order: -1; }
 }
 
 /* Zachování existujících stylů pro zbytek aplikace */
 .hidden { display: none !important; }
 
-.empty-state {
-    grid-column: 1 / -1;
-    text-align: center;
-    color: #9ca3af;
-    font-size: 1.1em;
-    margin-top: 60px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
+/* Shopping list & other components overrides */
+.shopping-list-container, .reservations-list-container {
+    flex: 1 1 320px; 
+    max-width: 400px;
 }
-.empty-state::before {
-    content: '\f03e'; /* FontAwesome image icon */
-    font-family: 'Font Awesome 6 Free';
-    font-weight: 900;
-    font-size: 3em;
-    color: #e5e7eb;
+.calendar-card { flex: 2 1 450px; }
+.shopping-list-container h2, .notice-board-container h2 {
+    margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee;
+    font-size: 1.1em; font-weight: 600; color: #555;
 }
+/* ... zbytek stylů pro nákupní seznam a rezervace zůstává stejný ... */
 
 @keyframes spin {
   0% { transform: rotate(0deg); }

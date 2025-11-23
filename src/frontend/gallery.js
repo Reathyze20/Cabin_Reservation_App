@@ -44,13 +44,48 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- State ---
     let currentFolderId = null;
     let currentPage = 1;
-    // Fixní počet fotek 12 odpovídá mřížce 4x3. 
-    // Tím zajistíme, že grid nebude přetékat, pokud budou všechny fotky standardní velikosti.
-    const photosPerPage = 12; 
     let currentPhotos = [];
     let currentLightboxIndex = 0;
 
     const backendUrl = ""; 
+
+    // --- DEFINICE LAYOUTŮ (Perfect Fit) ---
+    // Mřížka je 4 sloupce x 3 řádky = 12 buněk celkem.
+    // g-big = 4 buňky, g-wide = 2 buňky, g-tall = 2 buňky, normal = 1 buňka.
+    // Každý pattern musí mít součet buněk přesně 12.
+    
+    const layouts = [
+        {
+            // Layout A: "Hero" - Jedna velká, zbytek malé a široké
+            // 1x Big (4) + 2x Wide (4) + 4x Small (4) = 12
+            classes: ['g-big', 'g-wide', 'g-wide', '', '', '', ''],
+            itemsCount: 7
+        },
+        {
+            // Layout B: "Sloupce" - Vysoké fotky vedle sebe
+            // 4x Tall (8) + 4x Small (4) = 12
+            classes: ['g-tall', 'g-tall', 'g-tall', 'g-tall', '', '', '', ''],
+            itemsCount: 8
+        },
+        {
+            // Layout C: "Panoráma" - Samé široké
+            // 6x Wide (12) = 12
+            classes: ['g-wide', 'g-wide', 'g-wide', 'g-wide', 'g-wide', 'g-wide'],
+            itemsCount: 6
+        },
+        {
+            // Layout D: "Mozaika" - Mix
+            // 1x Big (4) + 1x Tall (2) + 1x Wide (2) + 4x Small (4) = 12
+            // Pozor na pořadí kvůli dense flow
+            classes: ['g-big', 'g-tall', '', '', 'g-wide', '', ''],
+            itemsCount: 7
+        },
+        {
+            // Layout E: "Klasika" - Jen mřížka
+            classes: [], // Žádné speciální třídy
+            itemsCount: 12
+        }
+    ];
 
     // --- Auth Check ---
     const loggedInUsername = localStorage.getItem("username");
@@ -164,7 +199,6 @@ document.addEventListener("DOMContentLoaded", () => {
         currentPage = 1;
 
         foldersView.style.display = 'none';
-        // Používáme flex pro zobrazení (kvůli layoutu s patičkou)
         photosView.style.display = 'flex'; 
 
         loadPhotos(folderId);
@@ -179,56 +213,57 @@ document.addEventListener("DOMContentLoaded", () => {
     async function loadPhotos(folderId) {
         const photos = await apiFetch(`${backendUrl}/api/gallery/photos?folderId=${folderId}`);
         if (photos) {
+            // Seřadit od nejnovějších
             photos.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-            currentPhotos = photos; // Uložit data
-            renderPhotos(photos);   // Vykreslit
+            currentPhotos = photos; 
+            renderPhotos(); 
         }
     }
 
-    function renderPhotos(photos) {
+    function renderPhotos() {
         photosGrid.innerHTML = '';
-        
-        const totalPages = Math.ceil(photos.length / photosPerPage);
-        if (currentPage > totalPages && totalPages > 0) currentPage = totalPages;
-        if (currentPage < 1) currentPage = 1;
-        
-        const start = (currentPage - 1) * photosPerPage;
-        const end = start + photosPerPage;
-        const pagePhotos = photos.slice(start, end);
 
-        if (photos.length === 0) {
+        if (currentPhotos.length === 0) {
             photosGrid.innerHTML = '<p class="empty-state">Toto album je prázdné. Nahrajte první fotky!</p>';
             paginationControls.style.display = 'none';
             return;
         }
 
-        // --- DEFINICE VZORŮ (LAYOUT PATTERNS) ---
-        // 12 buněk (4x3). Vzory by měly ideálně zaplnit 12 slotů.
-        // Pokud se položka nevejde (např. kvůli 'g-big'), grid-auto-flow: dense to zkusí přeskládat,
-        // ale fixní výška může způsobit oříznutí. 
-        // Pro "No Scroll" layout je bezpečnější používat mírnější vzory nebo standardní dlaždice.
+        // 1. Určit aktuální layout podle čísla stránky
+        const layoutIndex = (currentPage - 1) % layouts.length;
+        const currentLayout = layouts[layoutIndex];
         
-        const layouts = [
-            // Vzor A: Mix
-            ['g-big', 'g-wide', 'g-wide', '', '', '', '', ''],
-            // Vzor B: Důraz na výšku
-            ['g-tall', '', 'g-wide', 'g-tall', '', '', '', ''],
-            // Vzor C: Klasika
-            ['', '', '', '', '', '', '', '', '', '', '', '']
-        ];
+        // 2. Vypočítat offsety (kde začíná aktuální stránka v poli všech fotek)
+        // Musíme projít předchozí stránky a sečíst jejich kapacitu, protože každá stránka má jinou kapacitu
+        let startIndex = 0;
+        for (let i = 1; i < currentPage; i++) {
+            const prevLayout = layouts[(i - 1) % layouts.length];
+            startIndex += prevLayout.itemsCount;
+        }
 
-        // Vybereme layout podle čísla stránky
-        const currentLayoutPattern = layouts[(currentPage - 1) % layouts.length];
+        const endIndex = startIndex + currentLayout.itemsCount;
+        const pagePhotos = currentPhotos.slice(startIndex, endIndex);
 
+        // 3. Zjistit celkový počet stránek
+        // To je složitější, protože kapacita se mění. Uděláme simulaci průchodu.
+        let tempIndex = 0;
+        let totalPages = 0;
+        while (tempIndex < currentPhotos.length) {
+            const l = layouts[totalPages % layouts.length];
+            tempIndex += l.itemsCount;
+            totalPages++;
+        }
+
+        // --- Render ---
         pagePhotos.forEach((photo, index) => {
-            const globalIndex = start + index;
+            const globalIndex = startIndex + index;
             const photoEl = document.createElement('div');
             
             photoEl.className = 'photo-card';
             
-            // Aplikace třídy podle vzoru (pokud existuje pro daný index)
-            if (index < currentLayoutPattern.length) {
-                const spanClass = currentLayoutPattern[index];
+            // Aplikovat třídu z layoutu, pokud existuje
+            if (index < currentLayout.classes.length) {
+                const spanClass = currentLayout.classes[index];
                 if (spanClass) {
                     photoEl.classList.add(spanClass);
                 }
@@ -245,6 +280,19 @@ document.addEventListener("DOMContentLoaded", () => {
             photosGrid.appendChild(photoEl);
         });
 
+        // Vyplnění prázdnými divy, pokud fotek není dost na naplnění layoutu (poslední stránka)
+        // Aby grid "neskákal"
+        if (pagePhotos.length < currentLayout.itemsCount) {
+             const missingCount = currentLayout.itemsCount - pagePhotos.length;
+             for(let i=0; i<missingCount; i++) {
+                 const filler = document.createElement('div');
+                 // filler.className = 'photo-card'; // Bez stylů, jen placeholder, nebo průhledný
+                 // Nebudeme přidávat nic, grid-auto-flow: dense to nějak srovná, 
+                 // ale pro perfektní mřížku by to chtělo placeholder.
+                 // Prozatím necháme tak, na poslední stránce je prázdno akceptovatelné.
+             }
+        }
+
         // --- Stránkování ---
         if (totalPages > 1) {
             paginationControls.style.display = 'flex';
@@ -259,15 +307,23 @@ document.addEventListener("DOMContentLoaded", () => {
     prevPageBtn.addEventListener('click', () => {
         if (currentPage > 1) {
             currentPage--;
-            renderPhotos(currentPhotos);
+            renderPhotos();
         }
     });
 
     nextPageBtn.addEventListener('click', () => {
-        const totalPages = Math.ceil(currentPhotos.length / photosPerPage);
+        // Znovu spočítáme total pages pro validaci
+        let tempIndex = 0;
+        let totalPages = 0;
+        while (tempIndex < currentPhotos.length) {
+            const l = layouts[totalPages % layouts.length];
+            tempIndex += l.itemsCount;
+            totalPages++;
+        }
+
         if (currentPage < totalPages) {
             currentPage++;
-            renderPhotos(currentPhotos);
+            renderPhotos();
         }
     });
 
@@ -306,6 +362,7 @@ document.addEventListener("DOMContentLoaded", () => {
         uploadButton.textContent = "Nahrát";
         uploadPhotoModal.style.display = 'none';
         photoFileInput.value = '';
+        // Po uploadu reload
         loadPhotos(currentFolderId);
     });
 
@@ -336,7 +393,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const isAdmin = userRole === 'admin';
         
         if (isOwner || isAdmin) {
-            lightboxDelete.style.display = 'flex'; 
+            lightboxDelete.style.display = 'inline-flex'; 
             lightboxDelete.onclick = () => deletePhoto(photo.id);
         } else {
             lightboxDelete.style.display = 'none';
