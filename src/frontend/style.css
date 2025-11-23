@@ -311,11 +311,124 @@
     box-shadow: 0 20px 60px rgba(0,0,0,0.8);
 }
 
+/* --- LIGHTBOX POPIS (VZPOMÍNKY) --- */
+.lightbox-caption-container {
+    width: 100%;
+    max-width: 800px;
+    margin-top: 15px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.9);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 30px; /* Aby to neskákalo když je prázdné */
+}
+
+.lightbox-description {
+    font-size: 1.1em;
+    font-style: italic;
+    font-weight: 300;
+    line-height: 1.5;
+    position: relative;
+    padding: 0 25px;
+    margin: 0;
+    cursor: pointer; /* Indikuje možnost editace kliknutím */
+    transition: color 0.2s;
+}
+
+.lightbox-description:hover {
+    color: #fff;
+}
+
+/* Uvozovky */
+.lightbox-description::before {
+    content: '\201C'; /* Levé uvozovky */
+    font-family: serif;
+    font-size: 2em;
+    position: absolute;
+    left: -10px;
+    top: -10px;
+    color: rgba(255,255,255,0.4);
+}
+
+.lightbox-description::after {
+    content: '\201D'; /* Pravé uvozovky */
+    font-family: serif;
+    font-size: 2em;
+    position: absolute;
+    right: -10px;
+    bottom: -20px;
+    color: rgba(255,255,255,0.4);
+}
+
+/* Tlačítko pro přidání popisu (když je prázdný) */
+.add-description-btn {
+    background: none;
+    border: 1px dashed rgba(255,255,255,0.3);
+    color: rgba(255,255,255,0.5);
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.8em;
+    cursor: pointer;
+    margin-top: 5px;
+    transition: all 0.2s;
+}
+.add-description-btn:hover {
+    border-color: rgba(255,255,255,0.6);
+    color: white;
+    background: rgba(255,255,255,0.1);
+}
+
+/* Formulář pro editaci */
+.description-form {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    justify-content: center;
+    margin-top: 5px;
+    animation: fadeIn 0.2s;
+}
+
+.description-input {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 20px;
+    width: 300px;
+    font-family: inherit;
+}
+.description-input:focus {
+    outline: none;
+    border-color: rgba(255,255,255,0.8);
+    background: rgba(255,255,255,0.2);
+}
+
+.save-description-btn {
+    background: rgba(255,255,255,0.9);
+    color: #333;
+    border: none;
+    padding: 0 15px;
+    border-radius: 20px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.save-description-btn:hover {
+    background: white;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+
+/* --- LIGHTBOX OVLÁDÁNÍ --- */
 .lightbox-controls {
-    margin-top: 20px;
+    margin-top: 15px;
     display: flex;
     gap: 15px;
-    opacity: 0.4;
+    opacity: 0.6; /* Viditelnější než předtím */
     transition: opacity 0.3s ease;
 }
 .lightbox-content:hover .lightbox-controls,
@@ -398,6 +511,7 @@
         padding-bottom: 20px;
     }
     .footer-center { order: -1; }
+    .lightbox-content img { max-height: 60vh; }
 }
 
 /* Zachování existujících stylů pro zbytek aplikace */
@@ -413,7 +527,6 @@
     margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee;
     font-size: 1.1em; font-weight: 600; color: #555;
 }
-/* ... zbytek stylů pro nákupní seznam a rezervace zůstává stejný ... */
 
 @keyframes spin {
   0% { transform: rotate(0deg); }
