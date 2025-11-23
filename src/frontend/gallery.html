@@ -56,14 +56,9 @@
 
                     <!-- 2. POHLED: OBSAH SLOŽKY (FOTKY) -->
                     <div id="photos-view" style="display: none; flex-direction: column; height: 100%;">
-                        <div class="gallery-header" style="justify-content: space-between;">
+                        <div class="gallery-header">
                             <h2 id="current-folder-title">Název alba</h2>
-                            <div class="header-actions">
-                                <!-- Tlačítko pro smazání celé složky -->
-                                <button id="delete-folder-btn" class="gallery-btn gallery-btn-danger-outline" title="Smazat celé album">
-                                    <i class="fas fa-trash-alt"></i> Smazat album
-                                </button>
-                            </div>
+                            <!-- Tlačítko 'Smazat album' bylo odstraněno z hlavičky -->
                         </div>
 
                         <div class="gallery-content-wrapper">
@@ -99,6 +94,11 @@
                             </div>
 
                             <div class="footer-right">
+                                <!-- Tlačítko přesunuto SEM -->
+                                <button id="delete-folder-btn" class="gallery-btn gallery-btn-danger-outline" title="Smazat celé album" style="margin-right: 10px;">
+                                    <i class="fas fa-trash-alt"></i> Smazat album
+                                </button>
+                                
                                 <button id="upload-photo-btn" class="gallery-btn gallery-btn-primary">
                                     <i class="fas fa-cloud-upload-alt"></i> Nahrát fotky
                                 </button>
