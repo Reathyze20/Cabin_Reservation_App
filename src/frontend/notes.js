@@ -7,37 +7,34 @@ document.addEventListener("DOMContentLoaded", () => {
     const notesList = document.getElementById("notes-list");
     const addNoteForm = document.getElementById("add-note-form");
     const noteMessageInput = document.getElementById("note-message-input");
+    
+    // Filtry
     const authorFilterSelect = document.getElementById("author-filter");
+    const dateFromFilter = document.getElementById("date-from-filter");
+    const dateToFilter = document.getElementById("date-to-filter");
+    const resetFiltersBtn = document.getElementById("reset-filters-btn");
 
     // Definice Backend URL
     const backendUrl = "";
 
-    // Globální proměnná pro uložení dat (pro klientské filtrování)
+    // Globální proměnná pro uložení všech dat
     let allNotesData = [];
 
     // 2. Kontrola přihlášení
     const loggedInUsername = localStorage.getItem("username");
 
     if (loggedInUsername) {
-        // Uživatel JE přihlášen
         if (appContainer) appContainer.classList.remove("hidden");
         if (authContainer) authContainer.classList.add("hidden");
-        
-        // Vyplnění jména
         if (loggedInUsernameElement) {
             loggedInUsernameElement.textContent = loggedInUsername;
         }
-
-        // Načtení vzkazů
         loadNotes();
-
     } else {
-        // Uživatel NENÍ přihlášen
         if (appContainer) appContainer.classList.add("hidden");
         if (authContainer) authContainer.classList.remove("hidden");
     }
 
-    // 3. Funkčnost odhlášení
     if (logoutButton) {
         logoutButton.addEventListener("click", () => {
             localStorage.clear();
@@ -58,23 +55,16 @@ document.addEventListener("DOMContentLoaded", () => {
             
             if (!response.ok) throw new Error('Nepodařilo se načíst vzkazy.');
             
-            // Uložení dat
             allNotesData = await response.json();
             
             // Seřazení od nejnovějších
             allNotesData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-            // Naplnění filtru a vykreslení
+            // Naplnění filtru autorů
             populateAuthorFilter(allNotesData);
             
-            // Zkontrolujeme, jestli uživatel už něco vybral (např. před reloadem), jinak zobrazíme vše
-            const currentFilter = authorFilterSelect ? authorFilterSelect.value : "";
-            if (currentFilter) {
-                const filtered = allNotesData.filter(n => n.username === currentFilter);
-                renderNotes(filtered);
-            } else {
-                renderNotes(allNotesData);
-            }
+            // Aplikace filtrů (zobrazí vše, pokud jsou filtry prázdné)
+            applyFilters();
 
         } catch (error) {
             console.error("Chyba:", error);
@@ -86,11 +76,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!authorFilterSelect) return;
 
         const currentSelection = authorFilterSelect.value;
-        
-        // Získání unikátních jmen
         const authors = [...new Set(notes.map(note => note.username))].sort();
 
-        // Reset možností - vždy začínáme s "Všichni"
         authorFilterSelect.innerHTML = '<option value="">Všichni autoři</option>';
 
         authors.forEach(author => {
@@ -100,21 +87,57 @@ document.addEventListener("DOMContentLoaded", () => {
             authorFilterSelect.appendChild(option);
         });
 
-        // Pokud předchozí výběr stále existuje v datech, obnovíme ho
         if (currentSelection && authors.includes(currentSelection)) {
             authorFilterSelect.value = currentSelection;
         }
     }
 
-    if (authorFilterSelect) {
-        authorFilterSelect.addEventListener("change", (e) => {
-            const selectedAuthor = e.target.value;
-            if (selectedAuthor === "") {
-                renderNotes(allNotesData);
-            } else {
-                const filteredNotes = allNotesData.filter(note => note.username === selectedAuthor);
-                renderNotes(filteredNotes);
+    // --- Hlavní funkce pro filtrování ---
+    function applyFilters() {
+        if (!allNotesData) return;
+
+        const authorValue = authorFilterSelect ? authorFilterSelect.value : "";
+        const dateFromValue = dateFromFilter ? dateFromFilter.value : ""; // YYYY-MM-DD
+        const dateToValue = dateToFilter ? dateToFilter.value : "";     // YYYY-MM-DD
+
+        const filteredNotes = allNotesData.filter(note => {
+            // 1. Filtr podle autora
+            if (authorValue && note.username !== authorValue) {
+                return false;
             }
+
+            // Příprava data vzkazu (pouze datum bez času pro porovnání)
+            const noteDateObj = new Date(note.createdAt);
+            // Převedeme na string YYYY-MM-DD pro snadné porovnání
+            const noteDateStr = noteDateObj.toISOString().split('T')[0];
+
+            // 2. Filtr Datum OD
+            if (dateFromValue && noteDateStr < dateFromValue) {
+                return false;
+            }
+
+            // 3. Filtr Datum DO
+            if (dateToValue && noteDateStr > dateToValue) {
+                return false;
+            }
+
+            return true;
+        });
+
+        renderNotes(filteredNotes);
+    }
+
+    // Listenery pro změnu filtrů
+    if (authorFilterSelect) authorFilterSelect.addEventListener("change", applyFilters);
+    if (dateFromFilter) dateFromFilter.addEventListener("change", applyFilters);
+    if (dateToFilter) dateToFilter.addEventListener("change", applyFilters);
+
+    if (resetFiltersBtn) {
+        resetFiltersBtn.addEventListener("click", () => {
+            if (authorFilterSelect) authorFilterSelect.value = "";
+            if (dateFromFilter) dateFromFilter.value = "";
+            if (dateToFilter) dateToFilter.value = "";
+            applyFilters();
         });
     }
 
@@ -123,7 +146,7 @@ document.addEventListener("DOMContentLoaded", () => {
         
         notesList.innerHTML = '';
         if (notes.length === 0) {
-            notesList.innerHTML = '<p style="text-align:center; color:#666; margin-top:20px;"><i>Žádné vzkazy k zobrazení.</i></p>';
+            notesList.innerHTML = '<p style="text-align:center; color:#666; margin-top:20px;"><i>Žádné vzkazy neodpovídají filtrům.</i></p>';
             return;
         }
 
@@ -143,7 +166,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             noteEl.innerHTML = `
                 ${deleteBtn}
-                <div class="note-header" style="margin-bottom: 5px;">
+                <div class="note-header">
                     <span class="note-author" style="font-weight:bold; color:#d97706;">${note.username}</span>
                     <span class="note-date" style="font-size:0.85em; color:#777; margin-left:8px;">${formattedDate}</span>
                 </div>
@@ -171,8 +194,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 noteMessageInput.value = '';
                 
-                // Reset filtru na "Všichni", aby uživatel viděl svůj nový příspěvek
-                if(authorFilterSelect) authorFilterSelect.value = "";
+                // Reset filtrů, aby uživatel viděl svůj nový příspěvek
+                if (authorFilterSelect) authorFilterSelect.value = "";
+                if (dateFromFilter) dateFromFilter.value = "";
+                if (dateToFilter) dateToFilter.value = "";
                 
                 await loadNotes();
             } catch (error) {

@@ -25,32 +25,52 @@
             </div>
 
             <div class="main-content-notes">
-                <!-- Přidána třída notes-page-card pro full-height layout -->
+                <!-- Třída notes-page-card zajišťuje fixní výšku přes celou obrazovku -->
                 <div id="notes-section" class="card notes-page-card">
                     
-                    <!-- Hlavička s filtrem -->
-                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px;">
+                    <!-- Horní panel: Nadpis a Filtry -->
+                    <div class="filters-container">
                         <h2 style="margin: 0; border: none;"><i class="fas fa-thumbtack"></i> Nástěnka</h2>
                         
-                        <div class="filter-wrapper" style="display: flex; align-items: center; gap: 8px;">
-                            <label for="author-filter" style="font-weight: 500; color: #555; font-size: 0.9em;"><i class="fas fa-filter"></i> Autor:</label>
-                            <select id="author-filter" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #ddd; outline: none; background-color: white; min-width: 150px;">
-                                <option value="">Všichni autoři</option>
-                                <!-- Možnosti se načtou dynamicky -->
-                            </select>
+                        <div class="filters-group">
+                            <!-- Filtr Autor -->
+                            <div class="filter-item">
+                                <label for="author-filter"><i class="fas fa-user"></i> Autor:</label>
+                                <select id="author-filter">
+                                    <option value="">Všichni</option>
+                                    <!-- Možnosti se načtou dynamicky -->
+                                </select>
+                            </div>
+
+                            <!-- Filtr Datum Od -->
+                            <div class="filter-item">
+                                <label for="date-from-filter">Od:</label>
+                                <input type="date" id="date-from-filter">
+                            </div>
+
+                            <!-- Filtr Datum Do -->
+                            <div class="filter-item">
+                                <label for="date-to-filter">Do:</label>
+                                <input type="date" id="date-to-filter">
+                            </div>
+                            
+                            <!-- Tlačítko pro reset filtrů (volitelné, pro pohodlí) -->
+                            <button id="reset-filters-btn" class="button-secondary" style="padding: 6px 12px; font-size: 0.85em;" title="Zrušit filtry">
+                                <i class="fas fa-times"></i>
+                            </button>
                         </div>
                     </div>
                     
-                    <!-- Formulář nahoře -->
-                    <form id="add-note-form" class="add-note-form" style="margin-bottom: 20px;">
-                        <textarea id="note-message-input" placeholder="Napište vzkaz pro ostatní..." required rows="2"></textarea>
-                        <button type="submit">Přidat vzkaz</button>
-                    </form>
-
-                    <!-- Seznam vzkazů - roztáhne se díky flex-grow v CSS -->
+                    <!-- Seznam vzkazů - tento element bude scrollovat -->
                     <div id="notes-list" class="notes-list">
                         <!-- Vzkazy se generují dynamicky -->
                     </div>
+
+                    <!-- Formulář je fixně dole v kartě -->
+                    <form id="add-note-form" class="add-note-form">
+                        <textarea id="note-message-input" placeholder="Napište vzkaz pro ostatní..." required rows="2"></textarea>
+                        <button type="submit">Přidat vzkaz</button>
+                    </form>
                 </div>
             </div>
         </div>
