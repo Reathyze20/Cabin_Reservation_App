@@ -479,6 +479,51 @@ app.post('/api/gallery/folders', protect, async (req, res) => {
     }
 });
 
+// Smazání složky
+app.delete('/api/gallery/folders/:id', protect, async (req: Request, res: Response) => {
+    if (!req.user) return res.status(401).json({ message: "Neautorizováno" });
+    const { id } = req.params;
+
+    try {
+        let folders = await loadGalleryFolders();
+        const folderIdx = folders.findIndex(f => f.id === id);
+        if (folderIdx === -1) return res.status(404).json({ message: "Složka nenalezena." });
+
+        let photos = await loadGalleryPhotos();
+        const photosInFolder = photos.filter(p => p.folderId === id);
+
+        // Logic for deletion permissions
+        if (photosInFolder.length > 0) {
+            if (req.user.role !== 'admin') {
+                return res.status(403).json({ message: "Složka není prázdná. Pouze administrátor ji může smazat." });
+            }
+            
+            // Admin deleting non-empty folder - delete all files
+            for (const photo of photosInFolder) {
+                const fileName = photo.src.split('/uploads/')[1];
+                if (fileName) {
+                    const filePath = path.join(uploadsPath, fileName);
+                    if (fs.existsSync(filePath)) {
+                        await fs.promises.unlink(filePath);
+                    }
+                }
+            }
+            // Remove photos from DB
+            photos = photos.filter(p => p.folderId !== id);
+            await saveGalleryPhotos(photos);
+        }
+
+        // Delete folder itself
+        folders.splice(folderIdx, 1);
+        await saveGalleryFolders(folders);
+
+        res.json({ message: "Složka smazána." });
+    } catch (error) {
+        console.error("Delete folder error:", error);
+        res.status(500).json({ message: "Chyba při mazání složky." });
+    }
+});
+
 // 3. Získat fotky (filtr podle složky)
 app.get('/api/gallery/photos', protect, async (req, res) => {
     try {
@@ -566,7 +611,7 @@ app.patch('/api/gallery/photos/:id', protect, async (req, res) => {
     }
 });
 
-// 6. Mazání fotek
+// 6. Mazání fotek (Single)
 app.delete('/api/gallery/photos/:id', protect, async (req, res) => {
     if (!req.user) return res.status(401).json({ message: "Neautorizováno" });
     const { id } = req.params;
@@ -601,6 +646,52 @@ app.delete('/api/gallery/photos/:id', protect, async (req, res) => {
     } catch (error) {
         console.error("Delete error:", error);
         res.status(500).json({ message: "Chyba při mazání." });
+    }
+});
+
+// 7. Hromadné mazání fotek
+app.delete('/api/gallery/photos', protect, async (req: Request, res: Response) => {
+    if (!req.user) return res.status(401).json({ message: "Neautorizováno" });
+    const { photoIds } = req.body;
+
+    if (!Array.isArray(photoIds) || photoIds.length === 0) {
+        return res.status(400).json({ message: "Žádné fotky k vymazání." });
+    }
+
+    try {
+        let photos = await loadGalleryPhotos();
+        const initialCount = photos.length;
+        
+        // Filtrujeme fotky, které může uživatel smazat
+        const photosToDelete = photos.filter(p => photoIds.includes(p.id));
+        
+        for (const photo of photosToDelete) {
+             // Kontrola oprávnění per fotka
+             if (photo.uploadedBy !== req.user.username && req.user.role !== 'admin') {
+                 continue; // Přeskočit, pokud nemá právo (nebo vyhodit error, zde raději skip)
+             }
+
+             // Smazat soubor
+             const fileName = photo.src.split('/uploads/')[1];
+             if (fileName) {
+                const filePath = path.join(uploadsPath, fileName);
+                if (fs.existsSync(filePath)) {
+                    await fs.promises.unlink(filePath);
+                }
+             }
+             
+             // Odebrat z pole (označíme pro pozdější filter, nebo rovnou filtrujeme)
+             photos = photos.filter(p => p.id !== photo.id);
+        }
+
+        await saveGalleryPhotos(photos);
+        
+        const deletedCount = initialCount - photos.length;
+        res.json({ message: `Smazáno ${deletedCount} fotek.` });
+
+    } catch (error) {
+        console.error("Bulk delete error:", error);
+        res.status(500).json({ message: "Chyba při hromadném mazání." });
     }
 });
 

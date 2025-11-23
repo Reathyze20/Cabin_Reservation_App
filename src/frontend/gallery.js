@@ -16,6 +16,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const createFolderBtn = document.getElementById("create-folder-btn");
     const backToFoldersBtn = document.getElementById("back-to-folders-btn");
     const uploadPhotoBtn = document.getElementById("upload-photo-btn");
+    const deleteFolderBtn = document.getElementById("delete-folder-btn");
+    
+    // Selection Buttons
+    const toggleSelectionBtn = document.getElementById("toggle-selection-btn");
+    const deleteSelectedBtn = document.getElementById("delete-selected-btn");
+    const selectionCountSpan = document.getElementById("selection-count");
     
     // Pagination
     const paginationControls = document.getElementById("pagination-controls");
@@ -32,7 +38,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const uploadPhotoForm = document.getElementById("upload-photo-form");
     const photoFileInput = document.getElementById("photo-file-input");
     
-    // NOVÉ ELEMENTY PRO UPLOAD
+    // Admin Delete Modal
+    const deleteFolderModal = document.getElementById("delete-folder-modal");
+    const deleteFolderForm = document.getElementById("delete-folder-form");
+    const deleteConfirmInput = document.getElementById("delete-confirm-input");
+    
+    // Upload elements
     const fileChosenText = document.getElementById("file-chosen-text");
     const uploadLoadingOverlay = document.getElementById("upload-loading-overlay");
 
@@ -47,8 +58,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const lightboxPrev = document.getElementById("lightbox-prev");
     const lightboxNext = document.getElementById("lightbox-next");
     const lightboxDelete = document.getElementById("lightbox-delete");
-    
-    // Lightbox Description
     const lightboxDescription = document.getElementById("lightbox-description");
     const addDescriptionBtn = document.getElementById("add-description-btn");
     const descriptionForm = document.getElementById("description-form");
@@ -60,10 +69,14 @@ document.addEventListener("DOMContentLoaded", () => {
     let currentPage = 1;
     let currentPhotos = [];
     let currentLightboxIndex = 0;
+    
+    // Selection State
+    let isSelectionMode = false;
+    let selectedPhotos = new Set();
 
     const backendUrl = ""; 
 
-    // Layouty pro mřížku
+    // Layouts pro mřížku
     const layouts = [
         { classes: ['g-big', 'g-wide', 'g-wide', '', '', '', ''], itemsCount: 7 },
         { classes: ['g-tall', 'g-tall', 'g-tall', 'g-tall', '', '', '', ''], itemsCount: 8 },
@@ -109,10 +122,17 @@ document.addEventListener("DOMContentLoaded", () => {
                 window.location.href = "index.html";
                 return null;
             }
-            if (!response.ok) throw new Error("Chyba serveru");
+            if (!response.ok) {
+                // Zkusíme parsovat error message z JSONu
+                const err = await response.json().catch(() => ({}));
+                throw new Error(err.message || "Chyba serveru");
+            }
             return response.json();
         } catch (error) {
             console.error("API Error:", error);
+            if (options.method === 'DELETE' || options.method === 'POST') {
+                alert(error.message);
+            }
             return null;
         }
     }
@@ -166,11 +186,66 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    // --- Logic: Folder Deletion ---
+    deleteFolderBtn.addEventListener('click', () => {
+        if (!currentFolderId) return;
+        
+        // Logic: Check emptiness
+        const isEmpty = currentPhotos.length === 0;
+        const isAdmin = userRole === 'admin';
+
+        if (isEmpty) {
+            if(confirm("Opravdu smazat toto prázdné album?")) {
+                performFolderDelete(currentFolderId);
+            }
+        } else {
+            if (!isAdmin) {
+                alert("Album obsahuje fotky. Smazat ho může pouze administrátor.");
+                return;
+            }
+            // Is Admin & Not Empty -> Show Warning Modal
+            deleteConfirmInput.value = ''; // Reset input
+            deleteFolderModal.style.display = 'flex';
+            deleteConfirmInput.focus();
+        }
+    });
+
+    deleteFolderForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const inputValue = deleteConfirmInput.value;
+        if (inputValue === 'DELETE') { // Case sensitive check per requirement
+            performFolderDelete(currentFolderId);
+            deleteFolderModal.style.display = 'none';
+        } else {
+            alert("Musíte napsat přesně 'DELETE' pro potvrzení.");
+        }
+    });
+
+    async function performFolderDelete(folderId) {
+        const result = await apiFetch(`${backendUrl}/api/gallery/folders/${folderId}`, {
+            method: 'DELETE'
+        });
+        if (result) {
+            showSuccessToast();
+            // Go back to folders view
+            photosView.style.display = 'none';
+            foldersView.style.display = 'flex';
+            currentFolderId = null;
+            loadFolders();
+        }
+    }
+
     // --- Logic: Photos ---
     async function openFolder(folderId, folderName) {
         currentFolderId = folderId;
         currentFolderTitle.textContent = folderName;
         currentPage = 1;
+        
+        // Reset selection state
+        isSelectionMode = false;
+        selectedPhotos.clear();
+        updateSelectionUI();
+
         foldersView.style.display = 'none';
         photosView.style.display = 'flex'; 
         loadPhotos(folderId);
@@ -180,6 +255,8 @@ document.addEventListener("DOMContentLoaded", () => {
         photosView.style.display = 'none';
         foldersView.style.display = 'flex';
         currentFolderId = null;
+        isSelectionMode = false;
+        selectedPhotos.clear();
     });
 
     async function loadPhotos(folderId) {
@@ -223,18 +300,41 @@ document.addEventListener("DOMContentLoaded", () => {
             const globalIndex = startIndex + index;
             const photoEl = document.createElement('div');
             photoEl.className = 'photo-card';
+            if (isSelectionMode && selectedPhotos.has(photo.id)) {
+                photoEl.classList.add('selected');
+            }
+
+            // Assign grid classes
             if (index < currentLayout.classes.length) {
                 const spanClass = currentLayout.classes[index];
                 if (spanClass) photoEl.classList.add(spanClass);
             }
-            photoEl.onclick = () => openLightbox(globalIndex);
+
+            // Checkbox element
+            const checkboxHTML = isSelectionMode 
+                ? `<div class="photo-select-indicator"><i class="fas fa-check-circle"></i></div>` 
+                : '';
+
             photoEl.innerHTML = `
                 <img src="${photo.src}" alt="Foto" loading="lazy">
                 <div class="photo-overlay"><i class="fas fa-search-plus"></i></div>
+                ${checkboxHTML}
             `;
+
+            // Event Listener logic
+            photoEl.onclick = (e) => {
+                if (isSelectionMode) {
+                    e.stopPropagation();
+                    togglePhotoSelection(photo.id, photoEl);
+                } else {
+                    openLightbox(globalIndex);
+                }
+            };
+
             photosGrid.appendChild(photoEl);
         });
 
+        // Pagination logic
         if (totalPages > 1) {
             paginationControls.style.display = 'flex';
             pageInfo.textContent = `${currentPage} / ${totalPages}`;
@@ -260,16 +360,67 @@ document.addEventListener("DOMContentLoaded", () => {
         if (currentPage < totalPages) { currentPage++; renderPhotos(); }
     });
 
-    // --- Upload Logic (NOVÉ) ---
+    // --- Selection Logic ---
+    toggleSelectionBtn.addEventListener('click', () => {
+        isSelectionMode = !isSelectionMode;
+        if (!isSelectionMode) {
+            selectedPhotos.clear();
+        }
+        updateSelectionUI();
+        renderPhotos(); // Re-render to show/hide checkboxes
+    });
+
+    function updateSelectionUI() {
+        if (isSelectionMode) {
+            toggleSelectionBtn.classList.add('gallery-btn-primary');
+            toggleSelectionBtn.innerHTML = '<i class="fas fa-times"></i> Zrušit výběr';
+            deleteSelectedBtn.style.display = 'inline-flex';
+            selectionCountSpan.textContent = selectedPhotos.size;
+        } else {
+            toggleSelectionBtn.classList.remove('gallery-btn-primary');
+            toggleSelectionBtn.innerHTML = '<i class="fas fa-check-square"></i> Vybrat';
+            deleteSelectedBtn.style.display = 'none';
+        }
+    }
+
+    function togglePhotoSelection(photoId, element) {
+        if (selectedPhotos.has(photoId)) {
+            selectedPhotos.delete(photoId);
+            element.classList.remove('selected');
+        } else {
+            selectedPhotos.add(photoId);
+            element.classList.add('selected');
+        }
+        selectionCountSpan.textContent = selectedPhotos.size;
+    }
+
+    deleteSelectedBtn.addEventListener('click', async () => {
+        if (selectedPhotos.size === 0) return;
+        if (!confirm(`Opravdu smazat ${selectedPhotos.size} vybraných fotek?`)) return;
+
+        const photoIds = Array.from(selectedPhotos);
+        const result = await apiFetch(`${backendUrl}/api/gallery/photos`, {
+            method: 'DELETE',
+            body: JSON.stringify({ photoIds })
+        });
+
+        if (result) {
+            showSuccessToast();
+            selectedPhotos.clear();
+            isSelectionMode = false;
+            updateSelectionUI();
+            loadPhotos(currentFolderId);
+        }
+    });
+
+    // --- Upload Logic ---
     uploadPhotoBtn.addEventListener('click', () => {
         uploadPhotoModal.style.display = 'flex';
-        // Reset
         photoFileInput.value = '';
         fileChosenText.textContent = 'Nevybrán žádný soubor';
         uploadLoadingOverlay.style.display = 'none';
     });
 
-    // Aktualizace textu po výběru souboru
     photoFileInput.addEventListener('change', function() {
         if (this.files && this.files.length > 0) {
             if (this.files.length === 1) {
@@ -282,10 +433,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Funkce pro zobrazení notifikace
     function showSuccessToast() {
         successToast.classList.add("show");
-        // Skrýt po 3 sekundách
         setTimeout(() => {
             successToast.classList.remove("show");
         }, 3000);
@@ -296,7 +445,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const files = photoFileInput.files;
         if (!files.length) return;
 
-        // Zobrazit spinner
         uploadLoadingOverlay.style.display = 'flex';
         const uploadButton = uploadPhotoForm.querySelector('button[type="submit"]');
         uploadButton.disabled = true;
@@ -316,11 +464,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 successCount++;
             } catch (err) {
                 console.error("Chyba při uploadu:", err);
-                alert(`Nepodařilo se nahrát soubor ${file.name}`);
             }
         }
 
-        // Skrýt spinner a modal
         uploadButton.disabled = false;
         uploadLoadingOverlay.style.display = 'none';
         uploadPhotoModal.style.display = 'none';
@@ -328,7 +474,6 @@ document.addEventListener("DOMContentLoaded", () => {
         
         loadPhotos(currentFolderId);
 
-        // Zobrazit toast notifikaci pokud se nahrálo alespoň něco
         if (successCount > 0) {
             showSuccessToast();
         }
@@ -409,8 +554,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (result) {
             closeLightbox();
             loadPhotos(currentFolderId);
-        } else {
-            alert("Nepodařilo se smazat fotku.");
         }
     }
 
