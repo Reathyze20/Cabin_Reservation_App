@@ -31,6 +31,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const uploadPhotoModal = document.getElementById("upload-photo-modal");
     const uploadPhotoForm = document.getElementById("upload-photo-form");
     const photoFileInput = document.getElementById("photo-file-input");
+    const fileChosenText = document.getElementById("file-chosen-text"); // Nový element
+    const uploadLoadingOverlay = document.getElementById("upload-loading-overlay"); // Spinner overlay
 
     // Lightbox Elements
     const lightboxModal = document.getElementById("lightbox-modal");
@@ -311,6 +313,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
     uploadPhotoBtn.addEventListener('click', () => {
         uploadPhotoModal.style.display = 'flex';
+        // Reset inputs
+        photoFileInput.value = '';
+        fileChosenText.textContent = 'Nevybrán žádný soubor';
+        uploadLoadingOverlay.style.display = 'none';
+    });
+
+    // Změna textu "Nevybrán žádný soubor" na počet souborů
+    photoFileInput.addEventListener('change', function() {
+        if (this.files && this.files.length > 0) {
+            if (this.files.length === 1) {
+                fileChosenText.textContent = this.files[0].name;
+            } else {
+                fileChosenText.textContent = `${this.files.length} souborů vybráno`;
+            }
+        } else {
+            fileChosenText.textContent = 'Nevybrán žádný soubor';
+        }
     });
 
     uploadPhotoForm.addEventListener('submit', async (e) => {
@@ -318,10 +337,12 @@ document.addEventListener("DOMContentLoaded", () => {
         const files = photoFileInput.files;
         if (!files.length) return;
 
+        // 1. Zobrazit spinner a zablokovat tlačítko
+        uploadLoadingOverlay.style.display = 'flex';
         const uploadButton = uploadPhotoForm.querySelector('button[type="submit"]');
         uploadButton.disabled = true;
-        uploadButton.textContent = "Nahrávám...";
 
+        // 2. Upload proces
         for (const file of Array.from(files)) {
             try {
                 const base64 = await toBase64(file);
@@ -338,10 +359,14 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
+        // 3. Reset a skrytí spinneru
         uploadButton.disabled = false;
-        uploadButton.textContent = "Nahrát";
+        uploadLoadingOverlay.style.display = 'none';
         uploadPhotoModal.style.display = 'none';
         photoFileInput.value = '';
+        fileChosenText.textContent = 'Nevybrán žádný soubor';
+        
+        // 4. Obnovit fotky
         loadPhotos(currentFolderId);
     });
 

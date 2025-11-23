@@ -249,7 +249,14 @@
     color: #111827;
 }
 
-/* Ovládání stránek */
+/* Ovládání stránek - VYROVNÁNÍ */
+.pagination-controls {
+    display: flex;
+    align-items: center; /* Vertikální zarovnání na střed */
+    justify-content: center;
+    gap: 15px; /* Mezera mezi šipkami a číslem */
+}
+
 .nav-arrow {
     width: 36px;
     height: 36px;
@@ -262,6 +269,7 @@
     align-items: center;
     cursor: pointer;
     transition: all 0.2s;
+    padding: 0; /* Důležité pro vyrovnání ikony */
 }
 .nav-arrow:hover:not(:disabled) {
     border-color: #fbbf24;
@@ -279,39 +287,232 @@
     min-width: 50px;
     text-align: center;
     font-size: 0.9em;
+    line-height: 36px; /* Stejná výška jako šipky pro zarovnání */
+    display: inline-block;
 }
 
+/* --- NOVÉ STYLY PRO GALERII (VLOŽIT NA KONEC NEBO NAHRADIT STAROU SEKCI) --- */
 
-/* --- LIGHTBOX (DETAIL FOTKY) --- */
-.lightbox-overlay {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background-color: rgba(10, 10, 10, 0.95);
-    z-index: 2000;
+.main-content-gallery {
+    width: 100%;
+    height: calc(100vh - 100px); 
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.gallery-card {
+    background-color: white;
+    border-radius: 16px;
+    padding: 0; 
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    height: 100%; 
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+}
+
+.gallery-header {
+    padding: 10px 20px;
+    border-bottom: 1px solid #f3e2c0;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    height: 50px;
+    background-color: #fff;
+    z-index: 10;
+}
+
+.gallery-header h2 {
+    font-size: 1.3em;
+    color: #4b5563;
+    margin: 0;
+    padding: 0;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.gallery-header h2 i { color: #d97706; }
+
+.gallery-content-wrapper {
+    flex-grow: 1; 
+    padding: 10px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Folders Grid */
+.folders-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-auto-rows: max-content;
+    gap: 20px;
+    overflow-y: auto;
+    padding: 5px;
+    height: 100%;
+    align-content: start;
+}
+
+.folder-card {
+    background-color: #ffffff;
+    border: 1px solid #f3e2c0;
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 160px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+}
+.folder-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 25px rgba(217, 119, 6, 0.15);
+    border-color: #d97706;
+}
+.folder-icon {
+    font-size: 3.5em;
+    color: #fbbf24;
+    margin-bottom: 10px;
+    transition: transform 0.3s;
+}
+.folder-card:hover .folder-icon { transform: scale(1.1); }
+.folder-info h3 {
+    margin: 0 0 5px 0;
+    font-size: 1.1em;
+    color: #374151;
+    font-weight: 600;
+}
+.folder-date { font-size: 0.8em; color: #9ca3af; }
+
+/* Photos Grid */
+.photos-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); 
+    grid-template-rows: repeat(3, 1fr);    
+    grid-auto-flow: dense; 
+    gap: 8px; 
+    width: 100%;
+    height: 100%; 
+}
+
+.photo-card {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: none; 
+    transition: transform 0.3s ease, z-index 0s;
+    width: 100%;
+    height: 100%; 
+}
+.photo-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+    display: block;
+}
+.photo-card:hover {
+    z-index: 5;
+    transform: scale(1.02);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    border-radius: 12px;
+}
+.photo-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.2);
     display: flex;
     justify-content: center;
     align-items: center;
-    flex-direction: column;
-    backdrop-filter: blur(8px);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+.photo-card:hover .photo-overlay { opacity: 1; }
+.photo-overlay i {
+    color: white;
+    font-size: 2em;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
 }
 
-.lightbox-content {
-    max-width: 95%;
-    max-height: 85vh;
+/* Layout classes */
+.photo-card.g-wide { grid-column: span 2; }
+.photo-card.g-tall { grid-row: span 2; }
+.photo-card.g-big  { grid-column: span 2; grid-row: span 2; }
+
+/* Footer */
+.gallery-footer {
+    padding: 10px 20px;
+    border-top: 1px solid #f3e2c0;
+    background-color: #fff;
+    flex-shrink: 0;
     display: flex;
-    flex-direction: column;
+    justify-content: space-between;
     align-items: center;
-    position: relative;
+    height: 60px;
+    z-index: 10;
+}
+.footer-left, .footer-center, .footer-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
 }
 
-.lightbox-content img {
-    max-width: 100%;
-    max-height: 80vh;
-    border-radius: 4px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+.gallery-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 20px;
+    border-radius: 30px;
+    font-weight: 600;
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    text-decoration: none;
+    white-space: nowrap;
+}
+.gallery-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.gallery-btn-primary {
+    background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+    color: white;
+}
+.gallery-btn-primary:hover {
+    background: linear-gradient(135deg, #fcd34d 0%, #b45309 100%);
+}
+.gallery-btn-secondary {
+    background-color: white;
+    color: #4b5563;
+    border: 1px solid #e5e7eb;
+}
+.gallery-btn-secondary:hover {
+    background-color: #f9fafb;
+    border-color: #d1d5db;
+    color: #111827;
 }
 
-/* --- LIGHTBOX POPIS (VZPOMÍNKY) --- */
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+}
+
+/* Lightbox styles */
 .lightbox-caption-container {
     width: 100%;
     max-width: 800px;
@@ -321,9 +522,8 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    min-height: 30px; /* Aby to neskákalo když je prázdné */
+    min-height: 30px;
 }
-
 .lightbox-description {
     font-size: 1.1em;
     font-style: italic;
@@ -332,36 +532,10 @@
     position: relative;
     padding: 0 25px;
     margin: 0;
-    cursor: pointer; /* Indikuje možnost editace kliknutím */
+    cursor: pointer;
     transition: color 0.2s;
 }
-
-.lightbox-description:hover {
-    color: #fff;
-}
-
-/* Uvozovky */
-.lightbox-description::before {
-    content: '\201C'; /* Levé uvozovky */
-    font-family: serif;
-    font-size: 2em;
-    position: absolute;
-    left: -10px;
-    top: -10px;
-    color: rgba(255,255,255,0.4);
-}
-
-.lightbox-description::after {
-    content: '\201D'; /* Pravé uvozovky */
-    font-family: serif;
-    font-size: 2em;
-    position: absolute;
-    right: -10px;
-    bottom: -20px;
-    color: rgba(255,255,255,0.4);
-}
-
-/* Tlačítko pro přidání popisu (když je prázdný) */
+.lightbox-description:hover { color: #fff; }
 .add-description-btn {
     background: none;
     border: 1px dashed rgba(255,255,255,0.3);
@@ -378,17 +552,13 @@
     color: white;
     background: rgba(255,255,255,0.1);
 }
-
-/* Formulář pro editaci */
 .description-form {
     display: flex;
     gap: 8px;
     width: 100%;
     justify-content: center;
     margin-top: 5px;
-    animation: fadeIn 0.2s;
 }
-
 .description-input {
     background: rgba(255,255,255,0.1);
     border: 1px solid rgba(255,255,255,0.3);
@@ -396,14 +566,7 @@
     padding: 8px 12px;
     border-radius: 20px;
     width: 300px;
-    font-family: inherit;
 }
-.description-input:focus {
-    outline: none;
-    border-color: rgba(255,255,255,0.8);
-    background: rgba(255,255,255,0.2);
-}
-
 .save-description-btn {
     background: rgba(255,255,255,0.9);
     color: #333;
@@ -413,28 +576,17 @@
     font-weight: 600;
     cursor: pointer;
 }
-.save-description-btn:hover {
-    background: white;
-}
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(5px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-
-/* --- LIGHTBOX OVLÁDÁNÍ --- */
 .lightbox-controls {
     margin-top: 15px;
     display: flex;
     gap: 15px;
-    opacity: 0.6; /* Viditelnější než předtím */
+    opacity: 0.6;
     transition: opacity 0.3s ease;
 }
 .lightbox-content:hover .lightbox-controls,
 .lightbox-controls:hover { opacity: 1; }
 
-/* Lightbox Buttons */
 .lightbox-btn {
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.2);
@@ -450,7 +602,6 @@
     cursor: pointer;
     transition: all 0.3s;
 }
-
 .lightbox-btn:hover {
     background: rgba(255, 255, 255, 0.25);
     border-color: rgba(255, 255, 255, 0.5);
@@ -458,49 +609,105 @@
     transform: translateY(-2px);
     box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
 }
-
 .lightbox-btn-danger:hover {
     background: rgba(239, 68, 68, 0.2);
     border-color: #ef4444;
     color: #fca5a5;
 }
 
-.lightbox-close {
-    position: absolute;
-    top: 20px;
-    right: 30px;
-    color: rgba(255,255,255,0.5);
-    background: none;
-    border: none;
+/* --- UPLOAD MODAL & SPINNER --- */
+.upload-modal-content {
+    max-width: 450px;
+    padding: 25px;
+    text-align: center;
+    position: relative;
+    border-radius: 20px;
+}
+.upload-modal-content h2 {
+    color: #374151;
+    margin-bottom: 20px;
+    font-size: 1.5em;
+}
+.file-upload-container {
+    background-color: #f9fafb;
+    border: 2px dashed #e5e7eb;
+    border-radius: 12px;
+    padding: 30px 20px;
+    margin-bottom: 20px;
+    transition: all 0.3s;
+}
+.file-upload-container:hover {
+    border-color: #fbbf24;
+    background-color: #fffbeb;
+}
+.upload-icon {
     font-size: 3em;
-    cursor: pointer;
-    transition: all 0.3s;
+    color: #d1d5db;
+    margin-bottom: 10px;
 }
-.lightbox-close:hover { color: white; transform: rotate(90deg); }
+.file-upload-container:hover .upload-icon { color: #fbbf24; }
+.file-msg {
+    color: #6b7280;
+    margin-bottom: 15px;
+    font-size: 0.9em;
+}
 
-.lightbox-arrow {
+#photo-file-input { display: none; } /* Skrytý defaultní input */
+
+.custom-file-label {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: white;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    color: #374151;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.custom-file-label:hover {
+    border-color: #fbbf24;
+    color: #d97706;
+}
+.file-chosen-text {
+    display: block;
+    margin-top: 10px;
+    font-size: 0.85em;
+    color: #9ca3af;
+    font-style: italic;
+}
+
+/* Spinner Overlay */
+.loading-overlay {
     position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    background: transparent;
-    border: none;
-    color: rgba(255,255,255,0.3);
-    font-size: 3.5em;
-    padding: 20px;
-    cursor: pointer;
-    transition: all 0.3s;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(255, 255, 255, 0.9);
+    z-index: 50;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #d97706;
+    font-weight: 600;
 }
-.lightbox-arrow:hover {
-    color: white;
-    transform: translateY(-50%) scale(1.2);
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #d97706;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 15px;
 }
-.lightbox-arrow.left { left: 20px; }
-.lightbox-arrow.right { right: 20px; }
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
 
-/* Responzivita */
 @media (max-width: 768px) {
     .photos-grid {
-        /* Na mobilu 2 sloupce x 4 řádky */
         grid-template-columns: repeat(2, 1fr);
         grid-template-rows: repeat(4, 1fr);
     }
