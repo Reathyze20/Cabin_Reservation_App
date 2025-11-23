@@ -44,7 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- State ---
     let currentFolderId = null;
     let currentPage = 1;
-    let photosPerPage = 12; // Bude se dynamicky měnit
+    let photosPerPage = 12; // Defaultně 12
     let currentPhotos = [];
     let currentLightboxIndex = 0;
 
@@ -71,48 +71,6 @@ document.addEventListener("DOMContentLoaded", () => {
             window.location.href = "index.html";
         });
     }
-
-    // --- Dynamic Layout Logic (2 Řádky) ---
-    function calculatePhotosPerPage() {
-        if (!photosGrid) return;
-        
-        // Získáme šířku kontejneru pro fotky
-        const gridWidth = photosGrid.clientWidth;
-        if (gridWidth === 0) return; // Grid není vidět
-
-        // CSS Grid má minmax(250px, 1fr) a gap 15px
-        const minItemWidth = 250; 
-        const gap = 15;
-
-        // Vypočítáme, kolik sloupců se vejde na řádek
-        // (width + gap) / (item + gap) je zjednodušený vzorec pro auto-fill
-        let columns = Math.floor((gridWidth + gap) / (minItemWidth + gap));
-        if (columns < 1) columns = 1;
-
-        // Chceme VŽDY přesně 2 řady
-        const newPerPage = columns * 2;
-
-        if (newPerPage !== photosPerPage) {
-            photosPerPage = newPerPage;
-            // Pokud jsme na stránce, která už neexistuje, posuneme se na poslední
-            const totalPages = Math.ceil(currentPhotos.length / photosPerPage);
-            if (currentPage > totalPages && totalPages > 0) currentPage = totalPages;
-            
-            // Překreslíme fotky s novým limitem
-            if (currentFolderId) {
-                renderPhotos(currentPhotos); 
-            }
-        }
-    }
-
-    // Sledování změny velikosti okna
-    const resizeObserver = new ResizeObserver(() => {
-        if (photosView.style.display !== 'none') {
-            calculatePhotosPerPage();
-        }
-    });
-    if (photosGrid) resizeObserver.observe(photosGrid);
-
 
     // --- API Helpers ---
     async function apiFetch(url, options = {}) {
@@ -206,9 +164,6 @@ document.addEventListener("DOMContentLoaded", () => {
         foldersView.style.display = 'none';
         photosView.style.display = 'block';
 
-        // Přepočítat layout hned po zobrazení
-        setTimeout(calculatePhotosPerPage, 0);
-
         loadPhotos(folderId);
     }
 
@@ -230,7 +185,9 @@ document.addEventListener("DOMContentLoaded", () => {
     function renderPhotos(photos) {
         photosGrid.innerHTML = '';
         
-        // Použití dynamického photosPerPage
+        // Pevný počet fotek na stránku pro konzistentní layout
+        photosPerPage = 12; 
+
         const totalPages = Math.ceil(photos.length / photosPerPage);
         if (currentPage > totalPages && totalPages > 0) currentPage = totalPages;
         if (currentPage < 1) currentPage = 1;
@@ -245,10 +202,36 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
+        // --- DEFINICE VZORŮ (LAYOUT PATTERNS) ---
+        // 'g-big' = 2x2, 'g-wide' = 2x1, 'g-tall' = 1x2, '' nebo 'g-normal' = 1x1
+        const layouts = [
+            // Layout 1: Důraz na velké fotky
+            ['g-big', '', 'g-tall', '', 'g-wide', '', '', 'g-big', '', 'g-tall'],
+            
+            // Layout 2: Panoramatický styl (více wide)
+            ['g-wide', 'g-wide', '', '', 'g-big', '', '', 'g-wide', '', ''],
+            
+            // Layout 3: Vertikální rytmus
+            ['g-tall', '', '', 'g-big', '', 'g-wide', 'g-tall', '', '', '']
+        ];
+
+        // Vybereme layout podle čísla stránky (cyklování 0, 1, 2)
+        const currentLayoutPattern = layouts[(currentPage - 1) % layouts.length];
+
         pagePhotos.forEach((photo, index) => {
             const globalIndex = start + index;
             const photoEl = document.createElement('div');
+            
+            // Základní třída
             photoEl.className = 'photo-card';
+            
+            // Aplikace moderní třídy podle vzoru
+            // Použijeme index v rámci stránky (0 až 11) a modulo délkou vzoru, aby se nevyčerpal
+            const spanClass = currentLayoutPattern[index % currentLayoutPattern.length];
+            if (spanClass) {
+                photoEl.classList.add(spanClass);
+            }
+
             photoEl.onclick = () => openLightbox(globalIndex);
 
             photoEl.innerHTML = `
@@ -260,14 +243,13 @@ document.addEventListener("DOMContentLoaded", () => {
             photosGrid.appendChild(photoEl);
         });
 
-        // --- Vylepšené Stránkování ---
+        // --- Stránkování ---
         if (totalPages > 1) {
             paginationControls.style.display = 'flex';
-            pageInfo.textContent = `${currentPage} / ${totalPages}`; // Zjednodušený formát
+            pageInfo.textContent = `${currentPage} / ${totalPages}`;
             prevPageBtn.disabled = currentPage === 1;
             nextPageBtn.disabled = currentPage === totalPages;
             
-            // Vizuální stavy tlačítek
             updateButtonState(prevPageBtn, currentPage === 1);
             updateButtonState(nextPageBtn, currentPage === totalPages);
         } else {
@@ -285,7 +267,7 @@ document.addEventListener("DOMContentLoaded", () => {
         } else {
             btn.style.opacity = '1';
             btn.style.cursor = 'pointer';
-            btn.style.backgroundColor = ''; // Reset na CSS hover efekty
+            btn.style.backgroundColor = ''; 
             btn.style.color = '';
             btn.style.borderColor = '';
         }
@@ -295,6 +277,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if (currentPage > 1) {
             currentPage--;
             renderPhotos(currentPhotos);
+            // Scroll nahoru při změně stránky
+            document.querySelector('.gallery-card').scrollIntoView({ behavior: 'smooth' });
         }
     });
 
@@ -303,6 +287,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (currentPage < totalPages) {
             currentPage++;
             renderPhotos(currentPhotos);
+            document.querySelector('.gallery-card').scrollIntoView({ behavior: 'smooth' });
         }
     });
 
