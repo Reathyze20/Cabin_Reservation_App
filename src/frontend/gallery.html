@@ -8,8 +8,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 </head>
 <body>
-    <div id="app-container">
-        <header>
+    <!-- Přidán app-wrapper pro sjednocení šířky a centrování -->
+    <div class="app-wrapper">
+        <div id="app-container" class="app-container">
+            <!-- Odstraněn <header>, ponechán pouze .top-bar pro konzistenci -->
             <div class="top-bar">
                 <nav class="app-nav">
                     <a href="index.html" class="nav-link">Rezervace</a>
@@ -23,20 +25,23 @@
                     </button>
                 </div>
             </div>
-        </header>
 
-        <main class="gallery-main">
-            <h1>Galerie</h1>
-            <form id="upload-form" class="upload-form">
-                <label for="photo-upload">Vyberte fotku:</label>
-                <input type="file" id="photo-upload" accept="image/*" required>
-                <button type="submit">Nahrát</button>
-            </form>
+            <main class="gallery-main">
+                <!-- Přidána třída card pro bílé pozadí a stín -->
+                <div class="card">
+                    <h1>Galerie</h1>
+                    <form id="upload-form" class="upload-form">
+                        <label for="photo-upload">Vyberte fotku:</label>
+                        <input type="file" id="photo-upload" accept="image/*" required>
+                        <button type="submit">Nahrát</button>
+                    </form>
 
-            <section id="gallery" class="gallery">
-                <!-- Fotky se zobrazí zde -->
-            </section>
-        </main>
+                    <section id="gallery" class="gallery">
+                        <!-- Fotky se zobrazí zde -->
+                    </section>
+                </div>
+            </main>
+        </div>
     </div>
 
     <script src="gallery.js"></script>
