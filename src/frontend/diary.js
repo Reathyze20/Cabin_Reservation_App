@@ -111,6 +111,7 @@ document.addEventListener("DOMContentLoaded", () => {
     folders.forEach((folder) => {
       const el = document.createElement("div");
       el.className = "folder-card";
+      // Změna ikony na fa-book-journal-whills
       el.innerHTML = `
                 <div class="folder-icon"><i class="fas fa-book-journal-whills"></i></div>
                 <div class="folder-info">
@@ -173,24 +174,15 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderCalendar() {
     diaryCalendar.innerHTML = "";
 
-    // Jednoduchý kalendář - posledních 30 dní + dnešek (pro ukázku, lze rozšířit)
-    // Nebo lépe: Zobrazit aktuální měsíc, nebo prostě grid dnů
-    // Pro jednoduchost zobrazíme posledních 14 dní + možnost jít do historie?
-    // Uděláme to jako grid 28 dní (4 týdny) zpětně od dneška
-
     const today = new Date();
-    // Reset time
     today.setHours(0, 0, 0, 0);
 
-    // Vygenerujeme pole dat pro zobrazení (např. 28 dní)
     const daysToShow = 28;
     for (let i = 0; i < daysToShow; i++) {
       const d = new Date(today);
       d.setDate(today.getDate() - i);
       const dateStr = d.toISOString().split("T")[0]; // YYYY-MM-DD
 
-      // Najdeme, jestli pro tento den existuje záznam v aktuální složce
-      // Může být více záznamů v jeden den? Diary obvykle 1 den = 1 hlavní zápis, ale povolíme pole
       const entry = currentEntries.find((e) => e.date === dateStr);
 
       const dayCard = document.createElement("div");
@@ -202,7 +194,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
       let previewText = "";
       if (entry) {
-        // Odstraníme HTML značky pro náhled, pokud tam jsou
         const div = document.createElement("div");
         div.innerHTML = entry.content;
         previewText = div.textContent || div.innerText || "";
@@ -229,18 +220,14 @@ document.addEventListener("DOMContentLoaded", () => {
     currentSelectedDate = dateObj.toISOString().split("T")[0];
     currentEntryId = entry ? entry.id : null;
 
-    // Nastavit datum v hlavičce
     const options = { weekday: "long", year: "numeric", month: "long", day: "numeric" };
     notebookDateDisplay.textContent = dateObj.toLocaleDateString("cs-CZ", options);
 
-    // Nastavit obsah
     notebookTextarea.value = entry ? entry.content : "";
 
-    // Tlačítko smazat jen pokud existuje záznam
     deleteEntryBtn.style.display = entry ? "flex" : "none";
 
     notebookModal.style.display = "flex";
-    // Auto focus na konec textu
     notebookTextarea.focus();
     if (notebookTextarea.value) {
       notebookTextarea.setSelectionRange(notebookTextarea.value.length, notebookTextarea.value.length);
@@ -251,7 +238,6 @@ document.addEventListener("DOMContentLoaded", () => {
     notebookModal.style.display = "none";
   });
 
-  // Kliknutí mimo sešit zavře modál (volitelné, někdy to uživatele štve)
   notebookModal.addEventListener("click", (e) => {
     if (e.target === notebookModal) {
       notebookModal.style.display = "none";
@@ -259,21 +245,11 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   saveEntryBtn.addEventListener("click", async () => {
-    const content = notebookTextarea.value; // Zde ukládáme plain text z textarea
+    const content = notebookTextarea.value;
     if (!content.trim()) {
       showToast("Stránka je prázdná, nic neukládám.", "error");
       return;
     }
-
-    // Pokud už záznam existuje, měli bychom ho updatovat (PUT), nebo smazat starý a vytvořit nový
-    // Pro jednoduchost v server.ts máme zatím jen POST a DELETE.
-    // Uděláme chytrou logiku: Pokud existuje ID, smažeme starý a vytvoříme nový (nebo přidáme PUT endpoint).
-    // Vzhledem k aktuálnímu API (jen POST/DELETE entries) je nejčistší implementovat PUT v budoucnu,
-    // ale teď to uděláme tak, že pokud existuje, smažeme ho a vytvoříme nový s novým obsahem (zachováme ID? ne, nové ID).
-    // EDIT: V server.ts chybí PUT pro entries.
-    // Workaround: Vytvoříme nový záznam. Pokud existuje starý, server ho neodmítne (není unique na datum),
-    // ale my chceme jen jeden na den.
-    // Vylepšení: Přidám logiku, že pokud edituji (mám currentEntryId), tak nejprve smažu starý.
 
     if (currentEntryId) {
       await apiFetch(`${backendUrl}/api/diary/entries/${currentEntryId}`, { method: "DELETE" });
@@ -293,7 +269,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (result) {
       showToast("Zápis uložen do deníčku.");
       notebookModal.style.display = "none";
-      loadEntries(currentFolderId); // Refresh kalendáře
+      loadEntries(currentFolderId);
     }
   });
 
@@ -312,7 +288,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Zavírání modalů křížkem
   document.querySelectorAll(".modal-close-button").forEach((btn) => {
     btn.addEventListener("click", () => {
       const modal = btn.closest(".modal-overlay");
