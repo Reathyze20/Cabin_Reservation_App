@@ -486,6 +486,7 @@ app.post("/api/gallery/folders", protect, async (req, res) => {
       id: uuidv4(),
       name: name.trim(),
       createdAt: new Date().toISOString(),
+      createdBy: req.user.username, // Uložíme autora
     };
     folders.push(newFolder);
     await saveGalleryFolders(folders);
@@ -495,7 +496,7 @@ app.post("/api/gallery/folders", protect, async (req, res) => {
   }
 });
 
-// Přejmenování složky (NOVÝ ENDPOINT)
+// Přejmenování složky
 app.patch("/api/gallery/folders/:id", protect, async (req: Request, res: Response) => {
   if (!req.user) return res.status(401).json({ message: "Neautorizováno" });
   const { id } = req.params;

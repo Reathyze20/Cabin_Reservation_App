@@ -206,6 +206,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="folder-info">
                     <h3>${folder.name}</h3>
                     <span class="folder-date">Vytvořeno: ${new Date(folder.createdAt).toLocaleDateString()}</span>
+                    <span class="folder-owner" style="display:block; font-size:0.8em; color:#6b7280; margin-top: 4px;">Vytvořil: ${folder.createdBy || "Neznámý"}</span>
                 </div>
             `;
       foldersGrid.appendChild(folderEl);
@@ -461,8 +462,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if (spanClass) photoEl.classList.add(spanClass);
       }
 
-      // Checkbox element
-      const checkboxHTML = isSelectionMode ? `<div class="photo-select-indicator"><i class="fas fa-check-circle"></i></div>` : "";
+      // UPRAVENO: Checkbox/ikona je odstraněna, ponechán prázdný string
+      const checkboxHTML = "";
 
       photoEl.innerHTML = `
                 <img src="${photo.src}" alt="Foto" loading="lazy">
