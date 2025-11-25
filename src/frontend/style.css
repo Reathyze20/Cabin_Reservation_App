@@ -3000,127 +3000,137 @@ body.admin-page {
 
 /* --- DIARY STYLES --- */
 
-/* Kalendář deníku */
+/* 1. Hlavní kontejner přes celou výšku (minus hlavička) */
 .main-content-diary {
   width: 100%;
-  height: calc(100vh - 100px); /* Výška okna mínus hlavička */
+  height: calc(100vh - 100px);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: hidden; /* Zabrání scrollování celé stránky */
 }
 
-/* Kalendář deníku */
-.diary-calendar {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 10px;
-  padding: 20px;
-  max-width: 1000px;
-  margin: 0 auto;
-}
-
-.diary-day-card {
-  background-color: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  min-height: 100px;
-  padding: 10px;
-  cursor: pointer;
-  transition: all 0.2s;
+/* 2. Karta deníku se musí roztáhnout na 100% kontejneru */
+.diary-card {
+  background-color: white;
+  border-radius: 16px;
+  padding: 0; /* Reset paddingu, obsah má vlastní */
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   position: relative;
   overflow: hidden;
 }
 
-.diary-day-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-  border-color: #fbbf24;
+/* 3. Hlavička (Header) */
+.diary-header {
+  padding: 10px 20px;
+  border-bottom: 1px solid #f3e2c0;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  height: 50px;
+  background-color: #fff;
+  z-index: 10;
 }
 
-.diary-day-card.has-entry {
-  background-color: #fffbeb; /* Jemně žlutá pro dny se zápisem */
-  border-color: #fcd34d;
-}
-
-.diary-day-card.has-entry::after {
-  content: "\f02d"; /* Ikona knihy */
-  font-family: "Font Awesome 6 Free";
-  font-weight: 900;
-  position: absolute;
-  bottom: 5px;
-  right: 10px;
-  font-size: 1.5em;
-  color: #d97706;
-  opacity: 0.3;
-}
-
-.day-number {
+.diary-header h2 {
+  font-size: 1.3em;
+  color: #4b5563;
+  margin: 0;
+  padding: 0;
   font-weight: 700;
-  font-size: 1.1em;
-  color: #374151;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.diary-header h2 i {
+  color: #d97706;
 }
 
-.entry-preview {
-  font-size: 0.8em;
-  color: #6b7280;
-  margin-top: 5px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  font-family: "Kalam", cursive; /* Ukázka fontu i v náhledu */
+/* 4. Wrapper obsahu - toto je to místo, které se musí roztáhnout (flex-grow) */
+.diary-content-wrapper {
+  flex-grow: 1;
+  padding: 10px;
+  overflow: hidden; /* Skryje přetečení, scrolluje až vnitřní grid */
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background-color: #f9fafb; /* Jemně šedé pozadí pro kontrast s kartami */
 }
 
-/* --- REALISTIC NOTEBOOK MODAL --- */
+/* 5. Patička (Footer) */
+.diary-footer {
+  padding: 10px 20px;
+  border-top: 1px solid #f3e2c0;
+  background-color: #fff;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 60px;
+  z-index: 10;
+}
 
-/* Kontejner modálu pro sešit */
+/* Grid pro složky deníku - stejný jako v galerii */
+#diary-folders-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-auto-rows: max-content;
+  gap: 20px;
+  overflow-y: auto; /* TADY se scrolluje */
+  padding: 10px;
+  height: 100%;
+  align-content: start;
+}
+
+/* Grid pro kalendář */
+.diary-calendar-wrapper {
+  overflow-y: auto; /* Kalendář scrolluje */
+  height: 100%;
+}
+
+/* --- NOTEBOOK MODAL STYLY (Ponecháno beze změny) --- */
 .notebook-modal-content {
   width: 100%;
-  max-width: 700px; /* Šířka sešitu */
-  height: 85vh; /* Výška sešitu */
+  max-width: 700px;
+  height: 85vh;
   display: flex;
   justify-content: center;
   align-items: center;
   perspective: 1000px;
-  background: transparent; /* Průhledné pozadí kontejneru */
+  background: transparent;
 }
 
-/* Samotný papír */
 .notebook-paper {
   width: 100%;
   height: 100%;
-  background-color: #fdfbf7; /* Krémová barva papíru */
-  background-image: linear-gradient(#e5e7eb 1px, transparent 1px); /* Linky */
-  background-size: 100% 2rem; /* Výška řádku 2rem (32px) */
+  background-color: #fdfbf7;
+  background-image: linear-gradient(#e5e7eb 1px, transparent 1px);
+  background-size: 100% 2rem;
   position: relative;
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1), 10px 10px 20px rgba(0, 0, 0, 0.2), inset 0 0 40px rgba(0, 0, 0, 0.05); /* Jemné stínování uvnitř */
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1), 10px 10px 20px rgba(0, 0, 0, 0.2), inset 0 0 40px rgba(0, 0, 0, 0.05);
   border-radius: 4px;
   display: flex;
   flex-direction: column;
   padding: 0;
   overflow: hidden;
-  border-left: 2px solid rgba(0, 0, 0, 0.1); /* Hřbet */
+  border-left: 2px solid rgba(0, 0, 0, 0.1);
 }
 
-/* Červená vertikální linka (okraj) */
 .notebook-paper::before {
   content: "";
   position: absolute;
   top: 0;
   bottom: 0;
-  left: 4rem; /* Odsazení zleva */
+  left: 4rem;
   width: 2px;
-  background-color: #fca5a5; /* Červená linka */
+  background-color: #fca5a5;
   opacity: 0.6;
   z-index: 5;
   pointer-events: none;
 }
 
-/* Dírky na sešitě (vlevo) */
 .notebook-holes {
   position: absolute;
   left: 10px;
@@ -3129,27 +3139,26 @@ body.admin-page {
   width: 20px;
   z-index: 6;
   background: radial-gradient(circle at center, #333 30%, transparent 33%);
-  background-size: 100% 2rem; /* Musí sedět s řádky */
+  background-size: 100% 2rem;
   background-position: 0 1rem;
   opacity: 0.1;
   pointer-events: none;
 }
 
-/* Hlavička sešitu (datum a zavírání) */
 .notebook-header {
-  height: 4rem; /* 2 řádky */
+  height: 4rem;
   display: flex;
   justify-content: space-between;
-  align-items: flex-end; /* Zarovnat na spodní linku */
-  padding: 0 2rem 0.5rem 5rem; /* Respektovat červenou linku */
+  align-items: flex-end;
+  padding: 0 2rem 0.5rem 5rem;
   font-family: "Kalam", cursive;
-  color: #ef4444; /* Datum červeně jako nadpis */
+  color: #ef4444;
   font-size: 1.5rem;
   font-weight: 700;
 }
 
 .notebook-close-button {
-  font-family: sans-serif; /* Křížek normálně */
+  font-family: sans-serif;
   font-size: 2rem;
   color: #9ca3af;
   cursor: pointer;
@@ -3161,11 +3170,10 @@ body.admin-page {
   color: #374151;
 }
 
-/* Tělo sešitu (textarea) */
 .notebook-body {
   flex-grow: 1;
   position: relative;
-  padding-left: 5rem; /* Odsazení za červenou linkou */
+  padding-left: 5rem;
   padding-right: 2rem;
 }
 
@@ -3176,21 +3184,14 @@ body.admin-page {
   border: none;
   outline: none;
   resize: none;
-
-  /* Font nastavení */
   font-family: "Kalam", cursive;
-  font-size: 1.35rem; /* Velikost písma */
-  line-height: 2rem; /* MUSÍ být přesně stejné jako background-size papíru */
-  color: #1f2937; /* Tmavě šedá propiska */
-
-  /* Zarovnání textu na linky */
-  padding-top: 0.1rem; /* Jemné doladění posunu */
-
-  /* Scrollbar */
+  font-size: 1.35rem;
+  line-height: 2rem;
+  color: #1f2937;
+  padding-top: 0.1rem;
   overflow-y: auto;
 }
 
-/* Scrollbar styling pro textarea */
 #notebook-textarea::-webkit-scrollbar {
   width: 8px;
 }
@@ -3202,7 +3203,6 @@ body.admin-page {
   border-radius: 4px;
 }
 
-/* Patička sešitu */
 .notebook-footer {
   height: 3rem;
   display: flex;
@@ -3210,7 +3210,7 @@ body.admin-page {
   align-items: center;
   padding: 0 2rem;
   gap: 15px;
-  background: rgba(255, 255, 255, 0.3); /* Lehce odlišit */
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .notebook-btn-save,
@@ -3225,27 +3225,25 @@ body.admin-page {
   align-items: center;
   gap: 5px;
   padding: 5px 15px;
-  border-radius: 20px; /* Jako kdyby zakroužkované */
+  border-radius: 20px;
   transition: all 0.2s;
 }
 
 .notebook-btn-save {
-  color: #15803d; /* Zelená */
+  color: #15803d;
   border: 2px solid transparent;
 }
 .notebook-btn-save:hover {
-  border-color: #15803d; /* Zakroužkování při hoveru */
+  border-color: #15803d;
   background-color: rgba(22, 163, 74, 0.1);
 }
-
 .notebook-btn-delete {
-  color: #b91c1c; /* Červená */
+  color: #b91c1c;
 }
 .notebook-btn-delete:hover {
-  text-decoration: line-through; /* Přeškrtnutí při hoveru */
+  text-decoration: line-through;
 }
 
-/* Responsivita pro mobil */
 @media (max-width: 600px) {
   .notebook-paper::before {
     left: 2rem;
@@ -3262,8 +3260,3 @@ body.admin-page {
     font-size: 1.1rem;
   }
 }
-
-/* Oprava globálních stylů */
-.gallery-content-wrapper {
-  overflow: hidden;
-} /* Aby nám neutíkal layout */

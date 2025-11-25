@@ -25,39 +25,40 @@
           </div>
         </div>
 
-        <!-- Hlavní kontejner Deníku -->
+        <!-- HLAVNÍ OBSAH -->
         <div class="main-content-diary">
           <div class="card diary-card">
             <!-- 1. POHLED: SEZNAM OBDOBÍ (SLOŽKY) -->
             <div id="diary-folders-view" style="display: flex; flex-direction: column; height: 100%">
               <div class="diary-header">
-                <h2><i class="fas fa-book-open"></i> Deník - Období</h2>
+                <h2><i class="fas fa-book-open"></i> Deník zážitků</h2>
               </div>
 
               <div class="diary-content-wrapper">
                 <div id="diary-folders-grid" class="folders-grid">
-                  <!-- Složky se načtou dynamicky -->
+                  <!-- Zde se načtou složky/období -->
                 </div>
               </div>
 
               <div class="diary-footer">
+                <div class="footer-left" id="diary-folder-actions-group">
+                  <!-- Zde se zobrazí tlačítko Smazat při výběru -->
+                  <button id="delete-diary-folder-list-btn" class="gallery-btn gallery-btn-danger" style="display: none"><i class="fas fa-trash-alt"></i> Smazat období</button>
+                </div>
                 <div class="footer-right">
                   <button id="create-diary-folder-btn" class="gallery-btn gallery-btn-primary"><i class="fas fa-plus"></i> Nové období</button>
                 </div>
               </div>
             </div>
 
-            <!-- 2. POHLED: KALENDÁŘ/ZÁPISY (ENTRIES) -->
+            <!-- 2. POHLED: ZÁPISY (UVNITŘ SLOŽKY) -->
             <div id="diary-entries-view" style="display: none; flex-direction: column; height: 100%">
               <div class="diary-header" style="justify-content: space-between">
-                <h2 id="current-diary-folder-title">Název období</h2>
-                <div class="header-actions">
-                  <!-- Případně tlačítka pro smazání složky -->
-                </div>
+                <h2 id="current-diary-title">Název období</h2>
               </div>
 
               <div class="diary-content-wrapper diary-calendar-wrapper">
-                <!-- Zde bude kalendář vygenerovaný JS -->
+                <!-- Kalendář zápisů -->
                 <div id="diary-calendar" class="diary-calendar"></div>
               </div>
 
@@ -65,6 +66,7 @@
                 <div class="footer-left">
                   <button id="back-to-diary-folders-btn" class="gallery-btn gallery-btn-secondary">Zpět</button>
                 </div>
+                <!-- Tlačítko přidat je teď v podstatě kliknutí na den, ale můžeme nechat pro info -->
               </div>
             </div>
           </div>
@@ -82,10 +84,10 @@
     <div id="create-diary-folder-modal" class="modal-overlay" style="display: none">
       <div class="modal-content">
         <span class="modal-close-button">&times;</span>
-        <h2>Nové období deníku</h2>
+        <h2>Nové období</h2>
         <form id="create-diary-folder-form">
           <div class="form-group">
-            <label for="diary-folder-name-input">Název (např. Léto 2025):</label>
+            <label for="diary-folder-name-input">Název (např. Prázdniny 2024):</label>
             <input type="text" id="diary-folder-name-input" required />
           </div>
           <div class="modal-buttons">
@@ -95,25 +97,41 @@
       </div>
     </div>
 
-    <!-- MODAL: EDITACE ZÁZNAMU (REALISTIC NOTEBOOK) -->
+    <!-- MODAL: DELETE FOLDER WARNING (Deník) -->
+    <div id="delete-diary-folder-modal" class="modal-overlay" style="display: none">
+      <div class="modal-content">
+        <span class="modal-close-button">&times;</span>
+        <h2 style="color: #ef4444"><i class="fas fa-exclamation-triangle"></i> Varování</h2>
+        <p>Toto období obsahuje zápisky. Pokud ho smažete, <strong>všechny vzpomínky v něm budou nenávratně ztraceny</strong>.</p>
+        <p>Pro potvrzení smazání napište do pole níže slovo <strong>DELETE</strong>.</p>
+
+        <form id="delete-diary-folder-form">
+          <div class="form-group">
+            <input type="text" id="delete-diary-confirm-input" placeholder="DELETE" class="input-danger" required />
+          </div>
+          <div class="modal-buttons">
+            <button type="submit" class="gallery-btn gallery-btn-danger" style="width: 100%">Potvrdit smazání</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- MODAL: NOTEBOOK (EDITACE ZÁPISU) -->
     <div id="notebook-modal" class="modal-overlay" style="display: none">
-      <!-- Změna: modal-content nemá bílé pozadí defaultně, ale stylujeme ho jako sešit -->
       <div class="notebook-modal-content">
         <div class="notebook-paper">
           <div class="notebook-holes"></div>
           <div class="notebook-header">
-            <span id="notebook-date-display">24. 11. 2025</span>
+            <span id="notebook-date-display">Datum</span>
             <span class="notebook-close-button">&times;</span>
           </div>
           <div class="notebook-body">
-            <!-- Textarea, která vypadá jako řádky -->
             <textarea id="notebook-textarea" placeholder="Milý deníčku..."></textarea>
-            <!-- Overlay linky pro vizuální efekt -->
-            <div class="notebook-lines-overlay"></div>
+            <!-- Overlay linky pokud by bylo třeba, nyní řešeno pozadím -->
           </div>
           <div class="notebook-footer">
-            <button id="save-notebook-entry-btn" class="notebook-btn-save"><i class="fas fa-save"></i> Uložit zápis</button>
-            <button id="delete-notebook-entry-btn" class="notebook-btn-delete" style="display: none"><i class="fas fa-trash"></i> Smazat stránku</button>
+            <button id="save-notebook-entry-btn" class="notebook-btn-save"><i class="fas fa-save"></i> Uložit</button>
+            <button id="delete-notebook-entry-btn" class="notebook-btn-delete" style="display: none"><i class="fas fa-trash"></i> Vytrhnout</button>
           </div>
         </div>
       </div>
