@@ -2995,3 +2995,266 @@ body.admin-page {
 .gallery-header .header-actions {
   margin-left: auto;
 }
+/* ... Předchozí styly zachovány ... */
+/* Vložte toto na konec souboru style.css */
+
+/* --- DIARY STYLES --- */
+
+/* Kalendář deníku */
+.diary-calendar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+  padding: 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.diary-day-card {
+  background-color: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  min-height: 100px;
+  padding: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+}
+
+.diary-day-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  border-color: #fbbf24;
+}
+
+.diary-day-card.has-entry {
+  background-color: #fffbeb; /* Jemně žlutá pro dny se zápisem */
+  border-color: #fcd34d;
+}
+
+.diary-day-card.has-entry::after {
+  content: "\f02d"; /* Ikona knihy */
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  position: absolute;
+  bottom: 5px;
+  right: 10px;
+  font-size: 1.5em;
+  color: #d97706;
+  opacity: 0.3;
+}
+
+.day-number {
+  font-weight: 700;
+  font-size: 1.1em;
+  color: #374151;
+}
+
+.entry-preview {
+  font-size: 0.8em;
+  color: #6b7280;
+  margin-top: 5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  font-family: "Kalam", cursive; /* Ukázka fontu i v náhledu */
+}
+
+/* --- REALISTIC NOTEBOOK MODAL --- */
+
+/* Kontejner modálu pro sešit */
+.notebook-modal-content {
+  width: 100%;
+  max-width: 700px; /* Šířka sešitu */
+  height: 85vh; /* Výška sešitu */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  perspective: 1000px;
+  background: transparent; /* Průhledné pozadí kontejneru */
+}
+
+/* Samotný papír */
+.notebook-paper {
+  width: 100%;
+  height: 100%;
+  background-color: #fdfbf7; /* Krémová barva papíru */
+  background-image: linear-gradient(#e5e7eb 1px, transparent 1px); /* Linky */
+  background-size: 100% 2rem; /* Výška řádku 2rem (32px) */
+  position: relative;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1), 10px 10px 20px rgba(0, 0, 0, 0.2), inset 0 0 40px rgba(0, 0, 0, 0.05); /* Jemné stínování uvnitř */
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+  border-left: 2px solid rgba(0, 0, 0, 0.1); /* Hřbet */
+}
+
+/* Červená vertikální linka (okraj) */
+.notebook-paper::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 4rem; /* Odsazení zleva */
+  width: 2px;
+  background-color: #fca5a5; /* Červená linka */
+  opacity: 0.6;
+  z-index: 5;
+  pointer-events: none;
+}
+
+/* Dírky na sešitě (vlevo) */
+.notebook-holes {
+  position: absolute;
+  left: 10px;
+  top: 0;
+  bottom: 0;
+  width: 20px;
+  z-index: 6;
+  background: radial-gradient(circle at center, #333 30%, transparent 33%);
+  background-size: 100% 2rem; /* Musí sedět s řádky */
+  background-position: 0 1rem;
+  opacity: 0.1;
+  pointer-events: none;
+}
+
+/* Hlavička sešitu (datum a zavírání) */
+.notebook-header {
+  height: 4rem; /* 2 řádky */
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end; /* Zarovnat na spodní linku */
+  padding: 0 2rem 0.5rem 5rem; /* Respektovat červenou linku */
+  font-family: "Kalam", cursive;
+  color: #ef4444; /* Datum červeně jako nadpis */
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.notebook-close-button {
+  font-family: sans-serif; /* Křížek normálně */
+  font-size: 2rem;
+  color: #9ca3af;
+  cursor: pointer;
+  line-height: 1;
+  transition: color 0.2s;
+  margin-bottom: 5px;
+}
+.notebook-close-button:hover {
+  color: #374151;
+}
+
+/* Tělo sešitu (textarea) */
+.notebook-body {
+  flex-grow: 1;
+  position: relative;
+  padding-left: 5rem; /* Odsazení za červenou linkou */
+  padding-right: 2rem;
+}
+
+#notebook-textarea {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+
+  /* Font nastavení */
+  font-family: "Kalam", cursive;
+  font-size: 1.35rem; /* Velikost písma */
+  line-height: 2rem; /* MUSÍ být přesně stejné jako background-size papíru */
+  color: #1f2937; /* Tmavě šedá propiska */
+
+  /* Zarovnání textu na linky */
+  padding-top: 0.1rem; /* Jemné doladění posunu */
+
+  /* Scrollbar */
+  overflow-y: auto;
+}
+
+/* Scrollbar styling pro textarea */
+#notebook-textarea::-webkit-scrollbar {
+  width: 8px;
+}
+#notebook-textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+#notebook-textarea::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+/* Patička sešitu */
+.notebook-footer {
+  height: 3rem;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 0 2rem;
+  gap: 15px;
+  background: rgba(255, 255, 255, 0.3); /* Lehce odlišit */
+}
+
+.notebook-btn-save,
+.notebook-btn-delete {
+  background: none;
+  border: none;
+  font-family: "Kalam", cursive;
+  font-weight: 700;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 15px;
+  border-radius: 20px; /* Jako kdyby zakroužkované */
+  transition: all 0.2s;
+}
+
+.notebook-btn-save {
+  color: #15803d; /* Zelená */
+  border: 2px solid transparent;
+}
+.notebook-btn-save:hover {
+  border-color: #15803d; /* Zakroužkování při hoveru */
+  background-color: rgba(22, 163, 74, 0.1);
+}
+
+.notebook-btn-delete {
+  color: #b91c1c; /* Červená */
+}
+.notebook-btn-delete:hover {
+  text-decoration: line-through; /* Přeškrtnutí při hoveru */
+}
+
+/* Responsivita pro mobil */
+@media (max-width: 600px) {
+  .notebook-paper::before {
+    left: 2rem;
+  }
+  .notebook-header {
+    padding-left: 2.5rem;
+    font-size: 1.2rem;
+  }
+  .notebook-body {
+    padding-left: 2.5rem;
+    padding-right: 1rem;
+  }
+  #notebook-textarea {
+    font-size: 1.1rem;
+  }
+}
+
+/* Oprava globálních stylů */
+.gallery-content-wrapper {
+  overflow: hidden;
+} /* Aby nám neutíkal layout */
