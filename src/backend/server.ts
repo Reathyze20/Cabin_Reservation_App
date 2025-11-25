@@ -43,12 +43,6 @@ if (!fs.existsSync(uploadsPath)) {
 app.use(express.static(frontendPath));
 app.use("/uploads", express.static(uploadsPath));
 
-// ... (Kód pro Users, Auth, Reservations, Shopping List, Notes, Gallery zůstává stejný) ...
-// ZKOPÍRUJTE SI PROSÍM EXISTUJÍCÍ KÓD PRO TYTO SEKCE POKUD HO POTŘEBUJETE,
-// ZDE UVÁDÍM JEN ZMĚNĚNOU ČÁST PRO DIARY ABY BYL SOUBOR PŘEHLEDNÝ,
-// ALE PRO KOMPLETNÍ SOUBOR JE TŘEBA ZACHOVAT VŠE.
-// Níže uvádím KOMPLETNÍ sekci pro DIARY API, která nahradí tu starou.
-
 // ============================================================================
 //                                 USERS API
 // ============================================================================
@@ -689,7 +683,7 @@ app.get("/api/diary/folders", protect, async (req, res) => {
 
 app.post("/api/diary/folders", protect, async (req, res) => {
   if (!req.user) return res.status(401).json({ message: "Neautorizováno" });
-  const { name, startDate, endDate } = req.body; // PŘIDÁNO startDate a endDate
+  const { name, startDate, endDate } = req.body;
   if (!name || !startDate || !endDate) return res.status(400).json({ message: "Chybí název nebo datumy." });
 
   try {
@@ -699,14 +693,39 @@ app.post("/api/diary/folders", protect, async (req, res) => {
       name,
       createdAt: new Date().toISOString(),
       createdBy: req.user.username,
-      startDate, // Ukládáme
-      endDate, // Ukládáme
+      startDate,
+      endDate,
     };
     folders.push(newFolder);
     await saveDiaryFolders(folders);
     res.status(201).json(newFolder);
   } catch (error) {
     res.status(500).json({ message: "Chyba při vytváření složky." });
+  }
+});
+
+// NOVÉ: Přejmenování složky deníku
+app.patch("/api/diary/folders/:id", protect, async (req: Request, res: Response) => {
+  if (!req.user) return res.status(401).json({ message: "Neautorizováno" });
+  const { id } = req.params;
+  const { name: newName } = req.body;
+  if (!newName || newName.trim().length === 0) {
+    return res.status(400).json({ message: "Název složky nesmí být prázdný." });
+  }
+  try {
+    let folders = await loadDiaryFolders();
+    const folderIndex = folders.findIndex((f) => f.id === id);
+    if (folderIndex === -1) return res.status(404).json({ message: "Deník nenalezen." });
+
+    if (req.user.role !== "admin" && folders[folderIndex].createdBy !== req.user.username) {
+      return res.status(403).json({ message: "Nemáte oprávnění přejmenovat tento deník." });
+    }
+
+    folders[folderIndex].name = newName.trim();
+    await saveDiaryFolders(folders);
+    res.json({ message: "Deník úspěšně přejmenován.", folder: folders[folderIndex] });
+  } catch (error) {
+    res.status(500).json({ message: "Chyba při přejmenování deníku." });
   }
 });
 
@@ -760,7 +779,7 @@ app.get("/api/diary/entries", protect, async (req, res) => {
 
 app.post("/api/diary/entries", protect, async (req, res) => {
   if (!req.user) return res.status(401).json({ message: "Neautorizováno" });
-  const { folderId, date, content } = req.body;
+  const { folderId, date, content, galleryPhotoIds } = req.body; // Přidáno galleryPhotoIds
 
   if (!folderId || !date || !content) return res.status(400).json({ message: "Chybí data." });
 
@@ -774,6 +793,7 @@ app.post("/api/diary/entries", protect, async (req, res) => {
       author: req.user.username,
       authorId: req.user.userId,
       createdAt: new Date().toISOString(),
+      galleryPhotoIds: galleryPhotoIds || [], // Ukládáme ID fotek
     };
     entries.push(newEntry);
     await saveDiaryEntries(entries);

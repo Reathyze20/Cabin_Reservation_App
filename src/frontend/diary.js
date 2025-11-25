@@ -15,8 +15,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // Buttons
   const createFolderBtn = document.getElementById("create-diary-folder-btn");
   const backToFoldersBtn = document.getElementById("back-to-diary-folders-btn");
-  // Tlačítko smazat v patičce seznamu složek
   const deleteFolderListBtn = document.getElementById("delete-diary-folder-list-btn");
+  const renameFolderListBtn = document.getElementById("rename-diary-folder-list-btn");
 
   // Modals
   const createFolderModal = document.getElementById("create-diary-folder-modal");
@@ -24,6 +24,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const folderNameInput = document.getElementById("diary-folder-name-input");
   const folderStartDateInput = document.getElementById("diary-start-date");
   const folderEndDateInput = document.getElementById("diary-end-date");
+
+  // Modal Rename
+  const renameFolderModal = document.getElementById("rename-diary-folder-modal");
+  const renameFolderForm = document.getElementById("rename-diary-folder-form");
+  const newFolderNameInput = document.getElementById("new-diary-folder-name-input");
+  const oldFolderNameSpan = document.getElementById("old-diary-folder-name");
 
   // Modal Delete
   const deleteFolderModal = document.getElementById("delete-diary-folder-modal");
@@ -37,6 +43,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const notebookCloseBtn = document.querySelector(".notebook-close-button");
   const saveEntryBtn = document.getElementById("save-notebook-entry-btn");
   const deleteEntryBtn = document.getElementById("delete-notebook-entry-btn");
+  const attachPhotoBtn = document.getElementById("attach-photo-btn");
+  const notebookAttachmentsArea = document.getElementById("notebook-attachments-area");
+
+  // Modal Photo Picker
+  const selectGalleryPhotoModal = document.getElementById("select-gallery-photo-modal");
+  const galleryPickerFolders = document.getElementById("gallery-picker-folders");
+  const galleryPickerPhotos = document.getElementById("gallery-picker-photos");
+  const galleryPickerBackBtn = document.getElementById("gallery-picker-back-btn");
+  const galleryPickerConfirmBtn = document.getElementById("gallery-picker-confirm-btn");
+  const galleryPickerCloseBtn = selectGalleryPhotoModal.querySelector(".modal-close-button");
 
   // --- State ---
   const backendUrl = "";
@@ -44,10 +60,17 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentEntries = [];
   let currentSelectedDate = null;
   let currentEntryId = null;
+  let currentEntryPhotoIds = []; // ID fotek aktuálně připojených k otevřenému zápisu
 
   // Selection state for folders
   let selectedFolderId = null;
   let allFolders = [];
+
+  // Gallery Picker State
+  let pickerCurrentFolderId = null;
+  let pickerSelectedPhotoIds = new Set();
+  let allGalleryFolders = [];
+  let currentGalleryPhotos = [];
 
   // --- Auth Check ---
   const loggedInUsername = localStorage.getItem("username");
@@ -189,8 +212,10 @@ document.addEventListener("DOMContentLoaded", () => {
   function updateFolderActionsUI() {
     if (selectedFolderId) {
       deleteFolderListBtn.style.display = "inline-flex";
+      renameFolderListBtn.style.display = "inline-flex"; // Zobrazení tlačítka přejmenovat
     } else {
       deleteFolderListBtn.style.display = "none";
+      renameFolderListBtn.style.display = "none";
     }
   }
 
@@ -225,6 +250,36 @@ document.addEventListener("DOMContentLoaded", () => {
     if (result) {
       createFolderModal.style.display = "none";
       showToast("Deník vytvořen.");
+      loadFolders();
+    }
+  });
+
+  // --- Rename Logic ---
+  renameFolderListBtn.addEventListener("click", () => {
+    if (!selectedFolderId) return;
+    const folder = allFolders.find((f) => f.id === selectedFolderId);
+    if (!folder) return;
+
+    oldFolderNameSpan.textContent = folder.name;
+    newFolderNameInput.value = folder.name;
+    renameFolderModal.style.display = "flex";
+    newFolderNameInput.focus();
+  });
+
+  renameFolderForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const newName = newFolderNameInput.value.trim();
+    if (!newName) return;
+
+    const result = await apiFetch(`${backendUrl}/api/diary/folders/${selectedFolderId}`, {
+      method: "PATCH",
+      body: JSON.stringify({ name: newName }),
+    });
+
+    if (result) {
+      renameFolderModal.style.display = "none";
+      showToast("Deník přejmenován.");
+      selectedFolderId = null; // Reset výběru po akci
       loadFolders();
     }
   });
@@ -338,6 +393,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const div = document.createElement("div");
         div.innerHTML = entry.content;
         previewText = div.textContent || div.innerText || "";
+        if (entry.galleryPhotoIds && entry.galleryPhotoIds.length > 0) {
+          previewText += ` <i class="fas fa-image" title="Obsahuje ${entry.galleryPhotoIds.length} fotek"></i>`;
+        }
       }
 
       const clickDate = new Date(d);
@@ -356,9 +414,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function openNotebook(dateObj, entry) {
+  async function openNotebook(dateObj, entry) {
     currentSelectedDate = dateObj.toISOString().split("T")[0];
     currentEntryId = entry ? entry.id : null;
+    currentEntryPhotoIds = entry && entry.galleryPhotoIds ? [...entry.galleryPhotoIds] : [];
 
     const options = { weekday: "long", year: "numeric", month: "long", day: "numeric" };
     notebookDateDisplay.textContent = dateObj.toLocaleDateString("cs-CZ", options);
@@ -367,6 +426,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     deleteEntryBtn.style.display = entry ? "flex" : "none";
 
+    await renderNotebookAttachments(); // Načte a zobrazí připojené fotky
+
     notebookModal.style.display = "flex";
     notebookTextarea.focus();
     if (notebookTextarea.value) {
@@ -374,6 +435,191 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // --- Attachments Logic ---
+  async function renderNotebookAttachments() {
+    notebookAttachmentsArea.innerHTML = "";
+    if (currentEntryPhotoIds.length === 0) return;
+
+    // Musíme načíst všechny fotky abychom našli URL podle ID. Není to nejefektivnější, ale pro "jednoduché řešení" ok.
+    // Lepší by bylo fetchovat jen konkrétní fotky, ale API endpoint máme jen na všechny.
+    try {
+      const allPhotos = await apiFetch(`${backendUrl}/api/gallery/photos`);
+      if (!allPhotos) return;
+
+      currentEntryPhotoIds.forEach((photoId) => {
+        const photo = allPhotos.find((p) => p.id === photoId);
+        if (photo) {
+          const imgWrapper = document.createElement("div");
+          imgWrapper.className = "attachment-thumbnail-wrapper";
+          imgWrapper.style.position = "relative";
+          imgWrapper.style.display = "inline-block";
+          imgWrapper.style.margin = "5px";
+
+          const img = document.createElement("img");
+          img.src = photo.src;
+          img.className = "attachment-thumbnail";
+          img.style.width = "80px";
+          img.style.height = "80px";
+          img.style.objectFit = "cover";
+          img.style.borderRadius = "8px";
+          img.style.border = "2px solid #ddd";
+
+          const removeBtn = document.createElement("div");
+          removeBtn.innerHTML = "&times;";
+          removeBtn.style.position = "absolute";
+          removeBtn.style.top = "-5px";
+          removeBtn.style.right = "-5px";
+          removeBtn.style.backgroundColor = "red";
+          removeBtn.style.color = "white";
+          removeBtn.style.borderRadius = "50%";
+          removeBtn.style.width = "20px";
+          removeBtn.style.height = "20px";
+          removeBtn.style.textAlign = "center";
+          removeBtn.style.lineHeight = "18px";
+          removeBtn.style.cursor = "pointer";
+          removeBtn.style.fontSize = "14px";
+
+          removeBtn.onclick = () => {
+            currentEntryPhotoIds = currentEntryPhotoIds.filter((id) => id !== photoId);
+            renderNotebookAttachments(); // Překreslit
+          };
+
+          imgWrapper.appendChild(img);
+          imgWrapper.appendChild(removeBtn);
+          notebookAttachmentsArea.appendChild(imgWrapper);
+        }
+      });
+    } catch (e) {
+      console.error("Chyba při vykreslování příloh:", e);
+    }
+  }
+
+  // --- Gallery Picker Logic ---
+  attachPhotoBtn.addEventListener("click", async () => {
+    // 1. Načíst složky galerie
+    const folders = await apiFetch(`${backendUrl}/api/gallery/folders`);
+    if (!folders) return;
+
+    allGalleryFolders = folders;
+    renderGalleryPickerFolders();
+
+    // Reset stavu pickeru
+    pickerSelectedPhotoIds.clear();
+    pickerCurrentFolderId = null;
+    galleryPickerPhotos.style.display = "none";
+    galleryPickerFolders.style.display = "grid";
+    galleryPickerBackBtn.style.display = "none";
+
+    selectGalleryPhotoModal.style.display = "flex";
+  });
+
+  function renderGalleryPickerFolders() {
+    galleryPickerFolders.innerHTML = "";
+    allGalleryFolders.forEach((folder) => {
+      const el = document.createElement("div");
+      el.className = "folder-card"; // Recyklujeme styly
+      el.style.height = "120px"; // Menší pro picker
+      el.style.padding = "10px";
+      el.innerHTML = `
+            <div class="folder-icon" style="font-size: 2em; margin-bottom: 5px;"><i class="fas fa-folder"></i></div>
+            <div class="folder-info">
+                <h3 style="font-size: 0.9em; margin: 0;">${folder.name}</h3>
+            </div>
+          `;
+      el.onclick = () => openPickerFolder(folder.id);
+      galleryPickerFolders.appendChild(el);
+    });
+  }
+
+  async function openPickerFolder(folderId) {
+    pickerCurrentFolderId = folderId;
+    const photos = await apiFetch(`${backendUrl}/api/gallery/photos?folderId=${folderId}`);
+    currentGalleryPhotos = photos || [];
+
+    galleryPickerFolders.style.display = "none";
+    galleryPickerPhotos.style.display = "grid";
+    galleryPickerBackBtn.style.display = "flex";
+
+    renderPickerPhotos();
+  }
+
+  function renderPickerPhotos() {
+    galleryPickerPhotos.innerHTML = "";
+    currentGalleryPhotos.forEach((photo) => {
+      const el = document.createElement("div");
+      el.style.position = "relative";
+      el.style.cursor = "pointer";
+
+      const isSelected = pickerSelectedPhotoIds.has(photo.id) || currentEntryPhotoIds.includes(photo.id);
+      const isAlreadyAttached = currentEntryPhotoIds.includes(photo.id);
+
+      const img = document.createElement("img");
+      img.src = photo.src;
+      img.style.width = "100%";
+      img.style.height = "100px";
+      img.style.objectFit = "cover";
+      img.style.borderRadius = "4px";
+      if (isSelected) {
+        img.style.border = "3px solid #d97706";
+        img.style.opacity = "0.7";
+      }
+
+      if (isAlreadyAttached) {
+        img.style.filter = "grayscale(100%)";
+        el.title = "Již připojeno";
+      }
+
+      el.appendChild(img);
+
+      if (isSelected && !isAlreadyAttached) {
+        const check = document.createElement("div");
+        check.innerHTML = '<i class="fas fa-check"></i>';
+        check.style.position = "absolute";
+        check.style.top = "5px";
+        check.style.right = "5px";
+        check.style.color = "#d97706";
+        check.style.fontSize = "1.2em";
+        el.appendChild(check);
+      }
+
+      if (!isAlreadyAttached) {
+        el.onclick = () => {
+          if (pickerSelectedPhotoIds.has(photo.id)) {
+            pickerSelectedPhotoIds.delete(photo.id);
+          } else {
+            pickerSelectedPhotoIds.add(photo.id);
+          }
+          renderPickerPhotos();
+        };
+      }
+
+      galleryPickerPhotos.appendChild(el);
+    });
+  }
+
+  galleryPickerBackBtn.addEventListener("click", () => {
+    galleryPickerPhotos.style.display = "none";
+    galleryPickerFolders.style.display = "grid";
+    galleryPickerBackBtn.style.display = "none";
+    pickerCurrentFolderId = null;
+  });
+
+  galleryPickerConfirmBtn.addEventListener("click", () => {
+    // Přidat vybrané ID do currentEntryPhotoIds
+    pickerSelectedPhotoIds.forEach((id) => {
+      if (!currentEntryPhotoIds.includes(id)) {
+        currentEntryPhotoIds.push(id);
+      }
+    });
+    renderNotebookAttachments();
+    selectGalleryPhotoModal.style.display = "none";
+  });
+
+  galleryPickerCloseBtn.addEventListener("click", () => {
+    selectGalleryPhotoModal.style.display = "none";
+  });
+
+  // --- Notebook Actions ---
   notebookCloseBtn.addEventListener("click", () => {
     notebookModal.style.display = "none";
   });
@@ -386,7 +632,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   saveEntryBtn.addEventListener("click", async () => {
     const content = notebookTextarea.value;
-    if (!content.trim()) {
+    if (!content.trim() && currentEntryPhotoIds.length === 0) {
       showToast("Stránka je prázdná, nic neukládám.", "error");
       return;
     }
@@ -399,6 +645,7 @@ document.addEventListener("DOMContentLoaded", () => {
       folderId: currentFolderId,
       date: currentSelectedDate,
       content: content,
+      galleryPhotoIds: currentEntryPhotoIds, // Odesíláme seznam ID fotek
     };
 
     const result = await apiFetch(`${backendUrl}/api/diary/entries`, {
@@ -433,6 +680,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const modal = btn.closest(".modal-overlay");
       if (modal) modal.style.display = "none";
       if (modal.id === "delete-diary-folder-modal") deleteFolderForm.reset();
+      if (modal.id === "rename-diary-folder-modal") renameFolderForm.reset();
     });
   });
 });

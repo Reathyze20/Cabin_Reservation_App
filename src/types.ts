@@ -74,4 +74,5 @@ export interface DiaryEntry {
   author: string;
   authorId: string;
   createdAt: string;
+  galleryPhotoIds?: string[]; // NOVÉ: Seznam ID připojených fotek z galerie
 }
