@@ -15,9 +15,13 @@ import {
   saveGalleryFolders,
   loadGalleryPhotos,
   saveGalleryPhotos,
+  loadDiaryFolders,
+  saveDiaryFolders,
+  loadDiaryEntries,
+  saveDiaryEntries,
 } from "../utils/auth";
 import fs from "fs";
-import { User, Reservation, ShoppingListItem, Note, GalleryFolder, GalleryPhoto } from "../types";
+import { User, Reservation, ShoppingListItem, Note, GalleryFolder, GalleryPhoto, DiaryFolder, DiaryEntry } from "../types";
 import { JWT_SECRET } from "../config/config";
 import { protect } from "../middleware/authMiddleware";
 import { v4 as uuidv4 } from "uuid";
@@ -743,6 +747,138 @@ app.delete("/api/gallery/photos", protect, async (req: Request, res: Response) =
   } catch (error) {
     console.error("Bulk delete error:", error);
     res.status(500).json({ message: "Chyba při hromadném mazání." });
+  }
+});
+
+// ============================================================================
+//                                DIARY API
+// ============================================================================
+
+// 1. Folders (Období)
+app.get("/api/diary/folders", protect, async (req, res) => {
+  try {
+    const folders = await loadDiaryFolders();
+    res.json(folders);
+  } catch (error) {
+    res.status(500).json({ message: "Chyba při načítání deníku." });
+  }
+});
+
+app.post("/api/diary/folders", protect, async (req, res) => {
+  if (!req.user) return res.status(401).json({ message: "Neautorizováno" });
+  const { name } = req.body;
+  if (!name) return res.status(400).json({ message: "Chybí název." });
+
+  try {
+    const folders = await loadDiaryFolders();
+    const newFolder: DiaryFolder = {
+      id: uuidv4(),
+      name,
+      createdAt: new Date().toISOString(),
+      createdBy: req.user.username,
+    };
+    folders.push(newFolder);
+    await saveDiaryFolders(folders);
+    res.status(201).json(newFolder);
+  } catch (error) {
+    res.status(500).json({ message: "Chyba při vytváření složky." });
+  }
+});
+
+app.delete("/api/diary/folders/:id", protect, async (req, res) => {
+  if (!req.user) return res.status(401).json({ message: "Neautorizováno" });
+  const { id } = req.params;
+
+  try {
+    let folders = await loadDiaryFolders();
+    const folderIdx = folders.findIndex((f) => f.id === id);
+    if (folderIdx === -1) return res.status(404).json({ message: "Složka nenalezena." });
+
+    // Ověření oprávnění (jen admin nebo autor)
+    if (req.user.role !== "admin" && folders[folderIdx].createdBy !== req.user.username) {
+      return res.status(403).json({ message: "Nemáte oprávnění smazat toto období." });
+    }
+
+    // Smazat složku
+    folders.splice(folderIdx, 1);
+    await saveDiaryFolders(folders);
+
+    // Smazat i všechny záznamy v této složce
+    let entries = await loadDiaryEntries();
+    const initialEntryCount = entries.length;
+    entries = entries.filter((e) => e.folderId !== id);
+    if (entries.length !== initialEntryCount) {
+      await saveDiaryEntries(entries);
+    }
+
+    res.json({ message: "Složka a záznamy smazány." });
+  } catch (error) {
+    console.error("Delete diary folder error:", error);
+    res.status(500).json({ message: "Chyba při mazání složky." });
+  }
+});
+
+// 2. Entries (Zápisy)
+app.get("/api/diary/entries", protect, async (req, res) => {
+  const folderId = req.query.folderId as string;
+  try {
+    const entries = await loadDiaryEntries();
+    if (folderId) {
+      const filtered = entries.filter((e) => e.folderId === folderId);
+      // Seřadit od nejnovějšího data
+      filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      return res.json(filtered);
+    }
+    res.json(entries);
+  } catch (error) {
+    res.status(500).json({ message: "Chyba." });
+  }
+});
+
+app.post("/api/diary/entries", protect, async (req, res) => {
+  if (!req.user) return res.status(401).json({ message: "Neautorizováno" });
+  const { folderId, date, content } = req.body;
+
+  if (!folderId || !date || !content) return res.status(400).json({ message: "Chybí data." });
+
+  try {
+    const entries = await loadDiaryEntries();
+    const newEntry: DiaryEntry = {
+      id: uuidv4(),
+      folderId,
+      date,
+      content,
+      author: req.user.username,
+      authorId: req.user.userId,
+      createdAt: new Date().toISOString(),
+    };
+    entries.push(newEntry);
+    await saveDiaryEntries(entries);
+    res.status(201).json(newEntry);
+  } catch (error) {
+    res.status(500).json({ message: "Chyba při ukládání záznamu." });
+  }
+});
+
+app.delete("/api/diary/entries/:id", protect, async (req, res) => {
+  if (!req.user) return res.status(401).json({ message: "Neautorizováno" });
+  const { id } = req.params;
+
+  try {
+    let entries = await loadDiaryEntries();
+    const entryIdx = entries.findIndex((e) => e.id === id);
+    if (entryIdx === -1) return res.status(404).json({ message: "Záznam nenalezen." });
+
+    // Kontrola oprávnění
+    if (req.user.role !== "admin" && entries[entryIdx].authorId !== req.user.userId) {
+      return res.status(403).json({ message: "Nemáte oprávnění smazat tento záznam." });
+    }
+
+    entries.splice(entryIdx, 1);
+    await saveDiaryEntries(entries);
+    res.json({ message: "Záznam smazán." });
+  } catch (error) {
+    res.status(500).json({ message: "Chyba při mazání záznamu." });
   }
 });
 

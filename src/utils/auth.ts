@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { Reservation, User, ShoppingListItem, Note, GalleryFolder, GalleryPhoto } from "../types";
+import { Reservation, User, ShoppingListItem, Note, GalleryFolder, GalleryPhoto, DiaryFolder, DiaryEntry } from "../types";
 
 const usersFilePath = path.join(__dirname, "../../data/users.json");
 const reservationsFilePath = path.join(__dirname, "../../data/reservations.json");
@@ -8,6 +8,9 @@ const shoppingListFilePath = path.join(__dirname, "../../data/shopping-list.json
 const notesFilePath = path.join(__dirname, "../../data/notes.json");
 const galleryFoldersPath = path.join(__dirname, "../../data/gallery-folders.json");
 const galleryPhotosPath = path.join(__dirname, "../../data/gallery-photos.json");
+// Nové cesty pro deník
+const diaryFoldersPath = path.join(__dirname, "../../data/diary-folders.json");
+const diaryEntriesPath = path.join(__dirname, "../../data/diary-entries.json");
 
 // --- Users ---
 export async function loadUsers(): Promise<User[]> {
@@ -52,25 +55,25 @@ export async function saveReservation(reservations: Reservation[]) {
 
 // --- Shopping List ---
 export async function loadShoppingList(): Promise<ShoppingListItem[]> {
-    try {
-      const data = await fs.promises.readFile(shoppingListFilePath, "utf-8");
-      const parsed = JSON.parse(data);
-      if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].name && !parsed[0].items) {
-        const defaultList = {
-          id: 'default',
-          name: 'Hlavní seznam',
-          addedBy: 'system',
-          addedById: 'system',
-          createdAt: new Date().toISOString(),
-          items: parsed as ShoppingListItem[],
-        };
-        await saveShoppingLists([defaultList]);
-        return parsed as ShoppingListItem[];
-      }
-      const lists = (parsed as any[]) || [];
-      return lists.flatMap(l => (Array.isArray(l.items) ? l.items : [])) as ShoppingListItem[];
-    } catch (error) {
-     if (error instanceof Error && "code" in error && (error as any).code === "ENOENT") {
+  try {
+    const data = await fs.promises.readFile(shoppingListFilePath, "utf-8");
+    const parsed = JSON.parse(data);
+    if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].name && !parsed[0].items) {
+      const defaultList = {
+        id: "default",
+        name: "Hlavní seznam",
+        addedBy: "system",
+        addedById: "system",
+        createdAt: new Date().toISOString(),
+        items: parsed as ShoppingListItem[],
+      };
+      await saveShoppingLists([defaultList]);
+      return parsed as ShoppingListItem[];
+    }
+    const lists = (parsed as any[]) || [];
+    return lists.flatMap((l) => (Array.isArray(l.items) ? l.items : [])) as ShoppingListItem[];
+  } catch (error) {
+    if (error instanceof Error && "code" in error && (error as any).code === "ENOENT") {
       await saveShoppingLists([]);
       return [];
     }
@@ -90,7 +93,7 @@ export async function loadNotes(): Promise<Note[]> {
     const data = await fs.promises.readFile(notesFilePath, "utf-8");
     return JSON.parse(data) as Note[];
   } catch (error) {
-     if (error instanceof Error && "code" in error && (error as any).code === "ENOENT") {
+    if (error instanceof Error && "code" in error && (error as any).code === "ENOENT") {
       await saveNotes([]);
       return [];
     }
@@ -140,4 +143,42 @@ export async function loadGalleryPhotos(): Promise<GalleryPhoto[]> {
 export async function saveGalleryPhotos(photos: GalleryPhoto[]) {
   const data = JSON.stringify(photos, null, 2);
   await fs.promises.writeFile(galleryPhotosPath, data, "utf-8");
+}
+
+// --- Diary Folders (NOVÉ) ---
+export async function loadDiaryFolders(): Promise<DiaryFolder[]> {
+  try {
+    const data = await fs.promises.readFile(diaryFoldersPath, "utf-8");
+    return JSON.parse(data) as DiaryFolder[];
+  } catch (error) {
+    if (error instanceof Error && "code" in error && (error as any).code === "ENOENT") {
+      await saveDiaryFolders([]);
+      return [];
+    }
+    return [];
+  }
+}
+
+export async function saveDiaryFolders(folders: DiaryFolder[]) {
+  const data = JSON.stringify(folders, null, 2);
+  await fs.promises.writeFile(diaryFoldersPath, data, "utf-8");
+}
+
+// --- Diary Entries (NOVÉ) ---
+export async function loadDiaryEntries(): Promise<DiaryEntry[]> {
+  try {
+    const data = await fs.promises.readFile(diaryEntriesPath, "utf-8");
+    return JSON.parse(data) as DiaryEntry[];
+  } catch (error) {
+    if (error instanceof Error && "code" in error && (error as any).code === "ENOENT") {
+      await saveDiaryEntries([]);
+      return [];
+    }
+    return [];
+  }
+}
+
+export async function saveDiaryEntries(entries: DiaryEntry[]) {
+  const data = JSON.stringify(entries, null, 2);
+  await fs.promises.writeFile(diaryEntriesPath, data, "utf-8");
 }
