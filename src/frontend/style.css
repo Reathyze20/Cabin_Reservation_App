@@ -3007,18 +3007,17 @@ body.admin-page {
 /* 1. Hlavní kontejner přes celou výšku (minus hlavička) */
 .main-content-diary {
   width: 100%;
-  /* Zajistí, že kontejner zabírá zbytek místa v okně */
   height: calc(100vh - 100px);
   display: flex;
   flex-direction: column;
-  overflow: hidden; /* Zabrání scrollování celé stránky, scrolluje se jen uvnitř */
+  overflow: hidden;
 }
 
-/* 2. Karta deníku se musí roztáhnout na 100% kontejneru */
+/* 2. Karta deníku */
 .diary-card {
   background-color: white;
   border-radius: 16px;
-  padding: 0; /* Reset paddingu, obsah má vlastní */
+  padding: 0;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   height: 100%;
   display: flex;
@@ -3027,20 +3026,22 @@ body.admin-page {
   overflow: hidden;
 }
 
-/* 3. Hlavička (Header) */
+/* 3. Hlavička (Header) - Vycentrovaný nadpis */
 .diary-header {
   padding: 10px 20px;
   border-bottom: 1px solid #f3e2c0;
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  height: 50px;
+  justify-content: center; /* Změna: Centrování obsahu */
+  height: 60px;
   background-color: #fff;
   z-index: 10;
+  position: relative; /* Pro absolutní pozicování tlačítek */
 }
 
 .diary-header h2 {
-  font-size: 1.3em;
+  font-size: 1.5em;
   color: #4b5563;
   margin: 0;
   padding: 0;
@@ -3048,20 +3049,32 @@ body.admin-page {
   display: flex;
   align-items: center;
   gap: 10px;
+  font-family: "Kalam", cursive; /* Použijeme hravější font i zde */
 }
 .diary-header h2 i {
   color: #d97706;
 }
 
-/* 4. Wrapper obsahu - toto je to místo, které se musí roztáhnout (flex-grow) */
+/* Tlačítka v hlavičce umístíme absolutně napravo */
+.diary-header .header-actions,
+.diary-header button {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* 4. Wrapper obsahu - Pozadí jako tečkovaný papír */
 .diary-content-wrapper {
   flex-grow: 1;
-  padding: 10px;
-  overflow: hidden; /* Skryje přetečení, scrolluje až vnitřní grid */
+  padding: 20px;
+  overflow: hidden;
   position: relative;
   display: flex;
   flex-direction: column;
-  background-color: #f9fafb; /* Jemně šedé pozadí pro kontrast s kartami */
+  background-color: #fdfbf7; /* Krémová barva */
+  background-image: radial-gradient(#d1d5db 1px, transparent 1px); /* Jemné tečky */
+  background-size: 20px 20px;
 }
 
 /* 5. Patička (Footer) */
@@ -3077,82 +3090,122 @@ body.admin-page {
   z-index: 10;
 }
 
-/* Grid pro složky deníku - stejný jako v galerii */
+/* Grid pro složky deníku */
 #diary-folders-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Větší karty */
   grid-auto-rows: max-content;
-  gap: 20px;
-  overflow-y: auto; /* TADY se scrolluje */
+  gap: 25px;
+  overflow-y: auto;
   padding: 10px;
   height: 100%;
   align-content: start;
 }
 
-/* Grid pro kalendář */
+/* Grid pro kalendář - RESPONSIVNÍ ROZTAŽENÍ */
 .diary-calendar-wrapper {
-  overflow-y: auto; /* Kalendář scrolluje */
+  overflow-y: auto;
   height: 100%;
+  padding: 10px; /* Odsazení obsahu */
 }
 
 .diary-calendar {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 10px;
-  padding: 20px;
-  max-width: 1000px;
+  /* Automaticky vyplní řádek kartami o min šířce 180px, roztáhnou se (1fr) */
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 15px;
+  width: 100%;
   margin: 0 auto;
+  padding-bottom: 20px;
 }
 
+/* Styl karty dne */
 .diary-day-card {
   background-color: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  min-height: 100px;
-  padding: 10px;
+  border: none;
+  border-radius: 12px;
+  min-height: 140px; /* Vyšší karty */
+  padding: 15px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
 }
+
+/* Hover efekt - lehké nadzvednutí */
 .diary-day-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-  border-color: #fbbf24;
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+  z-index: 2;
 }
+
+/* Styl pro dny se zápisem */
 .diary-day-card.has-entry {
-  background-color: #fffbeb;
-  border-color: #fcd34d;
+  background: linear-gradient(135deg, #fffbeb 0%, #fff 100%);
+  border-left: 4px solid #fbbf24;
 }
+
+.diary-day-card.has-entry .day-number {
+  color: #d97706;
+}
+
 .diary-day-card.has-entry::after {
-  content: "\f02d";
+  content: "\f02d"; /* Ikona knihy */
   font-family: "Font Awesome 6 Free";
   font-weight: 900;
   position: absolute;
-  bottom: 5px;
+  bottom: 10px;
   right: 10px;
-  font-size: 1.5em;
-  color: #d97706;
-  opacity: 0.3;
+  font-size: 2em;
+  color: #fbbf24;
+  opacity: 0.2;
+  transform: rotate(-15deg);
 }
+
+/* Číslo dne - velké a výrazné */
 .day-number {
-  font-weight: 700;
-  font-size: 1.1em;
-  color: #374151;
+  font-weight: 800;
+  font-size: 2.5em;
+  color: #e5e7eb; /* Šedá pro prázdné dny */
+  line-height: 1;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 0;
+  transition: color 0.3s;
 }
+
+/* Text náhledu */
 .entry-preview {
-  font-size: 0.8em;
-  color: #6b7280;
-  margin-top: 5px;
+  font-size: 0.95em;
+  color: #4b5563;
+  margin-top: auto;
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   font-family: "Kalam", cursive;
+  line-height: 1.4;
+  z-index: 1; /* Nad číslem dne */
+  background: rgba(255, 255, 255, 0.8); /* Čitelnost */
+  border-radius: 4px;
+}
+
+.day-header-row {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  z-index: 1;
+  font-size: 0.85em;
+  color: #9ca3af;
+  font-weight: 600;
+  text-transform: uppercase;
 }
 
 /* --- NOTEBOOK MODAL STYLY (Ponecháno beze změny) --- */

@@ -22,8 +22,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const createFolderModal = document.getElementById("create-diary-folder-modal");
   const createFolderForm = document.getElementById("create-diary-folder-form");
   const folderNameInput = document.getElementById("diary-folder-name-input");
-  const folderStartDateInput = document.getElementById("diary-start-date"); // Nový input
-  const folderEndDateInput = document.getElementById("diary-end-date"); // Nový input
+  const folderStartDateInput = document.getElementById("diary-start-date");
+  const folderEndDateInput = document.getElementById("diary-end-date");
 
   // Modal Delete
   const deleteFolderModal = document.getElementById("delete-diary-folder-modal");
@@ -125,25 +125,21 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     folders.forEach((folder) => {
       const el = document.createElement("div");
-      // Přidáme třídu selected, pokud je vybrána
       el.className = `folder-card diary-folder ${folder.id === selectedFolderId ? "selected" : ""}`;
       el.dataset.id = folder.id;
 
-      // Zabraňuje defaultnímu kliku a otevření složky, pokud je vybrán checkbox
       el.onclick = (e) => {
         if (e.target.type !== "checkbox") {
           openFolder(folder.id, folder.name);
         }
       };
 
-      // Checkbox pro výběr (stejné jako galerie)
       const checkboxHTML = `
                 <div class="folder-checkbox-wrapper">
                     <input type="checkbox" class="folder-checkbox" data-id="${folder.id}" ${folder.id === selectedFolderId ? "checked" : ""}>
                 </div>
             `;
 
-      // Formátování data pro zobrazení
       let dateRange = "";
       if (folder.startDate && folder.endDate) {
         const d1 = new Date(folder.startDate).toLocaleDateString("cs-CZ");
@@ -151,7 +147,6 @@ document.addEventListener("DOMContentLoaded", () => {
         dateRange = `<div style="font-size: 0.8em; color: #555; margin-top:5px;">${d1} - ${d2}</div>`;
       }
 
-      // Ikonka zápisníku
       el.innerHTML = `
                 ${checkboxHTML}
                 <div class="folder-icon" style="color: #fbbf24;"><i class="fas fa-book-journal-whills"></i></div>
@@ -172,7 +167,6 @@ document.addEventListener("DOMContentLoaded", () => {
     foldersGrid.querySelectorAll(".folder-checkbox").forEach((checkbox) => {
       checkbox.addEventListener("change", (e) => {
         const id = e.target.dataset.id;
-        // Single selection logic
         foldersGrid.querySelectorAll(".folder-checkbox").forEach((otherCheckbox) => {
           if (otherCheckbox.dataset.id !== id) {
             otherCheckbox.checked = false;
@@ -235,7 +229,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // --- Deletion Logic (Folder) ---
   deleteFolderListBtn.addEventListener("click", () => {
     if (!selectedFolderId) return;
     const folder = allFolders.find((f) => f.id === selectedFolderId);
@@ -245,14 +238,12 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   async function performFolderDeleteCheck(folderId, folderName) {
-    // Zjistíme, jestli má složka zápisy
     const entries = await apiFetch(`${backendUrl}/api/diary/entries?folderId=${folderId}`);
     const isEmpty = entries && entries.length === 0;
     const isAdmin = userRole === "admin";
     const isCreator = allFolders.find((f) => f.id === folderId)?.createdBy === loggedInUsername;
 
     if (isEmpty) {
-      // Prázdná složka - stačí potvrzení (pokud je admin nebo tvůrce)
       if (isAdmin || isCreator) {
         if (confirm(`Opravdu smazat prázdný deník "${folderName}"?`)) {
           performFolderDelete(folderId);
@@ -261,13 +252,10 @@ document.addEventListener("DOMContentLoaded", () => {
         showToast("Cizí deníky může mazat jen autor nebo admin.", "error");
       }
     } else {
-      // Neprázdná složka
       if (!isAdmin && !isCreator) {
         showToast("Nemáte oprávnění smazat tento deník.", "error");
         return;
       }
-
-      // Zobrazit Warning Modal
       deleteConfirmInput.value = "";
       deleteFolderModal.style.display = "flex";
       deleteConfirmInput.focus();
@@ -296,17 +284,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // --- Entries Logic ---
   function openFolder(id, name) {
     currentFolderId = id;
     currentDiaryTitle.textContent = name;
     foldersView.style.display = "none";
     entriesView.style.display = "flex";
-
-    // Reset výběru složky při vstupu dovnitř
     selectedFolderId = null;
     updateFolderActionsUI();
-
     loadEntries(id);
   }
 
@@ -314,7 +298,7 @@ document.addEventListener("DOMContentLoaded", () => {
     entriesView.style.display = "none";
     foldersView.style.display = "flex";
     currentFolderId = null;
-    loadFolders(); // Refresh to keep checkboxes logic working
+    loadFolders();
   }
   backToFoldersBtn.addEventListener("click", backToFolders);
 
@@ -338,10 +322,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const start = new Date(folder.startDate);
     const end = new Date(folder.endDate);
 
-    // Iterujeme den po dni od start do end
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-      const dateStr = d.toISOString().split("T")[0]; // YYYY-MM-DD
-
+      const dateStr = d.toISOString().split("T")[0];
       const entry = currentEntries.find((e) => e.date === dateStr);
 
       const dayCard = document.createElement("div");
@@ -356,17 +338,14 @@ document.addEventListener("DOMContentLoaded", () => {
         const div = document.createElement("div");
         div.innerHTML = entry.content;
         previewText = div.textContent || div.innerText || "";
-      } else {
-        previewText = '<span style="color:#e5e7eb; font-style:italic;">Prázdná stránka...</span>';
       }
 
-      // Klon data pro closure
       const clickDate = new Date(d);
 
       dayCard.innerHTML = `
-                <div style="display:flex; justify-content:space-between; width:100%;">
-                    <span style="font-size:0.8em; color:#9ca3af;">${dayName}</span>
-                    <span style="font-size:0.8em; color:#9ca3af;">${monthName}</span>
+                <div class="day-header-row">
+                    <span>${dayName}</span>
+                    <span>${monthName}</span>
                 </div>
                 <div class="day-number">${dayNum}</div>
                 <div class="entry-preview">${previewText}</div>
@@ -377,7 +356,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // --- Notebook Modal Logic ---
   function openNotebook(dateObj, entry) {
     currentSelectedDate = dateObj.toISOString().split("T")[0];
     currentEntryId = entry ? entry.id : null;

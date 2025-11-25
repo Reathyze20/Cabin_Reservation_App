@@ -25,7 +25,7 @@
           </div>
         </div>
 
-        <!-- HLAVNÍ OBSAH -->
+        <!-- HLAVNÍ OBSAH (Používáme diary třídy pro specifický vzhled) -->
         <div class="main-content-diary">
           <div class="card diary-card">
             <!-- 1. POHLED: SEZNAM DENÍKŮ -->
@@ -53,8 +53,11 @@
 
             <!-- 2. POHLED: ZÁPISY (UVNITŘ DENÍKU) -->
             <div id="diary-entries-view" style="display: none; flex-direction: column; height: 100%">
-              <div class="diary-header" style="justify-content: space-between">
+              <div class="diary-header">
+                <!-- Nadpis je vycentrován CSS flexboxem -->
                 <h2 id="current-diary-title">Název deníku</h2>
+                <!-- Tlačítko v hlavičce s absolutní pozicí -->
+                <!-- <button id="delete-diary-folder-btn" ...> je nyní v patičce seznamu složek, zde není potřeba -->
               </div>
 
               <div class="diary-content-wrapper diary-calendar-wrapper">
