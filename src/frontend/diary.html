@@ -26,7 +26,7 @@
           </div>
         </div>
 
-        <!-- HLAVNÍ OBSAH (Používáme diary třídy pro specifický vzhled) -->
+        <!-- HLAVNÍ OBSAH -->
         <div class="main-content-diary">
           <div class="card diary-card">
             <!-- 1. POHLED: SEZNAM DENÍKŮ -->
@@ -43,7 +43,6 @@
 
               <div class="diary-footer">
                 <div class="footer-left" id="diary-folder-actions-group">
-                  <!-- Zde se zobrazí tlačítko Smazat a Přejmenovat při výběru -->
                   <button id="rename-diary-folder-list-btn" class="gallery-btn gallery-btn-secondary" style="display: none"><i class="fas fa-edit"></i> Přejmenovat</button>
                   <button id="delete-diary-folder-list-btn" class="gallery-btn gallery-btn-danger" style="display: none"><i class="fas fa-trash-alt"></i> Smazat deník</button>
                 </div>
@@ -56,14 +55,10 @@
             <!-- 2. POHLED: ZÁPISY (UVNITŘ DENÍKU) -->
             <div id="diary-entries-view" style="display: none; flex-direction: column; height: 100%">
               <div class="diary-header">
-                <!-- Nadpis je vycentrován CSS flexboxem -->
                 <h2 id="current-diary-title">Název deníku</h2>
-                <!-- Tlačítko v hlavičce s absolutní pozicí -->
-                <!-- <button id="delete-diary-folder-btn" ...> je nyní v patičce seznamu složek, zde není potřeba -->
               </div>
 
               <div class="diary-content-wrapper diary-calendar-wrapper">
-                <!-- Kalendář zápisů (přesně ty dny z rozmezí) -->
                 <div id="diary-calendar" class="diary-calendar"></div>
               </div>
 
@@ -167,7 +162,7 @@
           </div>
           <div class="notebook-footer">
             <!-- Tlačítko pro přidání fotky z galerie -->
-            <button id="attach-photo-btn" class="notebook-btn-attach" style="margin-right: auto"><i class="fas fa-images"></i> Připojit fotku</button>
+            <button id="attach-photo-btn" class="notebook-btn-attach"><i class="fas fa-images"></i> Připojit fotku</button>
 
             <button id="save-notebook-entry-btn" class="notebook-btn-save"><i class="fas fa-save"></i> Uložit</button>
             <button id="delete-notebook-entry-btn" class="notebook-btn-delete" style="display: none"><i class="fas fa-trash"></i> Vytrhnout</button>
@@ -193,6 +188,26 @@
           <button id="gallery-picker-confirm-btn" class="gallery-btn gallery-btn-primary">Použít vybrané</button>
         </div>
       </div>
+    </div>
+
+    <!-- LIGHTBOX (DETAIL FOTKY) - PŘIDÁNO PRO DENÍK -->
+    <div id="lightbox-modal" class="lightbox-overlay" style="display: none">
+      <button id="lightbox-close" class="lightbox-close">&times;</button>
+      <div class="lightbox-content">
+        <img id="lightbox-img" src="" alt="Detail fotky" />
+
+        <!-- Popisek (pouze pro čtení v deníku, nebo skryjeme) -->
+        <div class="lightbox-caption-container">
+          <p id="lightbox-description" class="lightbox-description"></p>
+        </div>
+
+        <div class="lightbox-controls">
+          <!-- V deníku stačí asi jen zavřít, nebo stáhnout -->
+          <a id="lightbox-download" href="#" download class="lightbox-btn"> <i class="fas fa-download"></i> Stáhnout </a>
+        </div>
+      </div>
+      <button id="lightbox-prev" class="lightbox-arrow left"><i class="fas fa-chevron-left"></i></button>
+      <button id="lightbox-next" class="lightbox-arrow right"><i class="fas fa-chevron-right"></i></button>
     </div>
 
     <!-- SUCCESS TOAST -->

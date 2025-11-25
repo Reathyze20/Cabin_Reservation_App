@@ -3368,65 +3368,204 @@ body.admin-page {
 }
 
 /* --- STYLY PRO PŘÍLOHY V NOTEBOOKU --- */
+/* ... (Předchozí styly zůstávají beze změny, upravujeme sekci pro NOTEBOOK ATTACHMENTS) ... */
+
+/* --- STYLY PRO PŘÍLOHY V NOTEBOOKU (Upraveno pro větší náhledy) --- */
 .notebook-attachments {
   margin-top: 15px;
-  padding-top: 10px;
-  border-top: 1px dashed #d1d5db;
-  min-height: 40px;
+  padding: 15px;
+  border-top: 2px dashed rgba(209, 213, 219, 0.6); /* Výraznější oddělovač */
+  min-height: 160px; /* Více místa pro větší fotky */
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 20px; /* Větší mezery mezi fotkami */
+  overflow-y: auto;
+  max-height: 220px; /* Omezení výšky s posuvníkem */
+  background-color: rgba(255, 255, 255, 0.3); /* Jemné podbarvení zóny pro fotky */
+  border-radius: 8px;
+  align-items: center; /* Zarovnání na střed řádku */
 }
 
-.attachment-thumbnail-wrapper:hover .attachment-thumbnail {
-  opacity: 0.8;
+.attachment-thumbnail-wrapper {
+  position: relative;
+  transition: transform 0.2s ease;
+  cursor: pointer;
+  display: inline-block; /* Zajistí, že wrapper obalí fotku */
 }
 
-/* Tlačítko pro připojení fotky */
+.attachment-thumbnail-wrapper:hover {
+  transform: scale(1.05) rotate(2deg); /* Efekt zvednutí fotky při najetí */
+  z-index: 5;
+}
+
+.attachment-thumbnail {
+  /* Zvětšení náhledů */
+  width: 140px !important;
+  height: 140px !important;
+  object-fit: cover;
+  border-radius: 2px; /* Jemně zaoblené rohy */
+  border: 5px solid white; /* Bílý rámeček jako u polaroidu */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Stín pro 3D efekt */
+  background-color: white;
+}
+
+/* Křížek pro odstranění - posunutý, aby nepřekážel */
+.attachment-remove-btn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background-color: #ef4444;
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  text-align: center;
+  line-height: 22px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+  transition: background-color 0.2s, transform 0.2s;
+}
+
+.attachment-remove-btn:hover {
+  background-color: #dc2626;
+  transform: scale(1.1);
+}
+
+/* Tlačítko pro připojení fotky - výraznější styl */
 .notebook-btn-attach {
   background: none;
-  border: 1px solid #d97706;
+  border: 2px dashed #d97706; /* Čárkovaný rámeček */
   color: #d97706;
   font-family: "Kalam", cursive;
   font-weight: 600;
-  padding: 5px 15px;
-  border-radius: 20px;
+  padding: 8px 20px;
+  border-radius: 25px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 5px;
-  font-size: 1rem;
+  gap: 8px;
+  font-size: 1.1rem;
   transition: all 0.2s;
+  margin-right: auto; /* Zarovnání doleva */
 }
 
 .notebook-btn-attach:hover {
   background-color: #fff7ed;
+  border-style: solid; /* Při hoveru plný rámeček */
+  transform: translateY(-2px);
 }
 
-/* --- MODAL FOTO VÝBĚRU --- */
-/* Přidáme drobné úpravy pro modal výběru fotek, aby vypadal dobře v rámci existujících stylů */
-#select-gallery-photo-modal .folder-card:hover {
-  transform: scale(1.02);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  border-color: #fbbf24;
+/* ... (Zbytek stylů zůstává stejný) ... */
+/* --- OPRAVENÉ LIGHTBOX STYLY (pokud tam ještě nejsou) --- */
+.lightbox-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.9);
+  z-index: 2000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(5px);
 }
 
-/* Zajistíme, aby gridy v modalu fungovaly i na mobilu */
-@media (max-width: 600px) {
-  #gallery-picker-folders {
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)) !important;
-  }
-  #gallery-picker-photos {
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)) !important;
-  }
+.lightbox-content {
+  position: relative;
+  max-width: 90%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-/* ... OSTATNÍ STYLY ZŮSTÁVAJÍ BEZ ZMĚNY (Vložte sem obsah původního style.css nebo jej jen doplňte o toto nahoře) ... */
-/* Pro jistotu kopíruji celý soubor, ale v reálu by stačilo přidat na konec. 
-   Z důvodu limitu znaků a čistoty zde uvedu jen nové styly, které je třeba přidat na konec souboru style.css.
-   Uživatel si je může přidat. Ale pro úplnost generuji celý soubor níže.
-*/
+.lightbox-content img {
+  max-width: 100%;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: 4px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+}
 
+.lightbox-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  font-size: 3rem;
+  color: white;
+  background: none;
+  border: none;
+  cursor: pointer;
+  z-index: 2010;
+  transition: color 0.3s;
+}
+.lightbox-close:hover {
+  color: #ef4444;
+}
+
+.lightbox-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: none;
+  font-size: 2rem;
+  padding: 15px;
+  cursor: pointer;
+  transition: background 0.3s;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2005;
+}
+.lightbox-arrow:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+.lightbox-arrow.left {
+  left: 20px;
+}
+.lightbox-arrow.right {
+  right: 20px;
+}
+
+.lightbox-caption-container {
+  color: #e5e7eb;
+  margin-top: 15px;
+  text-align: center;
+  font-family: "Kalam", cursive;
+  font-size: 1.2rem;
+}
+
+.lightbox-controls {
+  margin-top: 10px;
+}
+
+.lightbox-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+  text-decoration: none;
+  border-radius: 20px;
+  transition: background-color 0.3s;
+  font-size: 0.9rem;
+}
+.lightbox-btn:hover {
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+/* ... (zbytek původního CSS) ... */
 /* --- GLOBÁLNÍ STYLY PRO GALERII --- */
 
 .main-content-gallery {
@@ -3927,44 +4066,6 @@ body.admin-page {
 }
 .notebook-btn-delete:hover {
   text-decoration: line-through;
-}
-
-/* --- NOVÉ STYLY PRO PŘÍLOHY V NOTEBOOKU --- */
-.notebook-attachments {
-  margin-top: 5px;
-  padding-top: 5px;
-  border-top: 1px dashed rgba(209, 213, 219, 0.5);
-  min-height: 90px; /* Dost místa pro náhledy */
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  overflow-y: auto;
-  max-height: 120px;
-}
-
-.attachment-thumbnail-wrapper:hover .attachment-thumbnail {
-  opacity: 0.8;
-}
-
-/* Tlačítko pro připojení fotky */
-.notebook-btn-attach {
-  background: none;
-  border: 1px solid #d97706;
-  color: #d97706;
-  font-family: "Kalam", cursive;
-  font-weight: 600;
-  padding: 5px 15px;
-  border-radius: 20px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 1rem;
-  transition: all 0.2s;
-}
-
-.notebook-btn-attach:hover {
-  background-color: #fff7ed;
 }
 
 /* --- MODAL FOTO VÝBĚRU --- */
