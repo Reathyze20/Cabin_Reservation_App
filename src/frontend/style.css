@@ -3000,13 +3000,18 @@ body.admin-page {
 
 /* --- DIARY STYLES --- */
 
+/* ... Předchozí styly zachovány ... */
+
+/* --- DIARY STYLES --- */
+
 /* 1. Hlavní kontejner přes celou výšku (minus hlavička) */
 .main-content-diary {
   width: 100%;
+  /* Zajistí, že kontejner zabírá zbytek místa v okně */
   height: calc(100vh - 100px);
   display: flex;
   flex-direction: column;
-  overflow: hidden; /* Zabrání scrollování celé stránky */
+  overflow: hidden; /* Zabrání scrollování celé stránky, scrolluje se jen uvnitř */
 }
 
 /* 2. Karta deníku se musí roztáhnout na 100% kontejneru */
@@ -3090,6 +3095,66 @@ body.admin-page {
   height: 100%;
 }
 
+.diary-calendar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+  padding: 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.diary-day-card {
+  background-color: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  min-height: 100px;
+  padding: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+}
+.diary-day-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  border-color: #fbbf24;
+}
+.diary-day-card.has-entry {
+  background-color: #fffbeb;
+  border-color: #fcd34d;
+}
+.diary-day-card.has-entry::after {
+  content: "\f02d";
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  position: absolute;
+  bottom: 5px;
+  right: 10px;
+  font-size: 1.5em;
+  color: #d97706;
+  opacity: 0.3;
+}
+.day-number {
+  font-weight: 700;
+  font-size: 1.1em;
+  color: #374151;
+}
+.entry-preview {
+  font-size: 0.8em;
+  color: #6b7280;
+  margin-top: 5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  font-family: "Kalam", cursive;
+}
+
 /* --- NOTEBOOK MODAL STYLY (Ponecháno beze změny) --- */
 .notebook-modal-content {
   width: 100%;
@@ -3101,7 +3166,6 @@ body.admin-page {
   perspective: 1000px;
   background: transparent;
 }
-
 .notebook-paper {
   width: 100%;
   height: 100%;
@@ -3117,7 +3181,6 @@ body.admin-page {
   overflow: hidden;
   border-left: 2px solid rgba(0, 0, 0, 0.1);
 }
-
 .notebook-paper::before {
   content: "";
   position: absolute;
@@ -3130,7 +3193,6 @@ body.admin-page {
   z-index: 5;
   pointer-events: none;
 }
-
 .notebook-holes {
   position: absolute;
   left: 10px;
@@ -3144,7 +3206,6 @@ body.admin-page {
   opacity: 0.1;
   pointer-events: none;
 }
-
 .notebook-header {
   height: 4rem;
   display: flex;
@@ -3156,7 +3217,6 @@ body.admin-page {
   font-size: 1.5rem;
   font-weight: 700;
 }
-
 .notebook-close-button {
   font-family: sans-serif;
   font-size: 2rem;
@@ -3169,14 +3229,12 @@ body.admin-page {
 .notebook-close-button:hover {
   color: #374151;
 }
-
 .notebook-body {
   flex-grow: 1;
   position: relative;
   padding-left: 5rem;
   padding-right: 2rem;
 }
-
 #notebook-textarea {
   width: 100%;
   height: 100%;
@@ -3191,7 +3249,6 @@ body.admin-page {
   padding-top: 0.1rem;
   overflow-y: auto;
 }
-
 #notebook-textarea::-webkit-scrollbar {
   width: 8px;
 }
@@ -3202,7 +3259,6 @@ body.admin-page {
   background-color: rgba(0, 0, 0, 0.1);
   border-radius: 4px;
 }
-
 .notebook-footer {
   height: 3rem;
   display: flex;
@@ -3212,7 +3268,6 @@ body.admin-page {
   gap: 15px;
   background: rgba(255, 255, 255, 0.3);
 }
-
 .notebook-btn-save,
 .notebook-btn-delete {
   background: none;
@@ -3228,7 +3283,6 @@ body.admin-page {
   border-radius: 20px;
   transition: all 0.2s;
 }
-
 .notebook-btn-save {
   color: #15803d;
   border: 2px solid transparent;
@@ -3243,7 +3297,6 @@ body.admin-page {
 .notebook-btn-delete:hover {
   text-decoration: line-through;
 }
-
 @media (max-width: 600px) {
   .notebook-paper::before {
     left: 2rem;

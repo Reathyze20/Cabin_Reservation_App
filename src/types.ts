@@ -44,7 +44,7 @@ export interface GalleryFolder {
   id: string;
   name: string;
   createdAt: string;
-  createdBy?: string; // Přidáno pole pro autora
+  createdBy?: string;
 }
 
 export interface GalleryPhoto {
@@ -56,19 +56,21 @@ export interface GalleryPhoto {
   description?: string;
 }
 
-// --- NOVÉ TYPY PRO DENÍK ---
+// --- DENÍK ---
 export interface DiaryFolder {
   id: string;
-  name: string; // Např. "Léto 2025"
+  name: string;
   createdAt: string;
   createdBy: string;
+  startDate?: string; // Datum od (ISO string YYYY-MM-DD)
+  endDate?: string; // Datum do (ISO string YYYY-MM-DD)
 }
 
 export interface DiaryEntry {
   id: string;
   folderId: string;
-  date: string; // Datum zápisu
-  content: string; // HTML nebo text obsahu
+  date: string;
+  content: string;
   author: string;
   authorId: string;
   createdAt: string;

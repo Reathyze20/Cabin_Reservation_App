@@ -28,37 +28,37 @@
         <!-- HLAVNÍ OBSAH -->
         <div class="main-content-diary">
           <div class="card diary-card">
-            <!-- 1. POHLED: SEZNAM OBDOBÍ (SLOŽKY) -->
+            <!-- 1. POHLED: SEZNAM DENÍKŮ -->
             <div id="diary-folders-view" style="display: flex; flex-direction: column; height: 100%">
               <div class="diary-header">
-                <h2><i class="fas fa-book-open"></i> Deník zážitků</h2>
+                <h2><i class="fas fa-book-open"></i> Deníky výletů</h2>
               </div>
 
               <div class="diary-content-wrapper">
                 <div id="diary-folders-grid" class="folders-grid">
-                  <!-- Zde se načtou složky/období -->
+                  <!-- Zde se načtou složky/deníky -->
                 </div>
               </div>
 
               <div class="diary-footer">
                 <div class="footer-left" id="diary-folder-actions-group">
                   <!-- Zde se zobrazí tlačítko Smazat při výběru -->
-                  <button id="delete-diary-folder-list-btn" class="gallery-btn gallery-btn-danger" style="display: none"><i class="fas fa-trash-alt"></i> Smazat období</button>
+                  <button id="delete-diary-folder-list-btn" class="gallery-btn gallery-btn-danger" style="display: none"><i class="fas fa-trash-alt"></i> Smazat deník</button>
                 </div>
                 <div class="footer-right">
-                  <button id="create-diary-folder-btn" class="gallery-btn gallery-btn-primary"><i class="fas fa-plus"></i> Nové období</button>
+                  <button id="create-diary-folder-btn" class="gallery-btn gallery-btn-primary"><i class="fas fa-plus"></i> Nový deník</button>
                 </div>
               </div>
             </div>
 
-            <!-- 2. POHLED: ZÁPISY (UVNITŘ SLOŽKY) -->
+            <!-- 2. POHLED: ZÁPISY (UVNITŘ DENÍKU) -->
             <div id="diary-entries-view" style="display: none; flex-direction: column; height: 100%">
               <div class="diary-header" style="justify-content: space-between">
-                <h2 id="current-diary-title">Název období</h2>
+                <h2 id="current-diary-title">Název deníku</h2>
               </div>
 
               <div class="diary-content-wrapper diary-calendar-wrapper">
-                <!-- Kalendář zápisů -->
+                <!-- Kalendář zápisů (přesně ty dny z rozmezí) -->
                 <div id="diary-calendar" class="diary-calendar"></div>
               </div>
 
@@ -66,7 +66,6 @@
                 <div class="footer-left">
                   <button id="back-to-diary-folders-btn" class="gallery-btn gallery-btn-secondary">Zpět</button>
                 </div>
-                <!-- Tlačítko přidat je teď v podstatě kliknutí na den, ale můžeme nechat pro info -->
               </div>
             </div>
           </div>
@@ -80,15 +79,25 @@
       </div>
     </div>
 
-    <!-- MODAL: VYTVOŘIT OBDOBÍ -->
+    <!-- MODAL: VYTVOŘIT NOVÝ DENÍK -->
     <div id="create-diary-folder-modal" class="modal-overlay" style="display: none">
       <div class="modal-content">
         <span class="modal-close-button">&times;</span>
-        <h2>Nové období</h2>
+        <h2>Nový deník</h2>
         <form id="create-diary-folder-form">
           <div class="form-group">
-            <label for="diary-folder-name-input">Název (např. Prázdniny 2024):</label>
-            <input type="text" id="diary-folder-name-input" required />
+            <label for="diary-folder-name-input">Název deníku (např. Letní prázdniny):</label>
+            <input type="text" id="diary-folder-name-input" required placeholder="Zadejte název..." />
+          </div>
+          <div class="form-group" style="display: flex; gap: 10px">
+            <div style="flex: 1">
+              <label for="diary-start-date">Od:</label>
+              <input type="date" id="diary-start-date" required />
+            </div>
+            <div style="flex: 1">
+              <label for="diary-end-date">Do:</label>
+              <input type="date" id="diary-end-date" required />
+            </div>
           </div>
           <div class="modal-buttons">
             <button type="submit" class="gallery-btn gallery-btn-primary" style="width: 100%">Vytvořit</button>
@@ -97,12 +106,12 @@
       </div>
     </div>
 
-    <!-- MODAL: DELETE FOLDER WARNING (Deník) -->
+    <!-- MODAL: DELETE FOLDER WARNING -->
     <div id="delete-diary-folder-modal" class="modal-overlay" style="display: none">
       <div class="modal-content">
         <span class="modal-close-button">&times;</span>
         <h2 style="color: #ef4444"><i class="fas fa-exclamation-triangle"></i> Varování</h2>
-        <p>Toto období obsahuje zápisky. Pokud ho smažete, <strong>všechny vzpomínky v něm budou nenávratně ztraceny</strong>.</p>
+        <p>Tento deník obsahuje zápisky. Pokud ho smažete, <strong>všechny vzpomínky v něm budou nenávratně ztraceny</strong>.</p>
         <p>Pro potvrzení smazání napište do pole níže slovo <strong>DELETE</strong>.</p>
 
         <form id="delete-diary-folder-form">
@@ -127,7 +136,6 @@
           </div>
           <div class="notebook-body">
             <textarea id="notebook-textarea" placeholder="Milý deníčku..."></textarea>
-            <!-- Overlay linky pokud by bylo třeba, nyní řešeno pozadím -->
           </div>
           <div class="notebook-footer">
             <button id="save-notebook-entry-btn" class="notebook-btn-save"><i class="fas fa-save"></i> Uložit</button>

@@ -22,6 +22,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const createFolderModal = document.getElementById("create-diary-folder-modal");
   const createFolderForm = document.getElementById("create-diary-folder-form");
   const folderNameInput = document.getElementById("diary-folder-name-input");
+  const folderStartDateInput = document.getElementById("diary-start-date"); // Nový input
+  const folderEndDateInput = document.getElementById("diary-end-date"); // Nový input
 
   // Modal Delete
   const deleteFolderModal = document.getElementById("delete-diary-folder-modal");
@@ -118,7 +120,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderFolders(folders) {
     foldersGrid.innerHTML = "";
     if (folders.length === 0) {
-      foldersGrid.innerHTML = '<p class="empty-state">Deník je prázdný. Založte první období!</p>';
+      foldersGrid.innerHTML = '<p class="empty-state">Deník je prázdný. Založte první!</p>';
       return;
     }
     folders.forEach((folder) => {
@@ -141,12 +143,21 @@ document.addEventListener("DOMContentLoaded", () => {
                 </div>
             `;
 
-      // Ikonka zápisníku (fa-book-journal-whills)
+      // Formátování data pro zobrazení
+      let dateRange = "";
+      if (folder.startDate && folder.endDate) {
+        const d1 = new Date(folder.startDate).toLocaleDateString("cs-CZ");
+        const d2 = new Date(folder.endDate).toLocaleDateString("cs-CZ");
+        dateRange = `<div style="font-size: 0.8em; color: #555; margin-top:5px;">${d1} - ${d2}</div>`;
+      }
+
+      // Ikonka zápisníku
       el.innerHTML = `
                 ${checkboxHTML}
                 <div class="folder-icon" style="color: #fbbf24;"><i class="fas fa-book-journal-whills"></i></div>
                 <div class="folder-info">
                     <h3>${folder.name}</h3>
+                    ${dateRange}
                     <span class="folder-date">Vytvořil: ${folder.createdBy || "?"}</span>
                 </div>
             `;
@@ -192,20 +203,34 @@ document.addEventListener("DOMContentLoaded", () => {
   createFolderBtn.addEventListener("click", () => {
     createFolderModal.style.display = "flex";
     folderNameInput.value = "";
+    folderStartDateInput.value = "";
+    folderEndDateInput.value = "";
     folderNameInput.focus();
   });
 
   createFolderForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const name = folderNameInput.value.trim();
-    if (!name) return;
+    const startDate = folderStartDateInput.value;
+    const endDate = folderEndDateInput.value;
+
+    if (!name || !startDate || !endDate) {
+      showToast("Vyplňte název a obě data.", "error");
+      return;
+    }
+
+    if (new Date(startDate) > new Date(endDate)) {
+      showToast("Datum 'Od' musí být před 'Do'.", "error");
+      return;
+    }
+
     const result = await apiFetch(`${backendUrl}/api/diary/folders`, {
       method: "POST",
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({ name, startDate, endDate }),
     });
     if (result) {
       createFolderModal.style.display = "none";
-      showToast("Období vytvořeno.");
+      showToast("Deník vytvořen.");
       loadFolders();
     }
   });
@@ -229,16 +254,16 @@ document.addEventListener("DOMContentLoaded", () => {
     if (isEmpty) {
       // Prázdná složka - stačí potvrzení (pokud je admin nebo tvůrce)
       if (isAdmin || isCreator) {
-        if (confirm(`Opravdu smazat prázdné období "${folderName}"?`)) {
+        if (confirm(`Opravdu smazat prázdný deník "${folderName}"?`)) {
           performFolderDelete(folderId);
         }
       } else {
-        showToast("Cizí složky může mazat jen autor nebo admin.", "error");
+        showToast("Cizí deníky může mazat jen autor nebo admin.", "error");
       }
     } else {
       // Neprázdná složka
       if (!isAdmin && !isCreator) {
-        showToast("Nemáte oprávnění smazat toto období.", "error");
+        showToast("Nemáte oprávnění smazat tento deník.", "error");
         return;
       }
 
@@ -265,7 +290,7 @@ document.addEventListener("DOMContentLoaded", () => {
       method: "DELETE",
     });
     if (result) {
-      showToast("Období smazáno.");
+      showToast("Deník smazán.");
       selectedFolderId = null;
       loadFolders();
     }
@@ -303,14 +328,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function renderCalendar() {
     diaryCalendar.innerHTML = "";
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
 
-    const daysToShow = 28;
-    for (let i = 0; i < daysToShow; i++) {
-      const d = new Date(today);
-      d.setDate(today.getDate() - i);
-      const dateStr = d.toISOString().split("T")[0];
+    const folder = allFolders.find((f) => f.id === currentFolderId);
+    if (!folder || !folder.startDate || !folder.endDate) {
+      diaryCalendar.innerHTML = "<p>Chyba v datech deníku.</p>";
+      return;
+    }
+
+    const start = new Date(folder.startDate);
+    const end = new Date(folder.endDate);
+
+    // Iterujeme den po dni od start do end
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const dateStr = d.toISOString().split("T")[0]; // YYYY-MM-DD
 
       const entry = currentEntries.find((e) => e.date === dateStr);
 
@@ -330,6 +360,9 @@ document.addEventListener("DOMContentLoaded", () => {
         previewText = '<span style="color:#e5e7eb; font-style:italic;">Prázdná stránka...</span>';
       }
 
+      // Klon data pro closure
+      const clickDate = new Date(d);
+
       dayCard.innerHTML = `
                 <div style="display:flex; justify-content:space-between; width:100%;">
                     <span style="font-size:0.8em; color:#9ca3af;">${dayName}</span>
@@ -339,7 +372,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div class="entry-preview">${previewText}</div>
             `;
 
-      dayCard.onclick = () => openNotebook(d, entry);
+      dayCard.onclick = () => openNotebook(clickDate, entry);
       diaryCalendar.appendChild(dayCard);
     }
   }
@@ -396,7 +429,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     if (result) {
-      showToast("Zápis uložen do deníčku.");
+      showToast("Zápis uložen.");
       notebookModal.style.display = "none";
       loadEntries(currentFolderId);
     }
@@ -421,7 +454,6 @@ document.addEventListener("DOMContentLoaded", () => {
     btn.addEventListener("click", () => {
       const modal = btn.closest(".modal-overlay");
       if (modal) modal.style.display = "none";
-      // Reset inputs
       if (modal.id === "delete-diary-folder-modal") deleteFolderForm.reset();
     });
   });
