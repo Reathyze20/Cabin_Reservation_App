@@ -4589,6 +4589,37 @@ input[type="date"] {
 
 
 /* ... Předchozí styly zachovány ... */
+/* ... Předchozí styly zachovány ... */
+
+/* --- SPECIAL NAV BUTTON (REKONSTRUKCE) --- */
+.nav-link.nav-special {
+  background: repeating-linear-gradient(
+    45deg,
+    #fffbeb,
+    #fffbeb 10px,
+    #fff7ed 10px,
+    #fff7ed 20px
+  );
+  border: 2px solid #fbbf24;
+  color: #d97706;
+  font-weight: 800;
+  box-shadow: 0 2px 5px rgba(217, 119, 6, 0.2);
+  transition: all 0.3s ease;
+}
+
+.nav-link.nav-special:hover {
+  background: #fbbf24;
+  color: white;
+  border-color: #d97706;
+  transform: translateY(-2px);
+}
+
+.nav-link.nav-special.active {
+  background: #d97706;
+  color: white;
+  border-color: #b45309;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+}
 
 /* --- RECONSTRUCTION BOARD STYLES --- */
 
@@ -4664,8 +4695,17 @@ input[type="date"] {
   background: #fffbeb;
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
+  /* Centrování nadpisu */
+  text-align: center;
 }
-.column-header h3 { margin: 0; font-size: 1em; }
+.column-header h3 { 
+  margin: 0; 
+  font-size: 1em; 
+  display: flex;
+  justify-content: center; /* Vycentruje ikonu a text flexboxem */
+  align-items: center;
+  gap: 10px;
+}
 
 .header-idea i { color: #f59e0b; }
 .header-company i { color: #3b82f6; }
@@ -4674,7 +4714,7 @@ input[type="date"] {
 .column-content {
   padding: 10px;
   overflow-y: auto;
-  flex-grow: 1;
+  flex-grow: 1; /* Tímto se obsah roztáhne a vytlačí budget summary dolů */
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -4689,6 +4729,7 @@ input[type="date"] {
   box-shadow: 0 2px 4px rgba(0,0,0,0.02);
   transition: transform 0.2s;
   position: relative;
+  flex-shrink: 0; /* Zabrání smrsknutí karet */
 }
 .kanban-card:hover {
   transform: translateY(-2px);
@@ -4795,11 +4836,15 @@ input[type="date"] {
 }
 
 .budget-summary {
-  padding: 10px;
+  padding: 15px;
   background: #ecfdf5;
   color: #065f46;
   text-align: center;
-  border-bottom: 1px solid #d1fae5;
+  border-top: 1px solid #d1fae5;
+  margin-top: auto; /* Pojistka pro flexbox, aby to bylo dole */
+  font-size: 1.1em;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
 }
 
 /* Category Borders */

@@ -19,9 +19,11 @@ import {
   saveDiaryFolders,
   loadDiaryEntries,
   saveDiaryEntries,
+  loadReconstructionItems,
+  saveReconstructionItems,
 } from "../utils/auth";
 import fs from "fs";
-import { User, Reservation, ShoppingListItem, Note, GalleryFolder, GalleryPhoto, DiaryFolder, DiaryEntry } from "../types";
+import { User, Reservation, ShoppingListItem, Note, GalleryFolder, GalleryPhoto, DiaryFolder, DiaryEntry, ReconstructionItem } from "../types";
 import { JWT_SECRET } from "../config/config";
 import { protect } from "../middleware/authMiddleware";
 import { v4 as uuidv4 } from "uuid";
@@ -704,7 +706,6 @@ app.post("/api/diary/folders", protect, async (req, res) => {
   }
 });
 
-// NOVÉ: Přejmenování složky deníku
 app.patch("/api/diary/folders/:id", protect, async (req: Request, res: Response) => {
   if (!req.user) return res.status(401).json({ message: "Neautorizováno" });
   const { id } = req.params;
@@ -738,16 +739,13 @@ app.delete("/api/diary/folders/:id", protect, async (req, res) => {
     const folderIdx = folders.findIndex((f) => f.id === id);
     if (folderIdx === -1) return res.status(404).json({ message: "Složka nenalezena." });
 
-    // Ověření oprávnění (jen admin nebo autor)
     if (req.user.role !== "admin" && folders[folderIdx].createdBy !== req.user.username) {
       return res.status(403).json({ message: "Nemáte oprávnění smazat toto období." });
     }
 
-    // Smazat složku
     folders.splice(folderIdx, 1);
     await saveDiaryFolders(folders);
 
-    // Smazat i všechny záznamy v této složce
     let entries = await loadDiaryEntries();
     const initialEntryCount = entries.length;
     entries = entries.filter((e) => e.folderId !== id);
@@ -779,7 +777,7 @@ app.get("/api/diary/entries", protect, async (req, res) => {
 
 app.post("/api/diary/entries", protect, async (req, res) => {
   if (!req.user) return res.status(401).json({ message: "Neautorizováno" });
-  const { folderId, date, content, galleryPhotoIds } = req.body; // Přidáno galleryPhotoIds
+  const { folderId, date, content, galleryPhotoIds } = req.body;
 
   if (!folderId || !date || !content) return res.status(400).json({ message: "Chybí data." });
 
@@ -793,7 +791,7 @@ app.post("/api/diary/entries", protect, async (req, res) => {
       author: req.user.username,
       authorId: req.user.userId,
       createdAt: new Date().toISOString(),
-      galleryPhotoIds: galleryPhotoIds || [], // Ukládáme ID fotek
+      galleryPhotoIds: galleryPhotoIds || [],
     };
     entries.push(newEntry);
     await saveDiaryEntries(entries);
@@ -823,6 +821,107 @@ app.delete("/api/diary/entries/:id", protect, async (req, res) => {
     res.status(500).json({ message: "Chyba při mazání záznamu." });
   }
 });
+
+// ============================================================================
+//                             RECONSTRUCTION API (NOVÉ)
+// ============================================================================
+
+app.get("/api/reconstruction", protect, async (req, res) => {
+  try {
+    const items = await loadReconstructionItems();
+    res.json(items);
+  } catch (error) {
+    res.status(500).json({ message: "Chyba při načítání dat." });
+  }
+});
+
+app.post("/api/reconstruction", protect, async (req, res) => {
+  if (!req.user) return res.status(401).json({ message: "Neautorizováno" });
+  const { category, title, description, link, cost, status } = req.body;
+
+  if (!category || !title) return res.status(400).json({ message: "Chybí povinné údaje (kategorie, název)." });
+
+  try {
+    const items = await loadReconstructionItems();
+    const newItem: ReconstructionItem = {
+      id: uuidv4(),
+      category,
+      title,
+      description: description || "",
+      link: link || "",
+      cost: cost ? parseFloat(cost) : undefined,
+      status: status || "pending",
+      votes: [],
+      createdBy: req.user.username,
+      createdAt: new Date().toISOString(),
+    };
+    items.push(newItem);
+    await saveReconstructionItems(items);
+    res.status(201).json(newItem);
+  } catch (error) {
+    res.status(500).json({ message: "Chyba při ukládání." });
+  }
+});
+
+app.delete("/api/reconstruction/:id", protect, async (req, res) => {
+  if (!req.user) return res.status(401).json({ message: "Neautorizováno" });
+  const { id } = req.params;
+  try {
+    let items = await loadReconstructionItems();
+    const initialLength = items.length;
+    items = items.filter((i) => i.id !== id);
+    if (items.length === initialLength) return res.status(404).json({ message: "Nenalezeno." });
+    
+    await saveReconstructionItems(items);
+    res.json({ message: "Smazáno." });
+  } catch (error) {
+    res.status(500).json({ message: "Chyba." });
+  }
+});
+
+app.patch("/api/reconstruction/:id/vote", protect, async (req, res) => {
+  if (!req.user) return res.status(401).json({ message: "Neautorizováno" });
+  const { id } = req.params;
+  try {
+    let items = await loadReconstructionItems();
+    const idx = items.findIndex((i) => i.id === id);
+    if (idx === -1) return res.status(404).json({ message: "Nenalezeno." });
+
+    const userId = req.user.userId;
+    const hasVoted = items[idx].votes.includes(userId);
+
+    if (hasVoted) {
+      items[idx].votes = items[idx].votes.filter((v) => v !== userId); // Odebrat hlas
+    } else {
+      items[idx].votes.push(userId); // Přidat hlas
+    }
+
+    await saveReconstructionItems(items);
+    res.json(items[idx]);
+  } catch (error) {
+    res.status(500).json({ message: "Chyba." });
+  }
+});
+
+app.patch("/api/reconstruction/:id/status", protect, async (req, res) => {
+  if (!req.user) return res.status(401).json({ message: "Neautorizováno" });
+  const { id } = req.params;
+  const { status } = req.body;
+  try {
+    let items = await loadReconstructionItems();
+    const idx = items.findIndex((i) => i.id === id);
+    if (idx === -1) return res.status(404).json({ message: "Nenalezeno." });
+
+    if(items[idx].category !== 'task') return res.status(400).json({message: "Nelze měnit status u této kategorie."});
+
+    items[idx].status = status;
+    await saveReconstructionItems(items);
+    res.json(items[idx]);
+  } catch (error) {
+    res.status(500).json({ message: "Chyba." });
+  }
+});
+
 
 // --- FALLBACK PRO SPA ---
 app.get("*", (req, res) => {
