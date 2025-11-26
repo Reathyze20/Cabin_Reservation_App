@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { Reservation, User, ShoppingListItem, Note, GalleryFolder, GalleryPhoto, DiaryFolder, DiaryEntry } from "../types";
+import { Reservation, User, ShoppingListItem, Note, GalleryFolder, GalleryPhoto, DiaryFolder, DiaryEntry, ReconstructionItem } from "../types";
 
 const usersFilePath = path.join(__dirname, "../../data/users.json");
 const reservationsFilePath = path.join(__dirname, "../../data/reservations.json");
@@ -8,9 +8,10 @@ const shoppingListFilePath = path.join(__dirname, "../../data/shopping-list.json
 const notesFilePath = path.join(__dirname, "../../data/notes.json");
 const galleryFoldersPath = path.join(__dirname, "../../data/gallery-folders.json");
 const galleryPhotosPath = path.join(__dirname, "../../data/gallery-photos.json");
-// Nové cesty pro deník
 const diaryFoldersPath = path.join(__dirname, "../../data/diary-folders.json");
 const diaryEntriesPath = path.join(__dirname, "../../data/diary-entries.json");
+// NOVÁ CESTA
+const reconstructionFilePath = path.join(__dirname, "../../data/reconstruction.json");
 
 // --- Users ---
 export async function loadUsers(): Promise<User[]> {
@@ -18,7 +19,6 @@ export async function loadUsers(): Promise<User[]> {
     const data = await fs.promises.readFile(usersFilePath, "utf-8");
     return JSON.parse(data);
   } catch (error) {
-    // Pokud soubor neexistuje, vytvoříme prázdný
     if (error instanceof Error && "code" in error && (error as any).code === "ENOENT") {
       await saveUsers([]);
       return [];
@@ -145,7 +145,7 @@ export async function saveGalleryPhotos(photos: GalleryPhoto[]) {
   await fs.promises.writeFile(galleryPhotosPath, data, "utf-8");
 }
 
-// --- Diary Folders (NOVÉ) ---
+// --- Diary Folders ---
 export async function loadDiaryFolders(): Promise<DiaryFolder[]> {
   try {
     const data = await fs.promises.readFile(diaryFoldersPath, "utf-8");
@@ -164,7 +164,7 @@ export async function saveDiaryFolders(folders: DiaryFolder[]) {
   await fs.promises.writeFile(diaryFoldersPath, data, "utf-8");
 }
 
-// --- Diary Entries (NOVÉ) ---
+// --- Diary Entries ---
 export async function loadDiaryEntries(): Promise<DiaryEntry[]> {
   try {
     const data = await fs.promises.readFile(diaryEntriesPath, "utf-8");
@@ -181,4 +181,24 @@ export async function loadDiaryEntries(): Promise<DiaryEntry[]> {
 export async function saveDiaryEntries(entries: DiaryEntry[]) {
   const data = JSON.stringify(entries, null, 2);
   await fs.promises.writeFile(diaryEntriesPath, data, "utf-8");
+}
+
+// --- REKONSTRUKCE (NOVÉ) ---
+export async function loadReconstructionItems(): Promise<ReconstructionItem[]> {
+  try {
+    const data = await fs.promises.readFile(reconstructionFilePath, "utf-8");
+    return JSON.parse(data) as ReconstructionItem[];
+  } catch (error) {
+    if (error instanceof Error && "code" in error && (error as any).code === "ENOENT") {
+      await saveReconstructionItems([]);
+      return [];
+    }
+    console.error("Chyba při načítání rekonstrukce:", error);
+    return [];
+  }
+}
+
+export async function saveReconstructionItems(items: ReconstructionItem[]) {
+  const data = JSON.stringify(items, null, 2);
+  await fs.promises.writeFile(reconstructionFilePath, data, "utf-8");
 }
