@@ -1,359 +1,4 @@
-/* --- GLOBÁLNÍ STYLY PRO GALERII --- */
 
-.main-content-gallery {
-  width: 100%;
-  /* Výška okna mínus hlavička aplikace. */
-  height: calc(100vh - 100px);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.gallery-card {
-  background-color: white;
-  border-radius: 16px;
-  padding: 0;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  overflow: hidden;
-}
-
-/* --- HLAVIČKA GALERIE --- */
-.gallery-header {
-  padding: 10px 20px; /* Menší padding */
-  border-bottom: 1px solid #f3e2c0;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  height: 50px;
-  background-color: #fff;
-  z-index: 10;
-}
-
-.gallery-header h2 {
-  font-size: 1.3em;
-  color: #4b5563;
-  margin: 0;
-  padding: 0;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.gallery-header h2 i {
-  color: #d97706;
-}
-
-/* --- HLAVNÍ OBSAHOVÁ ČÁST (GRIDY) --- */
-.gallery-content-wrapper {
-  flex-grow: 1;
-  padding: 10px; /* Malý padding kolem fotek */
-  overflow: hidden;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-}
-
-/* --- Grid pro složky --- */
-.folders-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  grid-auto-rows: max-content;
-  gap: 20px;
-  overflow-y: auto;
-  padding: 5px;
-  height: 100%;
-  align-content: start;
-}
-
-.folder-card {
-  background-color: #ffffff;
-  border: 1px solid #f3e2c0;
-  border-radius: 16px;
-  padding: 20px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 160px;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
-}
-
-/* NOVÝ STYL: Oranžový okraj pro vybranou složku */
-.folder-card.selected {
-  border-color: #d97706;
-  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.3);
-}
-
-.folder-card::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 4px;
-  background: linear-gradient(90deg, #fbbf24, #d97706);
-  opacity: 0.5;
-  transition: opacity 0.3s;
-}
-
-.folder-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 12px 25px rgba(217, 119, 6, 0.15);
-  border-color: #d97706;
-}
-.folder-card:hover::after {
-  opacity: 1;
-}
-
-.folder-icon {
-  font-size: 3.5em;
-  color: #fbbf24;
-  margin-bottom: 10px;
-  transition: transform 0.3s;
-}
-.folder-card:hover .folder-icon {
-  transform: scale(1.1);
-}
-
-.folder-info {
-  /* Umožní textu zalomení */
-  max-width: 100%;
-  overflow: hidden;
-  word-wrap: break-word; /* Zajišťuje zalomení textu */
-}
-
-.folder-info h3 {
-  margin: 0 0 5px 0;
-  font-size: 1.1em;
-  color: #374151;
-  font-weight: 600;
-  /* Oprava zalomení: Povolit zalomení a oříznutí */
-  white-space: normal;
-  line-height: 1.3;
-}
-.folder-date {
-  font-size: 0.8em;
-  color: #9ca3af;
-}
-
-/* NOVÉ STYLY PRO CHECKBOX SLOŽKY */
-.folder-checkbox-wrapper {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  z-index: 5;
-  /* Důležité: Přesuneme klikací oblast na checkbox */
-  pointer-events: all;
-}
-.folder-checkbox {
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-  margin: 0;
-}
-
-/* --- Grid pro fotky (PERFECT FIT) --- */
-.photos-grid {
-  display: grid;
-  /* Fixní mřížka 4 sloupce x 3 řádky */
-  grid-template-columns: repeat(4, 1fr);
-  grid-template-rows: repeat(3, 1fr);
-  /* Hustší uspořádání - vyplňování děr */
-  grid-auto-flow: dense;
-  /* Menší mezera pro "plnější" vzhled */
-  gap: 8px;
-  width: 100%;
-  height: 100%;
-}
-
-.photo-card {
-  position: relative;
-  border-radius: 8px; /* Trochu menší rádius pro modernější "dlaždicový" vzhled */
-  overflow: hidden;
-  cursor: pointer;
-  /* Žádný stín defaultně, aby to vypadalo jako celistvá mozaika */
-  box-shadow: none;
-  transition: transform 0.3s ease, z-index 0s;
-  width: 100%;
-  height: 100%;
-}
-
-.photo-card img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.5s ease;
-  display: block; /* Odstraní spodní mezeru inline elementů */
-}
-
-.photo-card:hover {
-  z-index: 5; /* Při hoveru vystoupí nad ostatní */
-  transform: scale(1.02); /* Jemné zvětšení */
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  border-radius: 12px; /* Zvýraznění rohů při hoveru */
-}
-
-.photo-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.2);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-.photo-card:hover .photo-overlay {
-  opacity: 1;
-}
-.photo-overlay i {
-  color: white;
-  font-size: 2em;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
-}
-
-/* Třídy pro moderní layout */
-.photo-card.g-wide {
-  grid-column: span 2;
-}
-.photo-card.g-tall {
-  grid-row: span 2;
-}
-.photo-card.g-big {
-  grid-column: span 2;
-  grid-row: span 2;
-}
-
-/* --- PATIČKA S TLAČÍTKY --- */
-.gallery-footer {
-  padding: 10px 20px;
-  border-top: 1px solid #f3e2c0;
-  background-color: #fff;
-  flex-shrink: 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  height: 60px;
-  z-index: 10;
-}
-
-.footer-left,
-.footer-center,
-.footer-right {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-/* NOVÝ STYL: Skupina pro tlačítka Přejmenovat/Smazat na hlavní stránce alb */
-.folder-actions-group {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  /* Přesunout delete-folder-list-btn na pravou stranu */
-  margin-right: auto;
-}
-.footer-right {
-  /* Zarovnání prvků (Nový album, Smazat album) úplně vpravo */
-  margin-left: auto;
-}
-
-/* --- Styly tlačítek v patičce --- */
-.gallery-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 8px 20px;
-  border-radius: 30px;
-  font-weight: 600;
-  font-size: 0.9em;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border: none;
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.gallery-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-/* Primary Action */
-.gallery-btn-primary {
-  background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
-  color: white;
-}
-.gallery-btn-primary:hover {
-  background: linear-gradient(135deg, #fcd34d 0%, #b45309 100%);
-}
-
-/* Secondary Action */
-.gallery-btn-secondary {
-  background-color: white;
-  color: #4b5563;
-  border: 1px solid #e5e7eb;
-}
-.gallery-btn-secondary:hover {
-  background-color: #f9fafb;
-  border-color: #d1d5db;
-  color: #111827;
-}
-
-/* Ovládání stránek - VYROVNÁNÍ */
-.pagination-controls {
-  display: flex;
-  align-items: center; /* Vertikální zarovnání na střed */
-  justify-content: center;
-  gap: 15px; /* Mezera mezi šipkami a číslem */
-}
-
-.nav-arrow {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: 1px solid #e5e7eb;
-  background: white;
-  color: #6b7280;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  transition: all 0.2s;
-  padding: 0; /* Důležité pro vyrovnání ikony */
-}
-.nav-arrow:hover:not(:disabled) {
-  border-color: #fbbf24;
-  color: #d97706;
-  background-color: #fffbeb;
-}
-.nav-arrow:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
-#page-info {
-  font-weight: 600;
-  color: #374151;
-  min-width: 50px;
-  text-align: center;
-  font-size: 0.9em;
-  line-height: 36px; /* Stejná výška jako šipky pro zarovnání */
-  display: inline-block;
-}
 
 /* --- NOVÉ STYLY PRO GALERII (VLOŽIT NA KONEC NEBO NAHRADIT STAROU SEKCI) --- */
 
@@ -4621,8 +4266,11 @@ input[type="date"] {
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
 }
 
-/* --- RECONSTRUCTION BOARD STYLES --- */
+/* ==========================================================================
+   9. MODUL: REKONSTRUKCE (KOMPLETNĚ UPRAVENO)
+   ========================================================================== */
 
+/* Hlavní kontejner pro sekci Rekonstrukce */
 .main-content-reconstruction {
   width: 100%;
   height: calc(100vh - 100px);
@@ -4631,6 +4279,7 @@ input[type="date"] {
   overflow: hidden;
 }
 
+/* Hlavička rekonstrukce */
 .reconstruction-header {
   padding: 10px 20px;
   display: flex;
@@ -4639,6 +4288,9 @@ input[type="date"] {
   background: #fff;
   border-bottom: 1px solid #f3e2c0;
   flex-shrink: 0;
+  height: 50px;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
 }
 
 .reconstruction-header h2 {
@@ -4647,32 +4299,27 @@ input[type="date"] {
   display: flex;
   align-items: center;
   gap: 10px;
+  margin: 0;
 }
-.reconstruction-header h2 i { color: #d97706; }
 
-.action-btn {
-  background: #d97706;
-  color: white;
-  border: none;
-  padding: 8px 15px;
-  border-radius: 20px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s;
+.reconstruction-header h2 i {
+  color: #d97706;
 }
-.action-btn:hover { background: #b45309; }
 
-/* Kanban Board Layout */
+/* Kanban Board Layout - VYCENTROVANÝ */
 .kanban-board {
   flex-grow: 1;
   display: flex;
+  justify-content: center; /* Zajišťuje vycentrování sloupců */
   gap: 20px;
   padding: 20px;
   overflow-x: auto;
   background-color: #fdfbf7;
   align-items: flex-start;
+  height: 100%;
 }
 
+/* Sloupec Kanbanu */
 .kanban-column {
   flex: 1;
   min-width: 300px;
@@ -4687,40 +4334,61 @@ input[type="date"] {
   max-height: 100%;
 }
 
+/* Hlavička sloupce s tlačítkem přidat */
 .column-header {
-  padding: 15px;
+  padding: 10px 15px;
   border-bottom: 2px solid #f3e2c0;
   font-size: 1.1em;
   color: #374151;
   background: #fffbeb;
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
-  /* Centrování nadpisu */
-  text-align: center;
-}
-.column-header h3 { 
-  margin: 0; 
-  font-size: 1em; 
   display: flex;
-  justify-content: center; /* Vycentruje ikonu a text flexboxem */
+  justify-content: space-between; /* Nadpis vlevo, tlačítko vpravo */
+  align-items: center;
+}
+
+.column-header h3 {
+  margin: 0;
+  font-size: 1em;
+  display: flex;
   align-items: center;
   gap: 10px;
 }
 
+/* Tlačítko PLUS v hlavičce sloupce */
+.add-col-btn {
+  background: transparent;
+  border: none;
+  color: #d97706;
+  font-size: 1.1em;
+  cursor: pointer;
+  padding: 5px 8px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.add-col-btn:hover {
+  background-color: rgba(217, 119, 6, 0.1);
+  transform: scale(1.1);
+}
+
+/* Barvy ikon v hlavičkách */
 .header-idea i { color: #f59e0b; }
 .header-company i { color: #3b82f6; }
 .header-task i { color: #10b981; }
 
+/* Obsah sloupce */
 .column-content {
   padding: 10px;
   overflow-y: auto;
-  flex-grow: 1; /* Tímto se obsah roztáhne a vytlačí budget summary dolů */
+  flex-grow: 1;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-/* Cards */
+/* Karta úkolu/nápadu */
 .kanban-card {
   background: #fff;
   border: 1px solid #e5e7eb;
@@ -4729,19 +4397,27 @@ input[type="date"] {
   box-shadow: 0 2px 4px rgba(0,0,0,0.02);
   transition: transform 0.2s;
   position: relative;
-  flex-shrink: 0; /* Zabrání smrsknutí karet */
+  flex-shrink: 0;
 }
+
 .kanban-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0,0,0,0.05);
 }
 
+/* Barevné označení karet vlevo */
+.card-idea { border-left: 4px solid #f59e0b; }
+.card-company { border-left: 4px solid #3b82f6; }
+.card-task { border-left: 4px solid #10b981; }
+
+/* Obsah karty */
 .card-header-row {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 5px;
 }
+
 .card-header-row h4 {
   margin: 0;
   font-size: 1em;
@@ -4755,6 +4431,7 @@ input[type="date"] {
   color: #d1d5db;
   cursor: pointer;
 }
+
 .delete-card-btn:hover { color: #ef4444; }
 
 .card-desc {
@@ -4774,6 +4451,7 @@ input[type="date"] {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
 .card-link:hover { text-decoration: underline; }
 
 .card-cost {
@@ -4793,7 +4471,7 @@ input[type="date"] {
 
 .card-author { color: #9ca3af; }
 
-/* Vote Button */
+/* Tlačítko hlasování */
 .vote-btn {
   background: #f3f4f6;
   border: none;
@@ -4803,11 +4481,9 @@ input[type="date"] {
   color: #6b7280;
   transition: all 0.2s;
 }
+
 .vote-btn:hover { background: #e5e7eb; }
-.vote-btn.voted {
-  background: #fee2e2;
-  color: #ef4444;
-}
+.vote-btn.voted { background: #fee2e2; color: #ef4444; }
 
 /* Status Badges */
 .status-badge {
@@ -4820,42 +4496,42 @@ input[type="date"] {
 .badge-info { background: #dbeafe; color: #1e40af; }
 .badge-success { background: #d1fae5; color: #065f46; }
 
-/* Status Select Hover Magic */
 .status-select-wrapper {
   position: relative;
   display: inline-block;
 }
 .status-select {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  top: 0; left: 0; width: 100%; height: 100%;
   opacity: 0;
   cursor: pointer;
 }
 
+/* Souhrn rozpočtu (dole ve sloupci) */
 .budget-summary {
   padding: 15px;
   background: #ecfdf5;
   color: #065f46;
   text-align: center;
   border-top: 1px solid #d1fae5;
-  margin-top: auto; /* Pojistka pro flexbox, aby to bylo dole */
+  margin-top: auto;
   font-size: 1.1em;
   border-bottom-left-radius: 12px;
   border-bottom-right-radius: 12px;
 }
 
-/* Category Borders */
-.card-idea { border-left: 4px solid #f59e0b; }
-.card-company { border-left: 4px solid #3b82f6; }
-.card-task { border-left: 4px solid #10b981; }
-
+/* Responsivita pro mobilní zařízení */
 @media (max-width: 768px) {
+  .main-content {
+    flex-direction: column;
+  }
+  .shopping-list-container, .calendar-card, .reservations-list-container {
+    flex-basis: auto; width: 100%; max-width: 100%;
+  }
   .kanban-board {
     flex-direction: column;
     overflow-x: hidden;
+    justify-content: flex-start;
   }
   .kanban-column {
     max-width: 100%;

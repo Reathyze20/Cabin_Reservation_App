@@ -30,7 +30,7 @@
         <div class="main-content-reconstruction">
           <div class="reconstruction-header">
             <h2><i class="fas fa-hammer"></i> Rekonstrukce chaty</h2>
-            <button id="add-item-btn" class="action-btn"><i class="fas fa-plus"></i> Přidat kartu</button>
+            <!-- Globální tlačítko odstraněno, přesunuto do sloupců -->
           </div>
 
           <div class="kanban-board">
@@ -38,6 +38,7 @@
             <div class="kanban-column" id="col-idea">
               <div class="column-header header-idea">
                 <h3><i class="far fa-lightbulb"></i> Nápady & Inspirace</h3>
+                <button class="add-col-btn" data-category="idea" title="Přidat nápad"><i class="fas fa-plus"></i></button>
               </div>
               <div class="column-content" id="list-idea">
                 <!-- Items go here -->
@@ -48,6 +49,7 @@
             <div class="kanban-column" id="col-company">
               <div class="column-header header-company">
                 <h3><i class="fas fa-address-book"></i> Firmy & Kontakty</h3>
+                <button class="add-col-btn" data-category="company" title="Přidat kontakt"><i class="fas fa-plus"></i></button>
               </div>
               <div class="column-content" id="list-company">
                 <!-- Items go here -->
@@ -58,6 +60,7 @@
             <div class="kanban-column" id="col-task">
               <div class="column-header header-task">
                 <h3><i class="fas fa-tasks"></i> Úkoly & Rozpočet</h3>
+                <button class="add-col-btn" data-category="task" title="Přidat úkol"><i class="fas fa-plus"></i></button>
               </div>
               
               <!-- OBSAH (ÚKOLY) -->

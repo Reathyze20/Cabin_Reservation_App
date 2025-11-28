@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const listTask = document.getElementById("list-task");
     const totalBudgetEl = document.getElementById("total-budget");
 
-    const addItemBtn = document.getElementById("add-item-btn");
+    // Old global button removed, logic updated below
     const modal = document.getElementById("add-reconstruction-modal");
     const form = document.getElementById("add-reconstruction-form");
     const categorySelect = document.getElementById("rec-category");
@@ -176,10 +176,20 @@ document.addEventListener("DOMContentLoaded", () => {
         loadItems();
     };
 
-    // --- Modal ---
-    addItemBtn.addEventListener("click", () => {
-        modal.style.display = "flex";
-        categorySelect.dispatchEvent(new Event('change')); // Trigger display logic
+    // --- Modal Logic (UPDATED) ---
+    // Připojení event listenerů na tlačítka v hlavičkách sloupců
+    document.querySelectorAll('.add-col-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const category = btn.getAttribute('data-category'); // Získáme kategorii z tlačítka
+            
+            // Nastavíme hodnotu v selectu
+            categorySelect.value = category;
+            
+            // Vyvoláme change event, aby se zobrazilo/skrylo pole pro cenu (cost-group)
+            categorySelect.dispatchEvent(new Event('change'));
+            
+            modal.style.display = "flex";
+        });
     });
 
     modalCloseBtn.addEventListener("click", () => modal.style.display = "none");
