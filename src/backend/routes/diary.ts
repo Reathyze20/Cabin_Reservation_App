@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { protect } from "../../middleware/authMiddleware";
 import prisma from "../../utils/prisma";
+import logger from "../../utils/logger";
 import { PrismaClient } from "@prisma/client";
 
 const router = Router();
@@ -34,7 +35,7 @@ router.get("/folders", protect, async (req: Request, res: Response) => {
 
     res.json(formatted);
   } catch (error) {
-    console.error("Get diary folders error:", error);
+    logger.error("DIARY", "Get diary folders error", { error: String(error) });
     res.status(500).json({ message: "Chyba při načítání deníku." });
   }
 });
@@ -79,7 +80,7 @@ router.post("/folders", protect, async (req: Request, res: Response) => {
       endDate: newFolder.endDate?.toISOString().split("T")[0],
     });
   } catch (error) {
-    console.error("Create diary folder error:", error);
+    logger.error("DIARY", "Create diary folder error", { error: String(error) });
     res.status(500).json({ message: "Chyba při vytváření složky." });
   }
 });
@@ -143,7 +144,7 @@ router.patch("/folders/:id", protect, async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    console.error("Rename diary folder error:", error);
+    logger.error("DIARY", "Rename diary folder error", { error: String(error), id });
     res.status(500).json({ message: "Chyba při přejmenování deníku." });
   }
 });
@@ -185,7 +186,7 @@ router.delete("/folders/:id", protect, async (req: Request, res: Response) => {
 
     res.json({ message: "Složka a záznamy smazány." });
   } catch (error) {
-    console.error("Delete diary folder error:", error);
+    logger.error("DIARY", "Delete diary folder error", { error: String(error), id });
     res.status(500).json({ message: "Chyba při mazání složky." });
   }
 });
@@ -229,7 +230,7 @@ router.get("/entries", protect, async (req: Request, res: Response) => {
 
     res.json(formatted);
   } catch (error) {
-    console.error("Get diary entries error:", error);
+    logger.error("DIARY", "Get diary entries error", { error: String(error) });
     res.status(500).json({ message: "Chyba." });
   }
 });
@@ -287,7 +288,7 @@ router.post("/entries", protect, async (req: Request, res: Response) => {
       galleryPhotoIds: newEntry.photos.map((p) => p.photoId),
     });
   } catch (error) {
-    console.error("Create diary entry error:", error);
+    logger.error("DIARY", "Create diary entry error", { error: String(error) });
     res.status(500).json({ message: "Chyba při ukládání záznamu." });
   }
 });
@@ -347,7 +348,7 @@ router.put("/entries/:id", protect, async (req: Request, res: Response) => {
       galleryPhotoIds: updated.photos.map((p) => p.photoId),
     });
   } catch (error) {
-    console.error("Update diary entry error:", error);
+    logger.error("DIARY", "Update diary entry error", { error: String(error), id });
     res.status(500).json({ message: "Chyba při aktualizaci záznamu." });
   }
 });
@@ -381,7 +382,7 @@ router.delete("/entries/:id", protect, async (req: Request, res: Response) => {
 
     res.json({ message: "Záznam smazán." });
   } catch (error) {
-    console.error("Delete diary entry error:", error);
+    logger.error("DIARY", "Delete diary entry error", { error: String(error), id });
     res.status(500).json({ message: "Chyba při mazání záznamu." });
   }
 });

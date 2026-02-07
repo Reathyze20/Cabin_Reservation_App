@@ -1,4 +1,5 @@
 import dotenv from "dotenv";
+import logger from "../utils/logger";
 
 dotenv.config();
 
@@ -12,7 +13,5 @@ export const DATABASE_URL = process.env.DATABASE_URL || "";
 export const PORT = parseInt(process.env.PORT || "3000", 10);
 
 if (JWT_SECRET === "TotoJeVelmiTajneHeslo") {
-  console.warn(
-    "Používáte výchozí tajný klíč pro JWT. Změňte ho v .env souboru!"
-  );
+  logger.warn("CONFIG", "Používáte výchozí tajný klíč pro JWT. Změňte ho v .env souboru!");
 }

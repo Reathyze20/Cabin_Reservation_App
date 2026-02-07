@@ -109,7 +109,7 @@ router.delete("/:id", protect, async (req: Request, res: Response) => {
 
     res.json({ message: "Smazáno" });
   } catch (error) {
-    console.error("Delete note error:", error);
+    logger.error("NOTES", "Delete note error", { error: String(error), noteId: id });
     res.status(500).json({ message: "Chyba" });
   }
 });

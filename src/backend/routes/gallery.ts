@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { protect } from "../../middleware/authMiddleware";
 import prisma from "../../utils/prisma";
+import logger from "../../utils/logger";
 import fs from "fs";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
@@ -58,7 +59,7 @@ router.get("/folders", protect, async (req: Request, res: Response) => {
 
     res.json(formatted);
   } catch (error) {
-    console.error("Get folders error:", error);
+    logger.error("GALLERY", "Get folders error", { error: String(error) });
     res.status(500).json({ message: "Chyba při načítání složek." });
   }
 });
@@ -107,7 +108,7 @@ router.post("/folders", protect, async (req: Request, res: Response) => {
       createdBy: newFolder.createdBy?.username,
     });
   } catch (error) {
-    console.error("Create folder error:", error);
+    logger.error("GALLERY", "Create folder error", { error: String(error) });
     res.status(500).json({ message: "Chyba při vytváření složky." });
   }
 });
@@ -161,7 +162,7 @@ router.patch("/folders/:id", protect, async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    console.error("Rename folder error:", error);
+    logger.error("GALLERY", "Rename folder error", { error: String(error), id });
     res.status(500).json({ message: "Chyba při přejmenování složky." });
   }
 });
@@ -207,7 +208,7 @@ router.delete("/folders/:id", protect, async (req: Request, res: Response) => {
 
     res.json({ message: "Složka smazána." });
   } catch (error) {
-    console.error("Delete folder error:", error);
+    logger.error("GALLERY", "Delete folder error", { error: String(error), id });
     res.status(500).json({ message: "Chyba při mazání složky." });
   }
 });
@@ -259,7 +260,7 @@ router.get("/photos", protect, async (req: Request, res: Response) => {
 
     res.json(formatted);
   } catch (error) {
-    console.error("Get photos error:", error);
+    logger.error("GALLERY", "Get photos error", { error: String(error) });
     res.status(500).json({ message: "Chyba při načítání fotek." });
   }
 });
@@ -332,7 +333,7 @@ router.post("/photos", protect, upload.array("photos", 20), async (req: Request,
 
     res.status(201).json(results.length === 1 ? results[0] : results);
   } catch (error) {
-    console.error("Upload photo error:", error);
+    logger.error("GALLERY", "Upload photo error", { error: String(error) });
     res.status(500).json({ message: "Chyba při nahrávání fotky." });
   }
 });
@@ -370,7 +371,7 @@ router.patch("/photos/:id", protect, async (req: Request, res: Response) => {
       description: updated.description,
     });
   } catch (error) {
-    console.error("Update photo error:", error);
+    logger.error("GALLERY", "Update photo error", { error: String(error), id });
     res.status(500).json({ message: "Chyba při aktualizaci fotky." });
   }
 });
@@ -420,7 +421,7 @@ router.delete("/photos/:id", protect, async (req: Request, res: Response) => {
 
     res.json({ message: "Smazáno." });
   } catch (error) {
-    console.error("Delete photo error:", error);
+    logger.error("GALLERY", "Delete photo error", { error: String(error), id });
     res.status(500).json({ message: "Chyba při mazání." });
   }
 });
@@ -477,7 +478,7 @@ router.delete("/photos", protect, async (req: Request, res: Response) => {
 
     res.json({ message: `Smazáno ${deletable.length} fotek.` });
   } catch (error) {
-    console.error("Bulk delete photos error:", error);
+    logger.error("GALLERY", "Bulk delete photos error", { error: String(error), count: photoIds?.length });
     res.status(500).json({ message: "Chyba při hromadném mazání." });
   }
 });

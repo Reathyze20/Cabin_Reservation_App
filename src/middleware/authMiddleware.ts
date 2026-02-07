@@ -3,6 +3,7 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../config/config";
 import { JwtPayload } from "../types";
+import logger from "../utils/logger";
 
 declare global {
   namespace Express {
@@ -26,14 +27,14 @@ export const protect = (req: Request, res: Response, next: NextFunction) => {
 
       if (!decoded || !decoded.userId || !decoded.username) {
         // Pokud payload neobsahuje potřebná data, vrátíme chybu
-        console.log("Neplatný formát tokenu v payloadu:");
+        logger.warn("AUTH", "Invalid token payload format", { decoded });
         return res.status(401).json({ message: "Neplatný token." });
       }
 
       req.user = decoded; // Uložíme payload do requestu
       next(); // Pokračujeme na další middleware nebo route handler
     } catch (error) {
-      console.error("Chyba při ověřování tokenu:", error);
+      logger.error("AUTH", "Token verification error", { error: String(error) });
       return res.status(401).json({ message: "Neplatný token." });
     }
   }

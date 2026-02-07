@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { protect } from "../../middleware/authMiddleware";
 import prisma from "../../utils/prisma";
+import logger from "../../utils/logger";
 
 const router = Router();
 
@@ -37,7 +38,7 @@ router.get("/", protect, async (req: Request, res: Response) => {
 
     res.json([{ id: "default", name: "Hlavní seznam", items: formatted }]);
   } catch (error) {
-    console.error("Get shopping list error:", error);
+    logger.error("SHOPPING", "Get shopping list error", { error: String(error) });
     res.status(500).json({ message: "Chyba" });
   }
 });
@@ -79,7 +80,7 @@ router.post("/:listId/items", protect, async (req: Request, res: Response) => {
       purchased: newItem.purchased,
     });
   } catch (error) {
-    console.error("Add item error:", error);
+    logger.error("SHOPPING", "Add item error", { error: String(error) });
     res.status(500).json({ message: "Chyba" });
   }
 });
@@ -157,7 +158,7 @@ router.put("/:itemId/purchase", protect, async (req: Request, res: Response) => 
       splitWith: splits.map((s) => s.userId),
     });
   } catch (error) {
-    console.error("Purchase item error:", error);
+    logger.error("SHOPPING", "Purchase item error", { error: String(error), itemId });
     res.status(500).json({ message: "Chyba" });
   }
 });
@@ -191,7 +192,7 @@ async function deleteItem(req: Request, res: Response) {
     });
     res.json({ success: true });
   } catch (error) {
-    console.error("Delete item error:", error);
+    logger.error("SHOPPING", "Delete item error", { error: String(error), itemId });
     res.status(500).json({ message: "Chyba" });
   }
 }

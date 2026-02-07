@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { protect } from "../../middleware/authMiddleware";
 import prisma from "../../utils/prisma";
+import logger from "../../utils/logger";
 
 const router = Router();
 
@@ -34,7 +35,7 @@ router.get("/", protect, async (req: Request, res: Response) => {
 
     res.json(result);
   } catch (error) {
-    console.error("Get reservations error:", error);
+    logger.error("RESERVATIONS", "Get reservations error", { error: String(error) });
     res.status(500).json({ message: "Chyba." });
   }
 });
@@ -103,7 +104,7 @@ router.post("/", protect, async (req: Request, res: Response) => {
       userColor: newReservation.user.color,
     });
   } catch (error) {
-    console.error("Create reservation error:", error);
+    logger.error("RESERVATIONS", "Create reservation error", { error: String(error), userId: req.user?.userId });
     res.status(500).json({ message: "Chyba." });
   }
 });
@@ -161,7 +162,7 @@ router.put("/:id", protect, async (req: Request, res: Response) => {
       status: updated.status,
     });
   } catch (error) {
-    console.error("Update reservation error:", error);
+    logger.error("RESERVATIONS", "Update reservation error", { error: String(error), id });
     res.status(500).json({ message: "Chyba." });
   }
 });
@@ -195,7 +196,7 @@ router.post("/delete", protect, async (req: Request, res: Response) => {
 
     res.json({ message: "Smazáno." });
   } catch (error) {
-    console.error("Delete reservation error:", error);
+    logger.error("RESERVATIONS", "Delete reservation error", { error: String(error), id });
     res.status(500).json({ message: "Chyba." });
   }
 });
@@ -227,7 +228,7 @@ router.post("/:reservationId/assign", protect, async (req: Request, res: Respons
 
     res.json({ message: "Přiřazeno." });
   } catch (error) {
-    console.error("Assign reservation error:", error);
+    logger.error("RESERVATIONS", "Assign reservation error", { error: String(error), reservationId });
     res.status(500).json({ message: "Chyba." });
   }
 });

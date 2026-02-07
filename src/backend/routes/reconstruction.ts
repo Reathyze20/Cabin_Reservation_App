@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { protect } from "../../middleware/authMiddleware";
 import prisma from "../../utils/prisma";
+import logger from "../../utils/logger";
 
 const router = Router();
 
@@ -46,7 +47,7 @@ router.get("/", protect, async (req: Request, res: Response) => {
 
     res.json(formatted);
   } catch (error) {
-    console.error("Get reconstruction items error:", error);
+    logger.error("RECONSTRUCTION", "Get items error", { error: String(error) });
     res.status(500).json({ message: "Chyba při načítání dat." });
   }
 });
@@ -98,7 +99,7 @@ router.post("/", protect, async (req: Request, res: Response) => {
       createdAt: newItem.createdAt.toISOString(),
     });
   } catch (error) {
-    console.error("Create reconstruction item error:", error);
+    logger.error("RECONSTRUCTION", "Create item error", { error: String(error) });
     res.status(500).json({ message: "Chyba při ukládání." });
   }
 });
@@ -120,7 +121,7 @@ router.delete("/:id", protect, async (req: Request, res: Response) => {
 
     res.json({ message: "Smazáno." });
   } catch (error) {
-    console.error("Delete reconstruction item error:", error);
+    logger.error("RECONSTRUCTION", "Delete item error", { error: String(error), id });
     res.status(500).json({ message: "Chyba." });
   }
 });
@@ -203,7 +204,7 @@ router.patch("/:id/vote", protect, async (req: Request, res: Response) => {
       createdAt: item.createdAt.toISOString(),
     });
   } catch (error) {
-    console.error("Toggle vote error:", error);
+    logger.error("RECONSTRUCTION", "Toggle vote error", { error: String(error), id });
     res.status(500).json({ message: "Chyba." });
   }
 });
@@ -266,7 +267,7 @@ router.patch("/:id/status", protect, async (req: Request, res: Response) => {
       createdAt: updated.createdAt.toISOString(),
     });
   } catch (error) {
-    console.error("Update status error:", error);
+    logger.error("RECONSTRUCTION", "Update status error", { error: String(error), id });
     res.status(500).json({ message: "Chyba." });
   }
 });

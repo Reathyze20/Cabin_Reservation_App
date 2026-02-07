@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../../config/config";
 import prisma from "../../utils/prisma";
+import logger from "../../utils/logger";
 
 const router = Router();
 
@@ -34,7 +35,7 @@ router.post("/login", async (req: Request, res: Response) => {
       color: user.color,
     });
   } catch (error) {
-    console.error("Login error:", error);
+    logger.error("AUTH", "Login error", { error: String(error), stack: (error as Error).stack });
     res.status(500).json({ message: "Chyba serveru." });
   }
 });
@@ -72,7 +73,7 @@ router.post("/register", async (req: Request, res: Response) => {
 
     res.status(201).json({ message: "Registrace úspěšná." });
   } catch (error) {
-    console.error("Register error:", error);
+    logger.error("AUTH", "Register error", { error: String(error), stack: (error as Error).stack });
     res.status(500).json({ message: "Chyba serveru." });
   }
 });

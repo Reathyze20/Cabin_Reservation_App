@@ -128,13 +128,13 @@ app.get("*", (req, res) => {
 // ============================================================================
 
 process.on("SIGINT", async () => {
-  console.log("\nGracefully shutting down...");
+  logger.info("SERVER", "Gracefully shutting down (SIGINT)...");
   await prisma.$disconnect();
   process.exit(0);
 });
 
 process.on("SIGTERM", async () => {
-  console.log("\nGracefully shutting down...");
+  logger.info("SERVER", "Gracefully shutting down (SIGTERM)...");
   await prisma.$disconnect();
   process.exit(0);
 });
