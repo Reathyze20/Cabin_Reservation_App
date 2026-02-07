@@ -7,9 +7,11 @@ import path from "path";
 import fs from "fs";
 import { PORT } from "../config/config";
 import prisma from "../utils/prisma";
+import logger from "../utils/logger";
 
 // Import routes
 import authRoutes from "./routes/auth";
+import logsRoutes from "./routes/logs";
 import usersRoutes from "./routes/users";
 import reservationsRoutes from "./routes/reservations";
 import shoppingListRoutes from "./routes/shoppingList";
@@ -49,6 +51,22 @@ app.use(express.json({ limit: "10mb" }));
 
 // CORS
 app.use(cors());
+
+// Request logging
+app.use((req, res, next) => {
+  if (req.path.startsWith("/api/")) {
+    const start = Date.now();
+    res.on("finish", () => {
+      const duration = Date.now() - start;
+      const level = res.statusCode >= 500 ? "error" : res.statusCode >= 400 ? "warn" : "info";
+      logger[level]("HTTP", `${req.method} ${req.path} → ${res.statusCode} (${duration}ms)`, {
+        ip: req.ip,
+        user: req.user?.username || "anonymous",
+      });
+    });
+  }
+  next();
+});
 
 // Static files
 const frontendPath = path.join(__dirname, "../../src/frontend");
@@ -95,6 +113,7 @@ app.use("/api/notes", notesRoutes);
 app.use("/api/gallery", galleryRoutes);
 app.use("/api/diary", diaryRoutes);
 app.use("/api/reconstruction", reconstructionRoutes);
+app.use("/api/logs", logsRoutes);
 
 // ============================================================================
 //                            SPA FALLBACK
@@ -125,6 +144,6 @@ process.on("SIGTERM", async () => {
 // ============================================================================
 
 app.listen(PORT, () => {
-  console.log(`🚀 Backend server naslouchá na http://localhost:${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
+  logger.info("SERVER", `🚀 Backend server naslouchá na http://localhost:${PORT}`);
+  logger.info("SERVER", `📊 Health check: http://localhost:${PORT}/api/health`);
 });

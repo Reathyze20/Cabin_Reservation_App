@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { protect } from "../../middleware/authMiddleware";
 import prisma from "../../utils/prisma";
+import logger from "../../utils/logger";
 
 const router = Router();
 
@@ -32,7 +33,7 @@ router.get("/", protect, async (req: Request, res: Response) => {
 
     res.json(formatted);
   } catch (error) {
-    console.error("Get notes error:", error);
+    logger.error("NOTES", "Get notes error", { error: String(error), stack: (error as Error).stack });
     res.status(500).json({ message: "Chyba" });
   }
 });
@@ -46,6 +47,10 @@ router.post("/", protect, async (req: Request, res: Response) => {
   }
 
   const { message } = req.body;
+
+  if (!message || !message.trim()) {
+    return res.status(400).json({ message: "Zpráva nesmí být prázdná." });
+  }
 
   try {
     const newNote = await prisma.note.create({
@@ -70,7 +75,7 @@ router.post("/", protect, async (req: Request, res: Response) => {
       createdAt: newNote.createdAt.toISOString(),
     });
   } catch (error) {
-    console.error("Create note error:", error);
+    logger.error("NOTES", "Create note error", { error: String(error), stack: (error as Error).stack, userId: req.user?.userId });
     res.status(500).json({ message: "Chyba" });
   }
 });
