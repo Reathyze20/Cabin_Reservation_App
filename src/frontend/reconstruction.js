@@ -17,50 +17,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const modalCloseBtn = modal.querySelector(".modal-close-button");
 
     const backendUrl = "";
-    let currentUserId = localStorage.getItem("userId");
+    let currentUserId = Common.userId;
 
-    // Auth Check
-    const loggedInUsername = localStorage.getItem("username");
-    const token = localStorage.getItem("authToken");
-
-    if (loggedInUsername && token) {
-        appContainer.classList.remove("hidden");
-        authContainer.classList.add("hidden");
-        if (loggedInUsernameElement) loggedInUsernameElement.textContent = loggedInUsername;
+    // Auth Check — use Common module
+    if (Common.checkAuth(appContainer, authContainer, loggedInUsernameElement)) {
         loadItems();
-    } else {
-        appContainer.classList.add("hidden");
-        authContainer.classList.remove("hidden");
     }
+    Common.setupLogout(logoutButton);
 
-    if (logoutButton) {
-        logoutButton.addEventListener("click", () => {
-            localStorage.clear();
-            window.location.href = "index.html";
-        });
-    }
-
-    // --- API Helper ---
-    async function apiFetch(url, options = {}) {
-        const headers = {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-            ...options.headers,
-        };
-        try {
-            const response = await fetch(url, { ...options, headers });
-            if (response.status === 401) {
-                localStorage.clear();
-                window.location.href = "index.html";
-                return null;
-            }
-            if (!response.ok) throw new Error("Chyba serveru");
-            return response.json();
-        } catch (error) {
-            console.error("API Error:", error);
-            return null;
-        }
-    }
+    // Use shared API helpers from common.js
+    const apiFetch = Common.authFetch;
 
     // --- Load Data ---
     async function loadItems() {

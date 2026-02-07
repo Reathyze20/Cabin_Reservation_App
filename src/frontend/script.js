@@ -106,9 +106,24 @@ document.addEventListener("DOMContentLoaded", () => {
   let reservationIdToDelete = null;
   const backendUrl = "";
 
+  // Toast notification system
   function showToast(message, type = 'info') {
-      console.log(`Toast (${type}): ${message}`);
-      alert(message);
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `
+      <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
+      <span>${message}</span>
+    `;
+    document.body.appendChild(toast);
+    
+    // Trigger animation
+    setTimeout(() => toast.classList.add('show'), 10);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
   }
 
   function showLogin() {
@@ -131,9 +146,12 @@ document.addEventListener("DOMContentLoaded", () => {
     appSection.style.display = "flex";
     loggedInUsernameSpan.textContent = username;
 
-    await fetchUsers(); // Načteme uživatele pro split funkci
-    loadReservations();
-    loadShoppingList();
+    // Load all data in parallel for faster initial render
+    await Promise.all([
+      fetchUsers(),
+      loadReservations(),
+      loadShoppingList(),
+    ]);
     // loadNotes() odstraněno - přesunuto do notes.js
 
     const adminLink = document.getElementById('admin-link');

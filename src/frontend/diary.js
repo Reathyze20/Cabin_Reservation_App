@@ -85,64 +85,20 @@ document.addEventListener("DOMContentLoaded", () => {
   let allGalleryFolders = [];
   let currentGalleryPhotos = [];
 
-  // --- Auth Check ---
-  const loggedInUsername = localStorage.getItem("username");
-  const userRole = localStorage.getItem("role");
-  const userId = localStorage.getItem("userId");
-  const token = localStorage.getItem("authToken");
+  // --- Auth Check — use Common module ---
+  const loggedInUsername = Common.username;
+  const userRole = Common.role;
+  const userId = Common.userId;
+  const token = Common.token;
 
-  if (loggedInUsername && token) {
-    appContainer.classList.remove("hidden");
-    authContainer.classList.add("hidden");
-    if (loggedInUsernameElement) loggedInUsernameElement.textContent = loggedInUsername;
+  if (Common.checkAuth(appContainer, authContainer, loggedInUsernameElement)) {
     loadFolders();
-  } else {
-    appContainer.classList.add("hidden");
-    authContainer.classList.remove("hidden");
   }
+  Common.setupLogout(logoutButton);
 
-  if (logoutButton) {
-    logoutButton.addEventListener("click", () => {
-      localStorage.clear();
-      window.location.href = "index.html";
-    });
-  }
-
-  // --- API Helper ---
-  async function apiFetch(url, options = {}) {
-    const headers = {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-      ...options.headers,
-    };
-    try {
-      const response = await fetch(url, { ...options, headers });
-      if (response.status === 401) {
-        alert("Sezení vypršelo.");
-        localStorage.clear();
-        window.location.href = "index.html";
-        return null;
-      }
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err.message || "Chyba serveru");
-      }
-      return options.method === "DELETE" && response.status === 200 ? true : response.json();
-    } catch (error) {
-      console.error("API Error:", error);
-      showToast(error.message, "error");
-      return null;
-    }
-  }
-
-  function showToast(message, type = "success") {
-    const toast = document.getElementById("success-toast");
-    if (!toast) return;
-    toast.querySelector("span").textContent = message;
-    toast.style.backgroundColor = type === "success" ? "#10b981" : "#ef4444";
-    toast.classList.add("show");
-    setTimeout(() => toast.classList.remove("show"), 3000);
-  }
+  // Use shared API helpers from common.js
+  const apiFetch = Common.authFetch;
+  const showToast = Common.showToast;
 
   // ... (Zbytek kódu pro složky a kalendář zůstává stejný až po attach photo) ...
   // ZKOPÍROVAT: Kód loadFolders, renderFolders, setupFolderCheckboxes, createFolder atd.
@@ -353,7 +309,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     try {
-      const allPhotos = await apiFetch(`${backendUrl}/api/gallery/photos`);
+      // Fetch only the specific photos we need, not ALL gallery photos
+      const idsParam = currentEntryPhotoIds.join(",");
+      const allPhotos = await apiFetch(`${backendUrl}/api/gallery/photos?ids=${idsParam}`);
       if (!allPhotos) return;
 
       currentEntryPhotoIds.forEach((photoId, index) => {
@@ -367,9 +325,10 @@ document.addEventListener("DOMContentLoaded", () => {
           imgWrapper.className = "attachment-thumbnail-wrapper";
 
           const img = document.createElement("img");
-          img.src = photo.src;
+          img.src = photo.thumb || photo.src;
           img.className = "attachment-thumbnail";
           img.alt = "Foto v deníku";
+          img.loading = "lazy";
 
           // Kliknutí na fotku otevře Lightbox
           img.onclick = () => openLightbox(index);
@@ -505,7 +464,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const isAlreadyAttached = currentEntryPhotoIds.includes(photo.id);
 
       const img = document.createElement("img");
-      img.src = photo.src;
+      img.src = photo.thumb || photo.src;
+      img.loading = "lazy";
       img.style.width = "100%";
       img.style.height = "100px";
       img.style.objectFit = "cover";
@@ -568,9 +528,20 @@ document.addEventListener("DOMContentLoaded", () => {
       showToast("Stránka je prázdná.", "error");
       return;
     }
-    if (currentEntryId) await apiFetch(`${backendUrl}/api/diary/entries/${currentEntryId}`, { method: "DELETE" });
-    const newEntry = { folderId: currentFolderId, date: currentSelectedDate, content: content, galleryPhotoIds: currentEntryPhotoIds };
-    const result = await apiFetch(`${backendUrl}/api/diary/entries`, { method: "POST", body: JSON.stringify(newEntry) });
+
+    let result;
+    if (currentEntryId) {
+      // Update existing entry via PUT (instead of DELETE + CREATE)
+      result = await apiFetch(`${backendUrl}/api/diary/entries/${currentEntryId}`, {
+        method: "PUT",
+        body: JSON.stringify({ content, galleryPhotoIds: currentEntryPhotoIds }),
+      });
+    } else {
+      // Create new entry
+      const newEntry = { folderId: currentFolderId, date: currentSelectedDate, content, galleryPhotoIds: currentEntryPhotoIds };
+      result = await apiFetch(`${backendUrl}/api/diary/entries`, { method: "POST", body: JSON.stringify(newEntry) });
+    }
+
     if (result) {
       showToast("Zápis uložen.");
       notebookModal.style.display = "none";

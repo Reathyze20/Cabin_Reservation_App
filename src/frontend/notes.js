@@ -20,42 +20,22 @@ document.addEventListener("DOMContentLoaded", () => {
     // Globální proměnná pro uložení všech dat
     let allNotesData = [];
 
-    // 2. Kontrola přihlášení
-    const loggedInUsername = localStorage.getItem("username");
-
-    if (loggedInUsername) {
-        if (appContainer) appContainer.classList.remove("hidden");
-        if (authContainer) authContainer.classList.add("hidden");
-        if (loggedInUsernameElement) {
-            loggedInUsernameElement.textContent = loggedInUsername;
-        }
+    // 2. Kontrola přihlášení — use Common module
+    if (Common.checkAuth(appContainer, authContainer, loggedInUsernameElement)) {
         loadNotes();
-    } else {
-        if (appContainer) appContainer.classList.add("hidden");
-        if (authContainer) authContainer.classList.remove("hidden");
     }
-
-    if (logoutButton) {
-        logoutButton.addEventListener("click", () => {
-            localStorage.clear();
-            window.location.href = "index.html";
-        });
-    }
+    Common.setupLogout(logoutButton);
 
     // --- Logika Vzkazů ---
 
     async function loadNotes() {
         if (notesList) notesList.innerHTML = `<div class="spinner-container" style="text-align:center; padding:20px;"><div class="spinner"></div></div>`;
         
-        const token = localStorage.getItem("authToken");
         try {
-            const response = await fetch(`${backendUrl}/api/notes`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const data = await Common.authFetch(`${backendUrl}/api/notes`);
+            if (!data) throw new Error('Nepodařilo se načíst vzkazy.');
             
-            if (!response.ok) throw new Error('Nepodařilo se načíst vzkazy.');
-            
-            allNotesData = await response.json();
+            allNotesData = data;
             
             // Seřazení od nejnovějších
             allNotesData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -150,8 +130,8 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        const loggedInUserId = localStorage.getItem('userId');
-        const isAdmin = localStorage.getItem('role') === 'admin';
+        const loggedInUserId = Common.userId;
+        const isAdmin = Common.role === 'admin';
 
         notes.forEach(note => {
             const noteEl = document.createElement('div');
@@ -183,14 +163,12 @@ document.addEventListener("DOMContentLoaded", () => {
             const message = noteMessageInput.value.trim();
             if (!message) return;
 
-            const token = localStorage.getItem("authToken");
             try {
-                const response = await fetch(`${backendUrl}/api/notes`, {
+                const result = await Common.authFetch(`${backendUrl}/api/notes`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify({ message })
                 });
-                if (!response.ok) throw new Error('Chyba při přidávání vzkazu.');
+                if (!result) throw new Error('Chyba při přidávání vzkazu.');
 
                 noteMessageInput.value = '';
                 
@@ -201,7 +179,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 
                 await loadNotes();
             } catch (error) {
-                alert(error.message);
+                Common.showToast(error.message, 'error');
             }
         });
     }
@@ -216,16 +194,14 @@ document.addEventListener("DOMContentLoaded", () => {
             const noteId = noteItem.dataset.id;
 
             if (confirm('Opravdu chcete smazat tento vzkaz?')) {
-                const token = localStorage.getItem("authToken");
                 try {
-                    const response = await fetch(`${backendUrl}/api/notes/${noteId}`, {
-                        method: 'DELETE',
-                        headers: { 'Authorization': `Bearer ${token}` }
+                    const result = await Common.authFetch(`${backendUrl}/api/notes/${noteId}`, {
+                        method: 'DELETE'
                     });
-                    if (!response.ok) throw new Error('Chyba při mazání vzkazu.');
+                    if (!result) throw new Error('Chyba při mazání vzkazu.');
                     await loadNotes();
                 } catch (error) {
-                    alert(error.message);
+                    Common.showToast(error.message, 'error');
                 }
             }
         });

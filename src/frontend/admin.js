@@ -20,40 +20,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let users = [];
     let selectedUserId = null;
 
-    // --- Funkce pro API volání ---
-    const apiFetch = async (url, options = {}) => {
-        const token = localStorage.getItem('authToken');
-        const headers = {
-            'Content-Type': 'application/json',
-            ...options.headers,
-        };
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
-        }
-
-        try {
-            const response = await fetch(url, { ...options, headers });
-            if (response.status === 401 || response.status === 403) {
-                logout();
-                return null;
-            }
-            if (!response.ok) {
-                const errorData = await response.json();
-                alert(`Chyba: ${errorData.message || response.statusText}`);
-                return null;
-            }
-            if (response.status === 204) return true; // Pro odpovědi bez obsahu
-            return response.json();
-        } catch (error) {
-            console.error('Chyba API volání:', error);
-            alert('Došlo k chybě při komunikaci se serverem.');
-            return null;
-        }
-    };
+    // Use shared API helper from common.js
+    const apiFetch = Common.authFetch;
 
     // --- Inicializace ---
     const init = () => {
-    const token = localStorage.getItem('authToken');
+    const token = Common.token;
         if (token) {
             try {
                 const payload = JSON.parse(atob(token.split('.')[1]));
@@ -94,8 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function logout() {
-        localStorage.clear();
-        window.location.href = 'index.html';
+        Common.handleSessionExpired();
     }
 
     // --- Načítání a Vykreslování Uživatelů ---
@@ -171,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (result) {
-            alert('Role byla úspěšně změněna.');
+            Common.showToast('Role byla úspěšně změněna.', 'success');
             closeEditModal();
             loadUsers();
         }
@@ -180,7 +151,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function handleResetPassword() {
         const newPassword = prompt('Zadejte nové heslo pro uživatele (min. 6 znaků):');
         if (!newPassword || newPassword.length < 6) {
-            alert('Heslo je příliš krátké nebo nebylo zadáno.');
+            Common.showToast('Heslo je příliš krátké nebo nebylo zadáno.', 'error');
             return;
         }
         
@@ -190,7 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (result) {
-            alert('Heslo bylo úspěšně resetováno.');
+            Common.showToast('Heslo bylo úspěšně resetováno.', 'success');
         }
     }
 
@@ -200,7 +171,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: 'DELETE'
             });
             if (result) {
-                alert('Všechny rezervace uživatele byly smazány.');
+                Common.showToast('Všechny rezervace uživatele byly smazány.', 'success');
             }
         }
     }
@@ -211,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: 'DELETE'
             });
             if (result) {
-                alert('Uživatel byl smazán.');
+                Common.showToast('Uživatel byl smazán.', 'success');
                 closeEditModal();
                 loadUsers();
             }

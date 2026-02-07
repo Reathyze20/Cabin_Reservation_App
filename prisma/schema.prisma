@@ -1,0 +1,216 @@
+// Prisma schema for Cabin Reservation App
+// PostgreSQL database
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// USERS
+// ============================================================================
+model User {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  passwordHash String   @map("password_hash")
+  color        String
+  role         String   @default("user") // "admin" | "user" | "guest"
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relations
+  reservations              Reservation[]
+  shoppingListItemsAdded    ShoppingListItem[]           @relation("AddedBy")
+  shoppingListItemsPurchased ShoppingListItem[]          @relation("PurchasedBy")
+  shoppingItemSplits        ShoppingItemSplit[]
+  notes                     Note[]
+  galleryFolders            GalleryFolder[]
+  galleryPhotos             GalleryPhoto[]
+  diaryFolders              DiaryFolder[]
+  diaryEntries              DiaryEntry[]
+  reconstructionItems       ReconstructionItem[]
+  reconstructionVotes       ReconstructionVote[]
+
+  @@map("users")
+}
+
+// ============================================================================
+// RESERVATIONS
+// ============================================================================
+model Reservation {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  dateFrom  DateTime @map("date_from") @db.Date
+  dateTo    DateTime @map("date_to") @db.Date
+  purpose   String
+  notes     String?  @db.Text
+  status    String   @default("primary") // "primary" | "backup"
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("reservations")
+}
+
+// ============================================================================
+// SHOPPING LIST
+// ============================================================================
+model ShoppingListItem {
+  id            String    @id @default(uuid())
+  name          String
+  addedById     String    @map("added_by_id")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  purchased     Boolean   @default(false)
+  purchasedById String?   @map("purchased_by_id")
+  purchasedAt   DateTime? @map("purchased_at")
+  price         Decimal?  @db.Decimal(10, 2)
+
+  // Relations
+  addedBy     User                @relation("AddedBy", fields: [addedById], references: [id], onDelete: Cascade)
+  purchasedBy User?               @relation("PurchasedBy", fields: [purchasedById], references: [id], onDelete: SetNull)
+  splits      ShoppingItemSplit[]
+
+  @@map("shopping_list_items")
+}
+
+model ShoppingItemSplit {
+  itemId String @map("item_id")
+  userId String @map("user_id")
+
+  // Relations
+  item ShoppingListItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  user User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([itemId, userId])
+  @@map("shopping_item_splits")
+}
+
+// ============================================================================
+// NOTES
+// ============================================================================
+model Note {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  message   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notes")
+}
+
+// ============================================================================
+// GALLERY
+// ============================================================================
+model GalleryFolder {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  createdById String?  @map("created_by_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  createdBy User?          @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  photos    GalleryPhoto[]
+
+  @@map("gallery_folders")
+}
+
+model GalleryPhoto {
+  id            String   @id @default(uuid())
+  folderId      String   @map("folder_id")
+  src           String
+  uploadedById  String?  @map("uploaded_by_id")
+  description   String?  @db.Text
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  // Relations
+  folder         GalleryFolder       @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  uploadedBy     User?               @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  diaryEntries   DiaryEntryPhoto[]
+
+  @@map("gallery_photos")
+}
+
+// ============================================================================
+// DIARY
+// ============================================================================
+model DiaryFolder {
+  id          String    @id @default(uuid())
+  name        String
+  createdById String    @map("created_by_id")
+  startDate   DateTime? @map("start_date") @db.Date
+  endDate     DateTime? @map("end_date") @db.Date
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  createdBy User         @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  entries   DiaryEntry[]
+
+  @@map("diary_folders")
+}
+
+model DiaryEntry {
+  id        String   @id @default(uuid())
+  folderId  String   @map("folder_id")
+  authorId  String   @map("author_id")
+  entryDate DateTime @map("entry_date") @db.Date
+  content   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  folder  DiaryFolder       @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  author  User              @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  photos  DiaryEntryPhoto[]
+
+  @@map("diary_entries")
+}
+
+model DiaryEntryPhoto {
+  entryId String @map("entry_id")
+  photoId String @map("photo_id")
+
+  // Relations
+  entry DiaryEntry   @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  photo GalleryPhoto @relation(fields: [photoId], references: [id], onDelete: Cascade)
+
+  @@id([entryId, photoId])
+  @@map("diary_entry_photos")
+}
+
+// ============================================================================
+// RECONSTRUCTION
+// ============================================================================
+model ReconstructionItem {
+  id          String   @id @default(uuid())
+  category    String   // "idea" | "company" | "task"
+  title       String
+  description String   @db.Text
+  link        String?
+  cost        Decimal? @db.Decimal(10, 2)
+  status      String   @default("pending") // "pending" | "approved" | "done"
+  createdById String   @map("created_by_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  createdBy User                 @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  votes     ReconstructionVote[]
+
+  @@map("reconstruction_items")
+}
+
+model ReconstructionVote {
+  itemId String @map("item_id")
+  userId String @map("user_id")
+
+  // Relations
+  item ReconstructionItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  user User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([itemId, userId])
+  @@map("reconstruction_votes")
+}

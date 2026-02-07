@@ -2,7 +2,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../config/config";
-import { JwtPayload } from "../types"; // Importujeme naše rozhraní
+import { JwtPayload } from "../types";
 
 declare global {
   namespace Express {

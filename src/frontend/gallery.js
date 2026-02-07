@@ -98,73 +98,19 @@ document.addEventListener("DOMContentLoaded", () => {
     { classes: [], itemsCount: 12 },
   ];
 
-  // --- Auth Check ---
-  const loggedInUsername = localStorage.getItem("username");
-  const userRole = localStorage.getItem("role");
-  const token = localStorage.getItem("authToken");
+  // --- Auth Check — use Common module ---
+  const loggedInUsername = Common.username;
+  const userRole = Common.role;
+  const token = Common.token;
 
-  if (loggedInUsername && token) {
-    appContainer.classList.remove("hidden");
-    authContainer.classList.add("hidden");
-    if (loggedInUsernameElement) loggedInUsernameElement.textContent = loggedInUsername;
+  if (Common.checkAuth(appContainer, authContainer, loggedInUsernameElement)) {
     loadFolders();
-  } else {
-    appContainer.classList.add("hidden");
-    authContainer.classList.remove("hidden");
   }
+  Common.setupLogout(logoutButton);
 
-  if (logoutButton) {
-    logoutButton.addEventListener("click", () => {
-      localStorage.clear();
-      window.location.href = "index.html";
-    });
-  }
-
-  // --- API Helpers ---
-  async function apiFetch(url, options = {}) {
-    const headers = {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-      ...options.headers,
-    };
-    try {
-      const response = await fetch(url, { ...options, headers });
-      if (response.status === 401) {
-        // Používáme showToast místo alert, ale pro kritickou chybu je lepší alert
-        alert("Sezení vypršelo. Přihlaste se znovu.");
-        localStorage.clear();
-        window.location.href = "index.html";
-        return null;
-      }
-      if (!response.ok) {
-        // Zkusíme parsovat error message z JSONu
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err.message || response.statusText || "Chyba serveru");
-      }
-      return options.method === "DELETE" && response.status === 200 ? true : response.json();
-    } catch (error) {
-      console.error("API Error:", error);
-      // Zobrazíme chybu, jen pokud je to akce jako smazání/vytvoření
-      if (options.method === "DELETE" || options.method === "POST" || options.method === "PATCH") {
-        showToast(error.message, "error");
-      }
-      return null;
-    }
-  }
-
-  function showToast(message, type = "success") {
-    const toast = document.getElementById("success-toast");
-    if (!toast) return;
-
-    toast.querySelector("span").textContent = message;
-    toast.style.backgroundColor = type === "success" ? "#10b981" : "#ef4444";
-    toast.querySelector("i").className = type === "success" ? "fas fa-check-circle" : "fas fa-exclamation-triangle";
-
-    toast.classList.add("show");
-    setTimeout(() => {
-      toast.classList.remove("show");
-    }, 3000);
-  }
+  // Use shared API helpers from common.js
+  const apiFetch = Common.authFetch;
+  const showToast = Common.showToast;
 
   // --- Logic: Folders ---
   async function loadFolders() {
@@ -466,7 +412,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const checkboxHTML = "";
 
       photoEl.innerHTML = `
-                <img src="${photo.src}" alt="Foto" loading="lazy">
+                <img src="${photo.thumb || photo.src}" alt="Foto" loading="lazy">
                 <div class="photo-overlay"><i class="fas fa-search-plus"></i></div>
                 ${checkboxHTML}
             `;
@@ -598,24 +544,33 @@ document.addEventListener("DOMContentLoaded", () => {
     const uploadButton = uploadPhotoForm.querySelector('button[type="submit"]');
     uploadButton.disabled = true;
 
-    let successCount = 0;
-    let errorCount = 0;
-
-    for (const file of Array.from(files)) {
-      try {
-        const base64 = await toBase64(file);
-        await apiFetch(`${backendUrl}/api/gallery/photos`, {
-          method: "POST",
-          body: JSON.stringify({
-            folderId: currentFolderId,
-            imageBase64: base64,
-          }),
-        });
-        successCount++;
-      } catch (err) {
-        console.error("Chyba při uploadu:", err);
-        errorCount++;
+    try {
+      const formData = new FormData();
+      formData.append("folderId", currentFolderId);
+      for (const file of Array.from(files)) {
+        formData.append("photos", file);
       }
+
+      const response = await fetch(`${backendUrl}/api/gallery/photos`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+
+      if (response.status === 401) {
+        Common.handleSessionExpired();
+        return;
+      }
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.message || "Chyba při nahrávání");
+      }
+
+      showToast(`Úspěšně nahráno ${files.length} fotek.`, "success");
+    } catch (err) {
+      console.error("Chyba při uploadu:", err);
+      showToast(err.message || "Chyba při nahrávání fotek.", "error");
     }
 
     uploadButton.disabled = false;
@@ -624,22 +579,7 @@ document.addEventListener("DOMContentLoaded", () => {
     photoFileInput.value = "";
 
     loadPhotos(currentFolderId);
-
-    if (successCount > 0) {
-      showToast(`Úspěšně nahráno ${successCount} fotek.`, "success");
-    }
-    if (errorCount > 0) {
-      showToast(`Chyba při nahrávání ${errorCount} fotek.`, "error");
-    }
   });
-
-  const toBase64 = (file) =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = (error) => reject(error);
-    });
 
   // --- Lightbox Logic ---
   function openLightbox(index) {
