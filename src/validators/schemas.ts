@@ -74,7 +74,7 @@ export const createDiaryEntrySchema = z.object({
 // Reconstruction validators
 export const createReconstructionItemSchema = z.object({
   category: z.enum(["idea", "company", "task"], {
-    errorMap: () => ({ message: "Kategorie musí být idea, company nebo task" }),
+    error: "Kategorie musí být idea, company nebo task",
   }),
   title: z.string().min(1, "Název je povinný"),
   description: z.string().optional(),
