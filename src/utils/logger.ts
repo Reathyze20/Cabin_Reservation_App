@@ -6,6 +6,7 @@
 import fs from "fs";
 import path from "path";
 
+const __dirname = import.meta.dirname;
 const logsDir = path.join(__dirname, "../../data/logs");
 
 // Ensure logs directory exists

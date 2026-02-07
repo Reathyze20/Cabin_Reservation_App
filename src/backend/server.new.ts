@@ -69,6 +69,7 @@ app.use((req, res, next) => {
 });
 
 // Static files
+const __dirname = import.meta.dirname;
 const frontendPath = path.join(__dirname, "../../src/frontend");
 const uploadsPath = path.join(__dirname, "../../data/uploads");
 

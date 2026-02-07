@@ -1,7 +1,9 @@
 import dotenv from "dotenv";
+import path from "path";
 import logger from "../utils/logger";
 
-dotenv.config();
+const __dirname = import.meta.dirname;
+dotenv.config({ path: path.join(__dirname, "../../.env") });
 
 // JWT Configuration
 export const JWT_SECRET = process.env.JWT_SECRET || "TotoJeVelmiTajneHeslo";

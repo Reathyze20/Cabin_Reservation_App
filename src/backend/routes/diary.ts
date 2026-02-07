@@ -2,7 +2,7 @@ import { Router, Request, Response } from "express";
 import { protect } from "../../middleware/authMiddleware";
 import prisma from "../../utils/prisma";
 import logger from "../../utils/logger";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../../generated/prisma/client.js";
 
 const router = Router();
 

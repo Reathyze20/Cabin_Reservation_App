@@ -7,12 +7,17 @@
 
 import fs from "fs";
 import path from "path";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../generated/prisma/client.js";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { v4 as uuidv4 } from "uuid";
+import dotenv from "dotenv";
+dotenv.config();
 
-const prisma = new PrismaClient();
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
+const prisma = new PrismaClient({ adapter });
 
 // JSON file paths
+const __dirname = import.meta.dirname;
 const dataDir = path.join(__dirname, "../../data/archive");
 const usersFile = path.join(dataDir, "users.json");
 const reservationsFile = path.join(dataDir, "reservations.json");

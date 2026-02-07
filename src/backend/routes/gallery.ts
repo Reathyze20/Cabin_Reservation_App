@@ -9,6 +9,7 @@ import multer from "multer";
 import sharp from "sharp";
 
 const router = Router();
+const __dirname = import.meta.dirname;
 const uploadsPath = path.join(__dirname, "../../../data/uploads");
 const thumbsPath = path.join(__dirname, "../../../data/uploads/thumbs");
 
