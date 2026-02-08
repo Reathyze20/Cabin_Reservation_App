@@ -3,24 +3,26 @@
     "target": "ES2023",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "lib": ["ES2023"],
-    "types": ["node"],
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "strict": true,
     "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "noEmit": true
+    "noEmit": true,
+    "jsx": "preserve",
+    "paths": {
+      "@/*": ["./*"],
+      "@shared/*": ["../*"]
+    },
+    "baseUrl": "."
   },
   "include": [
-    "src/**/*.ts",
-    "prisma.config.ts"
+    "**/*.ts",
+    "vite-env.d.ts"
   ],
   "exclude": [
-    "src/frontend/**",
-    "src/generated/**",
-    "node_modules",
-    "dist"
+    "_legacy"
   ]
 }

@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="cs">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rezervace chaty - Třebenice</title>
+    <link rel="icon" type="image/png" href="favicon.png" />
+
+    <!-- Preconnect hints -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin />
+
+    <!-- Google Fonts (Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+    <!-- Flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+
+    <!-- Font Awesome pro ikony -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+    <!-- Náš vlastní CSS -->
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- Obalující prvek pro centrování a gradient -->
+    <div class="app-wrapper">
+      <!-- Sekce pro přihlášení -->
+      <div id="login-section" class="login-container card">
+        <h1>Přihlášení</h1>
+        <form id="login-form">
+          <div>
+            <label for="username">Uživatelské jméno:</label><br />
+            <input type="text" id="username" name="username" required />
+          </div>
+          <br />
+          <div>
+            <label for="password">Heslo:</label><br />
+            <div class="input-eye-wrapper">
+              <input type="password" id="login-password" name="password" required />
+              <i class="fas fa-eye toggle-password" id="toggle-password-login"></i>
+            </div>
+          </div>
+          <br />
+          <button type="submit">Přihlásit se</button>
+          <p id="login-error" class="error-message"></p>
+        </form>
+        <p class="toggle-form-text">Ještě nemáte účet? <a href="#" id="show-register-link">Zaregistrujte se</a></p>
+      </div>
+
+      <!-- Sekce pro registraci -->
+      <div id="register-section" class="login-container card" style="display: none">
+        <h1>Registrace</h1>
+        <form id="register-form">
+          <div>
+            <label for="register-username">Uživatelské jméno:</label><br />
+            <input type="text" id="register-username" name="username" required />
+          </div>
+          <br />
+          <div>
+            <label for="register-password">Heslo (min. 6 znaků):</label><br />
+            <div class="input-eye-wrapper">
+              <input type="password" id="register-password" name="password" required />
+              <i class="fas fa-eye toggle-password" id="toggle-password-register"></i>
+            </div>
+          </div>
+          <br />
+          <div>
+            <label for="register-color">Vyberte si barvu:</label><br />
+            <input type="color" id="register-color" name="color" value="#FFB300" style="width: 100%; height: 40px; border-radius: 8px; border: 1px solid #ddd; padding: 5px" required />
+          </div>
+          <br />
+          <button type="submit">Zaregistrovat</button>
+          <p id="register-message" class="message"></p>
+        </form>
+        <p class="toggle-form-text">Máte již účet? <a href="#" id="show-login-link">Přihlaste se</a></p>
+      </div>
+
+      <!-- Hlavní sekce aplikace -->
+      <div id="app-section" class="app-container" style="display: none">
+        <!-- Horní lišta: navigace + informace o uživateli -->
+        <div class="top-bar">
+          <nav class="app-nav">
+            <a href="index.html" class="nav-link active">Rezervace</a>
+            <a href="notes.html" class="nav-link">Nástěnka</a>
+            <a href="gallery.html" class="nav-link">Galerie</a>
+            <a href="diary.html" class="nav-link">Deník</a>
+          </nav>
+          <div class="user-info">
+            <span class="username-display">Přihlášen jako: <strong id="logged-in-username"></strong></span>
+            <button id="logout-button" class="button-logout"><i class="fas fa-sign-out-alt"></i> Odhlásit se</button>
+          </div>
+        </div>
+
+        <div class="main-content">
+          <!-- Nákupní seznam -->
+          <div class="card shopping-list-container">
+            <h2>Nákupní seznamy</h2>
+            <form id="add-item-form" class="add-item-form">
+              <input type="text" id="item-name-input" placeholder="Název nového seznamu" required />
+              <button type="submit" class="button-add-item" title="Vytvořit seznam"><i class="fas fa-plus"></i></button>
+            </form>
+            <div id="shopping-list" class="shopping-list-content">
+              <div class="spinner-container"><div class="spinner"></div></div>
+            </div>
+          </div>
+
+          <!-- Hlavní karta s kalendářem -->
+          <div class="card calendar-card">
+            <!-- Horní lišta pro výběr datumu -->
+            <div class="date-display-bar">
+              <div class="date-part">
+                <i class="far fa-calendar-alt icon"></i>
+                <div>
+                  <span class="label">Datum příjezdu</span>
+                  <span class="date-value" id="check-in-date-display">- Vyberte -</span>
+                </div>
+              </div>
+              <span class="date-separator">do</span>
+              <div class="date-part">
+                <div>
+                  <span class="label">Datum odjezdu</span>
+                  <span class="date-value" id="check-out-date-display">- Vyberte -</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Kontejner, kam JS vloží inline Flatpickr -->
+            <div class="calendar-container">
+              <!-- Flatpickr se připojí sem pomocí JS -->
+            </div>
+
+            <!-- Tlačítko pro rezervaci se zobrazí až po výběru datumu -->
+            <div style="display: flex; gap: 8px; align-items: center">
+              <button id="open-booking-modal-button" class="button-primary" style="display: none">Pokračovat k rezervaci</button>
+              <button id="clear-selection-button" class="button-secondary" style="display: none">Vymazat výběr</button>
+            </div>
+            <p id="booking-message"></p>
+          </div>
+          <!-- Konec .calendar-card -->
+
+          <!-- Seznam rezervací -->
+          <div class="reservations-list-container card">
+            <h2 id="reservations-title">Přehled rezervací</h2>
+            <div id="reservations-list">Načítám rezervace...</div>
+          </div>
+        </div>
+      </div>
+      <!-- Konec #app-section -->
+    </div>
+    <!-- Konec .app-wrapper -->
+
+    <!-- Modální okno pro úpravu nákupního seznamu -->
+    <div id="shopping-list-modal" class="modal-overlay" style="display: none">
+      <div class="modal-content">
+        <span class="modal-close-button">&times;</span>
+        <h2 id="shopping-modal-title">Seznam</h2>
+        <div id="shopping-modal-body">
+          <div style="display: flex; gap: 8px; margin-bottom: 10px">
+            <input type="text" id="shopping-item-input" placeholder="Přidat položku..." />
+            <button id="shopping-item-add-btn" class="button-primary">Přidat</button>
+          </div>
+          <div id="shopping-modal-list">
+            <!-- položky -->
+          </div>
+        </div>
+        <div style="text-align: right; margin-top: 12px">
+          <button id="shopping-modal-close" class="button-secondary">Zavřít</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modální okno pro výběr ikony -->
+    <div id="icon-select-modal" class="modal-overlay" style="display: none">
+      <div class="modal-content">
+        <span class="modal-close-button">&times;</span>
+        <h2>Vyberte ikonu</h2>
+        <div id="icon-grid">
+          <!-- Ikony se vygenerují sem pomocí JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Modální okno pro rozdělení ceny -->
+    <div id="price-split-modal" class="modal-overlay" style="display: none">
+      <div class="modal-content">
+        <span class="modal-close-button">&times;</span>
+        <h2 id="split-modal-title">Rozdělit útratu</h2>
+        <p id="split-modal-info"></p>
+        <form id="price-split-form">
+          <div id="user-split-list" class="user-split-list">
+            <!-- Seznam uživatelů se vygeneruje zde -->
+          </div>
+          <div class="modal-buttons">
+            <button type="submit" class="button-primary">Potvrdit rozdělení</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modální okno pro detaily rezervace -->
+    <div id="booking-modal" class="modal-overlay" style="display: none">
+      <div class="modal-content">
+        <span class="modal-close-button">&times;</span>
+        <h2 id="modal-title">Detail rezervace</h2>
+
+        <!-- Upozornění na záložní rezervaci -->
+        <div id="backup-warning-message" class="backup-warning" style="display: none">
+          <p><strong>Upozornění:</strong> Vámi vybraný termín je již obsazen. Vaše rezervace bude vytvořena jako <strong>záložní</strong>. O případném uvolnění termínu budete informováni.</p>
+        </div>
+
+        <p><strong>Termín:</strong> <span id="modal-date-range"></span></p>
+        <form id="booking-form">
+          <input type="hidden" id="reservation-id" name="reservationId" />
+          <div class="form-group">
+            <label for="purpose-select">Účel návštěvy:</label>
+            <select id="purpose-select" name="purpose">
+              <option value="Relax">Relax</option>
+              <option value="Práce na zahradě">Práce na zahradě</option>
+              <option value="Údržba chaty">Údržba chaty</option>
+              <option value="Jiný">Jiný (specifikujte)</option>
+            </select>
+          </div>
+          <div class="form-group" id="other-purpose-group" style="display: none">
+            <label for="other-purpose-input">Specifikujte jiný účel:</label>
+            <input type="text" id="other-purpose-input" placeholder="např. Oslava narozenin" />
+          </div>
+          <div class="form-group">
+            <label for="notes-textarea">Poznámky (co plánujete dělat):</label>
+            <textarea id="notes-textarea" rows="4" placeholder="např. Ostříhat stromy, vymalovat pokoj..."></textarea>
+          </div>
+          <div class="modal-buttons">
+            <button type="submit" id="modal-submit-button" class="button-primary">Potvrdit rezervaci</button>
+            <button type="button" id="modal-delete-button" class="button-danger" style="display: none">Odstranit rezervaci</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modální okno pro potvrzení smazání -->
+    <div id="confirm-delete-modal" class="modal-overlay" style="display: none">
+      <div class="modal-content">
+        <h2 id="confirm-modal-title">Opravdu smazat?</h2>
+        <p id="confirm-modal-text">Tato akce je nevratná.</p>
+        <div class="modal-buttons">
+          <button id="confirm-delete-btn" class="button-danger">Ano, smazat</button>
+          <button id="cancel-delete-btn" class="button-secondary">Zrušit</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modální okno pro přiřazení rezervace -->
+    <div id="assign-reservation-modal" class="modal-overlay" style="display: none">
+      <div class="modal-content">
+        <span class="modal-close-button">&times;</span>
+        <h2 id="assign-modal-title">Přiřadit rezervaci</h2>
+        <p id="assign-modal-text">Vyberte uživatele, kterému chcete přiřadit tuto rezervaci.</p>
+
+        <form id="assign-reservation-form">
+          <input type="hidden" id="assign-reservation-id-input" />
+          <div classs="form-group">
+            <label for="assign-user-select">Nový vlastník:</label>
+            <select id="assign-user-select" name="newOwner" required>
+              <!-- Možnosti se naplní pomocí JS -->
+            </select>
+          </div>
+
+          <div class="modal-buttons">
+            <button type="submit" class="button-primary">Potvrdit přiřazení</button>
+            <button type="button" id="cancel-assign-btn" class="button-secondary">Zrušit</button>
+          </div>
+          <p id="assign-error-message" class="error-message" style="margin-top: 10px"></p>
+        </form>
+      </div>
+    </div>
+
+    <!-- JS Knihovny a náš skript -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/cs.js"></script>
+    <script src="common.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
