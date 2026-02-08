@@ -24,8 +24,11 @@ RUN npm ci
 COPY prisma/ prisma/
 COPY prisma.config.ts ./
 
-# Generate Prisma client (dummy URL — generate only needs the schema, not a real DB)
-RUN DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy" npx prisma generate
+# Set dummy DATABASE_URL for prisma generate (Prisma 7 config loads this even at generate time)
+ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
+
+# Generate Prisma client
+RUN npx prisma generate
 
 # Copy the rest of source code
 COPY tsconfig.json vite.config.ts ./
