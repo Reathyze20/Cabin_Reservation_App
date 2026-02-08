@@ -21,6 +21,9 @@
     "docker:logs": "docker compose logs -f app",
     "docker:seed": "docker compose exec app npx tsx src/scripts/migrateData.ts"
   },
+  "engines": {
+    "node": ">=20.11.0"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",

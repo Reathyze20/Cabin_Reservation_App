@@ -14,6 +14,11 @@ export const DATABASE_URL = process.env.DATABASE_URL || "";
 // Server Configuration
 export const PORT = parseInt(process.env.PORT || "3000", 10);
 
+// Uploads — configurable for Railway volumes or Docker mounts
+const defaultUploads = path.join(__dirname, "../../data/uploads");
+export const UPLOADS_PATH = process.env.UPLOADS_PATH || defaultUploads;
+export const THUMBS_PATH = path.join(UPLOADS_PATH, "thumbs");
+
 if (JWT_SECRET === "TotoJeVelmiTajneHeslo") {
   if (process.env.NODE_ENV === "production") {
     logger.error("CONFIG", "FATAL: JWT_SECRET is not set! Cannot start in production with default secret.");

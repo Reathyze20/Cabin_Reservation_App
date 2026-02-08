@@ -5,7 +5,7 @@ import compression from "compression";
 import rateLimit from "express-rate-limit";
 import path from "path";
 import fs from "fs";
-import { PORT } from "../config/config";
+import { PORT, UPLOADS_PATH } from "../config/config";
 import prisma from "../utils/prisma";
 import logger from "../utils/logger";
 
@@ -79,7 +79,7 @@ app.use((req, res, next) => {
 // Static files
 const __dirname = import.meta.dirname;
 const distPath = path.join(__dirname, "../../dist/frontend");
-const uploadsPath = path.join(__dirname, "../../data/uploads");
+const uploadsPath = UPLOADS_PATH;
 
 if (!fs.existsSync(uploadsPath)) {
   fs.mkdirSync(uploadsPath, { recursive: true });

@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import { protect } from "../../middleware/authMiddleware";
 import prisma from "../../utils/prisma";
 import logger from "../../utils/logger";
+import { UPLOADS_PATH, THUMBS_PATH } from "../../config/config";
 import fs from "fs";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
@@ -9,9 +10,8 @@ import multer from "multer";
 import sharp from "sharp";
 
 const router = Router();
-const __dirname = import.meta.dirname;
-const uploadsPath = path.join(__dirname, "../../../data/uploads");
-const thumbsPath = path.join(__dirname, "../../../data/uploads/thumbs");
+const uploadsPath = UPLOADS_PATH;
+const thumbsPath = THUMBS_PATH;
 
 // Ensure uploads directories exist
 for (const dir of [uploadsPath, thumbsPath]) {
