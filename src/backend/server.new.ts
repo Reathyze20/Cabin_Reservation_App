@@ -21,6 +21,7 @@ import diaryRoutes from "./routes/diary";
 import reconstructionRoutes from "./routes/reconstruction";
 
 const app = express();
+const isProd = process.env.NODE_ENV === "production";
 
 // ============================================================================
 //                              MIDDLEWARE
@@ -49,8 +50,15 @@ const authLimiter = rateLimit({
 // Body parser (10mb for photo uploads via multer, reduced from 50mb)
 app.use(express.json({ limit: "10mb" }));
 
-// CORS
-app.use(cors());
+// Trust proxy (for Docker / reverse proxy — correct IP in rate limiter & logs)
+app.set("trust proxy", 1);
+
+// CORS — in production restrict to same-origin, in dev allow all
+if (isProd) {
+  app.use(cors({ origin: false }));
+} else {
+  app.use(cors());
+}
 
 // Request logging
 app.use((req, res, next) => {
@@ -70,35 +78,51 @@ app.use((req, res, next) => {
 
 // Static files
 const __dirname = import.meta.dirname;
-const frontendPath = path.join(__dirname, "../../src/frontend");
+const distPath = path.join(__dirname, "../../dist/frontend");
 const uploadsPath = path.join(__dirname, "../../data/uploads");
 
 if (!fs.existsSync(uploadsPath)) {
   fs.mkdirSync(uploadsPath, { recursive: true });
 }
 
-app.use(express.static(frontendPath, {
-  maxAge: "1d",
-  etag: true,
-  lastModified: true,
-}));
+// Uploads are served by both dev and prod
 app.use("/uploads", express.static(uploadsPath, {
   maxAge: "7d",
   etag: true,
   immutable: true, // Upload filenames contain UUIDs — never change
 }));
 
+// In production, serve Vite-built static assets from dist/frontend
+// In dev, Vite dev server handles frontend (proxied via vite.config.ts)
+if (isProd) {
+  app.use(express.static(distPath, {
+    maxAge: "1d",
+    etag: true,
+    lastModified: true,
+  }));
+}
+
 // ============================================================================
 //                                ROUTES
 // ============================================================================
 
-// Health check
-app.get("/api/health", (req, res) => {
-  res.json({
-    status: "ok",
-    timestamp: new Date().toISOString(),
-    database: "connected",
-  });
+// Health check (with real DB ping)
+app.get("/api/health", async (req, res) => {
+  try {
+    await prisma.$queryRawUnsafe("SELECT 1");
+    res.json({
+      status: "ok",
+      timestamp: new Date().toISOString(),
+      database: "connected",
+    });
+  } catch (err) {
+    logger.error("HEALTH", "Database health check failed", err);
+    res.status(503).json({
+      status: "error",
+      timestamp: new Date().toISOString(),
+      database: "disconnected",
+    });
+  }
 });
 
 // Auth routes (rate limiter only on login/register)
@@ -120,9 +144,12 @@ app.use("/api/logs", logsRoutes);
 //                            SPA FALLBACK
 // ============================================================================
 
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../../src/frontend/index.html"));
-});
+// In production, serve index.html for all non-API routes (SPA routing)
+if (isProd) {
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(distPath, "index.html"));
+  });
+}
 
 // ============================================================================
 //                          ERROR HANDLING
