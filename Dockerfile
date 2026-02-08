@@ -27,7 +27,7 @@ COPY prisma.config.ts ./
 # Set dummy DATABASE_URL for prisma generate (Prisma 7 config loads this even at generate time)
 ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 
-# Generate Prisma client
+# Generate Prisma client (requires DATABASE_URL env var even for code generation)
 RUN npx prisma generate
 
 # Copy the rest of source code
