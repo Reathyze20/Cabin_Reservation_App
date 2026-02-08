@@ -5,7 +5,7 @@ generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
 }
-844852e3d49eff95ee1eb7034dacb4fa5fd55d87106e2289de4f4b7f286ee4481
+
 datasource db {
   provider = "postgresql"
 }
