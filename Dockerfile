@@ -71,6 +71,7 @@ COPY src/middleware/ src/middleware/
 COPY src/utils/ src/utils/
 COPY src/types.ts src/types.ts
 COPY src/validators/ src/validators/
+COPY src/scripts/ src/scripts/
 
 # Create data directories
 RUN mkdir -p data/uploads/thumbs data/logs
