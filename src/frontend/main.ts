@@ -3,7 +3,7 @@
    ============================================================================ */
 
 // CSS
-import './styles/index.css';
+import './styles/legacy.css';
 import 'flatpickr/dist/flatpickr.min.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
