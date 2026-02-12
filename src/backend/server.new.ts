@@ -53,9 +53,12 @@ app.use(express.json({ limit: "10mb" }));
 // Trust proxy (for Docker / reverse proxy — correct IP in rate limiter & logs)
 app.set("trust proxy", 1);
 
-// CORS — in production restrict to same-origin, in dev allow all
+// CORS — in production allow same origin, in dev allow all
 if (isProd) {
-  app.use(cors({ origin: false }));
+  app.use(cors({
+    origin: true, // Reflect the request origin (allows same-origin)
+    credentials: true, // Allow credentials (cookies, authorization headers)
+  }));
 } else {
   app.use(cors());
 }
