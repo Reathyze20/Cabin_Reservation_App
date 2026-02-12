@@ -1,0 +1,99 @@
+/* ============================================================================
+   Navigation — Top Bar, App Nav, User Info
+   ============================================================================ */
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-xl);
+  padding: 10px var(--space-xl);
+  background-color: rgba(255, 255, 255, 0.85);
+  border-radius: var(--radius-lg);
+}
+
+.app-nav {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.app-nav .nav-link {
+  text-decoration: none;
+  color: var(--color-text);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.8);
+  transition: background var(--transition-fast);
+}
+.app-nav .nav-link:hover {
+  background: rgba(255, 255, 255, 1);
+}
+.app-nav .nav-link.active {
+  background-color: orange;
+  color: white;
+}
+
+/* Special nav button for reconstruction */
+.nav-link.nav-special {
+  background: repeating-linear-gradient(45deg, #fffbeb, #fffbeb 10px, #fff7ed 10px, #fff7ed 20px);
+  border: 2px solid var(--color-primary-light);
+  color: var(--color-primary);
+  font-weight: 800;
+  box-shadow: 0 2px 5px rgba(217, 119, 6, 0.2);
+  transition: all var(--transition-base);
+}
+.nav-link.nav-special:hover {
+  background: var(--color-primary-light);
+  color: white;
+  border-color: var(--color-primary);
+  transform: translateY(-2px);
+}
+.nav-link.nav-special.active {
+  background: var(--color-primary);
+  color: white;
+  border-color: #b45309;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.user-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 var(--space-xl);
+  font-size: var(--font-size-base);
+  background-color: rgba(255, 255, 255, 0.85);
+  color: var(--color-text-dark);
+  height: 50px;
+  backdrop-filter: blur(10px);
+  border-radius: var(--radius-xl);
+}
+.user-info strong {
+  font-weight: 700;
+}
+
+.username-display {
+  padding-right: 15px;
+}
+
+.admin-link {
+  text-decoration: none;
+  color: var(--color-text);
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  transition: all var(--transition-fast);
+}
+.admin-link:hover {
+  color: #d18b00;
+}
+
+.button-logout {
+  background: none;
+  border: none;
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+.button-logout:hover {
+  text-decoration: underline;
+}

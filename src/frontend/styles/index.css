@@ -1,0 +1,40 @@
+/* ============================================================================
+   Main CSS Entry Point — imports every module in the correct cascade order
+   ============================================================================ */
+
+/* Design tokens & theme */
+@import './variables.css';
+
+/* Reset & global base */
+@import './base.css';
+
+/* Layout shells */
+@import './layout.css';
+
+/* Navigation */
+@import './nav.css';
+
+/* Reusable components */
+@import './buttons.css';
+@import './forms.css';
+@import './modal.css';
+@import './toast.css';
+
+/* Calendar (flatpickr overrides) */
+@import './calendar.css';
+
+/* Page-specific styles */
+@import './reservations.css';
+@import './shopping.css';
+@import './notes.css';
+@import './gallery.css';
+@import './lightbox.css';
+@import './diary.css';
+@import './reconstruction.css';
+@import './admin.css';
+
+/* Utilities & enhancements */
+@import './skeleton.css';
+
+/* Dark mode overrides (must be last) */
+@import './dark-mode.css';
