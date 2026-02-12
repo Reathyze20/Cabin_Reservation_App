@@ -41,7 +41,7 @@ app.use(
 // Rate limiting for auth endpoints only
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // Limit each IP to 10 login/register requests per windowMs
+  max: 30, // Limit each IP to 30 login/register requests per windowMs
   message: "Příliš mnoho pokusů o přihlášení. Zkuste to prosím později.",
   standardHeaders: true,
   legacyHeaders: false,
