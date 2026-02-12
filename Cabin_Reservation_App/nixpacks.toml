@@ -1,0 +1,17 @@
+# Nixpacks config for Railway
+# Node.js 20 for import.meta.dirname support
+
+[phases.setup]
+nixPkgs = ["...", "python3"]
+
+[phases.install]
+cmds = ["npm ci"]
+
+[phases.build]
+cmds = [
+  "npx prisma generate",
+  "npx vite build --config vite.config.ts"
+]
+
+[start]
+cmd = "npx prisma migrate deploy && node --import tsx src/backend/server.new.ts"

@@ -1,0 +1,199 @@
+/* ============================================================================
+   Reservations Page — List, Status Badges, Warnings
+   ============================================================================ */
+.shopping-list-container,
+.reservations-list-container {
+  flex: 1 1 320px;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+}
+.calendar-card {
+  flex: 2 1 450px;
+}
+
+.reservation-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--space-sm);
+  gap: var(--space-sm);
+  padding-right: 60px;
+}
+.reservation-header > strong {
+  color: var(--color-text-dark);
+  font-size: var(--font-size-base);
+  display: block;
+  margin-bottom: 6px;
+  flex: none;
+  white-space: normal;
+}
+.reservation-header .status-badge {
+  flex: 0 0 auto;
+  margin-left: 6px;
+}
+.reservation-header span {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-light);
+  white-space: nowrap;
+  margin-left: auto;
+}
+
+.reservation-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+}
+
+.reservation-dates {
+  color: #4b5563;
+  font-weight: 400;
+  font-size: var(--font-size-sm);
+  white-space: normal;
+}
+.reservation-dates-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: 6px;
+}
+.dates-left {
+  color: #4b5563;
+  font-size: 0.95em;
+  white-space: nowrap;
+}
+.dates-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.action-buttons-inline {
+  display: flex;
+  gap: 6px;
+}
+.action-buttons-inline .edit-btn,
+.action-buttons-inline .delete-btn,
+.action-buttons-inline .assign-btn {
+  width: 26px;
+  height: 26px;
+  padding: 4px;
+  font-size: var(--font-size-sm);
+}
+.action-buttons-inline .delete-btn,
+.dates-actions .delete-btn {
+  color: var(--color-danger);
+}
+.action-buttons-inline .delete-btn:hover,
+.dates-actions .delete-btn:hover {
+  background-color: var(--color-danger-bg);
+  color: var(--color-danger-text);
+}
+.action-buttons-inline .assign-btn {
+  color: var(--color-info);
+}
+.action-buttons-inline .assign-btn:hover {
+  background-color: var(--color-info-bg);
+  color: var(--color-info-dark);
+}
+
+.reservation-body p {
+  margin: 4px 0 0;
+  font-size: var(--font-size-sm);
+  color: #4b5563;
+  line-height: 1.5;
+}
+.reservation-body p strong {
+  color: var(--color-text);
+}
+.reservation-body em {
+  color: var(--color-text-muted);
+}
+#reservations-list i {
+  color: var(--color-text-muted);
+}
+
+/* Status Badges */
+.status-badge {
+  font-size: var(--font-size-xs);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+  margin-left: var(--space-sm);
+  vertical-align: middle;
+}
+.status-badge.primary-with-backup {
+  background-color: #dcfce7;
+  color: #166534;
+}
+.status-badge.backup {
+  background-color: #ffedd5;
+  color: #9a3412;
+}
+
+/* Backup warning in modal */
+.backup-warning {
+  background-color: var(--color-primary-bg);
+  border: 1px solid var(--color-warning-border);
+  color: #854d0e;
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  margin-bottom: 15px;
+  font-size: var(--font-size-sm);
+}
+.backup-warning p { margin: 0; }
+.backup-warning strong { color: #713f12; }
+
+#booking-message {
+  margin-top: 15px;
+  font-weight: 600;
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .main-content {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .calendar-card {
+    order: 1;
+    flex-basis: 100%;
+    min-width: 100%;
+  }
+  .shopping-list-container {
+    order: 2;
+    flex-grow: 1;
+    flex-basis: calc(50% - 10px);
+    max-width: none;
+  }
+  .reservations-list-container {
+    order: 3;
+    flex-grow: 1;
+    flex-basis: calc(50% - 10px);
+    min-width: calc(50% - 10px);
+    max-width: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    flex-direction: column;
+    align-items: center;
+  }
+  .shopping-list-container,
+  .reservations-list-container,
+  .calendar-card {
+    order: 0;
+    flex-basis: auto;
+    width: 100%;
+    min-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  body { padding: 10px 5px; align-items: flex-start; }
+  .card { padding: 15px; }
+  .date-display-bar { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .date-separator { display: none; }
+}
