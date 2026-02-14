@@ -30,6 +30,12 @@ const isAdmin = () => localStorage.getItem('role') === 'admin';
 
 export const routes: Route[] = [
   {
+    path: '/dashboard',
+    label: 'Přehled',
+    icon: 'fa-home',
+    loader: () => import('../pages/dashboard').then((m) => m.default),
+  },
+  {
     path: '/reservations',
     label: 'Rezervace',
     icon: 'fa-calendar-alt',
@@ -79,13 +85,28 @@ let navContainer: HTMLElement | null = null;
 /** Get the hash path, e.g. "#/gallery" → "/gallery" */
 function getHashPath(): string {
   const hash = window.location.hash.slice(1); // remove "#"
-  return hash || '/reservations'; // default route
+  return hash || '/dashboard'; // default route
 }
 
 // ─── Skeleton Loaders ─────────────────────────────────────────────────
 
 function buildSkeleton(path: string): string {
   switch (path) {
+    case '/dashboard':
+      return `<div class="skeleton-page">
+        <div class="skeleton skeleton-title" style="width:60%"></div>
+        <div class="skeleton skeleton-text short" style="margin-bottom:1rem"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+          <div class="skeleton" style="height:180px;border-radius:12px"></div>
+          <div class="skeleton" style="height:180px;border-radius:12px"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+          <div class="skeleton" style="height:200px;border-radius:12px"></div>
+          <div class="skeleton" style="height:200px;border-radius:12px"></div>
+          <div class="skeleton" style="height:200px;border-radius:12px"></div>
+          <div class="skeleton" style="height:200px;border-radius:12px"></div>
+        </div>
+      </div>`;
     case '/reservations':
       return `<div class="skeleton-page">
         <div class="skeleton skeleton-title"></div>
@@ -137,14 +158,14 @@ async function handleRouteChange(): Promise<void> {
 
   const route = routes.find((r) => r.path === path);
   if (!route) {
-    // fallback to reservations
-    navigate('/reservations');
+    // fallback to dashboard
+    navigate('/dashboard');
     return;
   }
 
   // Check guard
   if (route.guard && !route.guard()) {
-    navigate('/reservations');
+    navigate('/dashboard');
     return;
   }
 

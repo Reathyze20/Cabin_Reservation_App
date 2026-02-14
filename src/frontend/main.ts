@@ -4,6 +4,7 @@
 
 // CSS
 import './styles/legacy.css';
+import './styles/dashboard.css';
 import 'flatpickr/dist/flatpickr.min.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 

@@ -19,6 +19,7 @@ import notesRoutes from "./routes/notes";
 import galleryRoutes from "./routes/gallery";
 import diaryRoutes from "./routes/diary";
 import reconstructionRoutes from "./routes/reconstruction";
+import dashboardRoutes from "./routes/dashboard";
 
 const app = express();
 const isProd = process.env.NODE_ENV === "production";
@@ -134,6 +135,7 @@ app.use("/api/register", authLimiter);
 app.use("/api", authRoutes);
 
 // API routes
+app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/users", usersRoutes);
 app.use("/api/reservations", reservationsRoutes);
 app.use("/api/shopping-list", shoppingListRoutes);

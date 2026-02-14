@@ -23,6 +23,7 @@ const usersFile = path.join(dataDir, "users.json");
 const reservationsFile = path.join(dataDir, "reservations.json");
 const shoppingListFile = path.join(dataDir, "shopping-list.json");
 const notesFile = path.join(dataDir, "notes.json");
+const galleryFile = path.join(dataDir, "gallery.json"); // Combined file
 const galleryFoldersFile = path.join(dataDir, "gallery-folders.json");
 const galleryPhotosFile = path.join(dataDir, "gallery-photos.json");
 const diaryFoldersFile = path.join(dataDir, "diary-folders.json");
@@ -162,7 +163,13 @@ async function migrate() {
     // 5. MIGRATE GALLERY FOLDERS
     // ========================================================================
     console.log("5️⃣  Migrating gallery folders...");
-    const galleryFolders = readJSON(galleryFoldersFile);
+    let galleryFolders = readJSON(galleryFoldersFile);
+    
+    // Check if data is in combined gallery.json file
+    if (galleryFolders.length === 0 && fs.existsSync(galleryFile)) {
+      const galleryData = JSON.parse(fs.readFileSync(galleryFile, "utf-8"));
+      galleryFolders = galleryData.folders || [];
+    }
 
     for (const folder of galleryFolders) {
       const createdById = folder.createdBy
@@ -184,7 +191,13 @@ async function migrate() {
     // 6. MIGRATE GALLERY PHOTOS
     // ========================================================================
     console.log("6️⃣  Migrating gallery photos...");
-    const galleryPhotos = readJSON(galleryPhotosFile);
+    let galleryPhotos = readJSON(galleryPhotosFile);
+    
+    // Check if data is in combined gallery.json file
+    if (galleryPhotos.length === 0 && fs.existsSync(galleryFile)) {
+      const galleryData = JSON.parse(fs.readFileSync(galleryFile, "utf-8"));
+      galleryPhotos = galleryData.photos || [];
+    }
 
     for (const photo of galleryPhotos) {
       const uploadedById = photo.uploadedBy
