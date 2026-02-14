@@ -18,6 +18,8 @@ jobs:
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: 22
         script: |
+          set -e
+
           # Explicitly source nvm to make node/npm available
           export NVM_DIR="$HOME/.nvm"
           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
@@ -25,25 +27,55 @@ jobs:
           # Navigate to the app directory
           cd ${{ secrets.SERVER_PATH }}
 
-          # Backup the data directory if it exists
-          if [ -d "data" ]; then
-            echo "Backing up data directory..."
-            cp -R data /tmp/cabin_data_backup
+          echo "=== Backing up data ==="
+          # Clean up any previous failed backup
+          rm -rf /tmp/cabin_data_backup
+
+          # Backup untracked/ignored data (live JSON data, logs, uploads)
+          mkdir -p /tmp/cabin_data_backup
+          if ls data/*.json 1>/dev/null 2>&1; then
+            cp data/*.json /tmp/cabin_data_backup/
+          fi
+          if [ -d "data/logs" ]; then
+            cp -R data/logs /tmp/cabin_data_backup/logs
+          fi
+          if [ -d "data/uploads" ]; then
+            cp -R data/uploads /tmp/cabin_data_backup/uploads
           fi
 
-          # Update the code
-          git pull
+          echo "=== Updating code ==="
+          # Force-reset to remote main (avoids merge conflicts from
+          # package-lock.json or any server-side file modifications)
+          git fetch origin main
+          git reset --hard origin/main
 
-          # Restore the data directory if a backup exists
-          if [ -d "/tmp/cabin_data_backup" ]; then
-            echo "Restoring data directory..."
-            mv /tmp/cabin_data_backup data
+          echo "=== Restoring data ==="
+          # Restore backed-up data files on top of fresh checkout
+          if ls /tmp/cabin_data_backup/*.json 1>/dev/null 2>&1; then
+            cp /tmp/cabin_data_backup/*.json data/
           fi
+          if [ -d "/tmp/cabin_data_backup/logs" ]; then
+            cp -R /tmp/cabin_data_backup/logs data/logs
+          fi
+          if [ -d "/tmp/cabin_data_backup/uploads" ]; then
+            cp -R /tmp/cabin_data_backup/uploads data/uploads
+          fi
+          rm -rf /tmp/cabin_data_backup
 
-          # Install dependencies and build the project
+          echo "=== Installing dependencies ==="
           npm install
+
+          echo "=== Generating Prisma client ==="
+          npx prisma generate
+
+          echo "=== Running database migrations ==="
+          npx prisma migrate deploy
+
+          echo "=== Building frontend ==="
           npm run build
 
-          # Restart the app with PM2
-          pm2 restart chata-app
+          echo "=== Restarting application ==="
+          # Restart PM2 process, or start it if it doesn't exist yet
+          pm2 restart chata-app 2>/dev/null || pm2 start npm --name "chata-app" -- run start
+          pm2 save
 
