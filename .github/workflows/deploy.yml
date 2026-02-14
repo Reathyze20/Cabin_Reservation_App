@@ -64,14 +64,16 @@ jobs:
 
           echo "=== Configuring environment ==="
           # Create .env file from GitHub secrets if provided
-          if [ -n "${{ secrets.DATABASE_URL }}" ]; then
+          if [ -n "${{ secrets.DATABASE_URL }}" ] && [ "${{ secrets.DATABASE_URL }}" != "" ]; then
             echo "Creating .env from GitHub secrets..."
             cat > .env << EOF
           DATABASE_URL=${{ secrets.DATABASE_URL }}
           JWT_SECRET=${{ secrets.JWT_SECRET }}
           PORT=3000
           EOF
-          elif [ ! -f ".env" ]; then
+          fi
+          
+          if [ ! -f ".env" ]; then
             echo "ERROR: .env file not found and no GitHub secrets configured!"
             echo ""
             echo "Option 1: Create .env manually on server with:"
