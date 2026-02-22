@@ -3,10 +3,18 @@
    ============================================================================ */
 .nordic-dashboard {
   width: 100%;
-  max-width: 768px;
-  /* On desktop it will be centered and have proper width */
+  max-width: 1400px;
   margin: 0 auto;
   min-height: 100%;
+  padding: 16px;
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+@media (min-width: 768px) {
+  .nordic-dashboard {
+    padding: 24px 0;
+  }
 }
 
 /* ── Header ────────────────────────────────────────────────────────── */
@@ -22,6 +30,12 @@
 .header-bg {
   height: 80px;
   background: linear-gradient(135deg, #a3b18a 0%, #588157 100%);
+}
+
+@media (min-width: 768px) {
+  .header-bg {
+    height: 120px;
+  }
 }
 
 .header-content {
@@ -70,6 +84,7 @@
 @media (min-width: 768px) {
   .dashboard-grid {
     grid-template-columns: 1fr 1fr;
+    gap: 20px;
   }
 }
 
@@ -341,4 +356,66 @@
 
 [data-theme="dark"] .nordic-weather-secondary {
   border-top-color: rgba(255, 255, 255, 0.05);
+}
+
+/* ── Desktop Only Utilities ────────────────────────────────────────── */
+.desktop-only {
+  display: none !important;
+}
+
+.mobile-only {
+  display: block;
+}
+
+@media (min-width: 768px) {
+  .desktop-only:not(.dashboard-card):not(.dashboard-stats) {
+    display: block !important;
+  }
+
+  .dashboard-card.desktop-only {
+    display: flex !important;
+  }
+
+  .dashboard-stats.desktop-only {
+    display: grid !important;
+  }
+
+  .mobile-only {
+    display: none !important;
+  }
+}
+
+/* ── Stats row ─────────────────────────────────────────────────────── */
+.dashboard-stats {
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  padding-bottom: 32px;
+}
+
+.dashboard-stat {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  padding: 20px;
+  text-align: center;
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.dashboard-stat i {
+  font-size: 24px;
+  color: #a3b18a;
+}
+
+.dashboard-stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-text-dark);
+}
+
+.dashboard-stat-label {
+  font-size: 14px;
+  color: var(--color-text-light);
 }

@@ -184,11 +184,26 @@ function getTemplate(): string {
 
   return `
   <div class="dashboard nordic-dashboard">
-    <!-- Header: oříznutá fotka přírody na pozadí, malý avatar, Ahoj jméno -->
-    <div class="dashboard-mobile-header">
+    <!-- Desktop Header -->
+    <div class="dashboard-desktop-header desktop-only">
+      <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 32px;">
+        <div class="dashboard-avatar-picker avatar-picker-btn" title="Změnit avatar">
+          ${avatarDisplay}
+        </div>
+        <div>
+          <h1 class="dashboard-greeting" style="margin: 0 0 4px 0; font-size: 28px; font-weight: 700; color: var(--color-text-dark);">
+            ${getGreeting()}, <strong>${username.split(' ')[0]}</strong>!
+          </h1>
+          <p class="dashboard-subtitle" style="margin: 0; font-size: 16px; color: var(--color-text-light);">Zde je přehled chaty</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Header -->
+    <div class="dashboard-mobile-header mobile-only">
       <div class="header-bg"></div>
       <div class="header-content">
-        <div id="avatar-picker-btn" class="dashboard-avatar-picker" title="Změnit avatar">
+        <div class="dashboard-avatar-picker avatar-picker-btn" title="Změnit avatar">
           ${avatarDisplay}
         </div>
         <div class="greeting-text">
@@ -246,6 +261,46 @@ function getTemplate(): string {
         <a href="#/shopping" class="dashboard-card-link-footer">
           Nákupní seznamy
         </a>
+      </div>
+
+      <!-- Desktop-only: Poslední zprávy -->
+      <div class="dashboard-card desktop-only">
+        <div id="dashboard-notes" class="card-body-full">
+          <div class="spinner-container"><div class="spinner"></div></div>
+        </div>
+        <a href="#/notes" class="dashboard-card-link-footer">Přejít do chatu</a>
+      </div>
+
+      <!-- Desktop-only: Deník -->
+      <div class="dashboard-card desktop-only">
+        <div id="dashboard-diary" class="card-body-full">
+          <div class="spinner-container"><div class="spinner"></div></div>
+        </div>
+        <a href="#/diary" class="dashboard-card-link-footer">Celý deník</a>
+      </div>
+    </div>
+
+    <!-- Desktop-only: Stats -->
+    <div class="dashboard-stats desktop-only">
+      <div class="dashboard-stat">
+        <i class="fas fa-calendar-check"></i>
+        <span class="dashboard-stat-value" id="stat-reservations">-</span>
+        <span class="dashboard-stat-label">Rezervací</span>
+      </div>
+      <div class="dashboard-stat">
+        <i class="fas fa-camera"></i>
+        <span class="dashboard-stat-value" id="stat-photos">-</span>
+        <span class="dashboard-stat-label">Fotek</span>
+      </div>
+      <div class="dashboard-stat">
+        <i class="fas fa-pen-nib"></i>
+        <span class="dashboard-stat-value" id="stat-diary">-</span>
+        <span class="dashboard-stat-label">Zápisů</span>
+      </div>
+      <div class="dashboard-stat">
+        <i class="fas fa-shopping-basket"></i>
+        <span class="dashboard-stat-value" id="stat-shopping">-</span>
+        <span class="dashboard-stat-label">Ke koupi</span>
       </div>
     </div>
   </div>`;
@@ -456,25 +511,27 @@ async function loadDashboard(): Promise<void> {
   }
 
   // Setup Avatar Picker Events
-  const avatarBtn = document.getElementById('avatar-picker-btn');
+  const avatarBtns = document.querySelectorAll('.avatar-picker-btn');
   const avatarModal = document.getElementById('avatar-modal');
   const avatarCancelBtn = document.getElementById('avatar-cancel-btn');
   const avatarClearBtn = document.getElementById('avatar-clear-btn');
   const avatarOptions = document.querySelectorAll('.avatar-option');
 
-  if (avatarBtn && avatarModal) {
-    avatarBtn.addEventListener('click', () => {
-      avatarModal.style.display = 'flex';
-      // Highlight current
-      const current = getAnimalIcon();
-      avatarOptions.forEach(opt => {
-        if (opt.getAttribute('data-emoji') === current) {
-          (opt as HTMLElement).style.borderColor = 'var(--color-primary)';
-          (opt as HTMLElement).style.background = 'var(--color-primary-bg)';
-        } else {
-          (opt as HTMLElement).style.borderColor = 'transparent';
-          (opt as HTMLElement).style.background = 'var(--color-bg-alt)';
-        }
+  if (avatarBtns.length > 0 && avatarModal) {
+    avatarBtns.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        avatarModal.style.display = 'flex';
+        // Highlight current
+        const current = getAnimalIcon();
+        avatarOptions.forEach(opt => {
+          if (opt.getAttribute('data-emoji') === current) {
+            (opt as HTMLElement).style.borderColor = 'var(--color-primary)';
+            (opt as HTMLElement).style.background = 'var(--color-primary-bg)';
+          } else {
+            (opt as HTMLElement).style.borderColor = 'transparent';
+            (opt as HTMLElement).style.background = 'var(--color-bg-alt)';
+          }
+        });
       });
     });
 
@@ -491,7 +548,7 @@ async function loadDashboard(): Promise<void> {
         saveAnimalIcon(null);
         showToast('Ikona byla odebrána', 'success');
         const username = getUsername() || 'U';
-        avatarBtn.innerHTML = username.charAt(0).toUpperCase();
+        avatarBtns.forEach(b => b.innerHTML = username.charAt(0).toUpperCase());
         avatarModal.style.display = 'none';
       }
     });
@@ -509,7 +566,7 @@ async function loadDashboard(): Promise<void> {
         if (res) {
           saveAnimalIcon(emoji);
           showToast('Ikona úspěšně změněna', 'success');
-          avatarBtn.innerHTML = emoji;
+          avatarBtns.forEach(b => b.innerHTML = emoji);
           avatarModal.style.display = 'none';
         }
       });
@@ -523,11 +580,13 @@ async function loadDashboard(): Promise<void> {
     });
 
     // Hover effect on main button
-    avatarBtn.addEventListener('mouseenter', () => {
-      avatarBtn.style.transform = 'scale(1.05)';
-    });
-    avatarBtn.addEventListener('mouseleave', () => {
-      avatarBtn.style.transform = 'scale(1)';
+    avatarBtns.forEach((btn) => {
+      btn.addEventListener('mouseenter', () => {
+        (btn as HTMLElement).style.transform = 'scale(1.05)';
+      });
+      btn.addEventListener('mouseleave', () => {
+        (btn as HTMLElement).style.transform = 'scale(1)';
+      });
     });
   }
 }
