@@ -119,7 +119,7 @@ function bindLoginForm(): void {
       });
       const data = await res.json();
       if (!res.ok) {
-        if (errEl) errEl.textContent = data.error || 'Chyba přihlášení';
+        if (errEl) errEl.textContent = data.message || data.error || 'Chyba přihlášení';
         return;
       }
       setAuth({

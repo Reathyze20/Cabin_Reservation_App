@@ -33,7 +33,7 @@ function getTemplate(): string {
       <h2>Vytvořit nový nákupní seznam</h2>
       <form id="new-list-form" style="margin-top: var(--space-md);">
         <input type="text" id="new-list-name" placeholder="Název (např. Nákup na víkend)" required style="width: 100%; margin-bottom: var(--space-md);" />
-        <div style="text-align: right;">
+        <div class="modal-actions">
           <button type="button" class="button-secondary" data-close="new-list-modal">Zrušit</button>
           <button type="submit" class="button-primary">Vytvořit</button>
         </div>

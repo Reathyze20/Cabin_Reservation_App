@@ -2,7 +2,7 @@
    pages/dashboard.ts — Přehled (Dashboard) — hlavní stránka po přihlášení
    ============================================================================ */
 import type { PageModule } from '../lib/router';
-import { authFetch, getUsername, getAnimalIcon, saveAnimalIcon, showToast } from '../lib/common';
+import { authFetch, getUsername, getAnimalIcon, saveAnimalIcon, showToast, pluralizeCzech } from '../lib/common';
 import { navigate } from '../lib/router';
 
 // ─── Types ────────────────────────────────────────────────────────────
@@ -372,10 +372,10 @@ function renderActiveReservation(data: DashboardData): void {
 
   if (data.activeReservation) {
     const r = data.activeReservation;
-    const avatarHtml = r.userAnimalIcon 
+    const avatarHtml = r.userAnimalIcon
       ? `<div style="font-size: 32px;">${r.userAnimalIcon}</div>`
       : `<i class="fas fa-home"></i>`;
-      
+
     el.className = 'glass-card status-card is-occupied';
     el.innerHTML = `
       <div class="card-body-full status-content">
@@ -490,9 +490,21 @@ function renderStats(stats: DashboardData['stats']): void {
   const statDiary = document.getElementById('stat-diary');
   const statShopping = document.getElementById('stat-shopping');
 
-  if (statRes) statRes.textContent = String(stats.totalReservations);
-  if (statPhotos) statPhotos.textContent = String(stats.totalPhotos);
-  if (statDiary) statDiary.textContent = String(stats.totalDiaryEntries);
+  if (statRes) {
+    statRes.textContent = String(stats.totalReservations);
+    const label = statRes.nextElementSibling;
+    if (label) label.textContent = pluralizeCzech(stats.totalReservations, 'Rezervace', 'Rezervace', 'Rezervací');
+  }
+  if (statPhotos) {
+    statPhotos.textContent = String(stats.totalPhotos);
+    const label = statPhotos.nextElementSibling;
+    if (label) label.textContent = pluralizeCzech(stats.totalPhotos, 'Fotka', 'Fotky', 'Fotek');
+  }
+  if (statDiary) {
+    statDiary.textContent = String(stats.totalDiaryEntries);
+    const label = statDiary.nextElementSibling;
+    if (label) label.textContent = pluralizeCzech(stats.totalDiaryEntries, 'Zápis', 'Zápisy', 'Zápisů');
+  }
   if (statShopping) statShopping.textContent = String(stats.unpurchasedCount);
 }
 

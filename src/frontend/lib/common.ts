@@ -317,6 +317,14 @@ export function formatDateShort(iso: string): string {
   return new Date(iso).toLocaleDateString('cs-CZ');
 }
 
+/** Simple Czech pluralization helper */
+export function pluralizeCzech(count: number, one: string, few: string, many: string): string {
+  const abs = Math.abs(count);
+  if (abs === 1) return one;
+  if (abs >= 2 && abs <= 4) return few;
+  return many;
+}
+
 /** Simple JWT payload decoder (no signature verification) */
 export function decodeJwtPayload<T = Record<string, unknown>>(
   token: string,

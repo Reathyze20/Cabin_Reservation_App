@@ -292,8 +292,22 @@
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  /* Prevent horizontal scrollbar */
   padding-right: 5px;
+
+  /* Better scrollbar for mobile */
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+#reservations-list::-webkit-scrollbar,
+#reservation-detail::-webkit-scrollbar {
+  width: 6px;
+}
+
+#reservations-list::-webkit-scrollbar-thumb,
+#reservation-detail::-webkit-scrollbar-thumb {
+  background-color: var(--color-border);
+  border-radius: 10px;
 }
 
 /* Reservation Detail Card */

@@ -400,7 +400,7 @@ div.shopping-list-card.card:hover {
   height: 26px;
   /* slightly larger */
   border-radius: 50%;
-  background-color: var(--color-bg-alt);
+  background-color: var(--color-bg);
   color: var(--color-text-light);
   font-size: 12px;
   /* larger text */
@@ -484,4 +484,20 @@ div.shopping-list-card.card:hover {
     max-width: 100%;
     margin-bottom: var(--space-md);
   }
+
+  .modal-actions {
+    text-align: center !important;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  .modal-actions button {
+    width: 100%;
+  }
+}
+
+.modal-actions {
+  text-align: right;
+  margin-top: var(--space-lg);
 }

@@ -4,10 +4,12 @@
 .date-display-bar {
   display: flex;
   justify-content: center;
-  align-items: center;
-  gap: var(--space-xl);
-  background: var(--color-bg-alt);
+  background-color: var(--color-bg);
+  color: var(--color-text-light);
+  font-size: 12px;
+  font-weight: 700;
   border: 1px solid var(--color-border);
+  line-height: 1;
   border-radius: var(--radius-full);
   padding: var(--space-sm) var(--space-xl);
   margin: 0 auto var(--space-xl) auto;
@@ -180,4 +182,22 @@ span.flatpickr-weekday {
   color: white;
   box-shadow: none;
   border-radius: 50%;
+}
+
+@media (max-width: 600px) {
+  .date-display-bar {
+    gap: var(--space-md);
+    padding: var(--space-sm) var(--space-lg);
+    width: calc(100% - 32px);
+    margin-left: 16px;
+    margin-right: 16px;
+  }
+
+  .date-part .date-value {
+    font-size: var(--font-size-sm);
+  }
+
+  .date-part .icon {
+    font-size: 1.1em;
+  }
 }

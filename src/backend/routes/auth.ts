@@ -17,8 +17,12 @@ router.post("/login", async (req: Request, res: Response) => {
       where: { username: { equals: username, mode: "insensitive" } },
     });
 
-    if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
-      return res.status(401).json({ message: "Neplatné přihlašovací údaje." });
+    if (!user) {
+      return res.status(401).json({ message: "Uživatel nenalezen." });
+    }
+
+    if (!(await bcrypt.compare(password, user.passwordHash))) {
+      return res.status(401).json({ message: "Nesprávné heslo." });
     }
 
     if (!user.isEmailVerified && user.role !== "admin") {
