@@ -1,0 +1,130 @@
+/* ============================================================================
+   styles/dialogs.css — Custom Modal Dialogs (Alert, Confirm, Prompt)
+   ============================================================================ */
+
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.dialog-overlay.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.dialog-box {
+  background-color: var(--color-bg, #ffffff);
+  border-radius: var(--radius-lg, 12px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 400px;
+  overflow: hidden;
+  transform: scale(0.95);
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: flex;
+  flex-direction: column;
+}
+
+.dialog-overlay.visible .dialog-box {
+  transform: scale(1);
+}
+
+.dialog-header {
+  padding: 20px 24px 10px;
+}
+
+.dialog-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--color-text-dark, #333);
+  font-weight: 600;
+}
+
+.dialog-body {
+  padding: 10px 24px 20px;
+  color: var(--color-text-light, #666);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.dialog-body p {
+  margin: 0 0 15px 0;
+}
+
+.dialog-body p:last-child {
+  margin-bottom: 0;
+}
+
+.dialog-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border, #ddd);
+  border-radius: var(--radius-md, 6px);
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.dialog-input:focus {
+  border-color: var(--color-primary, #4CAF50);
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+}
+
+.dialog-footer {
+  padding: 16px 24px;
+  background-color: var(--color-bg-alt, #f9f9f9);
+  border-top: 1px solid var(--color-border, #eee);
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.dialog-footer button {
+  padding: 8px 16px;
+  border-radius: var(--radius-md, 6px);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.dialog-cancel-btn {
+  background-color: transparent;
+  color: var(--color-text-dark, #333);
+  border: 1px solid var(--color-border, #ddd) !important;
+}
+
+.dialog-cancel-btn:hover {
+  background-color: var(--color-bg-hover, #f0f0f0);
+}
+
+.dialog-confirm-btn {
+  background-color: var(--color-primary, #4CAF50);
+  color: white;
+}
+
+.dialog-confirm-btn:hover {
+  background-color: var(--color-primary-hover, #45a049);
+}
+
+.dialog-confirm-btn.destructive {
+  background-color: var(--color-danger, #f44336);
+}
+
+.dialog-confirm-btn.destructive:hover {
+  background-color: var(--color-danger-hover, #d32f2f);
+}

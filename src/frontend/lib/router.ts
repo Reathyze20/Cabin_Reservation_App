@@ -43,9 +43,15 @@ export const routes: Route[] = [
   },
   {
     path: '/notes',
-    label: 'Nástěnka',
-    icon: 'fa-thumbtack',
+    label: 'Chat',
+    icon: 'fa-comments',
     loader: () => import('../pages/notes').then((m) => m.default),
+  },
+  {
+    path: '/shopping',
+    label: 'Nákupy',
+    icon: 'fa-shopping-cart',
+    loader: () => import('../pages/shopping').then((m) => m.default),
   },
   {
     path: '/gallery',
@@ -64,7 +70,6 @@ export const routes: Route[] = [
     label: 'Rekonstrukce',
     icon: 'fa-hammer',
     loader: () => import('../pages/reconstruction').then((m) => m.default),
-    navClass: 'nav-special',
   },
   {
     path: '/admin',
@@ -81,6 +86,10 @@ let currentModule: PageModule | null = null;
 let currentPath: string = '';
 let appContainer: HTMLElement | null = null;
 let navContainer: HTMLElement | null = null;
+let mobileNavContainer: HTMLElement | null = null;
+
+/** Routes to show in mobile bottom nav (limited space) */
+const MOBILE_NAV_PATHS = ['/dashboard', '/reservations', '/shopping', '/gallery', '/diary'];
 
 /** Get the hash path, e.g. "#/gallery" → "/gallery" */
 function getHashPath(): string {
@@ -204,37 +213,63 @@ async function handleRouteChange(): Promise<void> {
 }
 
 function updateActiveNav(path: string): void {
-  if (!navContainer) return;
-  navContainer.querySelectorAll('.nav-link').forEach((link) => {
-    const href = link.getAttribute('data-route');
-    link.classList.toggle('active', href === path);
-  });
+  // Desktop nav
+  if (navContainer) {
+    navContainer.querySelectorAll('.nav-link').forEach((link) => {
+      const href = link.getAttribute('data-route');
+      link.classList.toggle('active', href === path);
+    });
+  }
+  // Mobile nav
+  if (mobileNavContainer) {
+    mobileNavContainer.querySelectorAll('.mobile-nav-link').forEach((link) => {
+      const href = link.getAttribute('data-route');
+      link.classList.toggle('active', href === path);
+    });
+  }
 }
 
 // ─── Build Nav ────────────────────────────────────────────────────────
 
 function buildNav(): void {
-  if (!navContainer) return;
-  navContainer.innerHTML = '';
+  // Desktop nav
+  if (navContainer) {
+    navContainer.innerHTML = '';
+    for (const route of routes) {
+      if (route.guard && !route.guard()) continue;
+      const a = document.createElement('a');
+      a.className = `nav-link${route.navClass ? ' ' + route.navClass : ''}`;
+      a.setAttribute('data-route', route.path);
+      a.href = `#${route.path}`;
+      a.innerHTML = `<i class="fas ${route.icon}"></i> ${route.label}`;
+      a.addEventListener('click', (e) => {
+        e.preventDefault();
+        navigate(route.path);
+      });
+      a.addEventListener('mouseenter', () => {
+        route.loader().catch(() => { });
+      }, { once: true });
+      navContainer.appendChild(a);
+    }
+  }
 
-  for (const route of routes) {
-    // Skip if guard fails
-    if (route.guard && !route.guard()) continue;
-
-    const a = document.createElement('a');
-    a.className = `nav-link${route.navClass ? ' ' + route.navClass : ''}`;
-    a.setAttribute('data-route', route.path);
-    a.href = `#${route.path}`;
-    a.innerHTML = `<i class="fas ${route.icon}"></i> ${route.label}`;
-    a.addEventListener('click', (e) => {
-      e.preventDefault();
-      navigate(route.path);
-    });
-    // Prefetch on hover for instant navigation
-    a.addEventListener('mouseenter', () => {
-      route.loader().catch(() => { /* ignore prefetch errors */ });
-    }, { once: true });
-    navContainer.appendChild(a);
+  // Mobile bottom nav
+  if (mobileNavContainer) {
+    mobileNavContainer.innerHTML = '';
+    for (const route of routes) {
+      if (route.guard && !route.guard()) continue;
+      if (!MOBILE_NAV_PATHS.includes(route.path)) continue;
+      const a = document.createElement('a');
+      a.className = 'mobile-nav-link';
+      a.setAttribute('data-route', route.path);
+      a.href = `#${route.path}`;
+      a.innerHTML = `<i class="fas ${route.icon}"></i><span>${route.label}</span>`;
+      a.addEventListener('click', (e) => {
+        e.preventDefault();
+        navigate(route.path);
+      });
+      mobileNavContainer.appendChild(a);
+    }
   }
 }
 
@@ -246,6 +281,7 @@ export function initRouter(
 ): void {
   appContainer = container;
   navContainer = nav;
+  mobileNavContainer = document.getElementById('mobile-nav');
 
   buildNav();
 

@@ -17,15 +17,21 @@ model User {
   id           String   @id @default(uuid())
   username     String   @unique
   passwordHash String   @map("password_hash")
-  color        String
-  role         String   @default("user") // "admin" | "user" | "guest"
-  createdAt    DateTime @default(now()) @map("created_at")
+  color            String
+  animalIcon       String?  @map("animal_icon")
+  email            String?  @unique
+  isEmailVerified  Boolean  @default(false) @map("is_email_verified")
+  verificationCode String?  @map("verification_code")
+  role             String   @default("user") // "admin" | "user" | "guest"
+  createdAt        DateTime @default(now()) @map("created_at")
 
   // Relations
   reservations              Reservation[]
   shoppingListItemsAdded    ShoppingListItem[]           @relation("AddedBy")
   shoppingListItemsPurchased ShoppingListItem[]          @relation("PurchasedBy")
   shoppingItemSplits        ShoppingItemSplit[]
+  shoppingListsCreated      ShoppingList[]
+  noteThreads               NoteThread[]
   notes                     Note[]
   galleryFolders            GalleryFolder[]
   galleryPhotos             GalleryPhoto[]
@@ -41,14 +47,15 @@ model User {
 // RESERVATIONS
 // ============================================================================
 model Reservation {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
-  dateFrom  DateTime @map("date_from") @db.Date
-  dateTo    DateTime @map("date_to") @db.Date
-  purpose   String
-  notes     String?  @db.Text
-  status    String   @default("primary") // "primary" | "backup"
-  createdAt DateTime @default(now()) @map("created_at")
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  dateFrom     DateTime @map("date_from") @db.Date
+  dateTo       DateTime @map("date_to") @db.Date
+  purpose      String
+  notes        String?  @db.Text
+  handoverNote String?  @map("handover_note") @db.Text
+  status       String   @default("primary") // "primary" | "backup" | "soft"
+  createdAt    DateTime @default(now()) @map("created_at")
 
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -59,8 +66,23 @@ model Reservation {
 // ============================================================================
 // SHOPPING LIST
 // ============================================================================
+model ShoppingList {
+  id          String             @id @default(uuid())
+  name        String
+  createdById String             @map("created_by_id")
+  createdAt   DateTime           @default(now()) @map("created_at")
+  isResolved  Boolean            @default(false) @map("is_resolved")
+
+  // Relations
+  createdBy   User               @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  items       ShoppingListItem[]
+
+  @@map("shopping_lists")
+}
+
 model ShoppingListItem {
   id            String    @id @default(uuid())
+  listId        String?   @map("list_id") // Nullable initially for backward compatibility
   name          String
   addedById     String    @map("added_by_id")
   createdAt     DateTime  @default(now()) @map("created_at")
@@ -70,6 +92,7 @@ model ShoppingListItem {
   price         Decimal?  @db.Decimal(10, 2)
 
   // Relations
+  list        ShoppingList?       @relation(fields: [listId], references: [id], onDelete: Cascade)
   addedBy     User                @relation("AddedBy", fields: [addedById], references: [id], onDelete: Cascade)
   purchasedBy User?               @relation("PurchasedBy", fields: [purchasedById], references: [id], onDelete: SetNull)
   splits      ShoppingItemSplit[]
@@ -90,16 +113,31 @@ model ShoppingItemSplit {
 }
 
 // ============================================================================
-// NOTES
+// NOTES & THREADS
 // ============================================================================
+model NoteThread {
+  id          String   @id @default(uuid())
+  name        String
+  createdById String   @map("created_by_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  createdBy User   @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  notes     Note[]
+
+  @@map("note_threads")
+}
+
 model Note {
   id        String   @id @default(uuid())
   userId    String   @map("user_id")
+  threadId  String?  @map("thread_id") // Null = General / Hlavní nástěnka
   message   String   @db.Text
   createdAt DateTime @default(now()) @map("created_at")
 
   // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  thread NoteThread? @relation(fields: [threadId], references: [id], onDelete: Cascade)
 
   @@map("notes")
 }
@@ -145,6 +183,7 @@ model DiaryFolder {
   createdById String    @map("created_by_id")
   startDate   DateTime? @map("start_date") @db.Date
   endDate     DateTime? @map("end_date") @db.Date
+  activityTag String?   @map("activity_tag")
   createdAt   DateTime  @default(now()) @map("created_at")
 
   // Relations
@@ -186,15 +225,21 @@ model DiaryEntryPhoto {
 // RECONSTRUCTION
 // ============================================================================
 model ReconstructionItem {
-  id          String   @id @default(uuid())
-  category    String   // "idea" | "company" | "task"
-  title       String
-  description String   @db.Text
-  link        String?
-  cost        Decimal? @db.Decimal(10, 2)
-  status      String   @default("pending") // "pending" | "approved" | "done"
-  createdById String   @map("created_by_id")
-  createdAt   DateTime @default(now()) @map("created_at")
+  id             String   @id @default(uuid())
+  category       String   // "idea" | "company" | "task"
+  title          String
+  description    String   @db.Text
+  link           String?
+  cost           Decimal? @db.Decimal(10, 2)
+  status         String   @default("pending") // "pending" | "approved" | "done"
+  thumbnail      String?
+  tag            String?
+  specialization String?
+  email          String?
+  phone          String?
+  deadline       DateTime? @db.Date
+  createdById    String   @map("created_by_id")
+  createdAt      DateTime @default(now()) @map("created_at")
 
   // Relations
   createdBy User                 @relation(fields: [createdById], references: [id], onDelete: Cascade)

@@ -10,7 +10,14 @@ const router = Router();
 // ============================================================================
 router.get("/", protect, async (req: Request, res: Response) => {
   try {
+    const threadId = req.query.threadId as string | undefined;
+
+    const whereClause = threadId === 'all' 
+      ? {} 
+      : { threadId: threadId ? threadId : null };
+
     const notes = await prisma.note.findMany({
+      where: whereClause,
       include: {
         user: {
           select: {
@@ -26,6 +33,7 @@ router.get("/", protect, async (req: Request, res: Response) => {
     const formatted = notes.map((note) => ({
       id: note.id,
       userId: note.userId,
+      threadId: note.threadId,
       username: note.user.username,
       message: note.message,
       createdAt: note.createdAt.toISOString(),
@@ -46,7 +54,7 @@ router.post("/", protect, async (req: Request, res: Response) => {
     return res.status(401).json({ message: "Neautorizováno" });
   }
 
-  const { message } = req.body;
+  const { message, threadId } = req.body;
 
   if (!message || !message.trim()) {
     return res.status(400).json({ message: "Zpráva nesmí být prázdná." });
@@ -56,6 +64,7 @@ router.post("/", protect, async (req: Request, res: Response) => {
     const newNote = await prisma.note.create({
       data: {
         userId: req.user.userId,
+        threadId: threadId || null,
         message,
       },
       include: {
@@ -70,6 +79,7 @@ router.post("/", protect, async (req: Request, res: Response) => {
     res.status(201).json({
       id: newNote.id,
       userId: newNote.userId,
+      threadId: newNote.threadId,
       username: newNote.user.username,
       message: newNote.message,
       createdAt: newNote.createdAt.toISOString(),

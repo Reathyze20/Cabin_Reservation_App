@@ -2,51 +2,67 @@
    Buttons
    ============================================================================ */
 button {
-  padding: 10px 15px;
-  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 var(--space-xl);
+  border: 1px solid transparent;
   border-radius: var(--radius-md);
   cursor: pointer;
+  font-family: var(--font-family);
   font-weight: 600;
-  transition: background-color var(--transition-fast);
+  font-size: var(--font-size-sm);
+  transition: all var(--transition-fast);
+  white-space: nowrap;
 }
 
 button[type="submit"] {
   background-color: var(--color-primary-light);
   color: white;
+  box-shadow: var(--shadow-sm);
 }
+
 button[type="submit"]:hover {
-  background-color: #f59e0b;
+  background-color: var(--color-primary);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 .button-primary {
-  background-color: #f87171;
+  background-color: var(--color-primary);
   color: white;
   width: 100%;
-  padding: var(--space-md);
-  font-size: var(--font-size-base);
+  box-shadow: var(--shadow-sm);
 }
+
 .button-primary:hover {
-  background-color: var(--color-danger);
+  background-color: var(--color-primary-dark, #5B8C5A);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
 }
 
 .button-secondary {
-  background-color: var(--color-bg-hover);
-  color: var(--color-text);
-  border: 1px solid var(--color-border);
-  padding: 10px 14px;
-  border-radius: var(--radius-md);
-  font-weight: 600;
+  background-color: var(--color-bg);
+  color: var(--color-text-dark);
+  border: 1px solid var(--color-border-dark);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
+
 .button-secondary:hover {
-  background-color: #e9ecef;
+  background-color: var(--color-bg-hover);
+  border-color: #bbbbbb;
 }
 
 .button-danger {
   background-color: var(--color-danger);
   color: white;
+  box-shadow: var(--shadow-sm);
 }
+
 .button-danger:hover {
   background-color: var(--color-danger-dark);
+  transform: translateY(-1px);
 }
 
 /* Gallery-style buttons (pill shape) */
@@ -55,50 +71,64 @@ button[type="submit"]:hover {
   align-items: center;
   justify-content: center;
   gap: var(--space-sm);
-  padding: var(--space-sm) var(--space-xl);
+  padding: 8px 16px;
   border-radius: var(--radius-full);
   font-weight: 600;
   font-size: var(--font-size-sm);
   cursor: pointer;
   transition: all var(--transition-fast);
-  border: none;
+  border: 1px solid var(--color-border);
+  background-color: #fff;
+  color: var(--color-text);
   text-decoration: none;
   white-space: nowrap;
 }
+
 .gallery-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  background-color: var(--color-bg-hover);
+  border-color: var(--color-border-dark);
 }
+
 .gallery-btn-primary {
-  background: var(--color-primary-gradient);
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+
+.gallery-btn-primary:hover {
+  background: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
   color: white;
 }
-.gallery-btn-primary:hover {
-  background: var(--color-primary-gradient-hover);
+
+.gallery-btn-danger {
+  background: var(--color-danger);
+  color: white;
+  border-color: var(--color-danger);
 }
+
+.gallery-btn-danger:hover {
+  background: var(--color-danger-dark);
+  border-color: var(--color-danger-dark);
+  color: white;
+}
+
 .gallery-btn-secondary {
   background-color: white;
   color: var(--color-text-light);
   border: 1px solid var(--color-border);
 }
+
 .gallery-btn-secondary:hover {
   background-color: var(--color-bg-alt);
   border-color: var(--color-border-dark);
   color: var(--color-text-dark);
 }
-.gallery-btn-danger {
-  background-color: var(--color-danger-bg);
-  color: var(--color-danger-text);
-  border: 1px solid #fecaca;
-}
-.gallery-btn-danger:hover {
-  background-color: #fecaca;
-  color: #991b1b;
-}
 
 .delete-btn {
   color: var(--color-danger);
 }
+
 .delete-btn:hover {
   background-color: var(--color-danger-bg);
   color: var(--color-danger-text);

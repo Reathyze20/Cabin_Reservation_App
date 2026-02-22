@@ -36,7 +36,7 @@
 }
 
 /* Caption */
-.lightbox-caption-container {
+.lightbox-caption {
   width: 100%; max-width: 800px;
   margin-top: 15px;
   text-align: center;
@@ -119,6 +119,10 @@
   border-color: rgba(255, 255, 255, 0.5);
   color: white; transform: translateY(-2px);
   box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+}
+.lightbox-btn-danger {
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.5);
 }
 .lightbox-btn-danger:hover {
   background: rgba(239, 68, 68, 0.2);
