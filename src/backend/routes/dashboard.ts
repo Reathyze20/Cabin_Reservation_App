@@ -24,7 +24,7 @@ router.get("/", protect, async (req: Request, res: Response) => {
       },
       include: {
         user: {
-          select: { username: true, color: true },
+          select: { username: true, color: true, animalIcon: true },
         },
       },
       orderBy: { dateFrom: "asc" },
@@ -40,7 +40,7 @@ router.get("/", protect, async (req: Request, res: Response) => {
       },
       include: {
         user: {
-          select: { username: true, color: true },
+          select: { username: true, color: true, animalIcon: true },
         },
       },
     });
@@ -114,6 +114,7 @@ router.get("/", protect, async (req: Request, res: Response) => {
             id: activeReservation.id,
             username: activeReservation.user.username,
             userColor: activeReservation.user.color,
+            userAnimalIcon: activeReservation.user.animalIcon,
             from: activeReservation.dateFrom.toISOString().split("T")[0],
             to: activeReservation.dateTo.toISOString().split("T")[0],
             purpose: activeReservation.purpose,
@@ -124,6 +125,7 @@ router.get("/", protect, async (req: Request, res: Response) => {
         userId: r.userId,
         username: r.user.username,
         userColor: r.user.color,
+        userAnimalIcon: r.user.animalIcon,
         from: r.dateFrom.toISOString().split("T")[0],
         to: r.dateTo.toISOString().split("T")[0],
         purpose: r.purpose,

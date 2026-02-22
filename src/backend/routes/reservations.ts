@@ -97,6 +97,7 @@ router.post("/", protect, async (req: Request, res: Response) => {
           select: {
             username: true,
             color: true,
+            animalIcon: true,
           },
         },
       },
@@ -113,6 +114,7 @@ router.post("/", protect, async (req: Request, res: Response) => {
       handoverNote: newReservation.handoverNote,
       status: newReservation.status,
       userColor: newReservation.user.color,
+      userAnimalIcon: newReservation.user.animalIcon,
     });
   } catch (error) {
     logger.error("RESERVATIONS", "Create reservation error", { error: String(error), userId: req.user?.userId });
@@ -159,6 +161,7 @@ router.put("/:id", protect, async (req: Request, res: Response) => {
           select: {
             username: true,
             color: true,
+            animalIcon: true,
           },
         },
       },
@@ -174,6 +177,8 @@ router.put("/:id", protect, async (req: Request, res: Response) => {
       notes: updated.notes,
       handoverNote: updated.handoverNote,
       status: updated.status,
+      userColor: updated.user.color,
+      userAnimalIcon: updated.user.animalIcon,
     });
   } catch (error) {
     logger.error("RESERVATIONS", "Update reservation error", { error: String(error), id });

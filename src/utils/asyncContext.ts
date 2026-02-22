@@ -1,3 +1,8 @@
 import { AsyncLocalStorage } from 'async_hooks';
 
-export const requestContext = new AsyncLocalStorage<string>();
+export interface RequestContext {
+    requestId: string;
+    userId?: string;
+}
+
+export const requestContext = new AsyncLocalStorage<RequestContext>();

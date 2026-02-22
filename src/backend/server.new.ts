@@ -71,7 +71,7 @@ if (isProd) {
 
 // Request ID & Context middleware
 app.use((req, res, next) => {
-  const requestId = uuidv4().split('-')[0]; // 8-character ID
+  const requestId = req.headers['x-request-id']?.toString() || uuidv4().split('-')[0];
   req.headers['x-request-id'] = requestId;
   res.setHeader('X-Request-ID', requestId);
 
@@ -84,21 +84,29 @@ app.use((req, res, next) => {
     return originalJson.call(this, body);
   };
 
-  requestContext.run(requestId, () => {
+  requestContext.run({ requestId, userId: (req as any).user?.id }, () => {
     next();
   });
 });
 
 // Request logging
 app.use((req, res, next) => {
-  if (req.path.startsWith("/api/")) {
+  const isApi = req.path.startsWith("/api/");
+  const isHealth = req.path === "/api/health";
+
+  if (isApi && !isHealth) {
     const start = Date.now();
     res.on("finish", () => {
       const duration = Date.now() - start;
-      const level = res.statusCode >= 500 ? "error" : res.statusCode >= 400 ? "warn" : "info";
-      logger[level]("HTTP", `${req.method} ${req.path} → ${res.statusCode} (${duration}ms)`, {
+      const isSuccessGet = req.method === "GET" && (res.statusCode === 200 || res.statusCode === 304);
+
+      // Noise reduction: Only log successful GETs as 'debug', others as 'info/warn/error'
+      let level: 'info' | 'warn' | 'error' | 'debug' = res.statusCode >= 500 ? "error" : res.statusCode >= 400 ? "warn" : "info";
+      if (isSuccessGet) level = 'debug';
+
+      logger[level](`${req.method} ${req.path} → ${res.statusCode} (${duration}ms)`, {
         ip: req.ip,
-        user: req.user?.username || "anonymous",
+        user: (req as any).user?.username || "anonymous",
       });
     });
   }
@@ -145,7 +153,7 @@ app.get("/api/health", async (req, res) => {
       database: "connected",
     });
   } catch (err) {
-    logger.error("HEALTH", "Database health check failed", err);
+    logger.prismaError("Database health check failed", err);
     res.status(503).json({
       status: "error",
       timestamp: new Date().toISOString(),
@@ -189,13 +197,13 @@ if (isProd) {
 // ============================================================================
 
 process.on("SIGINT", async () => {
-  logger.info("SERVER", "Gracefully shutting down (SIGINT)...");
+  logger.info("Gracefully shutting down (SIGINT)...");
   await prisma.$disconnect();
   process.exit(0);
 });
 
 process.on("SIGTERM", async () => {
-  logger.info("SERVER", "Gracefully shutting down (SIGTERM)...");
+  logger.info("Gracefully shutting down (SIGTERM)...");
   await prisma.$disconnect();
   process.exit(0);
 });
@@ -205,6 +213,6 @@ process.on("SIGTERM", async () => {
 // ============================================================================
 
 app.listen(PORT, () => {
-  logger.info("SERVER", `🚀 Backend server naslouchá na http://localhost:${PORT}`);
-  logger.info("SERVER", `📊 Health check: http://localhost:${PORT}/api/health`);
+  logger.info(`🚀 Backend server naslouchá na http://localhost:${PORT}`);
+  logger.info(`📊 Health check: http://localhost:${PORT}/api/health`);
 });

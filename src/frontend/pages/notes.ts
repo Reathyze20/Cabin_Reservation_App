@@ -152,7 +152,7 @@ function renderNotes(notes: any[]): void {
       `;
     } else {
       el.innerHTML = `
-        <div class="message-avatar" style="background-color: ${userColor}">${initial}</div>
+        <div class="message-avatar" style="${animalIcon ? 'background-color: transparent; font-size: 24px;' : `background-color: ${userColor}`}">${initial}</div>
         <div class="message-bubble-container">
           <span class="message-sender">${note.username}</span>
           <div class="message-bubble" title="${dateFmt} ${timeFmt}">

@@ -19,15 +19,15 @@ router.get("/", protect, async (req: Request, res: Response) => {
             },
             include: {
                 createdBy: {
-                    select: { id: true, username: true, color: true },
+                    select: { id: true, username: true, color: true, animalIcon: true },
                 },
                 items: {
                     include: {
                         addedBy: {
-                            select: { id: true, username: true, color: true },
+                            select: { id: true, username: true, color: true, animalIcon: true },
                         },
                         purchasedBy: {
-                            select: { id: true, username: true, color: true },
+                            select: { id: true, username: true, color: true, animalIcon: true },
                         },
                         splits: true,
                     }

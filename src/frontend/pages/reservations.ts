@@ -577,7 +577,7 @@ function renderReservationList(reservations: typeof currentReservations, emptyMs
       <div class="res-indicator" style="background-color: ${uColor}"></div>
       <div class="res-content-left">
         <div class="res-user">
-          <div class="res-avatar" style="background-color: ${uColor}">${r.userAnimalIcon || init}</div>
+          <div class="res-avatar" style="${r.userAnimalIcon ? 'background-color: transparent; font-size: 24px;' : `background-color: ${uColor}`}">${r.userAnimalIcon || init}</div>
           <strong title="${r.username}">${r.username}</strong>
         </div>
         <div class="res-date-block-new">

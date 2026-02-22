@@ -138,7 +138,7 @@ function renderShoppingLists(lists: any[]): void {
                             <span class="custom-checkbox"></span>
                             <span class="shopping-item-name">${item.name}</span>
                         </label>
-                        ${item.purchased ? `<span class="purchased-by-badge" title="Koupil(a) ${item.purchasedBy?.username || 'Někdo'}">${item.purchasedBy?.username?.[0]?.toUpperCase() || '✓'}</span>` : ''}
+                        ${item.purchased ? `<span class="purchased-by-badge" title="Koupil(a) ${item.purchasedBy?.username || 'Někdo'}" style="${item.purchasedBy?.animalIcon ? 'background: transparent; font-size: 16px;' : ''}">${item.purchasedBy?.animalIcon || item.purchasedBy?.username?.[0]?.toUpperCase() || '✓'}</span>` : ''}
                         ${item.addedById === currentUserId || list.createdById === currentUserId || getUserId() === 'admin' ?
             `<button class="btn-icon-tiny btn-delete-item" title="Smazat položku"><i class="fas fa-times"></i></button>` : ''}
                     </div>

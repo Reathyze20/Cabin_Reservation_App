@@ -91,14 +91,14 @@ function renderUsers(list: any[]): void {
   const el = $('users-list');
   if (!el) return;
   el.innerHTML = list.map((u) => {
-    const init = u.username.charAt(0).toUpperCase();
+    const init = u.animalIcon || u.username.charAt(0).toUpperCase();
     const roleClass = u.role === 'admin' ? 'badge-admin' : 'badge-member';
     const roleText = u.role === 'admin' ? 'Admin' : 'Člen';
     
     return `
     <div class="user-row" data-uid="${u.id}">
       <div class="user-row-left">
-        <div class="user-row-avatar">${init}</div>
+        <div class="user-row-avatar" style="${u.animalIcon ? 'background: transparent; font-size: 24px;' : ''}">${init}</div>
         <span class="user-row-name">${u.username}</span>
       </div>
       <div class="user-row-middle">

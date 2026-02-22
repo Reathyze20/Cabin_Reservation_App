@@ -12,6 +12,7 @@ interface DashboardData {
     id: string;
     username: string;
     userColor: string;
+    userAnimalIcon?: string | null;
     from: string;
     to: string;
     purpose: string;
@@ -21,6 +22,7 @@ interface DashboardData {
     userId: string;
     username: string;
     userColor: string;
+    userAnimalIcon?: string | null;
     from: string;
     to: string;
     purpose: string;
@@ -212,8 +214,8 @@ function getTemplate(): string {
 
   return `
   <div class="dashboard nordic-dashboard">
-    <!-- Mobile Header -->
-    <div class="dashboard-mobile-header mobile-only">
+    <!-- Header -->
+    <div class="dashboard-mobile-header">
       <div class="header-bg"></div>
       <div class="header-content">
         <div class="dashboard-avatar-picker avatar-picker-btn" title="Změnit avatar">
@@ -370,11 +372,15 @@ function renderActiveReservation(data: DashboardData): void {
 
   if (data.activeReservation) {
     const r = data.activeReservation;
+    const avatarHtml = r.userAnimalIcon 
+      ? `<div style="font-size: 32px;">${r.userAnimalIcon}</div>`
+      : `<i class="fas fa-home"></i>`;
+      
     el.className = 'glass-card status-card is-occupied';
     el.innerHTML = `
       <div class="card-body-full status-content">
-        <div class="status-icon-wrapper">
-          <i class="fas fa-home"></i>
+        <div class="status-icon-wrapper" style="${r.userAnimalIcon ? 'background: transparent; box-shadow: none;' : ''}">
+          ${avatarHtml}
         </div>
         <div class="status-text">Nyní zde pobývá:<br>${r.username}</div>
         <div class="status-subtext">${formatDate(r.from)} — ${formatDate(r.to)}</div>
@@ -429,8 +435,8 @@ function renderUpcoming(reservations: DashboardData['upcomingReservations']): vo
     <div class="list-content">
       ${toShow.map((r) => `
         <div class="list-item">
-          <div class="list-item-icon" style="background: ${r.userColor || '#808080'}">
-            ${r.username.charAt(0).toUpperCase()}
+          <div class="list-item-icon" style="${r.userAnimalIcon ? 'background: transparent; font-size: 24px;' : `background: ${r.userColor || '#808080'}`}">
+            ${r.userAnimalIcon || r.username.charAt(0).toUpperCase()}
           </div>
           <div class="list-item-content">
             <div class="list-item-title">${r.username}</div>
