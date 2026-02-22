@@ -84,9 +84,10 @@ router.delete("/:id", protect, async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
 
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
         const user = req.user;
+        if (!user) {
+            return res.status(401).json({ error: "Not authorized" });
+        }
 
         const list = await prisma.shoppingList.findUnique({
             where: { id },

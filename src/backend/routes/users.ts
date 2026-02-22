@@ -28,6 +28,44 @@ router.get("/", protect, async (req: Request, res: Response) => {
 });
 
 // ============================================================================
+//                          CREATE USER (ADMIN)
+// ============================================================================
+router.post("/", protect, async (req: Request, res: Response) => {
+  if (!req.user || req.user.role !== "admin") {
+    return res.status(403).json({ message: "Přístup pouze pro administrátora." });
+  }
+
+  const { username, password, role } = req.body;
+
+  if (!username || !password || password.length < 6) {
+    return res.status(400).json({ message: "Chybná data nebo krátké heslo." });
+  }
+
+  try {
+    const existingUser = await prisma.user.findUnique({ where: { username } });
+    if (existingUser) {
+      return res.status(400).json({ message: "Uživatel již existuje." });
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const randomColor = "#" + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+    const newUser = await prisma.user.create({
+      data: {
+        username,
+        passwordHash,
+        role: role || "member",
+        color: randomColor,
+      },
+    });
+
+    res.status(201).json({ message: "Uživatel vytvořen.", user: { id: newUser.id, username: newUser.username } });
+  } catch (error) {
+    logger.error("USERS", "Create user error", { error: String(error) });
+    res.status(500).json({ message: "Chyba." });
+  }
+});
+
+// ============================================================================
 //                                GET MY PROFILE
 // ============================================================================
 router.get("/me", protect, async (req: Request, res: Response) => {
@@ -175,6 +213,35 @@ router.put("/:id/password", protect, async (req: Request, res: Response) => {
     res.status(200).json({ message: "Heslo změněno." });
   } catch (error) {
     logger.error("USERS", "Change password error", { error: String(error), userId: id });
+    res.status(500).json({ message: "Chyba." });
+  }
+});
+
+// ============================================================================
+//                          UPDATE USER (ADMIN)
+// ============================================================================
+router.patch("/:id", protect, async (req: Request, res: Response) => {
+  if (!req.user || req.user.role !== "admin") {
+    return res.status(403).json({ message: "Přístup pouze pro administrátora." });
+  }
+
+  const { id } = req.params;
+  const { role, password } = req.body;
+
+  try {
+    const data: any = {};
+    if (role) data.role = role;
+    if (password && password.length >= 6) {
+      data.passwordHash = await bcrypt.hash(password, 10);
+    }
+
+    await prisma.user.update({
+      where: { id },
+      data,
+    });
+    res.status(200).json({ message: "Uživatel upraven." });
+  } catch (error) {
+    logger.error("USERS", "Update user error", { error: String(error), userId: id });
     res.status(500).json({ message: "Chyba." });
   }
 });

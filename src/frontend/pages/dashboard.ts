@@ -31,10 +31,12 @@ interface DashboardData {
     to: string;
     purpose: string;
   } | null;
-  unpurchasedItems: {
+  activeShoppingLists: {
     id: string;
     name: string;
-    addedBy: string;
+    author: string;
+    unpurchasedCount: number;
+    totalCount: number;
   }[];
   latestNotes: {
     id: string;
@@ -439,11 +441,11 @@ function renderUpcoming(reservations: DashboardData['upcomingReservations']): vo
     </div>`;
 }
 
-function renderShopping(items: DashboardData['unpurchasedItems'], count: number): void {
+function renderShopping(lists: DashboardData['activeShoppingLists'], count: number): void {
   const el = document.getElementById('dashboard-shopping');
   if (!el) return;
 
-  if (items.length === 0) {
+  if (lists.length === 0) {
     el.innerHTML = `
       <div class="empty-state-card">
         <i class="fas fa-shopping-basket empty-icon-duotone"></i>
@@ -453,21 +455,21 @@ function renderShopping(items: DashboardData['unpurchasedItems'], count: number)
     return;
   }
 
-  const toShow = items.slice(0, 3);
+  const toShow = lists.slice(0, 3);
   el.innerHTML = `
     <div class="list-header">
       <span class="list-title">K dokoupení</span>
       <a href="#/shopping" class="list-link">Všechny (${count})</a>
     </div>
     <div class="list-content">
-      ${toShow.map((item) => `
+      ${toShow.map((list) => `
         <div class="list-item">
           <div class="list-item-icon" style="background: var(--color-primary); font-size: 14px;">
             <i class="fas fa-shopping-cart"></i>
           </div>
           <div class="list-item-content">
-            <div class="list-item-title">${item.name}</div>
-            <div class="list-item-subtitle">Přidal(a) ${item.addedBy}</div>
+            <div class="list-item-title">${list.name}</div>
+            <div class="list-item-subtitle">Chybí ${list.unpurchasedCount} z ${list.totalCount} položek</div>
           </div>
         </div>
       `).join('')}
@@ -502,7 +504,7 @@ async function loadDashboard(): Promise<void> {
   if (data) {
     renderActiveReservation(data);
     renderUpcoming(data.upcomingReservations);
-    renderShopping(data.unpurchasedItems, data.stats.unpurchasedCount);
+    renderShopping(data.activeShoppingLists, data.stats.unpurchasedCount);
     renderStats(data.stats);
   }
 

@@ -175,11 +175,21 @@ async function loadSystemInfo(): Promise<void> {
   if (!el) return;
   if (!info) { el.textContent = 'Nepodařilo se načíst'; return; }
   el.innerHTML = `
-    <div class="info-grid">
-      <div><strong>Uživatelé:</strong> ${info.userCount ?? '—'}</div>
-      <div><strong>Rezervace:</strong> ${info.reservationCount ?? '—'}</div>
-      <div><strong>Fotky:</strong> ${info.photoCount ?? '—'}</div>
-      <div><strong>Poznámky:</strong> ${info.noteCount ?? '—'}</div>
+    <div class="system-stat">
+      <div class="stat-value">${info.userCount ?? '—'}</div>
+      <div class="stat-label">Uživatelé</div>
+    </div>
+    <div class="system-stat">
+      <div class="stat-value">${info.reservationCount ?? '—'}</div>
+      <div class="stat-label">Rezervace</div>
+    </div>
+    <div class="system-stat">
+      <div class="stat-value">${info.photoCount ?? '—'}</div>
+      <div class="stat-label">Fotky</div>
+    </div>
+    <div class="system-stat">
+      <div class="stat-value">${info.noteCount ?? '—'}</div>
+      <div class="stat-label">Poznámky</div>
     </div>`;
 }
 

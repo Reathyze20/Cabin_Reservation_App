@@ -24,6 +24,7 @@ import reconstructionRoutes from "./routes/reconstruction";
 import dashboardRoutes from "./routes/dashboard";
 import noteThreadsRoutes from "./routes/noteThreads";
 import shoppingListsRoutes from "./routes/shoppingLists";
+import adminRoutes from "./routes/admin";
 
 const app = express();
 const isProd = process.env.NODE_ENV === "production";
@@ -170,6 +171,7 @@ app.use("/api/gallery", galleryRoutes);
 app.use("/api/diary", diaryRoutes);
 app.use("/api/reconstruction", reconstructionRoutes);
 app.use("/api/logs", logsRoutes);
+app.use("/api/admin", adminRoutes);
 
 // ============================================================================
 //                            SPA FALLBACK

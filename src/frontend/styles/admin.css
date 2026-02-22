@@ -37,12 +37,10 @@
   border-bottom: 1px solid var(--color-border-light);
   display: flex;
   flex-direction: column;
-  min-height: 0;
   flex-shrink: 0;
 }
 .admin-section.users-section {
-  flex-grow: 1;
-  flex-shrink: 1;
+  /* Removed flex-grow and flex-shrink to allow natural height */
 }
 .admin-section:last-child { border-bottom: none; margin-bottom: 0; }
 .admin-section h3 {
@@ -58,9 +56,6 @@
 .users-list {
   display: flex; flex-direction: column;
   gap: 0;
-  flex-grow: 1;
-  overflow-y: auto;
-  min-height: 0;
 }
 .user-row {
   display: flex; align-items: center; justify-content: space-between;

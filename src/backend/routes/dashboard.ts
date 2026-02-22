@@ -45,14 +45,31 @@ router.get("/", protect, async (req: Request, res: Response) => {
       },
     });
 
-    // 3) Unpurchased shopping items count
-    const unpurchasedItems = await prisma.shoppingListItem.findMany({
-      where: { purchased: false },
+    // 3) Active shopping lists (unresolved, with at least 1 unpurchased item)
+    const activeLists = await prisma.shoppingList.findMany({
+      where: {
+        isResolved: false,
+        items: {
+          some: { purchased: false }
+        }
+      },
       include: {
-        addedBy: { select: { username: true } },
+        createdBy: { select: { username: true } },
+        items: true,
       },
       orderBy: { createdAt: "desc" },
-      take: 5,
+      take: 3,
+    });
+
+    const activeShoppingLists = activeLists.map(list => {
+      const unpurchasedCount = list.items.filter(i => !i.purchased).length;
+      return {
+        id: list.id,
+        name: list.name,
+        author: list.createdBy.username,
+        unpurchasedCount,
+        totalCount: list.items.length
+      };
     });
 
     // 4) Latest notes (last 3)
@@ -119,11 +136,7 @@ router.get("/", protect, async (req: Request, res: Response) => {
             purpose: myNextReservation.purpose,
           }
         : null,
-      unpurchasedItems: unpurchasedItems.map((item) => ({
-        id: item.id,
-        name: item.name,
-        addedBy: item.addedBy.username,
-      })),
+      activeShoppingLists,
       latestNotes: latestNotes.map((n) => ({
         id: n.id,
         username: n.user.username,
