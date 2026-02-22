@@ -40,6 +40,12 @@ router.get("/", protect, async (req: Request, res: Response) => {
       link: item.link,
       cost: item.cost ? parseFloat(item.cost.toString()) : undefined,
       status: item.status,
+      thumbnail: item.thumbnail,
+      tag: item.tag,
+      specialization: item.specialization,
+      email: item.email,
+      phone: item.phone,
+      deadline: item.deadline ? item.deadline.toISOString() : undefined,
       votes: item.votes.map((v) => v.userId),
       createdBy: item.createdBy.username,
       createdAt: item.createdAt.toISOString(),
@@ -60,7 +66,7 @@ router.post("/", protect, async (req: Request, res: Response) => {
     return res.status(401).json({ message: "Neautorizováno" });
   }
 
-  const { category, title, description, link, cost, status } = req.body;
+  const { category, title, description, link, cost, status, thumbnail, tag, specialization, email, phone, deadline } = req.body;
 
   if (!category || !title) {
     return res.status(400).json({ message: "Chybí povinné údaje (kategorie, název)." });
@@ -75,6 +81,12 @@ router.post("/", protect, async (req: Request, res: Response) => {
         link: link || undefined,
         cost: cost ? parseFloat(cost) : undefined,
         status: status || "pending",
+        thumbnail: thumbnail || undefined,
+        tag: tag || undefined,
+        specialization: specialization || undefined,
+        email: email || undefined,
+        phone: phone || undefined,
+        deadline: deadline ? new Date(deadline) : undefined,
         createdById: req.user.userId,
       },
       include: {
@@ -94,6 +106,12 @@ router.post("/", protect, async (req: Request, res: Response) => {
       link: newItem.link,
       cost: newItem.cost ? parseFloat(newItem.cost.toString()) : undefined,
       status: newItem.status,
+      thumbnail: newItem.thumbnail,
+      tag: newItem.tag,
+      specialization: newItem.specialization,
+      email: newItem.email,
+      phone: newItem.phone,
+      deadline: newItem.deadline ? newItem.deadline.toISOString() : undefined,
       votes: [],
       createdBy: newItem.createdBy.username,
       createdAt: newItem.createdAt.toISOString(),
@@ -199,6 +217,12 @@ router.patch("/:id/vote", protect, async (req: Request, res: Response) => {
       link: item.link,
       cost: item.cost ? parseFloat(item.cost.toString()) : undefined,
       status: item.status,
+      thumbnail: item.thumbnail,
+      tag: item.tag,
+      specialization: item.specialization,
+      email: item.email,
+      phone: item.phone,
+      deadline: item.deadline ? item.deadline.toISOString() : undefined,
       votes: item.votes.map((v) => v.userId),
       createdBy: item.createdBy.username,
       createdAt: item.createdAt.toISOString(),
@@ -262,6 +286,12 @@ router.patch("/:id/status", protect, async (req: Request, res: Response) => {
       link: updated.link,
       cost: updated.cost ? parseFloat(updated.cost.toString()) : undefined,
       status: updated.status,
+      thumbnail: updated.thumbnail,
+      tag: updated.tag,
+      specialization: updated.specialization,
+      email: updated.email,
+      phone: updated.phone,
+      deadline: updated.deadline ? updated.deadline.toISOString() : undefined,
       votes: updated.votes.map((v) => v.userId),
       createdBy: updated.createdBy.username,
       createdAt: updated.createdAt.toISOString(),

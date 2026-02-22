@@ -15,17 +15,23 @@ select {
   font-family: var(--font-family);
 }
 
+html,
+body {
+  min-height: 100vh;
+  margin: 0;
+  background-color: #fdf8f0;
+}
+
 body {
   background-image: var(--bg-image);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   background-attachment: fixed;
-  min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: var(--space-xl);
+  padding: 0;
   color: var(--color-text);
   line-height: 1.6;
   position: relative;
@@ -39,22 +45,39 @@ body::before {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.4);
+  background: linear-gradient(180deg,
+      rgba(253, 248, 240, 0.3) 0%,
+      rgba(0, 0, 0, 0.25) 60%,
+      rgba(0, 0, 0, 0.4) 100%);
   z-index: -1;
 }
 
 .app-wrapper {
   width: 100%;
-  max-width: 1400px;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-xl);
+}
+
+/* Mobile Base Adjustments */
+@media (max-width: 768px) {
+  body {
+    padding: 0;
+  }
 }
 
 .hidden {
   display: none !important;
 }
+
+/* Ensure images and broad containers never exceed viewport */
+img,
+.calendar-container,
+.flatpickr-calendar {
+  max-width: 100%;
+}
+
 
 .error-message {
   color: var(--color-danger);
@@ -68,18 +91,35 @@ body::before {
   text-align: center;
 }
 
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-3xl);
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-lg);
+  height: 100%;
+  width: 100%;
+  grid-column: 1 / -1;
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 8px;
 }
+
 ::-webkit-scrollbar-track {
   background: #f1f1f1;
   border-radius: var(--radius-sm);
 }
+
 ::-webkit-scrollbar-thumb {
   background: var(--color-border-dark);
   border-radius: var(--radius-sm);
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-text-muted);
 }
@@ -94,16 +134,24 @@ body::before {
   animation: spin 1s linear infinite;
   margin-bottom: 15px;
 }
+
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
+
 .spinner-container {
   display: flex;
   justify-content: center;
   align-items: center;
   padding: 40px;
 }
+
 .loading-overlay {
   position: absolute;
   top: 0;

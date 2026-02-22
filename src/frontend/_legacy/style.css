@@ -1,5 +1,3 @@
-
-
 /* --- NOVÉ STYLY PRO GALERII (VLOŽIT NA KONEC NEBO NAHRADIT STAROU SEKCI) --- */
 
 .main-content-gallery {
@@ -43,6 +41,7 @@
   align-items: center;
   gap: 10px;
 }
+
 .gallery-header h2 i {
   color: #d97706;
 }
@@ -85,20 +84,24 @@
   overflow: hidden;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
 }
+
 .folder-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 12px 25px rgba(217, 119, 6, 0.15);
   border-color: #d97706;
 }
+
 .folder-icon {
   font-size: 3.5em;
   color: #fbbf24;
   margin-bottom: 10px;
   transition: transform 0.3s;
 }
+
 .folder-card:hover .folder-icon {
   transform: scale(1.1);
 }
+
 .folder-info h3 {
   margin: 0 0 5px 0;
   font-size: 1.1em;
@@ -108,6 +111,7 @@
   white-space: normal;
   line-height: 1.3;
 }
+
 .folder-date {
   font-size: 0.8em;
   color: #9ca3af;
@@ -134,6 +138,7 @@
   width: 100%;
   height: 100%;
 }
+
 .photo-card img {
   width: 100%;
   height: 100%;
@@ -141,12 +146,14 @@
   transition: transform 0.5s ease;
   display: block;
 }
+
 .photo-card:hover {
   z-index: 5;
   transform: scale(1.02);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   border-radius: 12px;
 }
+
 .photo-overlay {
   position: absolute;
   top: 0;
@@ -160,9 +167,11 @@
   opacity: 0;
   transition: opacity 0.2s ease;
 }
+
 .photo-card:hover .photo-overlay {
   opacity: 1;
 }
+
 .photo-overlay i {
   color: white;
   font-size: 2em;
@@ -173,9 +182,11 @@
 .photo-card.g-wide {
   grid-column: span 2;
 }
+
 .photo-card.g-tall {
   grid-row: span 2;
 }
+
 .photo-card.g-big {
   grid-column: span 2;
   grid-row: span 2;
@@ -193,6 +204,7 @@
   height: 60px;
   z-index: 10;
 }
+
 .footer-left,
 .footer-center,
 .footer-right {
@@ -216,22 +228,27 @@
   text-decoration: none;
   white-space: nowrap;
 }
+
 .gallery-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
+
 .gallery-btn-primary {
   background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
   color: white;
 }
+
 .gallery-btn-primary:hover {
   background: linear-gradient(135deg, #fcd34d 0%, #b45309 100%);
 }
+
 .gallery-btn-secondary {
   background-color: white;
   color: #4b5563;
   border: 1px solid #e5e7eb;
 }
+
 .gallery-btn-secondary:hover {
   background-color: #f9fafb;
   border-color: #d1d5db;
@@ -257,6 +274,7 @@
   align-items: center;
   min-height: 30px;
 }
+
 .lightbox-description {
   font-size: 1.1em;
   font-style: italic;
@@ -268,9 +286,11 @@
   cursor: pointer;
   transition: color 0.2s;
 }
+
 .lightbox-description:hover {
   color: #fff;
 }
+
 .add-description-btn {
   background: none;
   border: 1px dashed rgba(255, 255, 255, 0.3);
@@ -282,11 +302,13 @@
   margin-top: 5px;
   transition: all 0.2s;
 }
+
 .add-description-btn:hover {
   border-color: rgba(255, 255, 255, 0.6);
   color: white;
   background: rgba(255, 255, 255, 0.1);
 }
+
 .description-form {
   display: flex;
   gap: 8px;
@@ -294,6 +316,7 @@
   justify-content: center;
   margin-top: 5px;
 }
+
 .description-input {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.3);
@@ -302,6 +325,7 @@
   border-radius: 20px;
   width: 300px;
 }
+
 .save-description-btn {
   background: rgba(255, 255, 255, 0.9);
   color: #333;
@@ -319,6 +343,7 @@
   opacity: 0.6;
   transition: opacity 0.3s ease;
 }
+
 .lightbox-content:hover .lightbox-controls,
 .lightbox-controls:hover {
   opacity: 1;
@@ -339,6 +364,7 @@
   cursor: pointer;
   transition: all 0.3s;
 }
+
 .lightbox-btn:hover {
   background: rgba(255, 255, 255, 0.25);
   border-color: rgba(255, 255, 255, 0.5);
@@ -346,6 +372,7 @@
   transform: translateY(-2px);
   box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
 }
+
 .lightbox-btn-danger:hover {
   background: rgba(239, 68, 68, 0.2);
   border-color: #ef4444;
@@ -360,11 +387,13 @@
   position: relative;
   border-radius: 20px;
 }
+
 .upload-modal-content h2 {
   color: #374151;
   margin-bottom: 20px;
   font-size: 1.5em;
 }
+
 .file-upload-container {
   background-color: #f9fafb;
   border: 2px dashed #e5e7eb;
@@ -373,18 +402,22 @@
   margin-bottom: 20px;
   transition: all 0.3s;
 }
+
 .file-upload-container:hover {
   border-color: #fbbf24;
   background-color: #fffbeb;
 }
+
 .upload-icon {
   font-size: 3em;
   color: #d1d5db;
   margin-bottom: 10px;
 }
+
 .file-upload-container:hover .upload-icon {
   color: #fbbf24;
 }
+
 .file-msg {
   color: #6b7280;
   margin-bottom: 15px;
@@ -393,7 +426,9 @@
 
 #photo-file-input {
   display: none;
-} /* Skrytý defaultní input */
+}
+
+/* Skrytý defaultní input */
 
 .custom-file-label {
   display: inline-block;
@@ -407,10 +442,12 @@
   transition: all 0.2s;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
+
 .custom-file-label:hover {
   border-color: #fbbf24;
   color: #d97706;
 }
+
 .file-chosen-text {
   display: block;
   margin-top: 10px;
@@ -436,6 +473,7 @@
   color: #d97706;
   font-weight: 600;
 }
+
 .spinner {
   width: 40px;
   height: 40px;
@@ -445,10 +483,12 @@
   animation: spin 1s linear infinite;
   margin-bottom: 15px;
 }
+
 @keyframes spin {
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }
@@ -459,15 +499,18 @@
     grid-template-columns: repeat(2, 1fr);
     grid-template-rows: repeat(4, 1fr);
   }
+
   .gallery-footer {
     height: auto;
     flex-direction: column;
     gap: 15px;
     padding-bottom: 20px;
   }
+
   .footer-center {
     order: -1;
   }
+
   .lightbox-content img {
     max-height: 60vh;
   }
@@ -484,9 +527,11 @@
   flex: 1 1 320px;
   max-width: 400px;
 }
+
 .calendar-card {
   flex: 2 1 450px;
 }
+
 .shopping-list-container h2,
 .notice-board-container h2 {
   margin-bottom: 15px;
@@ -501,6 +546,7 @@
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }
@@ -513,46 +559,13 @@
   padding: 0;
 }
 
-body,
-button,
-input,
-textarea,
-select {
-  font-family: "Inter", sans-serif;
-}
 
-body {
-  background-image: url("https://i0.wp.com/www.zazracnestredohori.cz/wp-content/uploads/2020/05/Kostalov_vyhled_hrad_panorama_01-05-2020_C.jpg?fit=1600%2C727&ssl=1");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 20px;
-  color: #374151;
-  line-height: 1.6;
-  position: relative;
-  z-index: 0;
-}
-
-body::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.4);
-  z-index: -1;
-}
 
 /* Wrapper for main content */
 .app-wrapper {
   width: 100%;
-  max-width: 1400px; /* Zvětšeno pro 3 sloupce */
+  max-width: 1400px;
+  /* Zvětšeno pro 3 sloupce */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -576,10 +589,12 @@ body::before {
 
 .main-content {
   display: flex;
-  flex-direction: row; /* Explicitně nastaveno pro jistotu */
+  flex-direction: row;
+  /* Explicitně nastaveno pro jistotu */
   gap: 20px;
   width: 100%;
-  align-items: stretch; /* Zarovná karty na stejnou výšku */
+  align-items: stretch;
+  /* Zarovná karty na stejnou výšku */
 }
 
 /* Common style for "cards" */
@@ -591,14 +606,17 @@ body::before {
 }
 
 .shopping-list-container {
-  flex: 1 1 320px; /* grow, shrink, basis */
+  flex: 1 1 320px;
+  /* grow, shrink, basis */
   max-width: 400px;
   display: flex;
   flex-direction: column;
 }
+
 .calendar-card {
   flex: 2 1 450px;
 }
+
 .reservations-list-container {
   flex: 1 1 320px;
   max-width: 400px;
@@ -648,7 +666,8 @@ body::before {
 /* Container for calendar - Flatpickr will be here */
 .calendar-container {
   margin-bottom: 20px;
-  position: relative; /* Allow absolute labels inside */
+  position: relative;
+  /* Allow absolute labels inside */
 }
 
 /* Buttons */
@@ -665,6 +684,7 @@ button[type="submit"] {
   background-color: #fbbf24;
   color: white;
 }
+
 button[type="submit"]:hover {
   background-color: #f59e0b;
 }
@@ -676,6 +696,7 @@ button[type="submit"]:hover {
   padding: 12px;
   font-size: 1em;
 }
+
 .button-primary:hover {
   background-color: #ef4444;
 }
@@ -688,6 +709,7 @@ button[type="submit"]:hover {
   border-radius: 8px;
   font-weight: 600;
 }
+
 .button-secondary:hover {
   background-color: #e9ecef;
 }
@@ -718,6 +740,7 @@ input[type="date"] {
   backdrop-filter: blur(10px);
   border-radius: 16px;
 }
+
 .user-info strong {
   font-weight: 700;
 }
@@ -732,11 +755,13 @@ input[type="date"] {
   background-color: rgba(255, 255, 255, 0.85);
   border-radius: 12px;
 }
+
 .app-nav {
   display: flex;
   gap: 15px;
   align-items: center;
 }
+
 .app-nav .nav-link {
   text-decoration: none;
   color: #374151;
@@ -745,9 +770,11 @@ input[type="date"] {
   font-weight: 600;
   background: rgba(255, 255, 255, 0.8);
 }
+
 .app-nav .nav-link:hover {
   background: rgba(255, 255, 255, 1);
 }
+
 .app-nav .nav-link.active {
   background-color: orange;
   color: white;
@@ -795,22 +822,27 @@ input[type="date"] {
   align-items: center;
   margin-bottom: 8px;
   gap: 8px;
-  padding-right: 60px; /* space for action buttons */
+  padding-right: 60px;
+  /* space for action buttons */
 }
 
 /* Username style in reservation list */
-.reservation-header > strong {
-  color: #1f2937; /* Default text color */
+.reservation-header>strong {
+  color: #1f2937;
+  /* Default text color */
   font-size: 1em;
-  display: block; /* put username on its own line */
+  display: block;
+  /* put username on its own line */
   margin-bottom: 6px;
   flex: none;
   min-width: 0;
   max-width: 100%;
   overflow: visible;
   text-overflow: clip;
-  white-space: normal; /* allow wrapping so the full name is visible */
-  border-bottom: none; /* Removed border */
+  white-space: normal;
+  /* allow wrapping so the full name is visible */
+  border-bottom: none;
+  /* Removed border */
 }
 
 /* Status badge (backup etc.) should not force wrapping */
@@ -823,7 +855,8 @@ input[type="date"] {
   font-size: 0.9em;
   color: #6b7280;
   white-space: nowrap;
-  margin-left: auto; /* keep dates right-aligned */
+  margin-left: auto;
+  /* keep dates right-aligned */
 }
 
 /* Reservation meta line (dates + actions) */
@@ -835,9 +868,11 @@ input[type="date"] {
 }
 
 .reservation-dates {
-  color: #4b5563; /* match reservation body text color */
+  color: #4b5563;
+  /* match reservation body text color */
   font-weight: 400;
-  font-size: 0.85em; /* same as .reservation-body */
+  font-size: 0.85em;
+  /* same as .reservation-body */
   white-space: normal;
 }
 
@@ -853,11 +888,13 @@ input[type="date"] {
 .dates-left {
   color: #4b5563;
   font-size: 0.95em;
-  white-space: nowrap; /* Ensure date range stays on one line */
+  white-space: nowrap;
+  /* Ensure date range stays on one line */
 }
 
 .dates-actions {
-  margin-left: auto; /* push actions to the right */
+  margin-left: auto;
+  /* push actions to the right */
   display: flex;
   align-items: center;
   gap: 6px;
@@ -877,15 +914,18 @@ input[type="date"] {
 .dates-actions .delete-btn {
   color: #ef4444;
 }
+
 .action-buttons-inline .delete-btn:hover,
 .dates-actions .delete-btn:hover {
   background-color: #fee2e2;
   color: #b91c1c;
 }
+
 /* Styl pro assign button v seznamu */
 .action-buttons-inline .assign-btn {
   color: #3b82f6;
 }
+
 .action-buttons-inline .assign-btn:hover {
   background-color: #dbeafe;
   color: #2563eb;
@@ -986,6 +1026,7 @@ input[type="date"] {
   padding: 0;
   top: 8px;
 }
+
 .flatpickr-months .flatpickr-prev-month:hover,
 .flatpickr-months .flatpickr-next-month:hover {
   background-color: #ffedd5;
@@ -1004,10 +1045,12 @@ input[type="date"] {
   color: #333;
   padding-top: 5px;
 }
+
 .flatpickr-current-month .flatpickr-monthDropdown-months,
 .flatpickr-current-month .numInputWrapper {
   font-weight: 600;
 }
+
 .flatpickr-current-month input.cur-year {
   font-weight: 600;
 }
@@ -1015,6 +1058,7 @@ input[type="date"] {
 .flatpickr-weekdays {
   background-color: transparent;
 }
+
 span.flatpickr-weekday {
   color: #f97316;
   font-weight: 600;
@@ -1033,6 +1077,7 @@ span.flatpickr-weekday {
   border-radius: 50%;
   margin: 1px;
 }
+
 .flatpickr-day:hover {
   background-color: #f3f4f6;
 }
@@ -1048,6 +1093,7 @@ span.flatpickr-weekday {
   border: 1px solid #fbbf24;
   color: #d97706;
 }
+
 .flatpickr-day.today:hover {
   background-color: #fef3c7;
 }
@@ -1065,18 +1111,22 @@ span.flatpickr-weekday {
   border-color: #f87171;
   color: #fff;
 }
+
 .flatpickr-day.inRange {
   background: #fecaca;
   border-color: #fecaca;
   color: #b91c1c;
   border-radius: 50%;
 }
+
 .flatpickr-day.startRange {
   border-radius: 50%;
 }
+
 .flatpickr-day.endRange {
   border-radius: 50%;
 }
+
 .flatpickr-day.startRange.endRange {
   border-radius: 50%;
 }
@@ -1123,6 +1173,7 @@ span.flatpickr-weekday {
     opacity: 0;
     transform: translateY(-20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -1151,9 +1202,11 @@ span.flatpickr-weekday {
   margin-bottom: 20px;
   color: #333;
 }
+
 .modal-content p {
   margin-bottom: 20px;
 }
+
 .form-group {
   margin-bottom: 20px;
 }
@@ -1175,6 +1228,7 @@ span.flatpickr-weekday {
   background-color: #ef4444;
   color: white;
 }
+
 .button-danger:hover {
   background-color: #dc2626;
 }
@@ -1183,6 +1237,7 @@ span.flatpickr-weekday {
   background-color: #e5e7eb;
   color: #374151;
 }
+
 .button-secondary:hover {
   background-color: #d1d5db;
 }
@@ -1198,12 +1253,14 @@ span.flatpickr-weekday {
 }
 
 .status-badge.primary-with-backup {
-  background-color: #dcfce7; /* Light green */
+  background-color: #dcfce7;
+  /* Light green */
   color: #166534;
 }
 
 .status-badge.backup {
-  background-color: #ffedd5; /* Light orange */
+  background-color: #ffedd5;
+  /* Light orange */
   color: #9a3412;
 }
 
@@ -1217,9 +1274,11 @@ span.flatpickr-weekday {
   margin-bottom: 15px;
   font-size: 0.9em;
 }
+
 .backup-warning p {
   margin: 0;
 }
+
 .backup-warning strong {
   color: #713f12;
 }
@@ -1231,6 +1290,7 @@ span.flatpickr-weekday {
   font-weight: 600;
   transition: all 0.2s;
 }
+
 #admin-link:hover {
   color: #d18b00;
 }
@@ -1250,6 +1310,7 @@ span.flatpickr-weekday {
   gap: 8px;
   margin-bottom: 20px;
 }
+
 .button-icon-select {
   flex-shrink: 0;
   width: 42px;
@@ -1261,11 +1322,13 @@ span.flatpickr-weekday {
   color: #555;
   padding: 0;
 }
+
 #item-name-input {
   flex-grow: 1;
   margin-top: 0;
   height: 42px;
 }
+
 .button-add-item {
   flex-shrink: 0;
   width: 42px;
@@ -1275,6 +1338,7 @@ span.flatpickr-weekday {
   font-size: 1.2em;
   padding: 0;
 }
+
 .button-add-item:hover {
   background-color: #a86c00;
 }
@@ -1284,6 +1348,7 @@ span.flatpickr-weekday {
   overflow-y: auto;
   padding-right: 10px;
 }
+
 .shopping-list-content h3 {
   margin-top: 15px;
   margin-bottom: 10px;
@@ -1293,6 +1358,7 @@ span.flatpickr-weekday {
   border-bottom: 1px solid #ffe1a6;
   padding-bottom: 5px;
 }
+
 .shopping-list-content ul {
   list-style: none;
   padding: 0;
@@ -1307,36 +1373,43 @@ span.flatpickr-weekday {
   flex-direction: column;
   gap: 10px;
 }
+
 .shopping-list-card {
   background: #fdfcf9;
   border: 1px solid #f3e2c0;
   border-radius: 8px;
   padding: 12px 15px;
 }
+
 .list-header strong {
   font-weight: 600;
   color: #a86c00;
 }
+
 .list-meta {
   font-size: 0.85em;
   color: #78716c;
   margin-top: 4px;
 }
+
 .list-actions {
   margin-top: 10px;
   display: flex;
   gap: 8px;
 }
+
 .btn-open-list,
 .btn-delete-list {
   padding: 5px 10px;
   font-size: 0.85em;
   border-radius: 6px;
 }
+
 .btn-open-list {
   background-color: #d18b00;
   color: white;
 }
+
 .btn-delete-list {
   background: none;
   border: 1px solid #e5e7eb;
@@ -1347,9 +1420,11 @@ span.flatpickr-weekday {
 #shopping-list-modal .modal-content {
   max-width: 450px;
 }
+
 #shopping-modal-body {
   padding-top: 10px;
 }
+
 #shopping-modal-list {
   display: flex;
   flex-direction: column;
@@ -1358,6 +1433,7 @@ span.flatpickr-weekday {
   overflow-y: auto;
   padding: 5px;
 }
+
 .modal-item {
   display: flex;
   flex-direction: column;
@@ -1365,26 +1441,32 @@ span.flatpickr-weekday {
   border-radius: 8px;
   background-color: #f9fafb;
 }
+
 .modal-item.purchased {
   background-color: #f3f4f6;
 }
+
 .modal-item-main {
   display: flex;
   align-items: center;
   gap: 10px;
 }
+
 .modal-purchase-checkbox {
   width: 20px;
   height: 20px;
 }
+
 .modal-item-name {
   flex-grow: 1;
   font-weight: 500;
 }
+
 .modal-item.purchased .modal-item-name {
   text-decoration: line-through;
   color: #9ca3af;
 }
+
 .modal-delete-item {
   background: none;
   border: none;
@@ -1393,6 +1475,7 @@ span.flatpickr-weekday {
   font-weight: bold;
   cursor: pointer;
 }
+
 .modal-delete-item:hover {
   color: #ef4444;
 }
@@ -1413,12 +1496,14 @@ span.flatpickr-weekday {
   align-items: center;
   gap: 12px;
 }
+
 .item-icon {
   font-size: 1.4em;
   color: #d18b00;
   width: 25px;
   text-align: center;
 }
+
 .item-name {
   flex-grow: 1;
   font-weight: 500;
@@ -1437,15 +1522,19 @@ span.flatpickr-weekday {
   transition: all 0.2s;
   flex-shrink: 0;
 }
+
 .purchase-checkbox:hover {
   border-color: #d18b00;
 }
+
 .purchase-checkbox:checked {
   background-color: #d18b00;
   border-color: #d18b00;
 }
+
 .purchase-checkbox:checked::after {
-  content: "\f00c"; /* Font Awesome check icon */
+  content: "\f00c";
+  /* Font Awesome check icon */
   font-family: "Font Awesome 6 Free";
   font-weight: 900;
   color: white;
@@ -1466,6 +1555,7 @@ span.flatpickr-weekday {
   width: 28px;
   height: 28px;
 }
+
 .delete-item-btn:hover {
   color: #ef4444;
   background-color: #fee2e2;
@@ -1476,10 +1566,12 @@ span.flatpickr-weekday {
   background-color: #f9fafb;
   border-color: #e5e7eb;
 }
+
 .shopping-list-item.purchased .item-name {
   text-decoration: line-through;
   color: #9ca3af;
 }
+
 .shopping-list-item.purchased .item-icon {
   color: #9ca3af;
 }
@@ -1488,11 +1580,13 @@ span.flatpickr-weekday {
 .item-details {
   font-size: 0.8em;
   color: #6b7280;
-  padding: 8px 0 0 37px; /* (icon width + gap) */
+  padding: 8px 0 0 37px;
+  /* (icon width + gap) */
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
 }
+
 .item-details span {
   background-color: #f3f4f6;
   padding: 2px 6px;
@@ -1504,13 +1598,16 @@ span.flatpickr-weekday {
   padding-left: 37px;
   margin-top: 8px;
 }
+
 .price-info .paid-by {
   font-weight: 600;
   color: #166534;
 }
+
 .price-info strong {
   color: #1f2937;
 }
+
 .split-info {
   font-size: 0.8em;
   color: #4b5563;
@@ -1518,12 +1615,14 @@ span.flatpickr-weekday {
 }
 
 .purchase-form {
-  display: none; /* Skryto defaultně, ukáže se přes JS */
+  display: none;
+  /* Skryto defaultně, ukáže se přes JS */
   gap: 8px;
   align-items: center;
   margin-top: 10px;
   padding-left: 37px;
 }
+
 .price-input {
   width: 100px;
   height: 32px;
@@ -1531,6 +1630,7 @@ span.flatpickr-weekday {
   margin: 0;
   border-radius: 6px;
 }
+
 .save-purchase-btn,
 .split-purchase-btn {
   height: 32px;
@@ -1539,15 +1639,18 @@ span.flatpickr-weekday {
   padding: 0 12px;
   font-size: 0.9em;
 }
+
 .save-purchase-btn:hover,
 .split-purchase-btn:hover {
   background: #ffe1a6;
   color: #a86c00;
 }
+
 .split-purchase-btn {
   background-color: #f3f4f6;
   color: #4b5563;
 }
+
 .split-purchase-btn:hover {
   background-color: #e5e7eb;
 }
@@ -1557,6 +1660,7 @@ span.flatpickr-weekday {
   grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
   gap: 10px;
 }
+
 .icon-wrapper {
   display: flex;
   justify-content: center;
@@ -1568,6 +1672,7 @@ span.flatpickr-weekday {
   cursor: pointer;
   transition: background-color 0.2s;
 }
+
 .icon-wrapper:hover {
   background-color: #e5e7eb;
   color: #d18b00;
@@ -1582,23 +1687,28 @@ span.flatpickr-weekday {
   padding: 10px;
   margin-top: 10px;
 }
+
 .user-split-item {
   display: flex;
   align-items: center;
   padding: 8px;
   border-radius: 6px;
 }
+
 .user-split-item:hover {
   background-color: #f9fafb;
 }
+
 .user-split-item input[type="checkbox"] {
   width: 18px;
   height: 18px;
   margin-right: 12px;
 }
+
 .user-split-item label {
   font-weight: 500;
 }
+
 #split-modal-info {
   font-weight: 600;
   text-align: center;
@@ -1610,6 +1720,7 @@ span.flatpickr-weekday {
 .notice-board-container {
   width: 100%;
 }
+
 .notice-board-container h2 {
   margin-bottom: 15px;
   padding-bottom: 10px;
@@ -1627,7 +1738,8 @@ span.flatpickr-weekday {
   margin-bottom: 15px;
   overflow-y: auto;
   padding: 5px;
-  padding-right: 10px; /* Místo pro scrollbar */
+  padding-right: 10px;
+  /* Místo pro scrollbar */
 }
 
 /* Specifický styl pro widget na hlavní stránce (malý) */
@@ -1645,17 +1757,20 @@ span.flatpickr-weekday {
 
 /* Karta nástěnky na celou obrazovku */
 .notes-page-card {
-  height: calc(100vh - 140px); /* Fixní výška: viewport - hlavička */
+  height: calc(100vh - 140px);
+  /* Fixní výška: viewport - hlavička */
   min-height: 500px;
   display: flex;
   flex-direction: column;
-  overflow: hidden; /* Skryje vnější scrollbar */
+  overflow: hidden;
+  /* Skryje vnější scrollbar */
 }
 
 /* Seznam vzkazů uvnitř karty roztáhneme */
 .notes-page-card .notes-list {
   flex-grow: 1;
-  max-height: none; /* Zrušíme limit z widgetu */
+  max-height: none;
+  /* Zrušíme limit z widgetu */
   /* Scrolluje se jen tento element díky overflow-y: auto v .notes-list */
 }
 
@@ -1710,24 +1825,29 @@ span.flatpickr-weekday {
   padding: 12px 15px;
   border-radius: 4px;
   position: relative;
-  flex-shrink: 0; /* Důležité: vzkazy se nesmrsknou */
+  flex-shrink: 0;
+  /* Důležité: vzkazy se nesmrsknou */
 }
+
 .note-content {
   margin: 0;
   color: #4b5563;
   line-height: 1.5;
 }
+
 .note-header {
   margin-bottom: 5px;
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
 }
+
 .note-meta {
   font-size: 0.8em;
   color: #9ca3af;
   margin-top: 8px;
 }
+
 .delete-note-btn {
   position: absolute;
   top: 5px;
@@ -1739,6 +1859,7 @@ span.flatpickr-weekday {
   font-size: 1em;
   padding: 5px;
 }
+
 .delete-note-btn:hover {
   color: #ef4444;
 }
@@ -1748,12 +1869,14 @@ span.flatpickr-weekday {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-top: auto; /* Pojistka */
+  margin-top: auto;
+  /* Pojistka */
   padding-top: 15px;
   border-top: 1px solid #eee;
   background-color: white;
   z-index: 10;
 }
+
 .add-note-form textarea {
   width: 100%;
   border-radius: 8px;
@@ -1762,13 +1885,16 @@ span.flatpickr-weekday {
   resize: vertical;
   margin: 0;
 }
+
 .add-note-form button {
-  align-self: flex-end; /* Tlačítko vpravo */
+  align-self: flex-end;
+  /* Tlačítko vpravo */
   background-color: #fbbf24;
   color: white;
   font-weight: 500;
   padding: 8px 15px;
 }
+
 .add-note-form button:hover {
   background-color: #f59e0b;
 }
@@ -1777,14 +1903,17 @@ span.flatpickr-weekday {
 .notes-list::-webkit-scrollbar {
   width: 8px;
 }
+
 .notes-list::-webkit-scrollbar-track {
   background: #f1f1f1;
   border-radius: 4px;
 }
+
 .notes-list::-webkit-scrollbar-thumb {
   background: #d1d5db;
   border-radius: 4px;
 }
+
 .notes-list::-webkit-scrollbar-thumb:hover {
   background: #9ca3af;
 }
@@ -1795,17 +1924,20 @@ span.flatpickr-weekday {
     flex-wrap: wrap;
     justify-content: center;
   }
+
   .calendar-card {
     order: 1;
     flex-basis: 100%;
     min-width: 100%;
   }
+
   .shopping-list-container {
     order: 2;
     flex-grow: 1;
     flex-basis: calc(50% - 10px);
     max-width: none;
   }
+
   .reservations-list-container {
     order: 3;
     flex-grow: 1;
@@ -1820,10 +1952,12 @@ span.flatpickr-weekday {
     flex-direction: column;
     align-items: center;
   }
+
   .shopping-list-container,
   .reservations-list-container,
   .calendar-card {
-    order: 0; /* Reset order */
+    order: 0;
+    /* Reset order */
     flex-basis: auto;
     width: 100%;
     min-width: 100%;
@@ -1834,13 +1968,16 @@ span.flatpickr-weekday {
     flex-direction: column;
     align-items: flex-start;
   }
+
   .filters-group {
     width: 100%;
     justify-content: space-between;
   }
+
   .filter-item {
     flex-grow: 1;
   }
+
   .notes-page-card {
     height: auto;
     min-height: 80vh;
@@ -1852,14 +1989,17 @@ span.flatpickr-weekday {
     padding: 10px 5px;
     align-items: flex-start;
   }
+
   .card {
     padding: 15px;
   }
+
   .date-display-bar {
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
   }
+
   .date-separator {
     display: none;
   }
@@ -1893,9 +2033,11 @@ body.admin-page {
   color: #555;
   font-weight: normal;
 }
+
 .admin-page header nav a:hover {
   color: #000;
 }
+
 .admin-page header nav i {
   margin-right: 0.5rem;
 }
@@ -1962,9 +2104,11 @@ body.admin-page {
 .role-admin {
   background-color: #ef4444;
 }
+
 .role-user {
   background-color: #22c55e;
 }
+
 .role-guest {
   background-color: #6b7280;
 }
@@ -1976,16 +2120,19 @@ body.admin-page {
   border-radius: 5px;
   font-size: 0.9em;
 }
+
 .btn-edit:hover {
   background-color: #2563eb;
 }
+
 .btn-edit i {
   margin-right: 0.4rem;
 }
 
 /* Admin Modal */
 .admin-page .modal {
-  display: none; /* Hidden by default; use .open to display */
+  display: none;
+  /* Hidden by default; use .open to display */
   align-items: center;
   justify-content: center;
   position: fixed;
@@ -2029,6 +2176,7 @@ body.admin-page {
     transform: translateY(-30px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -2056,6 +2204,7 @@ body.admin-page {
   cursor: pointer;
   transition: color 0.2s;
 }
+
 .admin-page .close-button:hover {
   color: #111827;
 }
@@ -2088,6 +2237,7 @@ body.admin-page {
   text-align: left;
   transition: background-color 0.2s, border-color 0.2s;
 }
+
 .admin-page .btn-action:hover {
   background-color: #f3f4f6;
   border-color: #9ca3af;
@@ -2097,6 +2247,7 @@ body.admin-page {
   color: #92400e;
   border-color: #fcd34d;
 }
+
 .admin-page .btn-warning:hover {
   background-color: #fef3c7;
 }
@@ -2105,6 +2256,7 @@ body.admin-page {
   color: #991b1b;
   border-color: #fca5a5;
 }
+
 .admin-page .btn-danger:hover {
   background-color: #fee2e2;
 }
@@ -2121,6 +2273,7 @@ body.admin-page {
 .admin-page .modal-footer .btn-primary {
   background-color: #16a34a;
 }
+
 .admin-page .modal-footer .btn-primary:hover {
   background-color: #15803d;
 }
@@ -2137,20 +2290,24 @@ body.admin-page {
   border-radius: 8px;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
 }
+
 .admin-page .header-content {
   display: flex;
   align-items: center;
   gap: 18px;
 }
+
 .admin-page .header-content h1 {
   margin: 0;
   font-size: 1.4rem;
 }
+
 .admin-page #user-info {
   display: flex;
   align-items: center;
   gap: 12px;
 }
+
 .btn-back {
   background: none;
   border: 1px solid #e5e7eb;
@@ -2159,6 +2316,7 @@ body.admin-page {
   cursor: pointer;
   font-weight: 600;
 }
+
 .btn-back i {
   margin-right: 8px;
 }
@@ -2170,6 +2328,7 @@ body.admin-page {
   display: flex;
   justify-content: center;
 }
+
 .admin-main .card {
   width: 100%;
 }
@@ -2262,7 +2421,8 @@ body.admin-page {
   position: fixed;
   bottom: 30px;
   left: 30px;
-  background-color: #10b981; /* Svěží zelená */
+  background-color: #10b981;
+  /* Svěží zelená */
   color: white;
   padding: 15px 25px;
   border-radius: 12px;
@@ -2270,7 +2430,8 @@ body.admin-page {
   display: flex;
   align-items: center;
   gap: 12px;
-  z-index: 3000; /* Musí být nad modálem i ostatním obsahem */
+  z-index: 3000;
+  /* Musí být nad modálem i ostatním obsahem */
 
   /* Stav: Skrytý */
   transform: translateY(100px) scale(0.9);
@@ -2290,7 +2451,8 @@ body.admin-page {
 
 .toast i {
   font-size: 1.4em;
-  color: #ecfdf5; /* Velmi světlá zelená pro ikonu */
+  color: #ecfdf5;
+  /* Velmi světlá zelená pro ikonu */
 }
 
 .toast span {
@@ -2302,21 +2464,27 @@ body.admin-page {
 /* --- OPRAVENÉ LIGHTBOX STYLY --- */
 .lightbox-content {
   max-width: 95%;
-  max-height: 90vh; /* Zvětšeno pro lepší využití místa */
+  max-height: 90vh;
+  /* Zvětšeno pro lepší využití místa */
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center; /* Centrování obsahu */
+  justify-content: center;
+  /* Centrování obsahu */
   position: relative;
 }
 
 .lightbox-content img {
   display: block;
   max-width: 100%;
-  max-height: 80vh; /* Omezení výšky, aby zbylo místo na popisky */
-  width: auto; /* Důležité: Zachová poměr stran šířky */
-  height: auto; /* Důležité: Zachová poměr stran výšky */
-  object-fit: contain; /* Zajistí, že se obrázek vejde a neořízne */
+  max-height: 80vh;
+  /* Omezení výšky, aby zbylo místo na popisky */
+  width: auto;
+  /* Důležité: Zachová poměr stran šířky */
+  height: auto;
+  /* Důležité: Zachová poměr stran výšky */
+  object-fit: contain;
+  /* Zajistí, že se obrázek vejde a neořízne */
   border-radius: 4px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
 }
@@ -2344,7 +2512,8 @@ body.admin-page {
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(10, 10, 10, 0.95); /* Tmavší pozadí pro lepší kontrast */
+  background-color: rgba(10, 10, 10, 0.95);
+  /* Tmavší pozadí pro lepší kontrast */
   z-index: 2000;
   display: flex;
   justify-content: center;
@@ -2369,10 +2538,14 @@ body.admin-page {
   display: block;
   /* Obrázek se nesmí roztáhnout víc, než je jeho originál, a musí se vejít do okna */
   max-width: 100%;
-  max-height: 75vh; /* Omezíme výšku na 75% obrazovky, aby zbylo místo pro text */
-  width: auto; /* Automatická šířka podle poměru stran */
-  height: auto; /* Automatická výška podle poměru stran */
-  object-fit: contain; /* Zajistí, že celý obrázek bude vidět */
+  max-height: 75vh;
+  /* Omezíme výšku na 75% obrazovky, aby zbylo místo pro text */
+  width: auto;
+  /* Automatická šířka podle poměru stran */
+  height: auto;
+  /* Automatická výška podle poměru stran */
+  object-fit: contain;
+  /* Zajistí, že celý obrázek bude vidět */
   border-radius: 4px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
   margin: 0 auto;
@@ -2389,7 +2562,8 @@ body.admin-page {
   flex-direction: column;
   align-items: center;
   min-height: 30px;
-  flex-shrink: 0; /* Zabrání smrsknutí popisku */
+  flex-shrink: 0;
+  /* Zabrání smrsknutí popisku */
 }
 
 .lightbox-description {
@@ -2533,6 +2707,7 @@ body.admin-page {
   transition: all 0.3s;
   z-index: 2010;
 }
+
 .lightbox-close:hover {
   color: white;
   transform: rotate(90deg);
@@ -2551,13 +2726,16 @@ body.admin-page {
   transition: all 0.3s;
   z-index: 2010;
 }
+
 .lightbox-arrow:hover {
   color: white;
   transform: translateY(-50%) scale(1.2);
 }
+
 .lightbox-arrow.left {
   left: 20px;
 }
+
 .lightbox-arrow.right {
   right: 20px;
 }
@@ -2569,8 +2747,10 @@ body.admin-page {
 
 /* --- Selection Mode Styles (Checkboxes & Borders) --- */
 .photo-card.selected {
-  border: 4px solid #ef4444; /* Red border for selected items */
-  transform: scale(0.95); /* Slight shrink effect */
+  border: 4px solid #ef4444;
+  /* Red border for selected items */
+  transform: scale(0.95);
+  /* Slight shrink effect */
 }
 
 /* Hide the hover zoom icon when in selection mode so it doesn't obstruct */
@@ -2640,6 +2820,7 @@ body.admin-page {
 .gallery-header .header-actions {
   margin-left: auto;
 }
+
 /* ... Předchozí styly zachovány ... */
 /* Vložte toto na konec souboru style.css */
 
@@ -2678,11 +2859,13 @@ body.admin-page {
   flex-shrink: 0;
   display: flex;
   align-items: center;
-  justify-content: center; /* Změna: Centrování obsahu */
+  justify-content: center;
+  /* Změna: Centrování obsahu */
   height: 60px;
   background-color: #fff;
   z-index: 10;
-  position: relative; /* Pro absolutní pozicování tlačítek */
+  position: relative;
+  /* Pro absolutní pozicování tlačítek */
 }
 
 .diary-header h2 {
@@ -2694,8 +2877,10 @@ body.admin-page {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-family: "Kalam", cursive; /* Použijeme hravější font i zde */
+  font-family: "Kalam", cursive;
+  /* Použijeme hravější font i zde */
 }
+
 .diary-header h2 i {
   color: #d97706;
 }
@@ -2717,8 +2902,10 @@ body.admin-page {
   position: relative;
   display: flex;
   flex-direction: column;
-  background-color: #fdfbf7; /* Krémová barva */
-  background-image: radial-gradient(#d1d5db 1px, transparent 1px); /* Jemné tečky */
+  background-color: #fdfbf7;
+  /* Krémová barva */
+  background-image: radial-gradient(#d1d5db 1px, transparent 1px);
+  /* Jemné tečky */
   background-size: 20px 20px;
 }
 
@@ -2738,7 +2925,8 @@ body.admin-page {
 /* Grid pro složky deníku */
 #diary-folders-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Větší karty */
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  /* Větší karty */
   grid-auto-rows: max-content;
   gap: 25px;
   overflow-y: auto;
@@ -2751,7 +2939,8 @@ body.admin-page {
 .diary-calendar-wrapper {
   overflow-y: auto;
   height: 100%;
-  padding: 10px; /* Odsazení obsahu */
+  padding: 10px;
+  /* Odsazení obsahu */
 }
 
 .diary-calendar {
@@ -2769,7 +2958,8 @@ body.admin-page {
   background-color: #fff;
   border: none;
   border-radius: 12px;
-  min-height: 140px; /* Vyšší karty */
+  min-height: 140px;
+  /* Vyšší karty */
   padding: 15px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
@@ -2799,7 +2989,8 @@ body.admin-page {
 }
 
 .diary-day-card.has-entry::after {
-  content: "\f02d"; /* Ikona knihy */
+  content: "\f02d";
+  /* Ikona knihy */
   font-family: "Font Awesome 6 Free";
   font-weight: 900;
   position: absolute;
@@ -2815,7 +3006,8 @@ body.admin-page {
 .day-number {
   font-weight: 800;
   font-size: 2.5em;
-  color: #e5e7eb; /* Šedá pro prázdné dny */
+  color: #e5e7eb;
+  /* Šedá pro prázdné dny */
   line-height: 1;
   position: absolute;
   top: 50%;
@@ -2837,8 +3029,10 @@ body.admin-page {
   -webkit-box-orient: vertical;
   font-family: "Kalam", cursive;
   line-height: 1.4;
-  z-index: 1; /* Nad číslem dne */
-  background: rgba(255, 255, 255, 0.8); /* Čitelnost */
+  z-index: 1;
+  /* Nad číslem dne */
+  background: rgba(255, 255, 255, 0.8);
+  /* Čitelnost */
   border-radius: 4px;
 }
 
@@ -2864,6 +3058,7 @@ body.admin-page {
   perspective: 1000px;
   background: transparent;
 }
+
 .notebook-paper {
   width: 100%;
   height: 100%;
@@ -2879,6 +3074,7 @@ body.admin-page {
   overflow: hidden;
   border-left: 2px solid rgba(0, 0, 0, 0.1);
 }
+
 .notebook-paper::before {
   content: "";
   position: absolute;
@@ -2891,6 +3087,7 @@ body.admin-page {
   z-index: 5;
   pointer-events: none;
 }
+
 .notebook-holes {
   position: absolute;
   left: 10px;
@@ -2904,6 +3101,7 @@ body.admin-page {
   opacity: 0.1;
   pointer-events: none;
 }
+
 .notebook-header {
   height: 4rem;
   display: flex;
@@ -2915,6 +3113,7 @@ body.admin-page {
   font-size: 1.5rem;
   font-weight: 700;
 }
+
 .notebook-close-button {
   font-family: sans-serif;
   font-size: 2rem;
@@ -2924,15 +3123,18 @@ body.admin-page {
   transition: color 0.2s;
   margin-bottom: 5px;
 }
+
 .notebook-close-button:hover {
   color: #374151;
 }
+
 .notebook-body {
   flex-grow: 1;
   position: relative;
   padding-left: 5rem;
   padding-right: 2rem;
 }
+
 #notebook-textarea {
   width: 100%;
   height: 100%;
@@ -2947,16 +3149,20 @@ body.admin-page {
   padding-top: 0.1rem;
   overflow-y: auto;
 }
+
 #notebook-textarea::-webkit-scrollbar {
   width: 8px;
 }
+
 #notebook-textarea::-webkit-scrollbar-track {
   background: transparent;
 }
+
 #notebook-textarea::-webkit-scrollbar-thumb {
   background-color: rgba(0, 0, 0, 0.1);
   border-radius: 4px;
 }
+
 .notebook-footer {
   height: 3rem;
   display: flex;
@@ -2966,6 +3172,7 @@ body.admin-page {
   gap: 15px;
   background: rgba(255, 255, 255, 0.3);
 }
+
 .notebook-btn-save,
 .notebook-btn-delete {
   background: none;
@@ -2981,32 +3188,40 @@ body.admin-page {
   border-radius: 20px;
   transition: all 0.2s;
 }
+
 .notebook-btn-save {
   color: #15803d;
   border: 2px solid transparent;
 }
+
 .notebook-btn-save:hover {
   border-color: #15803d;
   background-color: rgba(22, 163, 74, 0.1);
 }
+
 .notebook-btn-delete {
   color: #b91c1c;
 }
+
 .notebook-btn-delete:hover {
   text-decoration: line-through;
 }
+
 @media (max-width: 600px) {
   .notebook-paper::before {
     left: 2rem;
   }
+
   .notebook-header {
     padding-left: 2.5rem;
     font-size: 1.2rem;
   }
+
   .notebook-body {
     padding-left: 2.5rem;
     padding-right: 1rem;
   }
+
   #notebook-textarea {
     font-size: 1.1rem;
   }
@@ -3019,27 +3234,35 @@ body.admin-page {
 .notebook-attachments {
   margin-top: 15px;
   padding: 15px;
-  border-top: 2px dashed rgba(209, 213, 219, 0.6); /* Výraznější oddělovač */
-  min-height: 160px; /* Více místa pro větší fotky */
+  border-top: 2px dashed rgba(209, 213, 219, 0.6);
+  /* Výraznější oddělovač */
+  min-height: 160px;
+  /* Více místa pro větší fotky */
   display: flex;
   flex-wrap: wrap;
-  gap: 20px; /* Větší mezery mezi fotkami */
+  gap: 20px;
+  /* Větší mezery mezi fotkami */
   overflow-y: auto;
-  max-height: 220px; /* Omezení výšky s posuvníkem */
-  background-color: rgba(255, 255, 255, 0.3); /* Jemné podbarvení zóny pro fotky */
+  max-height: 220px;
+  /* Omezení výšky s posuvníkem */
+  background-color: rgba(255, 255, 255, 0.3);
+  /* Jemné podbarvení zóny pro fotky */
   border-radius: 8px;
-  align-items: center; /* Zarovnání na střed řádku */
+  align-items: center;
+  /* Zarovnání na střed řádku */
 }
 
 .attachment-thumbnail-wrapper {
   position: relative;
   transition: transform 0.2s ease;
   cursor: pointer;
-  display: inline-block; /* Zajistí, že wrapper obalí fotku */
+  display: inline-block;
+  /* Zajistí, že wrapper obalí fotku */
 }
 
 .attachment-thumbnail-wrapper:hover {
-  transform: scale(1.05) rotate(2deg); /* Efekt zvednutí fotky při najetí */
+  transform: scale(1.05) rotate(2deg);
+  /* Efekt zvednutí fotky při najetí */
   z-index: 5;
 }
 
@@ -3048,9 +3271,12 @@ body.admin-page {
   width: 140px !important;
   height: 140px !important;
   object-fit: cover;
-  border-radius: 2px; /* Jemně zaoblené rohy */
-  border: 5px solid white; /* Bílý rámeček jako u polaroidu */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Stín pro 3D efekt */
+  border-radius: 2px;
+  /* Jemně zaoblené rohy */
+  border: 5px solid white;
+  /* Bílý rámeček jako u polaroidu */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  /* Stín pro 3D efekt */
   background-color: white;
 }
 
@@ -3083,7 +3309,8 @@ body.admin-page {
 /* Tlačítko pro připojení fotky - výraznější styl */
 .notebook-btn-attach {
   background: none;
-  border: 2px dashed #d97706; /* Čárkovaný rámeček */
+  border: 2px dashed #d97706;
+  /* Čárkovaný rámeček */
   color: #d97706;
   font-family: "Kalam", cursive;
   font-weight: 600;
@@ -3095,12 +3322,14 @@ body.admin-page {
   gap: 8px;
   font-size: 1.1rem;
   transition: all 0.2s;
-  margin-right: auto; /* Zarovnání doleva */
+  margin-right: auto;
+  /* Zarovnání doleva */
 }
 
 .notebook-btn-attach:hover {
   background-color: #fff7ed;
-  border-style: solid; /* Při hoveru plný rámeček */
+  border-style: solid;
+  /* Při hoveru plný rámeček */
   transform: translateY(-2px);
 }
 
@@ -3149,6 +3378,7 @@ body.admin-page {
   z-index: 2010;
   transition: color 0.3s;
 }
+
 .lightbox-close:hover {
   color: #ef4444;
 }
@@ -3172,12 +3402,15 @@ body.admin-page {
   justify-content: center;
   z-index: 2005;
 }
+
 .lightbox-arrow:hover {
   background: rgba(255, 255, 255, 0.3);
 }
+
 .lightbox-arrow.left {
   left: 20px;
 }
+
 .lightbox-arrow.right {
   right: 20px;
 }
@@ -3206,6 +3439,7 @@ body.admin-page {
   transition: background-color 0.3s;
   font-size: 0.9rem;
 }
+
 .lightbox-btn:hover {
   background-color: rgba(255, 255, 255, 0.4);
 }
@@ -3236,7 +3470,8 @@ body.admin-page {
 
 /* --- HLAVIČKA GALERIE --- */
 .gallery-header {
-  padding: 10px 20px; /* Menší padding */
+  padding: 10px 20px;
+  /* Menší padding */
   border-bottom: 1px solid #f3e2c0;
   flex-shrink: 0;
   display: flex;
@@ -3256,6 +3491,7 @@ body.admin-page {
   align-items: center;
   gap: 10px;
 }
+
 .gallery-header h2 i {
   color: #d97706;
 }
@@ -3263,7 +3499,8 @@ body.admin-page {
 /* --- HLAVNÍ OBSAHOVÁ ČÁST (GRIDY) --- */
 .gallery-content-wrapper {
   flex-grow: 1;
-  padding: 10px; /* Malý padding kolem fotek */
+  padding: 10px;
+  /* Malý padding kolem fotek */
   overflow: hidden;
   position: relative;
   display: flex;
@@ -3323,6 +3560,7 @@ body.admin-page {
   box-shadow: 0 12px 25px rgba(217, 119, 6, 0.15);
   border-color: #d97706;
 }
+
 .folder-card:hover::after {
   opacity: 1;
 }
@@ -3333,6 +3571,7 @@ body.admin-page {
   margin-bottom: 10px;
   transition: transform 0.3s;
 }
+
 .folder-card:hover .folder-icon {
   transform: scale(1.1);
 }
@@ -3341,7 +3580,8 @@ body.admin-page {
   /* Umožní textu zalomení */
   max-width: 100%;
   overflow: hidden;
-  word-wrap: break-word; /* Zajišťuje zalomení textu */
+  word-wrap: break-word;
+  /* Zajišťuje zalomení textu */
 }
 
 .folder-info h3 {
@@ -3353,6 +3593,7 @@ body.admin-page {
   white-space: normal;
   line-height: 1.3;
 }
+
 .folder-date {
   font-size: 0.8em;
   color: #9ca3af;
@@ -3367,6 +3608,7 @@ body.admin-page {
   /* Důležité: Přesuneme klikací oblast na checkbox */
   pointer-events: all;
 }
+
 .folder-checkbox {
   width: 20px;
   height: 20px;
@@ -3390,7 +3632,8 @@ body.admin-page {
 
 .photo-card {
   position: relative;
-  border-radius: 8px; /* Trochu menší rádius pro modernější "dlaždicový" vzhled */
+  border-radius: 8px;
+  /* Trochu menší rádius pro modernější "dlaždicový" vzhled */
   overflow: hidden;
   cursor: pointer;
   /* Žádný stín defaultně, aby to vypadalo jako celistvá mozaika */
@@ -3405,14 +3648,18 @@ body.admin-page {
   height: 100%;
   object-fit: cover;
   transition: transform 0.5s ease;
-  display: block; /* Odstraní spodní mezeru inline elementů */
+  display: block;
+  /* Odstraní spodní mezeru inline elementů */
 }
 
 .photo-card:hover {
-  z-index: 5; /* Při hoveru vystoupí nad ostatní */
-  transform: scale(1.02); /* Jemné zvětšení */
+  z-index: 5;
+  /* Při hoveru vystoupí nad ostatní */
+  transform: scale(1.02);
+  /* Jemné zvětšení */
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  border-radius: 12px; /* Zvýraznění rohů při hoveru */
+  border-radius: 12px;
+  /* Zvýraznění rohů při hoveru */
 }
 
 .photo-overlay {
@@ -3428,9 +3675,11 @@ body.admin-page {
   opacity: 0;
   transition: opacity 0.2s ease;
 }
+
 .photo-card:hover .photo-overlay {
   opacity: 1;
 }
+
 .photo-overlay i {
   color: white;
   font-size: 2em;
@@ -3441,9 +3690,11 @@ body.admin-page {
 .photo-card.g-wide {
   grid-column: span 2;
 }
+
 .photo-card.g-tall {
   grid-row: span 2;
 }
+
 .photo-card.g-big {
   grid-column: span 2;
   grid-row: span 2;
@@ -3478,6 +3729,7 @@ body.admin-page {
   /* Přesunout delete-folder-list-btn na pravou stranu */
   margin-right: auto;
 }
+
 .footer-right {
   /* Zarovnání prvků (Nový album, Smazat album) úplně vpravo */
   margin-left: auto;
@@ -3510,6 +3762,7 @@ body.admin-page {
   background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
   color: white;
 }
+
 .gallery-btn-primary:hover {
   background: linear-gradient(135deg, #fcd34d 0%, #b45309 100%);
 }
@@ -3520,6 +3773,7 @@ body.admin-page {
   color: #4b5563;
   border: 1px solid #e5e7eb;
 }
+
 .gallery-btn-secondary:hover {
   background-color: #f9fafb;
   border-color: #d1d5db;
@@ -3529,9 +3783,11 @@ body.admin-page {
 /* Ovládání stránek - VYROVNÁNÍ */
 .pagination-controls {
   display: flex;
-  align-items: center; /* Vertikální zarovnání na střed */
+  align-items: center;
+  /* Vertikální zarovnání na střed */
   justify-content: center;
-  gap: 15px; /* Mezera mezi šipkami a číslem */
+  gap: 15px;
+  /* Mezera mezi šipkami a číslem */
 }
 
 .nav-arrow {
@@ -3546,13 +3802,16 @@ body.admin-page {
   align-items: center;
   cursor: pointer;
   transition: all 0.2s;
-  padding: 0; /* Důležité pro vyrovnání ikony */
+  padding: 0;
+  /* Důležité pro vyrovnání ikony */
 }
+
 .nav-arrow:hover:not(:disabled) {
   border-color: #fbbf24;
   color: #d97706;
   background-color: #fffbeb;
 }
+
 .nav-arrow:disabled {
   opacity: 0.5;
   cursor: default;
@@ -3564,7 +3823,8 @@ body.admin-page {
   min-width: 50px;
   text-align: center;
   font-size: 0.9em;
-  line-height: 36px; /* Stejná výška jako šipky pro zarovnání */
+  line-height: 36px;
+  /* Stejná výška jako šipky pro zarovnání */
   display: inline-block;
 }
 
@@ -3579,6 +3839,7 @@ body.admin-page {
   perspective: 1000px;
   background: transparent;
 }
+
 .notebook-paper {
   width: 100%;
   height: 100%;
@@ -3594,6 +3855,7 @@ body.admin-page {
   overflow: hidden;
   border-left: 2px solid rgba(0, 0, 0, 0.1);
 }
+
 .notebook-paper::before {
   content: "";
   position: absolute;
@@ -3606,6 +3868,7 @@ body.admin-page {
   z-index: 5;
   pointer-events: none;
 }
+
 .notebook-holes {
   position: absolute;
   left: 10px;
@@ -3619,6 +3882,7 @@ body.admin-page {
   opacity: 0.1;
   pointer-events: none;
 }
+
 .notebook-header {
   height: 4rem;
   display: flex;
@@ -3630,6 +3894,7 @@ body.admin-page {
   font-size: 1.5rem;
   font-weight: 700;
 }
+
 .notebook-close-button {
   font-family: sans-serif;
   font-size: 2rem;
@@ -3639,9 +3904,11 @@ body.admin-page {
   transition: color 0.2s;
   margin-bottom: 5px;
 }
+
 .notebook-close-button:hover {
   color: #374151;
 }
+
 .notebook-body {
   flex-grow: 1;
   position: relative;
@@ -3650,9 +3917,11 @@ body.admin-page {
   display: flex;
   flex-direction: column;
 }
+
 #notebook-textarea {
   width: 100%;
-  flex-grow: 1; /* Aby zabral zbytek místa nad přílohami */
+  flex-grow: 1;
+  /* Aby zabral zbytek místa nad přílohami */
   background: transparent;
   border: none;
   outline: none;
@@ -3664,16 +3933,20 @@ body.admin-page {
   padding-top: 0.1rem;
   overflow-y: auto;
 }
+
 #notebook-textarea::-webkit-scrollbar {
   width: 8px;
 }
+
 #notebook-textarea::-webkit-scrollbar-track {
   background: transparent;
 }
+
 #notebook-textarea::-webkit-scrollbar-thumb {
   background-color: rgba(0, 0, 0, 0.1);
   border-radius: 4px;
 }
+
 .notebook-footer {
   height: 3rem;
   display: flex;
@@ -3683,6 +3956,7 @@ body.admin-page {
   gap: 15px;
   background: rgba(255, 255, 255, 0.3);
 }
+
 .notebook-btn-save,
 .notebook-btn-delete {
   background: none;
@@ -3698,17 +3972,21 @@ body.admin-page {
   border-radius: 20px;
   transition: all 0.2s;
 }
+
 .notebook-btn-save {
   color: #15803d;
   border: 2px solid transparent;
 }
+
 .notebook-btn-save:hover {
   border-color: #15803d;
   background-color: rgba(22, 163, 74, 0.1);
 }
+
 .notebook-btn-delete {
   color: #b91c1c;
 }
+
 .notebook-btn-delete:hover {
   text-decoration: line-through;
 }
@@ -3724,20 +4002,25 @@ body.admin-page {
   .notebook-paper::before {
     left: 2rem;
   }
+
   .notebook-header {
     padding-left: 2.5rem;
     font-size: 1.2rem;
   }
+
   .notebook-body {
     padding-left: 2.5rem;
     padding-right: 1rem;
   }
+
   #notebook-textarea {
     font-size: 1.1rem;
   }
+
   #gallery-picker-folders {
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)) !important;
   }
+
   #gallery-picker-photos {
     grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)) !important;
   }
@@ -3788,6 +4071,7 @@ body.admin-page {
   gap: 10px;
   font-family: "Kalam", cursive;
 }
+
 .diary-header h2 i {
   color: #d97706;
 }
@@ -3980,7 +4264,8 @@ body::before {
 /* Wrapper for main content */
 .app-wrapper {
   width: 100%;
-  max-width: 1400px; /* Zvětšeno pro 3 sloupce */
+  max-width: 1400px;
+  /* Zvětšeno pro 3 sloupce */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -4004,10 +4289,12 @@ body::before {
 
 .main-content {
   display: flex;
-  flex-direction: row; /* Explicitně nastaveno pro jistotu */
+  flex-direction: row;
+  /* Explicitně nastaveno pro jistotu */
   gap: 20px;
   width: 100%;
-  align-items: stretch; /* Zarovná karty na stejnou výšku */
+  align-items: stretch;
+  /* Zarovná karty na stejnou výšku */
 }
 
 /* Common style for "cards" */
@@ -4049,6 +4336,7 @@ body::before {
     opacity: 0;
     transform: translateY(-20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -4077,9 +4365,11 @@ body::before {
   margin-bottom: 20px;
   color: #333;
 }
+
 .modal-content p {
   margin-bottom: 20px;
 }
+
 .form-group {
   margin-bottom: 20px;
 }
@@ -4101,6 +4391,7 @@ body::before {
   background-color: #ef4444;
   color: white;
 }
+
 .button-danger:hover {
   background-color: #dc2626;
 }
@@ -4109,6 +4400,7 @@ body::before {
   background-color: #e5e7eb;
   color: #374151;
 }
+
 .button-secondary:hover {
   background-color: #d1d5db;
 }
@@ -4118,7 +4410,8 @@ body::before {
   position: fixed;
   bottom: 30px;
   left: 30px;
-  background-color: #10b981; /* Svěží zelená */
+  background-color: #10b981;
+  /* Svěží zelená */
   color: white;
   padding: 15px 25px;
   border-radius: 12px;
@@ -4126,7 +4419,8 @@ body::before {
   display: flex;
   align-items: center;
   gap: 12px;
-  z-index: 3000; /* Musí být nad modálem i ostatním obsahem */
+  z-index: 3000;
+  /* Musí být nad modálem i ostatním obsahem */
 
   /* Stav: Skrytý */
   transform: translateY(100px) scale(0.9);
@@ -4146,7 +4440,8 @@ body::before {
 
 .toast i {
   font-size: 1.4em;
-  color: #ecfdf5; /* Velmi světlá zelená pro ikonu */
+  color: #ecfdf5;
+  /* Velmi světlá zelená pro ikonu */
 }
 
 .toast span {
@@ -4185,6 +4480,7 @@ input[type="date"] {
   backdrop-filter: blur(10px);
   border-radius: 16px;
 }
+
 .user-info strong {
   font-weight: 700;
 }
@@ -4199,11 +4495,13 @@ input[type="date"] {
   background-color: rgba(255, 255, 255, 0.85);
   border-radius: 12px;
 }
+
 .app-nav {
   display: flex;
   gap: 15px;
   align-items: center;
 }
+
 .app-nav .nav-link {
   text-decoration: none;
   color: #374151;
@@ -4212,9 +4510,11 @@ input[type="date"] {
   font-weight: 600;
   background: rgba(255, 255, 255, 0.8);
 }
+
 .app-nav .nav-link:hover {
   background: rgba(255, 255, 255, 1);
 }
+
 .app-nav .nav-link.active {
   background-color: orange;
   color: white;
@@ -4238,13 +4538,11 @@ input[type="date"] {
 
 /* --- SPECIAL NAV BUTTON (REKONSTRUKCE) --- */
 .nav-link.nav-special {
-  background: repeating-linear-gradient(
-    45deg,
-    #fffbeb,
-    #fffbeb 10px,
-    #fff7ed 10px,
-    #fff7ed 20px
-  );
+  background: repeating-linear-gradient(45deg,
+      #fffbeb,
+      #fffbeb 10px,
+      #fff7ed 10px,
+      #fff7ed 20px);
   border: 2px solid #fbbf24;
   color: #d97706;
   font-weight: 800;
@@ -4263,7 +4561,7 @@ input[type="date"] {
   background: #d97706;
   color: white;
   border-color: #b45309;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* ==========================================================================
@@ -4310,7 +4608,8 @@ input[type="date"] {
 .kanban-board {
   flex-grow: 1;
   display: flex;
-  justify-content: center; /* Zajišťuje vycentrování sloupců */
+  justify-content: center;
+  /* Zajišťuje vycentrování sloupců */
   gap: 20px;
   padding: 20px;
   overflow-x: auto;
@@ -4328,7 +4627,7 @@ input[type="date"] {
   border-radius: 12px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
   border: 1px solid #eee;
   height: 100%;
   max-height: 100%;
@@ -4344,7 +4643,8 @@ input[type="date"] {
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
   display: flex;
-  justify-content: space-between; /* Nadpis vlevo, tlačítko vpravo */
+  justify-content: space-between;
+  /* Nadpis vlevo, tlačítko vpravo */
   align-items: center;
 }
 
@@ -4374,9 +4674,17 @@ input[type="date"] {
 }
 
 /* Barvy ikon v hlavičkách */
-.header-idea i { color: #f59e0b; }
-.header-company i { color: #3b82f6; }
-.header-task i { color: #10b981; }
+.header-idea i {
+  color: #f59e0b;
+}
+
+.header-company i {
+  color: #3b82f6;
+}
+
+.header-task i {
+  color: #10b981;
+}
 
 /* Obsah sloupce */
 .column-content {
@@ -4394,7 +4702,7 @@ input[type="date"] {
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   padding: 12px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
   transition: transform 0.2s;
   position: relative;
   flex-shrink: 0;
@@ -4402,13 +4710,21 @@ input[type="date"] {
 
 .kanban-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
 }
 
 /* Barevné označení karet vlevo */
-.card-idea { border-left: 4px solid #f59e0b; }
-.card-company { border-left: 4px solid #3b82f6; }
-.card-task { border-left: 4px solid #10b981; }
+.card-idea {
+  border-left: 4px solid #f59e0b;
+}
+
+.card-company {
+  border-left: 4px solid #3b82f6;
+}
+
+.card-task {
+  border-left: 4px solid #10b981;
+}
 
 /* Obsah karty */
 .card-header-row {
@@ -4432,7 +4748,9 @@ input[type="date"] {
   cursor: pointer;
 }
 
-.delete-card-btn:hover { color: #ef4444; }
+.delete-card-btn:hover {
+  color: #ef4444;
+}
 
 .card-desc {
   font-size: 0.9em;
@@ -4452,7 +4770,9 @@ input[type="date"] {
   text-overflow: ellipsis;
 }
 
-.card-link:hover { text-decoration: underline; }
+.card-link:hover {
+  text-decoration: underline;
+}
 
 .card-cost {
   font-weight: bold;
@@ -4469,7 +4789,9 @@ input[type="date"] {
   font-size: 0.8em;
 }
 
-.card-author { color: #9ca3af; }
+.card-author {
+  color: #9ca3af;
+}
 
 /* Tlačítko hlasování */
 .vote-btn {
@@ -4482,8 +4804,14 @@ input[type="date"] {
   transition: all 0.2s;
 }
 
-.vote-btn:hover { background: #e5e7eb; }
-.vote-btn.voted { background: #fee2e2; color: #ef4444; }
+.vote-btn:hover {
+  background: #e5e7eb;
+}
+
+.vote-btn.voted {
+  background: #fee2e2;
+  color: #ef4444;
+}
 
 /* Status Badges */
 .status-badge {
@@ -4492,17 +4820,33 @@ input[type="date"] {
   font-weight: 600;
   font-size: 0.9em;
 }
-.badge-warn { background: #fef3c7; color: #92400e; }
-.badge-info { background: #dbeafe; color: #1e40af; }
-.badge-success { background: #d1fae5; color: #065f46; }
+
+.badge-warn {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.badge-info {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.badge-success {
+  background: #d1fae5;
+  color: #065f46;
+}
 
 .status-select-wrapper {
   position: relative;
   display: inline-block;
 }
+
 .status-select {
   position: absolute;
-  top: 0; left: 0; width: 100%; height: 100%;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   opacity: 0;
   cursor: pointer;
 }
@@ -4525,14 +4869,21 @@ input[type="date"] {
   .main-content {
     flex-direction: column;
   }
-  .shopping-list-container, .calendar-card, .reservations-list-container {
-    flex-basis: auto; width: 100%; max-width: 100%;
+
+  .shopping-list-container,
+  .calendar-card,
+  .reservations-list-container {
+    flex-basis: auto;
+    width: 100%;
+    max-width: 100%;
   }
+
   .kanban-board {
     flex-direction: column;
     overflow-x: hidden;
     justify-content: flex-start;
   }
+
   .kanban-column {
     max-width: 100%;
     width: 100%;

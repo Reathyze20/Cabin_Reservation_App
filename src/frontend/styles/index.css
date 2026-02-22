@@ -19,11 +19,14 @@
 @import './forms.css';
 @import './modal.css';
 @import './toast.css';
+@import './dialogs.css';
+@import './skeleton.css';
 
 /* Calendar (flatpickr overrides) */
 @import './calendar.css';
 
 /* Page-specific styles */
+@import './dashboard.css';
 @import './reservations.css';
 @import './shopping.css';
 @import './notes.css';
@@ -34,7 +37,3 @@
 @import './admin.css';
 
 /* Utilities & enhancements */
-@import './skeleton.css';
-
-/* Dark mode overrides (must be last) */
-@import './dark-mode.css';

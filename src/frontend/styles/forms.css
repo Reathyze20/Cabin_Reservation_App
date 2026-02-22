@@ -2,21 +2,45 @@
    Form Elements
    ============================================================================ */
 input[type="text"],
+input[type="email"],
 input[type="password"],
+input[type="number"],
+input[type="tel"],
 textarea,
 select,
 input[type="date"] {
   width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
+  padding: 0 var(--space-md);
+  min-height: 42px;
+  line-height: normal;
+  border: 1px solid var(--color-border-dark);
   border-radius: var(--radius-md);
   margin-top: var(--space-xs);
   font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  background-color: var(--color-bg);
+  color: var(--color-text-dark);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+textarea {
+  min-height: 100px;
+  padding: var(--space-md);
+  resize: vertical;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(107, 158, 107, 0.15);
 }
 
 .form-group {
   margin-bottom: var(--space-xl);
 }
+
 .form-group label {
   display: block;
   margin-bottom: 6px;
@@ -31,6 +55,7 @@ input[type="date"] {
   text-align: center;
   letter-spacing: 1px;
 }
+
 .input-danger:focus {
   outline: none;
   border-color: var(--color-danger);

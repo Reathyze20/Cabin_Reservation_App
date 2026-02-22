@@ -16,6 +16,7 @@ router.get("/", protect, async (req: Request, res: Response) => {
           select: {
             username: true,
             color: true,
+            animalIcon: true,
           },
         },
       },
@@ -29,8 +30,10 @@ router.get("/", protect, async (req: Request, res: Response) => {
       to: r.dateTo.toISOString().split("T")[0],
       purpose: r.purpose,
       notes: r.notes,
+      handoverNote: r.handoverNote,
       status: r.status,
       userColor: r.user.color,
+      userAnimalIcon: r.user.animalIcon,
     }));
 
     res.json(result);
@@ -48,7 +51,7 @@ router.post("/", protect, async (req: Request, res: Response) => {
     return res.status(401).json({ message: "Neautorizováno." });
   }
 
-  const { from, to, purpose, notes } = req.body;
+  const { from, to, purpose, notes, handoverNote, status: requestedStatus } = req.body;
 
   if (!from || !to) {
     return res.status(400).json({ message: "Chybí data." });
@@ -58,10 +61,10 @@ router.post("/", protect, async (req: Request, res: Response) => {
     const newStart = new Date(from);
     const newEnd = new Date(to);
 
-    // Check for collision
+    // Check for collision with PRIMARY reservations
     const collision = await prisma.reservation.findFirst({
       where: {
-        status: { not: "backup" },
+        status: "primary",
         OR: [
           {
             dateFrom: { lte: newEnd },
@@ -71,7 +74,13 @@ router.post("/", protect, async (req: Request, res: Response) => {
       },
     });
 
-    const status = collision ? "backup" : "primary";
+    let finalStatus = "primary";
+    if (requestedStatus === "soft") {
+      finalStatus = "soft";
+    }
+    if (collision) {
+      finalStatus = "backup";
+    }
 
     const newReservation = await prisma.reservation.create({
       data: {
@@ -80,7 +89,8 @@ router.post("/", protect, async (req: Request, res: Response) => {
         dateTo: newEnd,
         purpose,
         notes,
-        status,
+        handoverNote,
+        status: finalStatus,
       },
       include: {
         user: {
@@ -100,6 +110,7 @@ router.post("/", protect, async (req: Request, res: Response) => {
       to: newReservation.dateTo.toISOString().split("T")[0],
       purpose: newReservation.purpose,
       notes: newReservation.notes,
+      handoverNote: newReservation.handoverNote,
       status: newReservation.status,
       userColor: newReservation.user.color,
     });
@@ -118,7 +129,7 @@ router.put("/:id", protect, async (req: Request, res: Response) => {
   }
 
   const { id } = req.params;
-  const { purpose, notes, from, to } = req.body;
+  const { purpose, notes, handoverNote, status, from, to } = req.body;
 
   try {
     const reservation = await prisma.reservation.findUnique({
@@ -140,6 +151,8 @@ router.put("/:id", protect, async (req: Request, res: Response) => {
         ...(to && { dateTo: new Date(to) }),
         ...(purpose && { purpose }),
         ...(notes !== undefined && { notes }),
+        ...(handoverNote !== undefined && { handoverNote }),
+        ...(status && { status }),
       },
       include: {
         user: {
@@ -159,6 +172,7 @@ router.put("/:id", protect, async (req: Request, res: Response) => {
       to: updated.dateTo.toISOString().split("T")[0],
       purpose: updated.purpose,
       notes: updated.notes,
+      handoverNote: updated.handoverNote,
       status: updated.status,
     });
   } catch (error) {

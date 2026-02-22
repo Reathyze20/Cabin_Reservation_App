@@ -55,6 +55,7 @@ router.post("/", protect, async (req: Request, res: Response) => {
 // ============================================================================
 router.post("/:listId/items", protect, async (req: Request, res: Response) => {
   const { name } = req.body;
+  const { listId } = req.params;
 
   if (!name) {
     return res.status(400).json({ message: "Chybí název." });
@@ -64,7 +65,10 @@ router.post("/:listId/items", protect, async (req: Request, res: Response) => {
     const newItem = await prisma.shoppingListItem.create({
       data: {
         name,
-        addedById: req.user!.userId,
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        addedById: req.user.userId,
+        listId: listId === "default" ? null : listId, // For legacy / transition
       },
       include: {
         addedBy: { select: { username: true } },
@@ -100,15 +104,15 @@ router.put("/:itemId/purchase", protect, async (req: Request, res: Response) => 
         purchased,
         ...(purchased
           ? {
-              purchasedById: req.user!.userId,
-              purchasedAt: new Date(),
-              price: price ? parseFloat(price) : null,
-            }
+            purchasedById: req.user!.userId,
+            purchasedAt: new Date(),
+            price: price ? parseFloat(price) : null,
+          }
           : {
-              purchasedById: null,
-              purchasedAt: null,
-              price: null,
-            }),
+            purchasedById: null,
+            purchasedAt: null,
+            price: null,
+          }),
       },
       include: {
         addedBy: { select: { username: true } },
@@ -175,7 +179,7 @@ router.put(
       (layer: any) => layer.route?.path === "/:itemId/purchase" && layer.route?.methods?.put
     );
     if (handler) {
-      return handler.route!.stack[0].handle(req, res, () => {});
+      return handler.route!.stack[0].handle(req, res, () => { });
     }
     res.status(404).json({ message: "Not found" });
   }

@@ -6,6 +6,7 @@ import {
   $, show, hide, showToast, authFetch,
   getUsername, getRole, getUserId,
 } from '../lib/common';
+import { showConfirm } from '../lib/dialogs';
 
 // ─── State ────────────────────────────────────────────────────────────
 let container: HTMLElement;
@@ -23,6 +24,7 @@ let pickerSelectedPhotoIds = new Set<string>();
 let allGalleryFolders: any[] = [];
 let currentGalleryPhotos: any[] = [];
 let keydownHandler: ((e: KeyboardEvent) => void) | null = null;
+let currentPeriodFilter: string = 'all';
 
 // ─── Template ─────────────────────────────────────────────────────────
 function getTemplate(): string {
@@ -33,10 +35,14 @@ function getTemplate(): string {
       <div id="diary-folders-view">
         <div class="diary-header">
           <h2><i class="fas fa-book-open"></i> Deník</h2>
-          <div class="header-actions" style="display:flex;gap:8px">
-            <button id="rename-diary-folder-list-btn" class="gallery-btn" style="display:none"><i class="fas fa-edit"></i></button>
-            <button id="delete-diary-folder-list-btn" class="gallery-btn gallery-btn-danger" style="display:none"><i class="fas fa-trash"></i></button>
-            <button id="create-diary-folder-btn" class="gallery-btn gallery-btn-primary"><i class="fas fa-plus"></i> Nový pobyt</button>
+          <div class="header-actions" style="display:flex;gap:15px;align-items:center;">
+            <select id="diary-period-filter" class="form-control" style="width:auto; padding:5px 10px; font-size:0.9rem; margin-bottom:0;">
+              <option value="all">Všechna období</option>
+              <option value="current_year">Tento rok</option>
+              <option value="last_year">Minulý rok</option>
+              <option value="older">Starší</option>
+            </select>
+            <button id="create-diary-folder-btn" class="button-primary"><i class="fas fa-plus"></i> Nový pobyt</button>
           </div>
         </div>
         <div class="diary-content-wrapper">
@@ -48,7 +54,7 @@ function getTemplate(): string {
       <div id="diary-entries-view" style="display:none">
         <div class="diary-header">
           <div style="display:flex;align-items:center;gap:10px">
-            <button id="back-to-diary-folders-btn" class="gallery-btn"><i class="fas fa-arrow-left"></i></button>
+            <button id="back-to-diary-folders-btn" class="button-secondary"><i class="fas fa-arrow-left"></i> Zpět</button>
             <h2 id="current-diary-title"></h2>
           </div>
         </div>
@@ -66,10 +72,29 @@ function getTemplate(): string {
     <div class="modal-content">
       <span class="modal-close-button" data-close="create-diary-folder-modal">&times;</span>
       <h2>Nový pobyt</h2>
+      <div class="form-group" style="margin-bottom: 20px;">
+        <label>Vybrat z rezervací (Volitelné)</label>
+        <select id="diary-reservation-select" class="form-control">
+          <option value="">-- Nevybráno (Zadat ručně) --</option>
+        </select>
+        <small class="text-muted">Předvyplní název a data podle tvé rezervace.</small>
+      </div>
       <form id="create-diary-folder-form">
         <div class="form-group"><label>Název</label><input type="text" id="diary-folder-name-input" required /></div>
         <div class="form-group"><label>Od</label><input type="date" id="diary-start-date" required /></div>
         <div class="form-group"><label>Do</label><input type="date" id="diary-end-date" required /></div>
+        <div class="form-group">
+          <label>Téma / Štítek</label>
+          <select id="diary-activity-tag" class="form-control">
+            <option value="">📓 Obyčejný deník</option>
+            <option value="relax">🍂 Podzimní relax</option>
+            <option value="party">🎉 Oslava / Párty</option>
+            <option value="work">🔨 Pracovní brigáda</option>
+            <option value="mushroom">🍄 Houbaření</option>
+            <option value="hike">👟 Výlety a túry</option>
+            <option value="family">👨‍👩‍👧‍👦 Rodinné setkání</option>
+          </select>
+        </div>
         <div class="modal-buttons"><button type="submit" class="button-primary">Vytvořit</button></div>
       </form>
     </div>
@@ -104,6 +129,7 @@ function getTemplate(): string {
   <!-- Notebook modal -->
   <div id="notebook-modal" class="modal-overlay hidden">
     <div class="notebook-modal-content">
+      <button id="notebook-prev-btn" class="notebook-nav-btn"><i class="fas fa-chevron-left"></i></button>
       <div class="notebook-paper">
         <div class="notebook-holes"></div>
         <div class="notebook-header">
@@ -120,6 +146,7 @@ function getTemplate(): string {
           <button id="save-notebook-entry-btn" class="notebook-btn-save"><i class="fas fa-save"></i> Uložit</button>
         </div>
       </div>
+      <button id="notebook-next-btn" class="notebook-nav-btn"><i class="fas fa-chevron-right"></i></button>
     </div>
   </div>
 
@@ -156,6 +183,18 @@ function hideModal(id: string): void { const el = $(id); if (el) { el.classList.
 
 // ─── Folders ──────────────────────────────────────────────────────────
 
+function getTagIcon(tag: string): string {
+  switch (tag) {
+    case 'relax': return '<i class="fas fa-leaf" style="color: #d97706;"></i>';
+    case 'party': return '<i class="fas fa-glass-cheers" style="color: #ec4899;"></i>';
+    case 'work': return '<i class="fas fa-hammer" style="color: #64748b;"></i>';
+    case 'mushroom': return '<span style="font-size: 1.2em;">🍄</span>';
+    case 'hike': return '<i class="fas fa-shoe-prints" style="color: #10b981;"></i>';
+    case 'family': return '<i class="fas fa-users" style="color: #3b82f6;"></i>';
+    default: return '<i class="fas fa-book-journal-whills" style="color:#fbbf24;"></i>';
+  }
+}
+
 async function loadFolders(): Promise<void> {
   const data = await authFetch<any[]>('/api/diary/folders', { silent: true });
   if (data) { allFolders = data; renderFolders(data); }
@@ -165,53 +204,90 @@ function renderFolders(folders: any[]): void {
   const grid = $('diary-folders-grid');
   if (!grid) return;
   grid.innerHTML = '';
-  if (!folders.length) { grid.innerHTML = '<p class="empty-state">Deník je prázdný.</p>'; return; }
 
-  for (const f of folders) {
+  const currentYear = new Date().getFullYear();
+  const filteredFolders = folders.filter(f => {
+    if (currentPeriodFilter === 'all') return true;
+    const pDate = f.startDate ? new Date(f.startDate) : new Date(f.createdAt);
+    const folderYear = pDate.getFullYear();
+    if (currentPeriodFilter === 'current_year') return folderYear === currentYear;
+    if (currentPeriodFilter === 'last_year') return folderYear === currentYear - 1;
+    if (currentPeriodFilter === 'older') return folderYear < currentYear - 1;
+    return true;
+  });
+
+  if (!filteredFolders.length) {
+    grid.innerHTML = '<p class="empty-state" style="grid-column: 1 / -1; text-align: center; color: var(--color-text-light);">Zatím zde nejsou žádné deníky pro toto období.</p>';
+    return;
+  }
+
+  for (const f of filteredFolders) {
     const el = document.createElement('div');
-    el.className = `folder-card diary-folder${f.id === selectedFolderId ? ' selected' : ''}`;
+    el.className = 'folder-card diary-folder';
     el.dataset.id = f.id;
-    el.onclick = (e) => { if ((e.target as HTMLElement).tagName !== 'INPUT') openFolder(f.id, f.name); };
+    el.onclick = (e) => {
+      // Ignore clicks on buttons inside the card
+      if (!(e.target as HTMLElement).closest('button')) {
+        openFolder(f.id, f.name);
+      }
+    };
 
     let dateRange = '';
     if (f.startDate && f.endDate) {
-      const d1 = new Date(f.startDate).toLocaleDateString('cs-CZ');
-      const d2 = new Date(f.endDate).toLocaleDateString('cs-CZ');
-      dateRange = `<div style="font-size:.8em;color:#555;margin-top:5px">${d1} - ${d2}</div>`;
+      const d1 = new Date(f.startDate).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'short' });
+      const d2 = new Date(f.endDate).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'short', year: 'numeric' });
+      dateRange = `<div class="folder-dates">${d1} — ${d2}</div>`;
     }
 
+    const stats = f.stats || { entries: 0, photos: 0 };
+
     el.innerHTML = `
-      <div class="folder-checkbox-wrapper"><input type="checkbox" class="folder-checkbox" data-id="${f.id}" ${f.id === selectedFolderId ? 'checked' : ''}></div>
-      <div class="folder-icon" style="color:#fbbf24"><i class="fas fa-book-journal-whills"></i></div>
-      <div class="folder-info"><h3>${f.name}</h3>${dateRange}<span class="folder-date">Vytvořil: ${f.createdBy || '?'}</span></div>`;
+      <div class="folder-icon-large">${getTagIcon(f.activityTag)}</div>
+      <div class="folder-info">
+        <h3>${f.name}</h3>
+        ${dateRange}
+        <div class="folder-stats-badges">
+          <span class="badge" style="background:#f3f4f6; color:#4b5563;"><i class="fas fa-pencil"></i> ${stats.entries} dnů</span>
+          <span class="badge" style="background:#f3f4f6; color:#4b5563;"><i class="fas fa-camera"></i> ${stats.photos} fotek</span>
+        </div>
+      </div>
+      <div class="folder-card-hover-actions">
+        <button class="icon-btn edit-folder-btn" title="Přejmenovat" data-id="${f.id}"><i class="fas fa-edit"></i></button>
+        <button class="icon-btn delete-folder-btn" title="Odstranit" data-id="${f.id}"><i class="fas fa-trash"></i></button>
+      </div>`;
     grid.appendChild(el);
   }
-  setupFolderCheckboxes();
-  updateFolderActionsUI();
-}
 
-function setupFolderCheckboxes(): void {
-  const grid = $('diary-folders-grid');
-  if (!grid) return;
-  grid.querySelectorAll<HTMLInputElement>('.folder-checkbox').forEach((cb) => {
-    cb.addEventListener('change', () => {
-      const id = cb.dataset.id!;
-      grid.querySelectorAll<HTMLInputElement>('.folder-checkbox').forEach((o) => {
-        if (o.dataset.id !== id) { o.checked = false; o.closest('.folder-card')?.classList.remove('selected'); }
-      });
-      selectedFolderId = cb.checked ? id : null;
-      cb.closest('.folder-card')?.classList.toggle('selected', cb.checked);
-      updateFolderActionsUI();
+  // Attach direct action listeners for the hover buttons
+  grid.querySelectorAll('.edit-folder-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = (e.currentTarget as HTMLElement).dataset.id!;
+      const f = allFolders.find(x => x.id === id);
+      if (f) triggerRename(id, f.name);
+    });
+  });
+
+  grid.querySelectorAll('.delete-folder-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = (e.currentTarget as HTMLElement).dataset.id!;
+      triggerDelete(id);
     });
   });
 }
 
-function updateFolderActionsUI(): void {
-  const rb = $('rename-diary-folder-list-btn');
-  const db = $('delete-diary-folder-list-btn');
-  const vis = selectedFolderId ? 'inline-flex' : 'none';
-  if (rb) rb.style.display = vis;
-  if (db) db.style.display = vis;
+function triggerRename(id: string, currentName: string): void {
+  selectedFolderId = id;
+  $<HTMLInputElement>('new-diary-folder-name-input')!.value = currentName;
+  const old = $('old-diary-folder-name');
+  if (old) old.textContent = currentName;
+  showModal('rename-diary-folder-modal');
+}
+
+function triggerDelete(id: string): void {
+  selectedFolderId = id;
+  showModal('delete-diary-folder-modal');
 }
 
 function openFolder(id: string, name: string): void {
@@ -223,7 +299,6 @@ function openFolder(id: string, name: string): void {
   if (fv) fv.style.display = 'none';
   if (ev) ev.style.display = 'flex';
   selectedFolderId = null;
-  updateFolderActionsUI();
   loadEntries(id);
 }
 
@@ -427,8 +502,57 @@ function bindEvents(): void {
     ov.addEventListener('click', (e) => { if (e.target === ov) hide(ov); });
   });
 
+  // Period filter
+  const pfBox = $('diary-period-filter') as HTMLSelectElement;
+  if (pfBox) {
+    pfBox.value = currentPeriodFilter; // Zajištění stavu při re-renderu
+    pfBox.addEventListener('change', (e) => {
+      currentPeriodFilter = (e.target as HTMLSelectElement).value;
+      renderFolders(allFolders);
+    });
+  }
+
   // Folder CRUD
-  $('create-diary-folder-btn')?.addEventListener('click', () => showModal('create-diary-folder-modal'));
+  $('create-diary-folder-btn')?.addEventListener('click', async () => {
+    showModal('create-diary-folder-modal');
+    // Load reservations for the dropdown
+    const select = $<HTMLSelectElement>('diary-reservation-select');
+    if (select) {
+      select.innerHTML = '<option value="">-- Nevybráno (Zadat ručně) --</option>';
+      const res = await authFetch<any[]>('/api/reservations', { silent: true });
+      if (res) {
+        const myId = getUserId();
+        const myReservations = res.filter((r) => String(r.userId) === String(myId));
+        // Sort newest first
+        myReservations.sort((a, b) => new Date(b.from).getTime() - new Date(a.from).getTime());
+
+        myReservations.forEach((r) => {
+          const opt = document.createElement('option');
+          opt.value = JSON.stringify({ name: r.purpose || 'Pobyt na chatě', from: r.from, to: r.to });
+          const d1 = new Date(r.from).toLocaleDateString('cs-CZ');
+          const d2 = new Date(r.to).toLocaleDateString('cs-CZ');
+          opt.textContent = `${d1} - ${d2} (${r.purpose || 'Pobyt'})`;
+          select.appendChild(opt);
+        });
+      }
+    }
+  });
+
+  $<HTMLSelectElement>('diary-reservation-select')?.addEventListener('change', (e) => {
+    const val = (e.target as HTMLSelectElement).value;
+    if (val) {
+      try {
+        const data = JSON.parse(val);
+        $<HTMLInputElement>('diary-folder-name-input')!.value = data.name;
+        $<HTMLInputElement>('diary-start-date')!.value = data.from;
+        $<HTMLInputElement>('diary-end-date')!.value = data.to;
+      } catch (e) { }
+    } else {
+      $<HTMLInputElement>('diary-folder-name-input')!.value = '';
+      $<HTMLInputElement>('diary-start-date')!.value = '';
+      $<HTMLInputElement>('diary-end-date')!.value = '';
+    }
+  });
   $<HTMLFormElement>('create-diary-folder-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const r = await authFetch('/api/diary/folders', {
@@ -436,20 +560,12 @@ function bindEvents(): void {
         name: $<HTMLInputElement>('diary-folder-name-input')!.value,
         startDate: $<HTMLInputElement>('diary-start-date')!.value,
         endDate: $<HTMLInputElement>('diary-end-date')!.value,
+        activityTag: $<HTMLSelectElement>('diary-activity-tag')?.value || null,
       }),
     });
     if (r) { hideModal('create-diary-folder-modal'); showToast('Vytvořeno.', 'success'); loadFolders(); }
   });
 
-  $('rename-diary-folder-list-btn')?.addEventListener('click', () => {
-    if (!selectedFolderId) return;
-    const f = allFolders.find((x: any) => x.id === selectedFolderId);
-    if (!f) return;
-    $<HTMLInputElement>('new-diary-folder-name-input')!.value = f.name;
-    const old = $('old-diary-folder-name');
-    if (old) old.textContent = f.name;
-    showModal('rename-diary-folder-modal');
-  });
   $<HTMLFormElement>('rename-diary-folder-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const name = $<HTMLInputElement>('new-diary-folder-name-input')?.value;
@@ -457,10 +573,6 @@ function bindEvents(): void {
     if (r) { hideModal('rename-diary-folder-modal'); selectedFolderId = null; showToast('Přejmenováno.', 'success'); loadFolders(); }
   });
 
-  $('delete-diary-folder-list-btn')?.addEventListener('click', () => {
-    if (!selectedFolderId) return;
-    showModal('delete-diary-folder-modal');
-  });
   $<HTMLFormElement>('delete-diary-folder-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     if ($<HTMLInputElement>('delete-diary-confirm-input')?.value === 'DELETE') {
@@ -495,7 +607,9 @@ function bindEvents(): void {
   });
 
   $('delete-notebook-entry-btn')?.addEventListener('click', async () => {
-    if (!currentEntryId || !confirm('Vytrhnout stránku?')) return;
+    if (!currentEntryId) return;
+    const confirmed = await showConfirm('Vytrhnout stránku?', 'Opravdu chcete smazat tento zápis?', true);
+    if (!confirmed) return;
     const r = await authFetch(`/api/diary/entries/${currentEntryId}`, { method: 'DELETE' });
     if (r) { showToast('Vytrženo.', 'success'); hideModal('notebook-modal'); if (currentFolderId) loadEntries(currentFolderId); }
   });

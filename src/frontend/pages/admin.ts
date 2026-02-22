@@ -3,6 +3,7 @@
    ============================================================================ */
 import type { PageModule } from '../lib/router';
 import { $, show, hide, showToast, authFetch, decodeJwtPayload, getToken, isAdmin } from '../lib/common';
+import { showConfirm } from '../lib/dialogs';
 
 let container: HTMLElement;
 let users: any[] = [];
@@ -11,21 +12,23 @@ function getTemplate(): string {
   return `
   <div class="main-content-admin">
     <div class="admin-page-card">
-      <div class="admin-section">
+      <div class="admin-section users-section">
         <h2><i class="fas fa-users-cog"></i> Správa uživatelů</h2>
 
         <div id="users-list" class="users-list"></div>
 
-        <h3 style="margin-top:1.5rem"><i class="fas fa-user-plus"></i> Přidat uživatele</h3>
-        <form id="add-user-form" class="add-user-form">
-          <div class="form-group"><label>Uživatelské jméno</label><input type="text" id="new-username" required /></div>
-          <div class="form-group"><label>Heslo</label><input type="password" id="new-password" required /></div>
-          <div class="form-group">
-            <label>Role</label>
-            <select id="new-role"><option value="member">Člen</option><option value="admin">Admin</option></select>
-          </div>
-          <button type="submit" class="button-primary"><i class="fas fa-plus"></i> Vytvořit</button>
-        </form>
+        <div class="add-user-section">
+          <h3><i class="fas fa-user-plus"></i> Přidat uživatele</h3>
+          <form id="add-user-form" class="add-user-form">
+            <div class="form-group"><label>Uživatelské jméno</label><input type="text" id="new-username" required /></div>
+            <div class="form-group"><label>Heslo</label><input type="password" id="new-password" required /></div>
+            <div class="form-group">
+              <label>Role</label>
+              <select id="new-role" style="width: 100%; padding: var(--space-sm) 12px; border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: var(--font-size-sm);"><option value="member">Člen</option><option value="admin">Admin</option></select>
+            </div>
+            <button type="submit" class="button-primary" style="height: 38px; margin-bottom: 0;"><i class="fas fa-plus"></i> Vytvořit</button>
+          </form>
+        </div>
       </div>
 
       <div class="admin-section" id="system-info">
@@ -70,14 +73,26 @@ async function loadUsers(): Promise<void> {
 function renderUsers(list: any[]): void {
   const el = $('users-list');
   if (!el) return;
-  el.innerHTML = list.map((u) => `
+  el.innerHTML = list.map((u) => {
+    const init = u.username.charAt(0).toUpperCase();
+    const roleClass = u.role === 'admin' ? 'badge-admin' : 'badge-member';
+    const roleText = u.role === 'admin' ? 'Admin' : 'Člen';
+    
+    return `
     <div class="user-row" data-uid="${u.id}">
-      <div>
-        <strong>${u.username}</strong>
-        <span class="user-role-badge">${u.role === 'admin' ? 'Admin' : 'Člen'}</span>
+      <div class="user-row-left">
+        <div class="user-row-avatar">${init}</div>
+        <span class="user-row-name">${u.username}</span>
       </div>
-      <button class="gallery-btn btn-edit-user" data-uid="${u.id}"><i class="fas fa-pen"></i></button>
-    </div>`).join('');
+      <div class="user-row-middle">
+        <span class="user-role-badge ${roleClass}">${roleText}</span>
+      </div>
+      <div class="user-row-right">
+        <i class="fas fa-pen btn-edit-user" data-uid="${u.id}" title="Upravit"></i>
+        <i class="fas fa-trash btn-delete-user-icon" data-uid="${u.id}" title="Smazat"></i>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function openEditModal(userId: string): void {
@@ -110,7 +125,12 @@ async function saveUser(): Promise<void> {
 async function deleteUserReservations(): Promise<void> {
   const id = $<HTMLInputElement>('edit-user-id')!.value;
   const username = $<HTMLInputElement>('edit-username')!.value;
-  if (!confirm(`Opravdu smazat VŠECHNY rezervace uživatele "${username}"?`)) return;
+  const confirmed = await showConfirm(
+    'Smazat rezervace?',
+    `Opravdu smazat VŠECHNY rezervace uživatele "${username}"?`,
+    true
+  );
+  if (!confirmed) return;
   const r = await authFetch(`/api/users/${id}/reservations`, { method: 'DELETE' });
   if (r) showToast('Rezervace smazány', 'success');
 }
@@ -118,7 +138,12 @@ async function deleteUserReservations(): Promise<void> {
 async function deleteUser(): Promise<void> {
   const id = $<HTMLInputElement>('edit-user-id')!.value;
   const username = $<HTMLInputElement>('edit-username')!.value;
-  if (!confirm(`Opravdu SMAZAT uživatele "${username}"? Toto nelze vrátit!`)) return;
+  const confirmed = await showConfirm(
+    'Smazat uživatele?',
+    `Opravdu SMAZAT uživatele "${username}"? Toto nelze vrátit!`,
+    true
+  );
+  if (!confirmed) return;
   const r = await authFetch(`/api/users/${id}`, { method: 'DELETE' });
   if (r) {
     hide($('edit-user-modal'));
@@ -151,9 +176,32 @@ function bindEvents(): void {
   });
 
   // Open edit user (event delegation)
-  container.addEventListener('click', (e) => {
-    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('.btn-edit-user');
-    if (btn) openEditModal(btn.dataset.uid!);
+  container.addEventListener('click', async (e) => {
+    const target = e.target as HTMLElement;
+    
+    const editBtn = target.closest<HTMLElement>('.btn-edit-user');
+    if (editBtn) {
+      openEditModal(editBtn.dataset.uid!);
+      return;
+    }
+
+    const deleteBtn = target.closest<HTMLElement>('.btn-delete-user-icon');
+    if (deleteBtn) {
+      const uid = deleteBtn.dataset.uid!;
+      const user = users.find((u) => String(u.id) === String(uid));
+      if (!user) return;
+      const confirmed = await showConfirm(
+        'Smazat uživatele?',
+        `Opravdu SMAZAT uživatele "${user.username}"? Toto nelze vrátit!`,
+        true
+      );
+      if (!confirmed) return;
+      const r = await authFetch(`/api/users/${uid}`, { method: 'DELETE' });
+      if (r) {
+        showToast('Uživatel smazán', 'success');
+        loadUsers();
+      }
+    }
   });
 
   // Modal action buttons

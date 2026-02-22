@@ -3,6 +3,7 @@
    ============================================================================ */
 import type { PageModule } from '../lib/router';
 import { $, show, hide, showToast, authFetch, getUserId } from '../lib/common';
+import { showConfirm } from '../lib/dialogs';
 
 let container: HTMLElement;
 let items: any[] = [];
@@ -13,7 +14,19 @@ function getTemplate(): string {
     <div class="reconstruction-card">
       <div class="reconstruction-header">
         <h2><i class="fas fa-hammer"></i> Rekonstrukce</h2>
-        <div style="font-size:.9em;color:#6b7280">Celkový rozpočet: <strong id="total-budget">0 Kč</strong></div>
+        <div class="budget-container">
+          <div class="budget-labels">
+            <span class="budget-title">Celkový rozpočet</span>
+            <span class="budget-amount"><strong id="total-budget">0 Kč</strong></span>
+          </div>
+          <div class="budget-progress-bar">
+            <div class="budget-progress-fill" id="budget-progress" style="width: 0%"></div>
+          </div>
+          <div class="budget-details">
+            <span id="budget-spent">Utraceno: 0 Kč</span>
+            <span id="budget-planned">Plánováno: 0 Kč</span>
+          </div>
+        </div>
       </div>
       <div class="kanban-board">
         <!-- Idea column -->
@@ -60,8 +73,36 @@ function getTemplate(): string {
         </div>
         <div class="form-group"><label>Název</label><input type="text" id="rec-title" required /></div>
         <div class="form-group"><label>Popis</label><textarea id="rec-desc" rows="3"></textarea></div>
-        <div class="form-group"><label>Odkaz / Kontakt</label><input type="text" id="rec-link" /></div>
-        <div class="form-group hidden" id="cost-group"><label>Odhadovaná cena (Kč)</label><input type="number" id="rec-cost" /></div>
+        
+        <!-- Dynamic fields based on category -->
+        <div id="dynamic-fields-idea" class="dynamic-fields">
+          <div class="form-group"><label>Odkaz na e-shop</label><input type="url" id="rec-link-idea" placeholder="https://" /></div>
+          <div class="form-group"><label>Náhledový obrázek (URL)</label><input type="url" id="rec-thumbnail" placeholder="https://" /></div>
+          <div class="form-group"><label>Štítek (Kategorie)</label><input type="text" id="rec-tag" placeholder="např. Podlaha, Spotřebiče" /></div>
+          <div class="form-group"><label>Odhadovaná cena (Kč)</label><input type="number" id="rec-cost-idea" /></div>
+        </div>
+
+        <div id="dynamic-fields-company" class="dynamic-fields hidden">
+          <div class="form-group"><label>Specializace</label><input type="text" id="rec-specialization" placeholder="např. Truhlář, Instalatér" /></div>
+          <div class="form-group"><label>Telefon</label><input type="tel" id="rec-phone" /></div>
+          <div class="form-group"><label>E-mail</label><input type="email" id="rec-email" /></div>
+          <div class="form-group"><label>Web</label><input type="url" id="rec-link-company" placeholder="https://" /></div>
+          <div class="form-group">
+            <label>Stav</label>
+            <select id="rec-status-company">
+              <option value="pending">K oslovení</option>
+              <option value="contacted">Čekám na nacenění</option>
+              <option value="approved">Schváleno</option>
+              <option value="rejected">Zamítnuto</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="dynamic-fields-task" class="dynamic-fields hidden">
+          <div class="form-group"><label>Termín (Deadline)</label><input type="date" id="rec-deadline" /></div>
+          <div class="form-group"><label>Odhadovaná cena (Kč)</label><input type="number" id="rec-cost-task" /></div>
+        </div>
+
         <div class="modal-buttons"><button type="submit" class="button-primary">Přidat</button></div>
       </form>
     </div>
@@ -78,70 +119,162 @@ function renderBoard(list: any[]): void {
   const colCompany = $('list-company');
   const colTask = $('list-task');
   const budgetEl = $('total-budget');
+  const budgetSpentEl = $('budget-spent');
+  const budgetPlannedEl = $('budget-planned');
+  const budgetProgressEl = $('budget-progress');
+  
   if (!colIdea || !colCompany || !colTask) return;
   colIdea.innerHTML = '';
   colCompany.innerHTML = '';
   colTask.innerHTML = '';
-  let budget = 0;
+  
+  let totalBudget = 0;
+  let spentBudget = 0;
+  let ideaCount = 0;
+  let companyCount = 0;
+  let taskCount = 0;
 
   for (const item of list) {
     const card = createCard(item);
-    if (item.category === 'idea') colIdea.appendChild(card);
-    else if (item.category === 'company') colCompany.appendChild(card);
-    else if (item.category === 'task') {
+    if (item.category === 'idea') {
+      colIdea.appendChild(card);
+      ideaCount++;
+    } else if (item.category === 'company') {
+      colCompany.appendChild(card);
+      companyCount++;
+    } else if (item.category === 'task') {
       colTask.appendChild(card);
-      if (item.cost) budget += item.cost;
+      taskCount++;
+      if (item.cost) {
+        totalBudget += item.cost;
+        if (item.status === 'done') {
+          spentBudget += item.cost;
+        }
+      }
     }
   }
-  if (budgetEl) budgetEl.textContent = budget.toLocaleString('cs-CZ') + ' Kč';
+
+  // Empty states
+  if (ideaCount === 0) {
+    colIdea.innerHTML = `
+      <div class="kanban-empty-state">
+        <i class="fas fa-lightbulb"></i>
+        <p>Zatím žádné nápady. Přidejte odkaz nebo fotku.</p>
+      </div>`;
+  }
+  if (companyCount === 0) {
+    colCompany.innerHTML = `
+      <div class="kanban-empty-state">
+        <i class="fas fa-building"></i>
+        <p>Zatím žádné firmy. Přidejte kontakt na řemeslníka.</p>
+      </div>`;
+  }
+  if (taskCount === 0) {
+    colTask.innerHTML = `
+      <div class="kanban-empty-state">
+        <i class="fas fa-tasks"></i>
+        <p>Zatím žádné úkoly. Naplánujte další krok.</p>
+      </div>`;
+  }
+
+  // Update budget UI
+  if (budgetEl) budgetEl.textContent = totalBudget.toLocaleString('cs-CZ') + ' Kč';
+  if (budgetSpentEl) budgetSpentEl.textContent = 'Utraceno: ' + spentBudget.toLocaleString('cs-CZ') + ' Kč';
+  if (budgetPlannedEl) budgetPlannedEl.textContent = 'Plánováno: ' + totalBudget.toLocaleString('cs-CZ') + ' Kč';
+  if (budgetProgressEl) {
+    const percentage = totalBudget > 0 ? Math.min(100, (spentBudget / totalBudget) * 100) : 0;
+    budgetProgressEl.style.width = percentage + '%';
+  }
+}
+
+function getStatusLabel(status: string): string {
+  const map: Record<string, string> = {
+    pending: 'K oslovení',
+    contacted: 'Čekám na nacenění',
+    approved: 'Schváleno',
+    rejected: 'Zamítnuto',
+    done: 'Hotovo'
+  };
+  return map[status] || status;
+}
+
+function isDeadlineNear(dateStr: string): boolean {
+  const deadline = new Date(dateStr);
+  const now = new Date();
+  const diffTime = deadline.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays <= 3; // Near if within 3 days or passed
+}
+
+function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('cs-CZ');
 }
 
 function createCard(item: any): HTMLElement {
   const el = document.createElement('div');
-  el.className = `kanban-item`;
+  el.className = `kanban-item ${item.category}-card ${item.status === 'done' ? 'task-done' : ''}`;
 
-  let linkHtml = '';
-  if (item.link) {
-    const isUrl = item.link.startsWith('http');
-    linkHtml = isUrl
-      ? `<a href="${item.link}" target="_blank" class="card-link" style="color:var(--color-primary);font-size:.85em"><i class="fas fa-external-link-alt"></i> Otevřít</a>`
-      : `<span style="font-size:.85em;color:#6b7280"><i class="fas fa-phone"></i> ${item.link}</span>`;
-  }
+  let innerHtml = '';
 
-  let costHtml = '';
-  if (item.category === 'task' && item.cost) {
-    costHtml = `<div style="font-weight:600;color:var(--color-primary);margin-top:4px">${item.cost.toLocaleString('cs-CZ')} Kč</div>`;
-  }
-
-  let votesHtml = '';
   if (item.category === 'idea') {
     const myId = getUserId();
     const hasVoted = item.votes?.includes(myId);
-    votesHtml = `<button class="vote-btn ${hasVoted ? 'voted-up' : ''}" data-vote="${item.id}"><i class="fas fa-heart"></i> ${item.votes?.length || 0}</button>`;
+    const votesHtml = `<button class="vote-btn ${hasVoted ? 'voted-up' : ''}" data-vote="${item.id}"><i class="fas fa-heart"></i> ${item.votes?.length || 0}</button>`;
+    
+    innerHtml = `
+      ${item.thumbnail ? `<div class="idea-thumbnail"><img src="${item.thumbnail}" alt="Náhled"></div>` : ''}
+      <div class="idea-content">
+        <div class="idea-header">
+          ${item.tag ? `<span class="idea-tag">${item.tag}</span>` : '<span></span>'}
+          <div class="idea-actions">
+            ${item.link ? `<a href="${item.link}" target="_blank" class="idea-link" title="Otevřít e-shop"><i class="fas fa-external-link-alt"></i></a>` : ''}
+            <button class="delete-card-btn" data-del="${item.id}" title="Smazat"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+        <div class="kanban-item-title">${item.title}</div>
+        ${item.description ? `<div class="kanban-item-desc">${item.description.replace(/\n/g, '<br>')}</div>` : ''}
+        <div class="idea-footer">
+          ${item.cost ? `<span class="idea-cost">${item.cost.toLocaleString('cs-CZ')} Kč</span>` : '<span></span>'}
+          ${votesHtml}
+        </div>
+      </div>
+    `;
+  } else if (item.category === 'company') {
+    innerHtml = `
+      <div class="company-header">
+        <div class="company-title-group">
+          <div class="kanban-item-title">${item.title}</div>
+          ${item.specialization ? `<div class="company-specialization">${item.specialization}</div>` : ''}
+        </div>
+        <div class="company-status status-${item.status || 'pending'}">${getStatusLabel(item.status || 'pending')}</div>
+      </div>
+      ${item.description ? `<div class="kanban-item-desc">${item.description.replace(/\n/g, '<br>')}</div>` : ''}
+      <div class="company-actions">
+        ${item.phone ? `<a href="tel:${item.phone}" class="company-action-btn"><i class="fas fa-phone"></i> Zavolat</a>` : ''}
+        ${item.email ? `<a href="mailto:${item.email}" class="company-action-btn"><i class="fas fa-envelope"></i> Napsat</a>` : ''}
+        ${item.link ? `<a href="${item.link}" target="_blank" class="company-action-btn"><i class="fas fa-globe"></i> Web</a>` : ''}
+        <button class="delete-card-btn" data-del="${item.id}" title="Smazat" style="margin-left: auto;"><i class="fas fa-trash"></i></button>
+      </div>
+    `;
+  } else if (item.category === 'task') {
+    innerHtml = `
+      <div class="task-header">
+        <label class="task-checkbox-wrapper">
+          <input type="checkbox" class="task-checkbox" data-task-id="${item.id}" ${item.status === 'done' ? 'checked' : ''}>
+          <span class="checkmark"></span>
+        </label>
+        <div class="kanban-item-title">${item.title}</div>
+        <button class="delete-card-btn" data-del="${item.id}" title="Smazat" style="margin-left: auto;"><i class="fas fa-trash"></i></button>
+      </div>
+      ${item.description ? `<div class="kanban-item-desc">${item.description.replace(/\n/g, '<br>')}</div>` : ''}
+      <div class="task-footer">
+        ${item.cost ? `<span class="task-cost">${item.cost.toLocaleString('cs-CZ')} Kč</span>` : '<span></span>'}
+        ${item.deadline ? `<span class="task-deadline ${isDeadlineNear(item.deadline) ? 'deadline-near' : ''}"><i class="far fa-calendar-alt"></i> ${formatDate(item.deadline)}</span>` : ''}
+      </div>
+    `;
   }
 
-  let statusHtml = '';
-  if (item.category === 'task') {
-    const map: Record<string, string> = { pending: 'Čeká se', approved: 'Schváleno', done: 'Hotovo' };
-    statusHtml = `
-      <select class="status-select" data-status-id="${item.id}">
-        <option value="pending" ${item.status === 'pending' ? 'selected' : ''}>Čeká se</option>
-        <option value="approved" ${item.status === 'approved' ? 'selected' : ''}>Schváleno</option>
-        <option value="done" ${item.status === 'done' ? 'selected' : ''}>Hotovo</option>
-      </select>`;
-  }
-
-  el.innerHTML = `
-    <div class="kanban-item-title" style="display:flex;justify-content:space-between;align-items:start">
-      <span>${item.title}</span>
-      <button class="delete-card-btn" data-del="${item.id}" style="background:none;border:none;color:#9ca3af;cursor:pointer" title="Smazat"><i class="fas fa-trash"></i></button>
-    </div>
-    <div class="kanban-item-desc">${(item.description || '').replace(/\n/g, '<br>')}</div>
-    ${linkHtml}${costHtml}
-    <div class="kanban-item-footer">
-      <span class="kanban-item-author"><i class="fas fa-user"></i> ${item.createdBy}</span>
-      ${votesHtml}${statusHtml}
-    </div>`;
+  el.innerHTML = innerHtml;
   return el;
 }
 
@@ -164,41 +297,80 @@ function bindEvents(): void {
     });
   });
 
-  // Category change → toggle cost field
+  // Category change → toggle dynamic fields
   $<HTMLSelectElement>('rec-category')?.addEventListener('change', (e) => {
-    const cg = $('cost-group');
-    if (cg) cg.classList.toggle('hidden', (e.target as HTMLSelectElement).value !== 'task');
+    const cat = (e.target as HTMLSelectElement).value;
+    container.querySelectorAll('.dynamic-fields').forEach(el => el.classList.add('hidden'));
+    const target = $(`dynamic-fields-${cat}`);
+    if (target) target.classList.remove('hidden');
   });
 
   // Form submit
   $<HTMLFormElement>('add-reconstruction-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const data = {
-      category: $<HTMLSelectElement>('rec-category')!.value,
+    const cat = $<HTMLSelectElement>('rec-category')!.value;
+    
+    const data: any = {
+      category: cat,
       title: $<HTMLInputElement>('rec-title')!.value,
       description: $<HTMLTextAreaElement>('rec-desc')?.value || '',
-      link: $<HTMLInputElement>('rec-link')?.value || '',
-      cost: $<HTMLInputElement>('rec-cost')?.value || '',
     };
+
+    if (cat === 'idea') {
+      data.link = $<HTMLInputElement>('rec-link-idea')?.value || '';
+      data.thumbnail = $<HTMLInputElement>('rec-thumbnail')?.value || '';
+      data.tag = $<HTMLInputElement>('rec-tag')?.value || '';
+      data.cost = $<HTMLInputElement>('rec-cost-idea')?.value || '';
+    } else if (cat === 'company') {
+      data.specialization = $<HTMLInputElement>('rec-specialization')?.value || '';
+      data.phone = $<HTMLInputElement>('rec-phone')?.value || '';
+      data.email = $<HTMLInputElement>('rec-email')?.value || '';
+      data.link = $<HTMLInputElement>('rec-link-company')?.value || '';
+      data.status = $<HTMLSelectElement>('rec-status-company')?.value || 'pending';
+    } else if (cat === 'task') {
+      data.deadline = $<HTMLInputElement>('rec-deadline')?.value || '';
+      data.cost = $<HTMLInputElement>('rec-cost-task')?.value || '';
+    }
+
     const r = await authFetch('/api/reconstruction', { method: 'POST', body: JSON.stringify(data) });
     if (r) {
       hide($('add-reconstruction-modal'));
       $<HTMLFormElement>('add-reconstruction-form')?.reset();
+      // Reset dynamic fields visibility
+      $<HTMLSelectElement>('rec-category')?.dispatchEvent(new Event('change'));
       loadItems();
     }
   });
 
   // Event delegation for cards (vote, delete, status)
   container.addEventListener('click', async (e) => {
-    const voteBtn = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-vote]');
+    const target = e.target as HTMLElement;
+    
+    // Task checkbox
+    if (target.classList.contains('task-checkbox')) {
+      const cb = target as HTMLInputElement;
+      const id = cb.dataset.taskId;
+      if (id) {
+        const newStatus = cb.checked ? 'done' : 'pending';
+        await authFetch(`/api/reconstruction/${id}/status`, { 
+          method: 'PATCH',
+          body: JSON.stringify({ status: newStatus })
+        });
+        loadItems();
+      }
+      return;
+    }
+
+    const voteBtn = target.closest<HTMLButtonElement>('[data-vote]');
     if (voteBtn) {
       await authFetch(`/api/reconstruction/${voteBtn.dataset.vote}/vote`, { method: 'PATCH' });
       loadItems();
       return;
     }
-    const delBtn = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-del]');
+    const delBtn = target.closest<HTMLButtonElement>('[data-del]');
     if (delBtn) {
-      if (!confirm('Smazat?')) return;
+      const confirmed = await showConfirm('Smazat položku?', 'Opravdu chcete smazat tuto položku?', true);
+      if (!confirmed) return;
       await authFetch(`/api/reconstruction/${delBtn.dataset.del}`, { method: 'DELETE' });
       loadItems();
     }

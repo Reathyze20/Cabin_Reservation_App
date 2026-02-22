@@ -1,25 +1,44 @@
 /* ============================================================================
    Layout — Login, App Container, Cards, Main Content
    ============================================================================ */
-.login-container {
-  width: 100%;
-  max-width: 400px;
-  margin-top: 50px;
+.login-container,
+.register-container {
+  width: 400px;
+  height: auto !important;
+  min-height: 0 !important;
+  max-width: 95vw;
+  margin: 50px auto;
 }
 
 .app-container {
-  width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  height: 100vh;
+  height: 100dvh;
+  padding: 0 20px 20px 20px;
+  gap: 0;
+  overflow: hidden;
+}
+
+#page-container {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding-top: 20px;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .main-content {
+  flex-grow: 1;
   display: flex;
   flex-direction: row;
-  gap: var(--space-xl);
+  gap: 20px;
   width: 100%;
-  align-items: stretch;
 }
 
 .card {
@@ -27,6 +46,26 @@
   border-radius: var(--radius-xl);
   padding: var(--space-2xl);
   box-shadow: var(--shadow-lg);
+  /* Flexibilnější rozměry pro stabilitu rozhraní bez scrollbaru */
+  min-height: 50vh;
+  height: auto;
+  overflow: visible;
+  /* Allow the card to grow seamlessly with its elements */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Mobile Layout Adjustments */
+@media (max-width: 768px) {
+  .main-content {
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .card {
+    padding: var(--space-lg);
+    border-radius: var(--radius-lg);
+  }
 }
 
 .toggle-form-text {
@@ -35,11 +74,13 @@
   font-size: var(--font-size-sm);
   color: #666;
 }
+
 .toggle-form-text a {
   color: #f59e0b;
   font-weight: 600;
   text-decoration: none;
 }
+
 .toggle-form-text a:hover {
   text-decoration: underline;
 }
@@ -48,9 +89,11 @@
 .input-eye-wrapper {
   position: relative;
 }
+
 .input-eye-wrapper input {
   padding-right: 40px;
 }
+
 .toggle-password {
   position: absolute;
   right: 10px;
@@ -59,6 +102,29 @@
   cursor: pointer;
   color: var(--color-text-muted);
 }
+
 .toggle-password:hover {
   color: var(--color-text);
+}
+
+/* Remember me checkbox */
+.remember-me-group {
+  margin-top: var(--space-xs);
+}
+
+.remember-me-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-light);
+  user-select: none;
+}
+
+.remember-me-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-primary);
+  cursor: pointer;
 }

@@ -18,20 +18,41 @@ router.get("/folders", protect, async (req: Request, res: Response) => {
             username: true,
           },
         },
+        entries: {
+          select: {
+            photos: {
+              select: {
+                photoId: true,
+              },
+            },
+          },
+        },
       },
       orderBy: {
         createdAt: "desc",
       },
     });
 
-    const formatted = folders.map((folder) => ({
-      id: folder.id,
-      name: folder.name,
-      createdAt: folder.createdAt.toISOString(),
-      createdBy: folder.createdBy.username,
-      startDate: folder.startDate?.toISOString().split("T")[0],
-      endDate: folder.endDate?.toISOString().split("T")[0],
-    }));
+    const formatted = folders.map((folder) => {
+      const entryCount = folder.entries.length;
+      const uniquePhotoIds = new Set(
+        folder.entries.flatMap((entry) => entry.photos.map((p) => p.photoId))
+      );
+
+      return {
+        id: folder.id,
+        name: folder.name,
+        activityTag: folder.activityTag,
+        createdAt: folder.createdAt.toISOString(),
+        createdBy: folder.createdBy.username,
+        startDate: folder.startDate?.toISOString().split("T")[0],
+        endDate: folder.endDate?.toISOString().split("T")[0],
+        stats: {
+          entries: entryCount,
+          photos: uniquePhotoIds.size,
+        },
+      };
+    });
 
     res.json(formatted);
   } catch (error) {
@@ -48,7 +69,7 @@ router.post("/folders", protect, async (req: Request, res: Response) => {
     return res.status(401).json({ message: "Neautorizováno" });
   }
 
-  const { name, startDate, endDate } = req.body;
+  const { name, startDate, endDate, activityTag } = req.body;
 
   if (!name || !startDate || !endDate) {
     return res.status(400).json({ message: "Chybí název nebo datumy." });
@@ -58,6 +79,7 @@ router.post("/folders", protect, async (req: Request, res: Response) => {
     const newFolder = await prisma.diaryFolder.create({
       data: {
         name,
+        activityTag: activityTag || null,
         createdById: req.user.userId,
         startDate: new Date(startDate),
         endDate: new Date(endDate),
@@ -74,10 +96,12 @@ router.post("/folders", protect, async (req: Request, res: Response) => {
     res.status(201).json({
       id: newFolder.id,
       name: newFolder.name,
+      activityTag: newFolder.activityTag,
       createdAt: newFolder.createdAt.toISOString(),
       createdBy: newFolder.createdBy.username,
       startDate: newFolder.startDate?.toISOString().split("T")[0],
       endDate: newFolder.endDate?.toISOString().split("T")[0],
+      stats: { entries: 0, photos: 0 },
     });
   } catch (error) {
     logger.error("DIARY", "Create diary folder error", { error: String(error) });
@@ -94,7 +118,7 @@ router.patch("/folders/:id", protect, async (req: Request, res: Response) => {
   }
 
   const { id } = req.params;
-  const { name: newName } = req.body;
+  const { name: newName, activityTag } = req.body;
 
   if (!newName || newName.trim().length === 0) {
     return res.status(400).json({ message: "Název složky nesmí být prázdný." });
@@ -122,7 +146,10 @@ router.patch("/folders/:id", protect, async (req: Request, res: Response) => {
 
     const updated = await prisma.diaryFolder.update({
       where: { id },
-      data: { name: newName.trim() },
+      data: {
+        name: newName.trim(),
+        ...(activityTag !== undefined ? { activityTag: activityTag || null } : {})
+      },
       include: {
         createdBy: {
           select: {
@@ -137,6 +164,7 @@ router.patch("/folders/:id", protect, async (req: Request, res: Response) => {
       folder: {
         id: updated.id,
         name: updated.name,
+        activityTag: updated.activityTag,
         createdAt: updated.createdAt.toISOString(),
         createdBy: updated.createdBy.username,
         startDate: updated.startDate?.toISOString().split("T")[0],

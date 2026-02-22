@@ -1,46 +1,57 @@
 /* ============================================================================
    Design Tokens — CSS Custom Properties
+   Family-friendly palette: Peach · Beige · Yellow · Sage
    ============================================================================ */
 :root {
-  /* ── Colors ─────────────────────────────────────────────────────────── */
-  --color-primary: #d97706;
-  --color-primary-light: #fbbf24;
-  --color-primary-lighter: #fef3c7;
-  --color-primary-bg: #fffbeb;
-  --color-primary-gradient: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
-  --color-primary-gradient-hover: linear-gradient(135deg, #fcd34d 0%, #b45309 100%);
+  /* ── Primary (Sage green — friendly, natural) ──────────────────────── */
+  --color-primary: #6B9E6B;
+  --color-primary-light: #8BB88B;
+  --color-primary-lighter: #CCE0AC;
+  --color-primary-bg: #f0f7ec;
+  --color-primary-gradient: linear-gradient(135deg, #8BB88B 0%, #6B9E6B 100%);
+  --color-primary-gradient-hover: linear-gradient(135deg, #9FC99F 0%, #5B8C5A 100%);
 
-  --color-danger: #ef4444;
-  --color-danger-dark: #dc2626;
+  /* ── Accent (Peach — warm, inviting) ────────────────────────────────── */
+  --color-accent: #FF8A8A;
+  --color-accent-light: #FFB3B3;
+  --color-accent-bg: #fff0f0;
+
+  /* ── Semantic colors ────────────────────────────────────────────────── */
+  --color-danger: #e85d5d;
+  --color-danger-dark: #d44545;
   --color-danger-bg: #fee2e2;
   --color-danger-text: #b91c1c;
 
-  --color-success: #10b981;
-  --color-success-dark: #15803d;
+  --color-success: #6B9E6B;
+  --color-success-dark: #5B8C5A;
   --color-success-bg: #d1fae5;
   --color-success-text: #065f46;
 
-  --color-info: #3b82f6;
-  --color-info-dark: #2563eb;
+  --color-info: #5b9bd5;
+  --color-info-dark: #4a8cc7;
   --color-info-bg: #dbeafe;
   --color-info-text: #1e40af;
 
-  --color-warning-bg: #fef3c7;
-  --color-warning-text: #92400e;
-  --color-warning-border: #facc15;
+  --color-warning-bg: #F0EAAC;
+  --color-warning-text: #7a6c14;
+  --color-warning-border: #e0d87a;
 
-  --color-text: #374151;
-  --color-text-dark: #1f2937;
-  --color-text-light: #6b7280;
-  --color-text-muted: #9ca3af;
+  /* ── Text ────────────────────────────────────────────────────────────── */
+  --color-text: #4a4a4a;
+  --color-text-dark: #2d2d2d;
+  --color-text-light: #7a7a7a;
+  --color-text-muted: #a0a0a0;
 
+  /* ── Backgrounds ─────────────────────────────────────────────────────── */
   --color-bg: #ffffff;
-  --color-bg-alt: #f9fafb;
-  --color-bg-hover: #f3f4f6;
+  --color-bg-alt: #fdfaf5;
+  --color-bg-hover: #f7f2eb;
+  --color-bg-warm: #FDF8F0;
 
-  --color-border: #e5e7eb;
-  --color-border-light: #f3e2c0;
-  --color-border-dark: #d1d5db;
+  /* ── Borders ─────────────────────────────────────────────────────────── */
+  --color-border: #e8e0d4;
+  --color-border-light: #f0e8db;
+  --color-border-dark: #d4cbbf;
 
   /* ── Typography ─────────────────────────────────────────────────────── */
   --font-family: "Inter", sans-serif;
@@ -53,7 +64,7 @@
   --font-size-xl: 1.3em;
   --font-size-2xl: 1.5em;
 
-  /* ── Spacing ────────────────────────────────────────────────────────── */
+  /* ── Spacing ─────────────────────────────────────────────────────────── */
   --space-xs: 4px;
   --space-sm: 8px;
   --space-md: 12px;
@@ -62,59 +73,29 @@
   --space-2xl: 24px;
   --space-3xl: 30px;
 
-  /* ── Radii ──────────────────────────────────────────────────────────── */
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  /* ── Radii (softer, friendlier) ──────────────────────────────────────── */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
   --radius-full: 50px;
 
-  /* ── Shadows ────────────────────────────────────────────────────────── */
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.05);
-  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
-  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.15);
+  /* ── Shadows (warm-toned) ────────────────────────────────────────────── */
+  --shadow-sm: 0 2px 8px rgba(139, 115, 85, 0.06);
+  --shadow-md: 0 4px 12px rgba(139, 115, 85, 0.08);
+  --shadow-lg: 0 8px 24px rgba(139, 115, 85, 0.12);
+  --shadow-xl: 0 16px 40px rgba(139, 115, 85, 0.16);
 
-  /* ── Transitions ────────────────────────────────────────────────────── */
+  /* ── Transitions ─────────────────────────────────────────────────────── */
   --transition-fast: 0.2s ease;
   --transition-base: 0.3s ease;
   --transition-bounce: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* ── Z-index layers ─────────────────────────────────────────────────── */
+  /* ── Z-index layers ──────────────────────────────────────────────────── */
   --z-sticky: 10;
   --z-modal: 1000;
   --z-lightbox: 2000;
   --z-toast: 3000;
 
-  /* ── Background image ───────────────────────────────────────────────── */
   --bg-image: url("https://i0.wp.com/www.zazracnestredohori.cz/wp-content/uploads/2020/05/Kostalov_vyhled_hrad_panorama_01-05-2020_C.jpg?fit=1600%2C727&ssl=1");
-}
-
-/* ── Dark mode ─────────────────────────────────────────────────────── */
-[data-theme="dark"] {
-  --color-bg: #1a1a2e;
-  --color-bg-alt: #16213e;
-  --color-bg-hover: #1a1a3e;
-  --color-text: #e2e8f0;
-  --color-text-dark: #f1f5f9;
-  --color-text-light: #94a3b8;
-  --color-text-muted: #64748b;
-  --color-border: #334155;
-  --color-border-light: #475569;
-  --color-border-dark: #64748b;
-
-  --color-primary-bg: rgba(217, 119, 6, 0.15);
-  --color-primary-lighter: rgba(251, 191, 36, 0.12);
-  --color-danger-bg: rgba(239, 68, 68, 0.15);
-  --color-success-bg: rgba(16, 185, 129, 0.15);
-  --color-info-bg: rgba(59, 130, 246, 0.15);
-  --color-warning-bg: rgba(250, 204, 21, 0.1);
-
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.4);
-  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.5);
-
-  --bg-image: none;
-  color-scheme: dark;
 }

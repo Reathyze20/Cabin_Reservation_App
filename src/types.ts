@@ -10,6 +10,7 @@ export interface User {
   username: string;
   passwordHash: string;
   color: string;
+  animalIcon?: string | null;
   role?: "admin" | "user" | "guest";
 }
 
@@ -21,8 +22,10 @@ export interface Reservation {
   to: string;
   purpose: string;
   notes?: string;
-  status?: "primary" | "backup";
+  handoverNote?: string;
+  status?: "primary" | "backup" | "soft";
   userColor?: string;
+  userAnimalIcon?: string | null;
 }
 
 export interface ShoppingListItem {

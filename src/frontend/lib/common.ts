@@ -2,18 +2,24 @@
    lib/common.ts — Shared utilities (ES-module replacement for Common IIFE)
    ============================================================================ */
 
-// ─── Auth state ──────────────────────────────────────────────────────
+// ─── Auth state (dual storage: sessionStorage for session, localStorage for persistent) ─
+
+/** Helper: read from sessionStorage first, fallback to localStorage */
+function getAuthItem(key: string): string | null {
+  return sessionStorage.getItem(key) ?? localStorage.getItem(key);
+}
+
 export function getToken(): string | null {
-  return localStorage.getItem('authToken');
+  return getAuthItem('authToken');
 }
 export function getUsername(): string | null {
-  return localStorage.getItem('username');
+  return getAuthItem('username');
 }
 export function getUserId(): string | null {
-  return localStorage.getItem('userId');
+  return getAuthItem('userId');
 }
 export function getRole(): string | null {
-  return localStorage.getItem('role');
+  return getAuthItem('role');
 }
 
 export function isLoggedIn(): boolean {
@@ -24,22 +30,57 @@ export function isAdmin(): boolean {
   return getRole() === 'admin';
 }
 
-/** Store auth data after login */
+export function getAnimalIcon(): string | null {
+  return localStorage.getItem('animalIcon') || sessionStorage.getItem('animalIcon');
+}
+
+export function saveAnimalIcon(icon: string | null): void {
+  // Save to whichever storage currently holds the username
+  const store = localStorage.getItem('username') ? localStorage : sessionStorage;
+  if (icon) {
+    store.setItem('animalIcon', icon);
+  } else {
+    store.removeItem('animalIcon');
+  }
+}
+
+/** Store auth data after login.
+ *  If `remember` is true, persists in localStorage (survives browser close).
+ *  Otherwise uses sessionStorage (cleared when tab/browser closes). */
 export function setAuth(data: {
   token: string;
   username: string;
   userId: string;
   role: string;
+  animalIcon?: string | null;
+  remember?: boolean;
 }): void {
-  localStorage.setItem('authToken', data.token);
-  localStorage.setItem('username', data.username);
-  localStorage.setItem('userId', data.userId);
-  localStorage.setItem('role', data.role);
+  const store = data.remember ? localStorage : sessionStorage;
+  // Clear the other storage to avoid stale data
+  const otherStore = data.remember ? sessionStorage : localStorage;
+  ['authToken', 'username', 'userId', 'role', 'animalIcon'].forEach((k) => otherStore.removeItem(k));
+
+  store.setItem('authToken', data.token);
+  store.setItem('username', data.username);
+  store.setItem('userId', data.userId);
+  store.setItem('role', data.role);
+  if (data.animalIcon) store.setItem('animalIcon', data.animalIcon);
+}
+
+/** Clear all auth data from both storages */
+function clearAuth(): void {
+  const savedTheme = localStorage.getItem('theme');
+  ['authToken', 'username', 'userId', 'role', 'animalIcon'].forEach((k) => {
+    localStorage.removeItem(k);
+    sessionStorage.removeItem(k);
+  });
+  // Preserve theme preference
+  if (savedTheme) localStorage.setItem('theme', savedTheme);
 }
 
 /** Clear all auth data and navigate to login */
 export function logout(): void {
-  localStorage.clear();
+  clearAuth();
   // Let the router handle navigation
   window.location.hash = '#/';
   window.location.reload();
@@ -47,7 +88,7 @@ export function logout(): void {
 
 /** Handle 401 — session expired */
 export function handleSessionExpired(): void {
-  localStorage.clear();
+  clearAuth();
   showToast('Relace vypršela, přihlaste se znovu', 'error');
   // Use global callback set by main.ts to avoid circular imports
   if (typeof (window as any).__showLogin === 'function') {

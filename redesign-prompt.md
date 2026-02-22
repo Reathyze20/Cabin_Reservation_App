@@ -18,6 +18,7 @@
 ## 📋 Kontext Aplikace
 
 Redesignuj webovou aplikaci pro správu chaty s těmito hlavními funkcemi:
+- **Přehled** - kalendář rezervací chaty pro různé uživatele
 - **Rezervace** - kalendář rezervací chaty pro různé uživatele
 - **Nákupní seznam** - sdílený seznam s rozdělenými náklady
 - **Nástěnka** - rychlé poznámky a zprávy

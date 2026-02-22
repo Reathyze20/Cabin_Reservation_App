@@ -6,6 +6,7 @@ import {
   $, show, hide, showToast, authFetch, authUpload,
   getUsername, getRole,
 } from '../lib/common';
+import { showConfirm, showPrompt } from '../lib/dialogs';
 
 // ─── State ────────────────────────────────────────────────────────────
 let container: HTMLElement;
@@ -30,15 +31,26 @@ const layouts = [
 // ─── Template ─────────────────────────────────────────────────────────
 function getTemplate(): string {
   return `
-  <div class="gallery-card">
-    <!-- Folders view -->
-    <div id="folders-view">
-      <div class="gallery-header">
+  <div class="main-content-gallery">
+    <div class="gallery-card">
+      <!-- Folders view -->
+      <div id="folders-view">
+        <div class="gallery-header">
         <h2><i class="fas fa-images"></i> Galerie</h2>
         <div class="gallery-actions">
+          <div class="search-wrapper" style="position: relative; margin-right: 10px;">
+            <i class="fas fa-search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--color-text-muted);"></i>
+            <input type="text" id="folder-search-input" placeholder="Hledat album..." style="padding-left: 35px; border-radius: var(--radius-full); border: 1px solid var(--color-border); height: 38px; width: 200px; font-size: var(--font-size-sm);">
+          </div>
+          <select id="folder-sort-select" style="border-radius: var(--radius-full); border: 1px solid var(--color-border); height: 38px; padding: 0 15px; font-size: var(--font-size-sm); background: white; cursor: pointer; margin-right: 10px;">
+            <option value="date-desc">Nejnovější</option>
+            <option value="date-asc">Nejstarší</option>
+            <option value="name-asc">A-Z</option>
+            <option value="name-desc">Z-A</option>
+          </select>
           <button id="rename-folder-btn" class="gallery-btn" style="display:none"><i class="fas fa-edit"></i> Přejmenovat</button>
           <button id="delete-folder-list-btn" class="gallery-btn gallery-btn-danger" style="display:none"><i class="fas fa-trash"></i> Smazat</button>
-          <button id="create-folder-btn" class="gallery-btn gallery-btn-primary"><i class="fas fa-folder-plus"></i> Nové album</button>
+          <button id="create-folder-btn" class="gallery-btn gallery-btn-primary"><i class="fas fa-plus"></i> Nové album</button>
         </div>
       </div>
       <div id="folders-grid" class="folders-grid"></div>
@@ -48,7 +60,6 @@ function getTemplate(): string {
     <div id="photos-view" style="display:none">
       <div class="gallery-header">
         <div style="display:flex;align-items:center;gap:10px">
-          <button id="back-to-folders-btn" class="gallery-btn"><i class="fas fa-arrow-left"></i></button>
           <h2 id="current-folder-title"></h2>
         </div>
         <div class="gallery-actions">
@@ -61,11 +72,12 @@ function getTemplate(): string {
       </div>
       <div id="photos-grid" class="photos-grid"></div>
       <div id="pagination-controls" class="pagination-controls" style="display:none">
-        <button id="prev-page-btn" class="gallery-btn">← Předchozí</button>
+        <button id="prev-page-btn" class="nav-arrow"><i class="fas fa-chevron-left"></i></button>
         <span id="page-info">1 / 1</span>
-        <button id="next-page-btn" class="gallery-btn">Další →</button>
+        <button id="next-page-btn" class="nav-arrow"><i class="fas fa-chevron-right"></i></button>
       </div>
     </div>
+  </div>
   </div>
 
   <!-- Create folder modal -->
@@ -112,16 +124,18 @@ function getTemplate(): string {
 
   <!-- Upload modal -->
   <div id="upload-photo-modal" class="modal-overlay hidden">
-    <div class="modal-content">
+    <div class="modal-content upload-modal-content">
       <span class="modal-close-button" data-close="upload-photo-modal">&times;</span>
       <h2>Nahrát fotky</h2>
       <form id="upload-photo-form">
-        <div class="form-group">
-          <label class="custom-file-upload">
+        <div class="file-upload-container">
+          <i class="fas fa-cloud-upload-alt upload-icon"></i>
+          <p class="file-msg">Přetáhněte soubory sem nebo klikněte na tlačítko níže.</p>
+          <label class="custom-file-label">
             <input type="file" id="photo-file-input" accept="image/*" multiple />
-            <i class="fas fa-cloud-upload-alt"></i> Vybrat soubory
+            Vybrat soubory
           </label>
-          <span id="file-chosen-text">Nevybrán žádný soubor</span>
+          <span id="file-chosen-text" class="file-chosen-text">Nevybrán žádný soubor</span>
         </div>
         <div id="upload-loading-overlay" class="loading-overlay" style="display:none"><div class="spinner"></div></div>
         <div class="modal-buttons"><button type="submit" class="button-primary">Nahrát</button></div>
@@ -134,21 +148,22 @@ function getTemplate(): string {
     <div class="lightbox-content">
       <img id="lightbox-img" src="" alt="" />
       <div class="lightbox-caption">
-        <span id="lightbox-description"></span>
-        <button id="add-description-btn" class="gallery-btn" style="display:none"><i class="fas fa-pen"></i> Přidat vzpomínku</button>
-        <div id="description-form" style="display:none">
-          <input type="text" id="description-input" placeholder="Vaše vzpomínka..." />
-          <button id="save-description-btn" class="gallery-btn gallery-btn-primary">Uložit</button>
+        <span id="lightbox-description" class="lightbox-description"></span>
+        <button id="add-description-btn" class="add-description-btn" style="display:none"><i class="fas fa-pen"></i> Přidat vzpomínku</button>
+        <div id="description-form" class="description-form" style="display:none">
+          <input type="text" id="description-input" class="description-input" placeholder="Vaše vzpomínka..." />
+          <button id="save-description-btn" class="save-description-btn">Uložit</button>
         </div>
       </div>
     </div>
     <div class="lightbox-controls">
-      <button id="lightbox-close" title="Zavřít"><i class="fas fa-times"></i></button>
-      <a id="lightbox-download" download="foto.jpg"><i class="fas fa-download"></i></a>
-      <button id="lightbox-delete" style="display:none"><i class="fas fa-trash"></i></button>
+      <a id="lightbox-download" class="lightbox-btn" download="foto.jpg"><i class="fas fa-download"></i> Stáhnout</a>
+      <button id="lightbox-delete" class="lightbox-btn lightbox-btn-danger" style="display:none"><i class="fas fa-trash"></i> Smazat</button>
     </div>
-    <button id="lightbox-prev" class="lightbox-arrow lightbox-arrow-left"><i class="fas fa-chevron-left"></i></button>
-    <button id="lightbox-next" class="lightbox-arrow lightbox-arrow-right"><i class="fas fa-chevron-right"></i></button>
+    <button id="lightbox-close" class="lightbox-close" title="Zavřít"><i class="fas fa-times"></i></button>
+    <button id="lightbox-prev" class="lightbox-arrow left"><i class="fas fa-chevron-left"></i></button>
+    <button id="lightbox-next" class="lightbox-arrow right"><i class="fas fa-chevron-right"></i></button>
+  </div>
   </div>`;
 }
 
@@ -167,26 +182,126 @@ function renderFolders(folders: any[]): void {
   const grid = $('folders-grid');
   if (!grid) return;
   grid.innerHTML = '';
-  if (!folders.length) { grid.innerHTML = '<p class="empty-state">Zatím tu nejsou žádná alba.</p>'; return; }
+
+  // Add dashed placeholder for new album
+  const placeholder = document.createElement('div');
+  placeholder.className = 'folder-card dashed-placeholder';
+  placeholder.onclick = () => showModal('create-folder-modal');
+  placeholder.innerHTML = `
+    <div class="folder-cover">
+      <i class="fas fa-plus"></i>
+    </div>
+    <div class="folder-info">
+      <h3>Nové album</h3>
+    </div>
+  `;
+  grid.appendChild(placeholder);
+
+  if (!folders.length) { 
+    const empty = document.createElement('p');
+    empty.className = 'empty-state';
+    empty.style.gridColumn = '1 / -1';
+    empty.textContent = 'Zatím tu nejsou žádná alba.';
+    grid.appendChild(empty);
+    return; 
+  }
 
   for (const f of folders) {
     const el = document.createElement('div');
     el.className = `folder-card${f.id === selectedFolderId ? ' selected' : ''}`;
     el.dataset.id = f.id;
-    el.onclick = (e) => { if ((e.target as HTMLElement).tagName !== 'INPUT') openFolder(f.id, f.name); };
+    
+    // Handle long press for selection
+    let pressTimer: number;
+    el.addEventListener('mousedown', () => {
+      pressTimer = window.setTimeout(() => {
+        toggleFolderSelection(f.id, el);
+      }, 500);
+    });
+    el.addEventListener('mouseup', () => clearTimeout(pressTimer));
+    el.addEventListener('mouseleave', () => clearTimeout(pressTimer));
+    el.addEventListener('touchstart', () => {
+      pressTimer = window.setTimeout(() => {
+        toggleFolderSelection(f.id, el);
+      }, 500);
+    });
+    el.addEventListener('touchend', () => clearTimeout(pressTimer));
+
+    el.onclick = (e) => { 
+      // If we are in selection mode or clicked the checkbox, handle selection
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.closest('.folder-checkbox-wrapper') || selectedFolderId) {
+        if (target.tagName !== 'INPUT') {
+          toggleFolderSelection(f.id, el);
+        }
+        return;
+      }
+      openFolder(f.id, f.name); 
+    };
+
+    // Use the first photo as cover if available, otherwise a placeholder icon
+    const coverHtml = f.coverPhotoUrl 
+      ? `<img src="${f.coverPhotoUrl}" alt="${f.name} cover" style="width: 100%; height: 100%; object-fit: cover;">`
+      : `<i class="fas fa-folder-open" style="font-size: 3rem; color: var(--color-primary-light); opacity: 0.5;"></i>`;
+
     el.innerHTML = `
-      <div class="folder-checkbox-wrapper">
+      <div class="folder-checkbox-wrapper" style="${selectedFolderId ? 'opacity: 1;' : ''}">
         <input type="checkbox" class="folder-checkbox" data-id="${f.id}" ${f.id === selectedFolderId ? 'checked' : ''}>
       </div>
-      <div class="folder-icon"><i class="fas fa-folder"></i></div>
+      <div class="folder-cover">
+        ${coverHtml}
+      </div>
       <div class="folder-info">
         <h3>${f.name}</h3>
-        <span class="folder-date">Vytvořeno: ${new Date(f.createdAt).toLocaleDateString('cs-CZ')}</span>
-        <span class="folder-owner" style="display:block;font-size:.8em;color:#6b7280;margin-top:4px">Vytvořil: ${f.createdBy || 'Neznámý'}</span>
+        <div class="folder-meta">
+          <span><i class="fas fa-image"></i> ${f.photoCount || 0} fotek</span>
+          <span><i class="fas fa-clock"></i> ${new Date(f.createdAt).toLocaleDateString('cs-CZ')}</span>
+        </div>
       </div>`;
     grid.appendChild(el);
   }
   setupFolderCheckboxes();
+  updateFolderActionsUI();
+}
+
+function toggleFolderSelection(id: string, el: HTMLElement) {
+  const cb = el.querySelector('.folder-checkbox') as HTMLInputElement;
+  if (!cb) return;
+  
+  // For now, keep single selection logic as requested by existing code structure,
+  // but make it toggleable via the card itself
+  const grid = $('folders-grid');
+  if (!grid) return;
+  
+  if (selectedFolderId === id) {
+    // Deselect
+    selectedFolderId = null;
+    cb.checked = false;
+    el.classList.remove('selected');
+    el.querySelector('.folder-checkbox-wrapper')?.setAttribute('style', '');
+  } else {
+    // Select new
+    grid.querySelectorAll<HTMLInputElement>('.folder-checkbox').forEach((o) => {
+      o.checked = false;
+      const card = o.closest('.folder-card');
+      card?.classList.remove('selected');
+      card?.querySelector('.folder-checkbox-wrapper')?.setAttribute('style', '');
+    });
+    selectedFolderId = id;
+    cb.checked = true;
+    el.classList.add('selected');
+    el.querySelector('.folder-checkbox-wrapper')?.setAttribute('style', 'opacity: 1;');
+  }
+  
+  // Show/hide checkboxes based on selection mode
+  grid.querySelectorAll('.folder-checkbox-wrapper').forEach(wrapper => {
+    if (selectedFolderId) {
+      (wrapper as HTMLElement).style.opacity = '1';
+    } else {
+      (wrapper as HTMLElement).style.opacity = '';
+    }
+  });
+  
   updateFolderActionsUI();
 }
 
@@ -196,17 +311,10 @@ function setupFolderCheckboxes(): void {
   grid.querySelectorAll<HTMLInputElement>('.folder-checkbox').forEach((cb) => {
     cb.addEventListener('change', () => {
       const id = cb.dataset.id!;
-      grid.querySelectorAll<HTMLInputElement>('.folder-checkbox').forEach((o) => {
-        if (o.dataset.id !== id) { o.checked = false; o.closest('.folder-card')?.classList.remove('selected'); }
-      });
-      if (cb.checked) {
-        selectedFolderId = id;
-        cb.closest('.folder-card')?.classList.add('selected');
-      } else {
-        selectedFolderId = null;
-        cb.closest('.folder-card')?.classList.remove('selected');
+      const el = cb.closest('.folder-card') as HTMLElement;
+      if (el) {
+        toggleFolderSelection(id, el);
       }
-      updateFolderActionsUI();
     });
   });
 }
@@ -221,7 +329,9 @@ function updateFolderActionsUI(): void {
 function openFolder(folderId: string, name: string): void {
   currentFolderId = folderId;
   const title = $('current-folder-title');
-  if (title) title.textContent = name;
+  if (title) {
+    title.innerHTML = `<a href="#" onclick="backToFolders(); return false;" style="color: var(--color-primary); text-decoration: none;"><i class="fas fa-home"></i> Galerie</a> <i class="fas fa-chevron-right" style="font-size: 0.8em; margin: 0 5px; color: var(--color-text-muted);"></i> ${name}`;
+  }
   currentPage = 1;
   isSelectionMode = false;
   selectedPhotos.clear();
@@ -242,7 +352,7 @@ function backToFolders(): void {
   isSelectionMode = false;
   selectedPhotos.clear();
   selectedFolderId = null;
-  loadFolders();
+  loadFolders(); // Reload to update covers/counts
 }
 
 // ─── Photos ───────────────────────────────────────────────────────────
@@ -283,7 +393,13 @@ function renderPhotos(): void {
     el.className = 'photo-card';
     if (isSelectionMode && selectedPhotos.has(photo.id)) el.classList.add('selected');
     if (idx < layout.classes.length && layout.classes[idx]) el.classList.add(layout.classes[idx]);
-    el.innerHTML = `<img src="${photo.thumb || photo.src}" alt="Foto" loading="lazy"><div class="photo-overlay"><i class="fas fa-search-plus"></i></div>`;
+    
+    let innerHTML = `<img src="${photo.thumb || photo.src}" alt="Foto" loading="lazy"><div class="photo-overlay"><i class="fas fa-search-plus"></i></div>`;
+    if (isSelectionMode) {
+      innerHTML += `<div class="photo-select-indicator">${selectedPhotos.has(photo.id) ? '<i class="fas fa-check"></i>' : ''}</div>`;
+    }
+    el.innerHTML = innerHTML;
+    
     el.onclick = (e) => {
       if (isSelectionMode) { e.stopPropagation(); togglePhotoSel(photo.id, el); }
       else openLightbox(globalIdx);
@@ -323,8 +439,16 @@ function updateSelectionUI(): void {
 }
 
 function togglePhotoSel(id: string, el: HTMLElement): void {
-  if (selectedPhotos.has(id)) { selectedPhotos.delete(id); el.classList.remove('selected'); }
-  else { selectedPhotos.add(id); el.classList.add('selected'); }
+  const ind = el.querySelector('.photo-select-indicator');
+  if (selectedPhotos.has(id)) { 
+    selectedPhotos.delete(id); 
+    el.classList.remove('selected'); 
+    if (ind) ind.innerHTML = '';
+  } else { 
+    selectedPhotos.add(id); 
+    el.classList.add('selected'); 
+    if (ind) ind.innerHTML = '<i class="fas fa-check"></i>';
+  }
   const sc = $('selection-count');
   if (sc) sc.textContent = String(selectedPhotos.size);
 }
@@ -376,7 +500,8 @@ function closeLightbox(): void {
 }
 
 async function deletePhoto(photoId: string): Promise<void> {
-  if (!confirm('Smazat fotku?')) return;
+  const confirmed = await showConfirm('Smazat fotku?', 'Opravdu chcete smazat tuto fotku?', true);
+  if (!confirmed) return;
   const result = await authFetch(`/api/gallery/photos/${photoId}`, { method: 'DELETE' });
   if (result) { showToast('Fotka smazána.', 'success'); closeLightbox(); if (currentFolderId) loadPhotos(currentFolderId); }
 }
@@ -389,7 +514,8 @@ async function performFolderDeleteCheck(folderId: string, name: string): Promise
   const isAdm = getRole() === 'admin';
 
   if (isEmpty) {
-    if (confirm(`Smazat prázdné album "${name}"?`)) performFolderDelete(folderId);
+    const confirmed = await showConfirm('Smazat album?', `Smazat prázdné album "${name}"?`, true);
+    if (confirmed) performFolderDelete(folderId);
   } else if (!isAdm) {
     showToast('Album obsahuje fotky. Smazat může jen admin.', 'error');
   } else {
@@ -413,8 +539,39 @@ function bindEvents(): void {
 
   // Overlay click to close modals
   container.querySelectorAll<HTMLElement>('.modal-overlay').forEach((ov) => {
-    ov.addEventListener('click', (e) => { if (e.target === ov) hide(ov); });
+    ov.addEventListener('click', (e) => { if (e.target === ov) hideModal(ov.id); });
   });
+
+  // Search and Sort
+  const searchInput = $<HTMLInputElement>('folder-search-input');
+  const sortSelect = $<HTMLSelectElement>('folder-sort-select');
+
+  const filterAndSortFolders = () => {
+    let filtered = [...allFolders];
+    
+    // Search
+    if (searchInput && searchInput.value) {
+      const term = searchInput.value.toLowerCase();
+      filtered = filtered.filter(f => f.name.toLowerCase().includes(term));
+    }
+    
+    // Sort
+    if (sortSelect) {
+      const val = sortSelect.value;
+      filtered.sort((a, b) => {
+        if (val === 'date-desc') return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        if (val === 'date-asc') return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        if (val === 'name-asc') return a.name.localeCompare(b.name);
+        if (val === 'name-desc') return b.name.localeCompare(a.name);
+        return 0;
+      });
+    }
+    
+    renderFolders(filtered);
+  };
+
+  searchInput?.addEventListener('input', filterAndSortFolders);
+  sortSelect?.addEventListener('change', filterAndSortFolders);
 
   // Create folder
   $('create-folder-btn')?.addEventListener('click', () => { showModal('create-folder-modal'); $<HTMLInputElement>('folder-name-input')?.focus(); });
@@ -484,7 +641,8 @@ function bindEvents(): void {
   // Delete selected
   $('delete-selected-btn')?.addEventListener('click', async () => {
     if (!selectedPhotos.size) return;
-    if (!confirm(`Smazat ${selectedPhotos.size} fotek?`)) return;
+    const confirmed = await showConfirm('Smazat fotky?', `Opravdu chcete smazat ${selectedPhotos.size} vybraných fotek?`, true);
+    if (!confirmed) return;
     const r = await authFetch('/api/gallery/photos', { method: 'DELETE', body: JSON.stringify({ photoIds: [...selectedPhotos] }) });
     if (r) { showToast('Fotky smazány.', 'success'); selectedPhotos.clear(); isSelectionMode = false; updateSelectionUI(); if (currentFolderId) loadPhotos(currentFolderId); }
   });

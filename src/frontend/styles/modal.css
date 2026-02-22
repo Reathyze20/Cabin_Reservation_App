@@ -20,15 +20,26 @@
   padding: var(--space-3xl);
   border-radius: var(--radius-xl);
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-  width: 100%;
-  max-width: 500px;
+  width: 500px;
+  height: auto;
+  max-width: 95vw;
+  max-height: 90vh;
+  overflow-y: auto;
   position: relative;
   animation: modal-fade-in 0.3s ease-out;
 }
 
+
 @keyframes modal-fade-in {
-  from { opacity: 0; transform: translateY(-20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .modal-close-button {
@@ -43,6 +54,7 @@
   border: none;
   padding: 0;
 }
+
 .modal-close-button:hover {
   color: #333;
 }
@@ -52,6 +64,7 @@
   margin-bottom: var(--space-xl);
   color: #333;
 }
+
 .modal-content p {
   margin-bottom: var(--space-xl);
 }
@@ -60,4 +73,211 @@
   display: flex;
   gap: 10px;
   margin-top: var(--space-xl);
+}
+
+/* ============================================================================
+   Profile Drawer Restyle
+   ============================================================================ */
+.drawer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: flex-end;
+  /* right slide default */
+  align-items: stretch;
+  z-index: var(--z-modal);
+}
+
+.drawer-content {
+  background: var(--color-bg);
+  width: 450px;
+  max-width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -5px 0 25px rgba(0, 0, 0, 0.3);
+  animation: slide-in-right 0.3s ease-out;
+  overflow: hidden;
+}
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+.drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-xl);
+  border-bottom: 1px solid var(--color-border);
+  background: white;
+}
+
+.drawer-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--color-text-dark);
+}
+
+.close-drawer {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  cursor: pointer;
+  color: var(--color-text-light);
+  line-height: 1;
+}
+
+.close-drawer:hover {
+  color: var(--color-text-dark);
+}
+
+.drawer-body {
+  flex: 1;
+  padding: var(--space-xl);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+}
+
+/* Segmented Control */
+.segmented-control {
+  display: flex;
+  background: var(--color-bg-alt);
+  padding: 4px;
+  border-radius: var(--radius-lg);
+}
+
+.segmented-btn {
+  flex: 1;
+  border: none;
+  background: none;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  color: var(--color-text-light);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.segmented-btn.active {
+  background: white;
+  color: var(--color-text-dark);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Tab contents */
+.drawer-tab-content {
+  display: none;
+  flex-direction: column;
+  gap: var(--space-xl);
+}
+
+.drawer-tab-content.active-tab {
+  display: flex;
+}
+
+.drawer-section h3 {
+  margin-top: 0;
+  margin-bottom: var(--space-md);
+  font-size: 1.1rem;
+  color: var(--color-text-dark);
+}
+
+/* Avatar and Color grids */
+.swatch-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.color-swatch {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 3px solid transparent;
+  transition: transform 0.2s, border-color 0.2s;
+  outline: none;
+}
+
+.color-swatch:focus-visible,
+.avatar-icon:focus-visible {
+  outline: 2px dashed var(--color-primary);
+  outline-offset: 4px;
+}
+
+.color-swatch.active {
+  border-color: var(--color-text-dark);
+  transform: scale(1.1);
+}
+
+.avatar-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.avatar-icon {
+  font-size: 1.7rem;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+  outline: none;
+  border: 2px solid transparent;
+  user-select: none;
+}
+
+.avatar-icon.active {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary);
+  transform: scale(1.1);
+}
+
+/* Drawer email row */
+.drawer-email-row input {
+  flex: 1;
+}
+
+/* Mobile Bottom Sheet Layout */
+@media (max-width: 768px) {
+  .drawer-overlay {
+    align-items: flex-end;
+    /* snap bottom */
+  }
+
+  .drawer-content {
+    width: 100%;
+    height: 85vh;
+    /* not full height on mobile */
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -5px 25px rgba(0, 0, 0, 0.3);
+    animation: slide-in-up 0.3s ease-out;
+  }
+
+  @keyframes slide-in-up {
+    from {
+      transform: translateY(100%);
+    }
+
+    to {
+      transform: translateY(0);
+    }
+  }
 }
