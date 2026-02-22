@@ -96,7 +96,10 @@ router.get("/", protect, async (req: Request, res: Response) => {
     const totalPhotos = await prisma.galleryPhoto.count();
     const totalDiaryEntries = await prisma.diaryEntry.count();
     const unpurchasedCount = await prisma.shoppingListItem.count({
-      where: { purchased: false },
+      where: {
+        purchased: false,
+        list: { isResolved: false }
+      },
     });
 
     // 7) User's own next reservation
