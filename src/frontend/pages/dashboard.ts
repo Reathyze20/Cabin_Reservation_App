@@ -184,19 +184,6 @@ function getTemplate(): string {
 
   return `
   <div class="dashboard nordic-dashboard">
-    <!-- Desktop Header -->
-    <div class="dashboard-desktop-header desktop-only dashboard-card" style="margin-bottom: 24px; padding: 24px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); text-align: center;">
-      <div class="dashboard-avatar-picker avatar-picker-btn" title="Změnit avatar" style="margin: 0; border: 2px solid var(--color-primary-light);">
-        ${avatarDisplay}
-      </div>
-      <div>
-        <h1 class="dashboard-greeting" style="margin: 0 0 4px 0; font-size: 28px; font-weight: 700; color: var(--color-text-dark);">
-          ${getGreeting()}, <strong>${username.split(' ')[0]}</strong>!
-        </h1>
-        <p class="dashboard-subtitle" style="margin: 0; font-size: 16px; color: var(--color-text-light);">Zde je přehled chaty</p>
-      </div>
-    </div>
-
     <!-- Mobile Header -->
     <div class="dashboard-mobile-header mobile-only">
       <div class="header-bg"></div>

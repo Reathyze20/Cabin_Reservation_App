@@ -15,9 +15,9 @@
 
 @media (min-width: 768px) {
   .nordic-dashboard {
-    padding: 24px 0;
-    justify-content: center;
-    height: 100vh;
+    padding: 0;
+    justify-content: stretch;
+    height: 100%;
     overflow: hidden;
   }
 }
@@ -89,7 +89,9 @@
 @media (min-width: 768px) {
   .dashboard-grid {
     grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
     gap: 20px;
+    height: 100%;
     padding-bottom: 16px;
   }
 }
