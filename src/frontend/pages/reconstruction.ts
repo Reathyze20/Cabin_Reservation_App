@@ -61,9 +61,9 @@ function getTemplate(): string {
   <div id="add-reconstruction-modal" class="modal-overlay hidden">
     <div class="modal-content">
       <span class="modal-close-button" data-close="add-reconstruction-modal">&times;</span>
-      <h2>Nová položka</h2>
+      <h2 id="add-reconstruction-title">Nová položka</h2>
       <form id="add-reconstruction-form">
-        <div class="form-group">
+        <div class="form-group hidden">
           <label>Kategorie</label>
           <select id="rec-category">
             <option value="idea">Nápad</option>
@@ -83,10 +83,9 @@ function getTemplate(): string {
         </div>
 
         <div id="dynamic-fields-company" class="dynamic-fields hidden">
-          <div class="form-group"><label>Specializace</label><input type="text" id="rec-specialization" placeholder="např. Truhlář, Instalatér" /></div>
           <div class="form-group"><label>Telefon</label><input type="tel" id="rec-phone" /></div>
           <div class="form-group"><label>E-mail</label><input type="email" id="rec-email" /></div>
-          <div class="form-group"><label>Web</label><input type="url" id="rec-link-company" placeholder="https://" /></div>
+          <div class="form-group"><label>Web</label><input type="url" id="rec-link-company" placeholder="" /></div>
           <div class="form-group">
             <label>Stav</label>
             <select id="rec-status-company">
@@ -303,6 +302,15 @@ function bindEvents(): void {
     container.querySelectorAll('.dynamic-fields').forEach(el => el.classList.add('hidden'));
     const target = $(`dynamic-fields-${cat}`);
     if (target) target.classList.remove('hidden');
+
+    // Update modal title based on category
+    const titleEl = $('add-reconstruction-title');
+    if (titleEl) {
+      if (cat === 'idea') titleEl.textContent = 'Nová položka - Nápad';
+      else if (cat === 'company') titleEl.textContent = 'Nová položka - Firma / Kontakt';
+      else if (cat === 'task') titleEl.textContent = 'Nová položka - Úkol';
+      else titleEl.textContent = 'Nová položka';
+    }
   });
 
   // Form submit
@@ -322,7 +330,6 @@ function bindEvents(): void {
       data.tag = $<HTMLInputElement>('rec-tag')?.value || '';
       data.cost = $<HTMLInputElement>('rec-cost-idea')?.value || '';
     } else if (cat === 'company') {
-      data.specialization = $<HTMLInputElement>('rec-specialization')?.value || '';
       data.phone = $<HTMLInputElement>('rec-phone')?.value || '';
       data.email = $<HTMLInputElement>('rec-email')?.value || '';
       data.link = $<HTMLInputElement>('rec-link-company')?.value || '';
