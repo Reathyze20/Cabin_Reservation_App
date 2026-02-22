@@ -35,6 +35,23 @@ function getTemplate(): string {
         <h2><i class="fas fa-server"></i> Systém</h2>
         <div class="system-info" id="sys-info-content">Načítání…</div>
       </div>
+
+      <div class="admin-section" id="server-logs">
+        <h2><i class="fas fa-terminal"></i> Logy serveru</h2>
+        <div class="logs-controls" style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
+          <select id="log-date-select" style="padding: var(--space-sm) 12px; border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: var(--font-size-sm);"></select>
+          <select id="log-level-select" style="padding: var(--space-sm) 12px; border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: var(--font-size-sm);">
+            <option value="">Všechny úrovně</option>
+            <option value="INFO">INFO</option>
+            <option value="WARN">WARN</option>
+            <option value="ERROR">ERROR</option>
+            <option value="DEBUG">DEBUG</option>
+          </select>
+          <button id="btn-refresh-logs" class="button-secondary" style="margin: 0; padding: 0 15px; height: 38px;"><i class="fas fa-sync-alt"></i> Obnovit</button>
+          <button id="btn-download-logs" class="button-secondary" style="margin: 0; padding: 0 15px; height: 38px;"><i class="fas fa-download"></i> Stáhnout</button>
+        </div>
+        <div class="logs-viewer" id="logs-content" style="background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 8px; font-family: monospace; height: 400px; overflow-y: auto; white-space: pre-wrap; font-size: 13px; line-height: 1.4;">Načítání logů...</div>
+      </div>
     </div>
   </div>
 
@@ -166,6 +183,76 @@ async function loadSystemInfo(): Promise<void> {
     </div>`;
 }
 
+async function loadLogFiles(): Promise<void> {
+  const data = await authFetch<{ files: string[] }>('/api/logs/files', { silent: true });
+  const select = $<HTMLSelectElement>('log-date-select');
+  if (!select) return;
+  
+  if (data && data.files && data.files.length > 0) {
+    select.innerHTML = data.files.map(f => `<option value="${f}">${f}</option>`).join('');
+  } else {
+    const today = new Date().toISOString().split('T')[0];
+    select.innerHTML = `<option value="${today}">${today}</option>`;
+  }
+}
+
+async function loadLogs(): Promise<void> {
+  const date = $<HTMLSelectElement>('log-date-select')?.value || new Date().toISOString().split('T')[0];
+  const level = $<HTMLSelectElement>('log-level-select')?.value || '';
+  
+  const el = $('logs-content');
+  if (el) el.textContent = 'Načítání logů...';
+
+  let url = `/api/logs?date=${date}&lines=500`;
+  if (level) url += `&level=${level}`;
+
+  const data = await authFetch<{ logs: string[] }>(url, { silent: true });
+  if (!el) return;
+
+  if (data && data.logs) {
+    if (data.logs.length === 0) {
+      el.textContent = 'Žádné logy pro tento den/filtr.';
+    } else {
+      // Colorize log levels
+      const formattedLogs = data.logs.map(line => {
+        let color = '#d4d4d4';
+        if (line.includes('[ERROR]')) color = '#f87171';
+        else if (line.includes('[WARN]')) color = '#fbbf24';
+        else if (line.includes('[INFO]')) color = '#60a5fa';
+        else if (line.includes('[DEBUG]')) color = '#9ca3af';
+        
+        // Escape HTML to prevent XSS
+        const escapedLine = line.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return `<span style="color: ${color}">${escapedLine}</span>`;
+      }).join('\n');
+      
+      el.innerHTML = formattedLogs;
+      // Scroll to bottom
+      el.scrollTop = el.scrollHeight;
+    }
+  } else {
+    el.textContent = 'Nepodařilo se načíst logy.';
+  }
+}
+
+function downloadLogs(): void {
+  const el = $('logs-content');
+  if (!el) return;
+  
+  const date = $<HTMLSelectElement>('log-date-select')?.value || 'logs';
+  const text = el.textContent || '';
+  
+  const blob = new Blob([text], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `chata-logs-${date}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 function bindEvents(): void {
   // Close modal
   container.querySelectorAll<HTMLElement>('[data-close]').forEach((btn) => {
@@ -224,6 +311,12 @@ function bindEvents(): void {
       loadUsers();
     }
   });
+
+  // Logs controls
+  $('btn-refresh-logs')?.addEventListener('click', loadLogs);
+  $('btn-download-logs')?.addEventListener('click', downloadLogs);
+  $('log-date-select')?.addEventListener('change', loadLogs);
+  $('log-level-select')?.addEventListener('change', loadLogs);
 }
 
 const adminPage: PageModule = {
@@ -236,7 +329,8 @@ const adminPage: PageModule = {
     }
     el.innerHTML = getTemplate();
     bindEvents();
-    await Promise.all([loadUsers(), loadSystemInfo()]);
+    await Promise.all([loadUsers(), loadSystemInfo(), loadLogFiles()]);
+    await loadLogs();
   },
   unmount() { users = []; },
 };

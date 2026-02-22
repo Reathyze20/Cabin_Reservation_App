@@ -90,9 +90,11 @@
   .dashboard-grid {
     grid-template-columns: 1fr 1fr;
     grid-template-rows: 1fr 1fr;
-    gap: 20px;
-    height: 100%;
-    padding-bottom: 16px;
+    gap: 24px;
+    height: auto;
+    flex-grow: 1;
+    min-height: 0;
+    padding-bottom: 24px;
   }
 }
 
@@ -103,6 +105,7 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
 .card-highlight {
@@ -111,8 +114,12 @@
 }
 
 .card-body-full {
-  padding: 20px;
+  padding: 24px;
   flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .dashboard-card-link-footer {
@@ -135,8 +142,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   text-align: center;
   gap: 4px;
+  flex: 1;
 }
 
 .nas-bubble {
@@ -197,8 +206,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   text-align: center;
   margin-bottom: 24px;
+  flex: 1;
 }
 
 .nw-primary {
@@ -209,8 +220,45 @@
 
 .nw-icon {
   font-size: 48px;
-  color: #c7d2c3;
-  /* Jemná listově šedozelená pro oblaka */
+  /* Výchozí barva, pokud by chyběla specifická */
+  color: #9ca3af;
+}
+
+/* ── Barvy pro specifické ikony počasí ── */
+.nw-icon .fa-sun {
+  color: #f59e0b;
+}
+
+.nw-icon .fa-cloud-sun {
+  color: #fbbf24;
+}
+
+.nw-icon .fa-cloud {
+  color: #9ca3af;
+}
+
+.nw-icon .fa-smog {
+  color: #a8a29e;
+}
+
+.nw-icon .fa-cloud-rain {
+  color: #60a5fa;
+}
+
+.nw-icon .fa-cloud-showers-heavy {
+  color: #3b82f6;
+}
+
+.nw-icon .fa-snowflake {
+  color: #bfdbfe;
+}
+
+.nw-icon .fa-cloud-sun-rain {
+  color: #38bdf8;
+}
+
+.nw-icon .fa-bolt {
+  color: #eab308;
 }
 
 .nw-temp {
@@ -270,6 +318,7 @@
   text-align: center;
   padding: 16px 0;
   color: var(--color-text-light);
+  flex: 1;
 }
 
 .nordic-icon-wrapper {
@@ -407,6 +456,8 @@
 
   .dashboard-stats.desktop-only {
     display: grid !important;
+    padding-bottom: 0;
+    flex-shrink: 0;
   }
 
   .mobile-only {
@@ -425,12 +476,13 @@
   background: #ffffff;
   border-radius: 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-  padding: 20px;
+  padding: 16px 20px;
   text-align: center;
   display: flex !important;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: 6px;
 }
 
 .dashboard-stat i {
