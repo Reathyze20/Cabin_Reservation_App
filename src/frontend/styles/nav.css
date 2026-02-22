@@ -117,9 +117,9 @@
     display: none !important;
   }
 
-  /* Simplify top bar on mobile */
+  /* Completely remove top bar on mobile */
   .top-bar {
-    padding: 8px var(--space-md);
+    display: none !important;
   }
 
   .username-display {
@@ -139,12 +139,13 @@
     left: 0;
     right: 0;
     z-index: var(--z-sticky);
-    background: rgba(255, 255, 255, 0.85);
+    background: #ffffff;
+    /* Čisté bílé pozadí pro nordic styl */
     /* Glassmorphism */
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border-top: 1px solid rgba(255, 255, 255, 0.5);
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.04);
     justify-content: space-around;
     align-items: center;
     padding: 4px 0;
@@ -174,6 +175,7 @@
 
   .mobile-nav-link.active {
     color: var(--color-primary);
+    font-weight: 600;
   }
 
   .mobile-nav-link.active i {

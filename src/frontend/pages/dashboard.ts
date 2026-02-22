@@ -183,18 +183,16 @@ function getTemplate(): string {
   const avatarDisplay = currentIcon ? currentIcon : username.charAt(0).toUpperCase();
 
   return `
-  <div class="dashboard">
-    <!-- Header -->
-    <div class="dashboard-header">
-      <div style="display: flex; align-items: center; gap: 15px;">
-        <div id="avatar-picker-btn" class="dashboard-avatar-picker" style="cursor: pointer; width: 60px; height: 60px; border-radius: 50%; background: var(--color-primary-bg); color: var(--color-primary-dark); display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: bold; border: 2px solid var(--color-primary); box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: transform 0.2s;" title="Změnit avatar">
+  <div class="dashboard nordic-dashboard">
+    <!-- Header: oříznutá fotka přírody na pozadí, malý avatar, Ahoj jméno -->
+    <div class="dashboard-mobile-header">
+      <div class="header-bg"></div>
+      <div class="header-content">
+        <div id="avatar-picker-btn" class="dashboard-avatar-picker" title="Změnit avatar">
           ${avatarDisplay}
         </div>
-        <div>
-          <h1 class="dashboard-greeting" style="margin-bottom: 5px;">
-            ${getGreeting()}, <strong>${username}</strong>!
-          </h1>
-          <p class="dashboard-subtitle" style="margin: 0;">Zde je přehled chaty</p>
+        <div class="greeting-text">
+          Ahoj, <strong>${username.split(' ')[0]}</strong>!
         </div>
       </div>
     </div>
@@ -214,119 +212,40 @@ function getTemplate(): string {
       </div>
     </div>
 
-    <!-- Weather + Active reservation row -->
-    <div class="dashboard-top-row">
-      <!-- Weather card -->
-      <div class="dashboard-card dashboard-weather-card">
-        <div class="dashboard-card-header">
-          <i class="fas fa-cloud-sun"></i>
-          <span>Počasí na chatě</span>
-        </div>
-        <div id="dashboard-weather" class="dashboard-weather-content">
-          <div class="spinner-container"><div class="spinner"></div></div>
-        </div>
-      </div>
-
-      <!-- Active / next reservation -->
-      <div class="dashboard-card dashboard-active-card">
-        <div class="dashboard-card-header">
-          <i class="fas fa-house-user"></i>
-          <span>Právě na chatě</span>
-        </div>
-        <div id="dashboard-active-reservation" class="dashboard-active-content">
-          <div class="spinner-container"><div class="spinner"></div></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Main content grid -->
+    <!-- Cards Layout: 1 sloupec, gap 16px na mobilu -->
     <div class="dashboard-grid">
-      <!-- Upcoming reservations -->
-      <div class="dashboard-card">
-        <div class="dashboard-card-header">
-          <i class="fas fa-calendar-alt"></i>
-          <span>Nadcházející rezervace</span>
-        </div>
-        <div id="dashboard-reservations" class="dashboard-card-body">
+      <!-- Karta 1: Právě na chatě -->
+      <div class="dashboard-card card-highlight">
+        <div id="dashboard-active-reservation" class="card-body-full">
           <div class="spinner-container"><div class="spinner"></div></div>
-        </div>
-        <div class="dashboard-card-footer">
-          <a href="#/reservations" class="dashboard-link">
-            <i class="fas fa-arrow-right"></i> Všechny rezervace
-          </a>
         </div>
       </div>
 
-      <!-- Shopping needs -->
-      <div class="dashboard-card">
-        <div class="dashboard-card-header">
-          <i class="fas fa-shopping-cart"></i>
-          <span>K dokoupení</span>
-        </div>
-        <div id="dashboard-shopping" class="dashboard-card-body">
+      <!-- Karta 2: Počasí na chatě -->
+      <div class="dashboard-card card-weather">
+        <div id="dashboard-weather" class="card-body-full">
           <div class="spinner-container"><div class="spinner"></div></div>
-        </div>
-        <div class="dashboard-card-footer">
-          <a href="#/reservations" class="dashboard-link">
-            <i class="fas fa-arrow-right"></i> Nákupní seznamy
-          </a>
         </div>
       </div>
 
-      <!-- Latest notes -->
+      <!-- Karta 3: Nadcházející rezervace -->
       <div class="dashboard-card">
-        <div class="dashboard-card-header">
-          <i class="fas fa-comments"></i>
-          <span>Poslední zprávy</span>
-        </div>
-        <div id="dashboard-notes" class="dashboard-card-body">
+        <div id="dashboard-reservations" class="card-body-full">
           <div class="spinner-container"><div class="spinner"></div></div>
         </div>
-        <div class="dashboard-card-footer">
-          <a href="#/notes" class="dashboard-link">
-            <i class="fas fa-arrow-right"></i> Přejít do chatu
-          </a>
-        </div>
+        <a href="#/reservations" class="dashboard-card-link-footer">
+          Všechny rezervace
+        </a>
       </div>
 
-      <!-- Recent diary -->
+      <!-- Karta 4: K dokoupení -->
       <div class="dashboard-card">
-        <div class="dashboard-card-header">
-          <i class="fas fa-book-open"></i>
-          <span>Deník</span>
-        </div>
-        <div id="dashboard-diary" class="dashboard-card-body">
+        <div id="dashboard-shopping" class="card-body-full">
           <div class="spinner-container"><div class="spinner"></div></div>
         </div>
-        <div class="dashboard-card-footer">
-          <a href="#/diary" class="dashboard-link">
-            <i class="fas fa-arrow-right"></i> Celý deník
-          </a>
-        </div>
-      </div>
-    </div>
-
-    <!-- Stats row -->
-    <div class="dashboard-stats">
-      <div class="dashboard-stat">
-        <i class="fas fa-calendar-check"></i>
-        <span class="dashboard-stat-value" id="stat-reservations">-</span>
-        <span class="dashboard-stat-label">Rezervací</span>
-      </div>
-      <div class="dashboard-stat">
-        <i class="fas fa-camera"></i>
-        <span class="dashboard-stat-value" id="stat-photos">-</span>
-        <span class="dashboard-stat-label">Fotek</span>
-      </div>
-      <div class="dashboard-stat">
-        <i class="fas fa-pen-nib"></i>
-        <span class="dashboard-stat-value" id="stat-diary">-</span>
-        <span class="dashboard-stat-label">Zápisů</span>
-      </div>
-      <div class="dashboard-stat">
-        <i class="fas fa-shopping-basket"></i>
-        <span class="dashboard-stat-value" id="stat-shopping">-</span>
-        <span class="dashboard-stat-label">Ke koupi</span>
+        <a href="#/shopping" class="dashboard-card-link-footer">
+          Nákupní seznamy
+        </a>
       </div>
     </div>
   </div>`;
@@ -340,36 +259,34 @@ function renderWeather(weather: WeatherData | null): void {
 
   if (!weather) {
     el.innerHTML = `
-      <div class="dashboard-empty">
-        <i class="fas fa-cloud-slash"></i>
+      <div class="nordic-empty-state">
+        <i class="fas fa-cloud-slash" style="font-size: 24px; color: #cbd5e1; margin-bottom: 8px;"></i>
         <p>Nepodařilo se načíst počasí</p>
       </div>`;
     return;
   }
 
   el.innerHTML = `
-    <div class="weather-main">
-      <div class="weather-temp">
-        <i class="fas ${weather.icon} weather-icon"></i>
-        <span class="weather-temp-value">${weather.temp}°C</span>
+    <div class="nordic-weather-main">
+      <div class="nw-primary">
+        <i class="fas ${weather.icon} nw-icon"></i>
+        <div class="nw-temp">${weather.temp}°C</div>
       </div>
-      <div class="weather-desc">${weather.description}</div>
-      <div class="weather-location">
-        <i class="fas fa-map-marker-alt"></i> ${weather.city}
-      </div>
+      <div class="nw-desc">${weather.description}</div>
+      <div class="nw-city">Třebenice</div>
     </div>
-    <div class="weather-details">
-      <div class="weather-detail">
-        <i class="fas fa-temperature-low"></i>
-        <span>Pocitově ${weather.feelsLike}°C</span>
+    <div class="nordic-weather-secondary">
+      <div class="nw-sec-item">
+        <span>Pocitově</span>
+        <strong>${weather.feelsLike}°</strong>
       </div>
-      <div class="weather-detail">
-        <i class="fas fa-tint"></i>
-        <span>Vlhkost ${weather.humidity}%</span>
+      <div class="nw-sec-item">
+        <span>Vlhkost</span>
+        <strong>${weather.humidity}%</strong>
       </div>
-      <div class="weather-detail">
-        <i class="fas fa-wind"></i>
-        <span>Vítr ${weather.windSpeed} km/h</span>
+      <div class="nw-sec-item">
+        <span>Vítr</span>
+        <strong>${weather.windSpeed} km/h</strong>
       </div>
     </div>`;
 }
@@ -381,43 +298,28 @@ function renderActiveReservation(data: DashboardData): void {
   if (data.activeReservation) {
     const r = data.activeReservation;
     el.innerHTML = `
-      <div class="active-reservation">
-        <div class="active-reservation-badge" style="background: ${r.userColor || '#E07A5F'}">
-          <i class="fas fa-house-chimney"></i>
+      <div class="nordic-active-state">
+        <div class="nas-bubble" style="background: ${r.userColor || '#E07A5F'}">
+          ${r.username.charAt(0).toUpperCase()}
         </div>
-        <div class="active-reservation-info">
-          <strong>${r.username}</strong> je na chatě
-          <div class="active-reservation-dates">
-            ${formatDate(r.from)} — ${formatDate(r.to)}
-          </div>
-          ${r.purpose ? `<div class="active-reservation-purpose">${r.purpose}</div>` : ''}
-        </div>
+        <p class="nas-text"><strong>${r.username}</strong> je na chatě</p>
+        <p class="nas-dates">${formatDate(r.from)} — ${formatDate(r.to)}</p>
       </div>`;
   } else if (data.myNextReservation) {
     const days = daysUntil(data.myNextReservation.from);
     el.innerHTML = `
-      <div class="active-reservation next-reservation">
-        <div class="active-reservation-badge next" style="background: #E07A5F">
+      <div class="nordic-active-state">
+        <div class="nas-bubble" style="background: #a3b18a">
           <i class="fas fa-calendar-day"></i>
         </div>
-        <div class="active-reservation-info">
-          <strong>Tvoje příští návštěva</strong>
-          <div class="active-reservation-dates">
-            ${formatDate(data.myNextReservation.from)} — ${formatDate(data.myNextReservation.to)}
-          </div>
-          <div class="active-reservation-countdown">
-            <span>za</span>
-            <strong>${days}</strong> 
-            <span>${days === 1 ? 'den' : days < 5 && days > 0 ? 'dny' : 'dní'}</span>
-          </div>
-        </div>
+        <p class="nas-text">Tvoje návštěva za <strong>${days}</strong> ${days === 1 ? 'den' : days < 5 && days > 0 ? 'dny' : 'dní'}</p>
+        <p class="nas-dates">${formatDate(data.myNextReservation.from)} — ${formatDate(data.myNextReservation.to)}</p>
       </div>`;
   } else {
     el.innerHTML = `
-      <div class="dashboard-empty">
-        <i class="fas fa-house"></i>
-        <p>Chata je momentálně volná</p>
-        <a href="#/reservations" class="dashboard-empty-action">Zarezervovat</a>
+      <div class="nordic-active-state empty">
+        <p class="nas-text" style="font-weight: 600; font-size: 18px;">Chata je momentálně volná</p>
+        <a href="#/reservations" class="nas-cta">Zarezervovat</a>
       </div>`;
   }
 }
@@ -428,33 +330,21 @@ function renderUpcoming(reservations: DashboardData['upcomingReservations']): vo
 
   if (reservations.length === 0) {
     el.innerHTML = `
-      <div class="dashboard-empty">
-        <i class="fas fa-calendar-plus"></i>
+      <div class="nordic-empty-state">
+        <div class="nordic-icon-wrapper"><i class="fas fa-calendar-alt"></i></div>
         <p>Žádné nadcházející rezervace</p>
       </div>`;
     return;
   }
 
-  el.innerHTML = reservations.map((r) => {
-    const days = daysUntil(r.from);
-    const statusBadge = r.status === 'backup'
-      ? '<span class="badge badge-backup">záloha</span>'
-      : '';
-
+  const toShow = reservations.slice(0, 3);
+  el.innerHTML = toShow.map((r) => {
     return `
-    <div class="dashboard-list-item">
-      <div class="dashboard-list-color" style="background: ${r.userColor || '#808080'}"></div>
-      <div class="dashboard-list-content">
-        <div class="dashboard-list-title">
-          ${r.username} ${statusBadge}
-        </div>
-        <div class="dashboard-list-subtitle">
-          ${formatDateShort(r.from)} — ${formatDateShort(r.to)}
-          ${r.purpose ? `· ${r.purpose}` : ''}
-        </div>
-      </div>
-      <div class="dashboard-list-badge">
-        za ${days} ${days === 1 ? 'den' : days < 5 ? 'dny' : 'dní'}
+    <div class="nordic-list-item">
+      <div class="nli-color" style="background: ${r.userColor || '#808080'}"></div>
+      <div class="nli-content">
+        <div class="nli-title">${r.username}</div>
+        <div class="nli-subtitle">${formatDateShort(r.from)} — ${formatDateShort(r.to)}</div>
       </div>
     </div>`;
   }).join('');
@@ -466,24 +356,21 @@ function renderShopping(items: DashboardData['unpurchasedItems'], count: number)
 
   if (items.length === 0) {
     el.innerHTML = `
-      <div class="dashboard-empty">
-        <i class="fas fa-check-circle"></i>
-        <p>Na chatě nic nechybí!</p>
+      <div class="nordic-empty-state">
+        <p style="font-size: 16px; font-weight: 500;">Na chatě nic nechybí!</p>
       </div>`;
     return;
   }
 
-  el.innerHTML = items.map((item) => `
-    <div class="dashboard-list-item">
-      <div class="dashboard-list-icon"><i class="fas fa-circle"></i></div>
-      <div class="dashboard-list-content">
-        <div class="dashboard-list-title">${item.name}</div>
-        <div class="dashboard-list-subtitle">Přidal: ${item.addedBy}</div>
+  const toShow = items.slice(0, 3);
+  el.innerHTML = toShow.map((item) => `
+    <div class="nordic-list-item">
+      <div class="nli-dot"></div>
+      <div class="nli-content">
+        <div class="nli-title">${item.name}</div>
       </div>
     </div>
-  `).join('') + (count > items.length
-      ? `<div class="dashboard-list-more">a dalších ${count - items.length} položek…</div>`
-      : '');
+  `).join('') + (count > 3 ? `<div class="nli-more">a dalších ${count - 3} položek…</div>` : '');
 }
 
 function renderNotes(notes: DashboardData['latestNotes']): void {

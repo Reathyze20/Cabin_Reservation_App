@@ -57,8 +57,17 @@
 
 /* Mobile Layout Adjustments */
 @media (max-width: 768px) {
+  body {
+    background-color: #f7f6f3;
+  }
+
   .app-container {
-    padding: 0 12px 12px 12px;
+    padding: 0;
+    background-color: #f7f6f3;
+  }
+
+  #page-container {
+    padding-top: 0;
   }
 
   .main-content {
@@ -68,7 +77,8 @@
 
   .card {
     padding: var(--space-lg);
-    border-radius: var(--radius-lg);
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
   }
 }
 
