@@ -458,7 +458,7 @@ function showReservationDetail(r: Reservation & { userColor?: string }) {
   if (delBtn) {
     delBtn.addEventListener('click', () => {
       const id = (delBtn as HTMLElement).dataset.id;
-      if (id) confirmDelete(id);
+      if (id) openConfirmDelete(id);
     });
   }
 
@@ -836,7 +836,7 @@ function bindEvents(): void {
     const id = btn.dataset.id!;
     if (btn.classList.contains('edit-btn')) {
       const r = currentReservations.find((x) => x.id === id);
-      if (r) openBookingModal(true, r);
+      if (r) openBookingModal(undefined, undefined, true, r);
     } else if (btn.classList.contains('delete-btn')) {
       openConfirmDelete(id);
     } else if (btn.classList.contains('assign-btn')) {
@@ -905,3 +905,12 @@ const reservationsPage: PageModule = {
 };
 
 export default reservationsPage;
+function openEditModal(id: string): void {
+  const reservation = currentReservations.find((r) => r.id === id);
+  if (!reservation) {
+    showToast('Rezervace nenalezena.', 'error');
+    return;
+  }
+  openBookingModal(undefined, undefined, true, reservation);
+}
+
