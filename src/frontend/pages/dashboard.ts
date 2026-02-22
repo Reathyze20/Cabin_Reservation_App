@@ -40,6 +40,12 @@ interface DashboardData {
     unpurchasedCount: number;
     totalCount: number;
   }[];
+  shoppingItems: {
+    id: string;
+    name: string;
+    listName: string;
+    purchased: boolean;
+  }[];
   latestNotes: {
     id: string;
     username: string;
@@ -411,39 +417,121 @@ function renderUpcoming(reservations: DashboardData['upcomingReservations']): vo
     </div>`;
 }
 
-function renderShopping(lists: DashboardData['activeShoppingLists'], count: number): void {
+function renderShopping(items: DashboardData['shoppingItems'], count: number): void {
   const el = document.getElementById('dashboard-shopping');
   if (!el) return;
 
-  if (lists.length === 0) {
-    el.innerHTML = `
-      <div class="empty-state-card">
-        <i class="fas fa-shopping-basket empty-icon-duotone"></i>
-        <p class="empty-text">Na chatě nic nechybí!</p>
-        <a href="#/shopping" class="empty-cta"><i class="fas fa-plus"></i> Přidat položku</a>
-      </div>`;
-    return;
-  }
-
-  const toShow = lists.slice(0, 3);
-  el.innerHTML = `
+  const headerHtml = `
     <div class="list-header">
       <span class="list-title">K dokoupení</span>
-      <a href="#/shopping" class="list-link">Všechny (${count})</a>
+      <a href="#/shopping" class="list-link">Všechny nákupy &rarr;</a>
     </div>
-    <div class="list-content">
-      ${toShow.map((list) => `
-        <div class="list-item">
-          <div class="list-item-icon" style="background: var(--color-primary); font-size: 14px;">
-            <i class="fas fa-shopping-cart"></i>
+    <div class="shopping-quick-add">
+      <input type="text" id="dashboard-quick-add-input" placeholder="Rychle přidat položku..." autocomplete="off" />
+      <button id="dashboard-quick-add-btn" aria-label="Přidat položku">
+        <i class="fas fa-arrow-up"></i>
+      </button>
+    </div>
+  `;
+
+  if (items.length === 0) {
+    el.innerHTML = `
+      ${headerHtml}
+      <div class="empty-state-card shopping-empty">
+        <i class="fas fa-shopping-basket empty-icon-duotone"></i>
+        <p class="empty-text">Na chatě nic nechybí!</p>
+      </div>`;
+  } else {
+    const toShow = items.slice(0, 5);
+    el.innerHTML = `
+      ${headerHtml}
+      <div class="list-content shopping-widget-list">
+        ${toShow.map((item) => `
+          <div class="shopping-widget-item ${item.purchased ? 'is-purchased' : ''}" data-id="${item.id}">
+            <div class="shopping-widget-checkbox">
+              <i class="fas ${item.purchased ? 'fa-check-circle' : 'fa-circle'}"></i>
+            </div>
+            <div class="shopping-widget-name">${item.name}</div>
+            <div class="shopping-widget-badge">${item.listName}</div>
           </div>
-          <div class="list-item-content">
-            <div class="list-item-title">${list.name}</div>
-            <div class="list-item-subtitle">Chybí ${list.unpurchasedCount} z ${list.totalCount} položek</div>
-          </div>
-        </div>
-      `).join('')}
-    </div>`;
+        `).join('')}
+      </div>`;
+  }
+
+  // Attach event listeners
+  const input = document.getElementById('dashboard-quick-add-input') as HTMLInputElement;
+  const btn = document.getElementById('dashboard-quick-add-btn') as HTMLButtonElement;
+
+  const handleAdd = async () => {
+    const name = input.value.trim();
+    if (!name) return;
+    
+    input.disabled = true;
+    btn.disabled = true;
+    
+    try {
+      // Add to default list (or the first available list if we had one, but backend handles 'default' fallback)
+      const res = await authFetch('/api/shopping-list/default/items', {
+        method: 'POST',
+        body: JSON.stringify({ name })
+      });
+      
+      if (res) {
+        input.value = '';
+        showToast('Položka přidána', 'success');
+        loadDashboard(); // Refresh dashboard to show new item
+      }
+    } catch (err) {
+      showToast('Chyba při přidávání položky', 'error');
+    } finally {
+      input.disabled = false;
+      btn.disabled = false;
+      input.focus();
+    }
+  };
+
+  if (btn) btn.addEventListener('click', handleAdd);
+  if (input) input.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') handleAdd();
+  });
+
+  // Checkbox toggles
+  const itemEls = el.querySelectorAll('.shopping-widget-item');
+  itemEls.forEach(itemEl => {
+    const checkbox = itemEl.querySelector('.shopping-widget-checkbox');
+    if (checkbox) {
+      checkbox.addEventListener('click', async () => {
+        const id = (itemEl as HTMLElement).dataset.id;
+        if (!id) return;
+        
+        const isPurchased = itemEl.classList.contains('is-purchased');
+        const newStatus = !isPurchased;
+        
+        // Optimistic UI update
+        itemEl.classList.toggle('is-purchased', newStatus);
+        const icon = checkbox.querySelector('i');
+        if (icon) {
+          icon.className = newStatus ? 'fas fa-check-circle' : 'fas fa-circle';
+        }
+        
+        try {
+          await authFetch(`/api/shopping-list/${id}/purchase`, {
+            method: 'PUT',
+            body: JSON.stringify({ purchased: newStatus })
+          });
+          // Optionally reload dashboard after a short delay to let user see the checkmark
+          setTimeout(loadDashboard, 1000);
+        } catch (err) {
+          // Revert on error
+          itemEl.classList.toggle('is-purchased', isPurchased);
+          if (icon) {
+            icon.className = isPurchased ? 'fas fa-check-circle' : 'fas fa-circle';
+          }
+          showToast('Chyba při úpravě položky', 'error');
+        }
+      });
+    }
+  });
 }
 
 
@@ -486,7 +574,7 @@ async function loadDashboard(): Promise<void> {
   if (data) {
     renderActiveReservation(data);
     renderUpcoming(data.upcomingReservations);
-    renderShopping(data.activeShoppingLists, data.stats.unpurchasedCount);
+    renderShopping(data.shoppingItems, data.stats.unpurchasedCount);
     renderStats(data.stats);
   }
 }

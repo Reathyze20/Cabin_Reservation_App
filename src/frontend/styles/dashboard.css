@@ -595,3 +595,125 @@
     font-size: 20px;
   }
 }
+
+/*  Shopping Widget  */
+.shopping-quick-add {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  position: relative;
+}
+
+.shopping-quick-add input {
+  flex: 1;
+  padding: 10px 16px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  font-size: 14px;
+  background: rgba(255, 255, 255, 0.8);
+  transition: all 0.2s ease;
+}
+
+.shopping-quick-add input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(88, 129, 87, 0.1);
+  background: #fff;
+}
+
+.shopping-quick-add button {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.shopping-quick-add button:hover {
+  background: var(--color-primary-dark);
+  transform: translateY(-1px);
+}
+
+.shopping-quick-add button:active {
+  transform: translateY(1px);
+}
+
+.shopping-widget-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.shopping-widget-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.shopping-widget-item:hover {
+  background: rgba(255, 255, 255, 0.8);
+  transform: translateX(2px);
+}
+
+.shopping-widget-checkbox {
+  color: #cbd5e1;
+  font-size: 20px;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shopping-widget-checkbox:hover {
+  color: var(--color-primary);
+}
+
+.shopping-widget-name {
+  flex: 1;
+  font-size: 14px;
+  color: var(--color-text-dark);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: all 0.2s ease;
+}
+
+.shopping-widget-badge {
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  background: rgba(88, 129, 87, 0.1);
+  color: var(--color-primary-dark);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.shopping-widget-item.is-purchased .shopping-widget-checkbox {
+  color: var(--color-primary);
+}
+
+.shopping-widget-item.is-purchased .shopping-widget-name {
+  text-decoration: line-through;
+  color: #94a3b8;
+}
+
+.shopping-widget-item.is-purchased .shopping-widget-badge {
+  opacity: 0.5;
+}
+
+.shopping-empty {
+  margin-top: 16px;
+}

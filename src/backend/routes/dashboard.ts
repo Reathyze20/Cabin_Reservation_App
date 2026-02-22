@@ -72,6 +72,29 @@ router.get("/", protect, async (req: Request, res: Response) => {
       };
     });
 
+    // 3b) Top 5 unpurchased shopping items across all active lists
+    const topShoppingItems = await prisma.shoppingListItem.findMany({
+      where: {
+        purchased: false,
+        OR: [
+          { listId: null },
+          { list: { isResolved: false } }
+        ]
+      },
+      include: {
+        list: { select: { name: true } }
+      },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+    });
+
+    const shoppingItems = topShoppingItems.map(item => ({
+      id: item.id,
+      name: item.name,
+      listName: item.list?.name || "Obecné",
+      purchased: item.purchased
+    }));
+
     // 4) Latest notes (last 3)
     const latestNotes = await prisma.note.findMany({
       include: {
@@ -98,7 +121,10 @@ router.get("/", protect, async (req: Request, res: Response) => {
     const unpurchasedCount = await prisma.shoppingListItem.count({
       where: {
         purchased: false,
-        list: { isResolved: false }
+        OR: [
+          { listId: null },
+          { list: { isResolved: false } }
+        ]
       },
     });
 
@@ -142,6 +168,7 @@ router.get("/", protect, async (req: Request, res: Response) => {
           }
         : null,
       activeShoppingLists,
+      shoppingItems,
       latestNotes: latestNotes.map((n) => ({
         id: n.id,
         username: n.user.username,
