@@ -483,7 +483,7 @@ async function loadDashboard(): Promise<void> {
     });
 
     avatarClearBtn?.addEventListener('click', async () => {
-      const res = await authFetch('/api/users/me/icon', {
+      const res = await authFetch('/api/users/me', {
         method: 'PATCH',
         body: JSON.stringify({ animalIcon: null }),
       });
@@ -501,7 +501,7 @@ async function loadDashboard(): Promise<void> {
         const emoji = opt.getAttribute('data-emoji');
         if (!emoji) return;
 
-        const res = await authFetch('/api/users/me/icon', {
+        const res = await authFetch('/api/users/me', {
           method: 'PATCH',
           body: JSON.stringify({ animalIcon: emoji }),
         });

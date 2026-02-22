@@ -13,7 +13,7 @@ import { registerSW } from 'virtual:pwa-register';
 import {
   $, show, hide, showToast,
   isLoggedIn, setAuth, logout, getUsername,
-  saveAnimalIcon, getAnimalIcon
+  saveAnimalIcon, getAnimalIcon, getToken, handleSessionExpired
 } from './lib/common';
 import { initRouter, destroyRouter } from './lib/router';
 
@@ -249,7 +249,7 @@ function initProfileDrawer(): void {
     // Načtení profilu
     try {
       const res = await fetch('/api/users/me', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        headers: { 'Authorization': `Bearer ${getToken()}` }
       });
       if (res.ok) {
         const user = await res.json();
@@ -317,7 +317,7 @@ function initProfileDrawer(): void {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${getToken()}`
         },
         body: JSON.stringify({ email })
       });
@@ -340,16 +340,12 @@ function initProfileDrawer(): void {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${getToken()}`
         },
         body: JSON.stringify(payload)
       });
       if (res.status === 401) {
-        localStorage.removeItem('token');
-        showToast('Relace vypršela. Prosím přihlaste se znovu.', 'error');
-        if (typeof (window as any).__showLogin === 'function') {
-          (window as any).__showLogin();
-        }
+        handleSessionExpired();
         throw new Error('Unauthorized');
       }
       if (!res.ok) throw new Error('Failed');
@@ -495,7 +491,7 @@ function initProfileDrawer(): void {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${getToken()}`
         },
         body: JSON.stringify({ oldPassword, newPassword })
       });
