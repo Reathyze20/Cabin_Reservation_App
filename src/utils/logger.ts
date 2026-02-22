@@ -1,4 +1,4 @@
-import pino from 'pino';
+﻿import pino from 'pino';
 import { requestContext } from './asyncContext';
 import fs from 'fs';
 import path from 'path';
@@ -10,7 +10,11 @@ const level = isTest ? 'warn' : isDev ? 'debug' : 'info';
 
 const LOGS_DIR = path.join(import.meta.dirname, '../../data/logs');
 if (!fs.existsSync(LOGS_DIR) && !isTest) {
-  fs.mkdirSync(LOGS_DIR, { recursive: true });
+  try {
+    fs.mkdirSync(LOGS_DIR, { recursive: true });
+  } catch (err) {
+    console.error('Failed to create logs directory:', err);
+  }
 }
 
 const transport = isDev
@@ -44,18 +48,16 @@ function appendToLogFile(level: string, msg: string, objOrMsg?: any, obj?: any) 
     const date = new Date().toISOString().split('T')[0];
     const logFile = path.join(LOGS_DIR, `${date}.log`);
     const timestamp = new Date().toISOString();
-
+    
     let tag = 'SERVER';
     let message = msg;
     let extra = objOrMsg;
 
-    // Handle our custom (tag, msg, obj) or (msg, obj) patterns
     if (obj) {
       tag = msg;
       message = objOrMsg;
       extra = obj;
     } else if (typeof objOrMsg === 'string' && msg.length < 20) {
-      // Heuristic: if first arg is short and second is string, it's likely [TAG] MSG
       tag = msg;
       message = objOrMsg;
       extra = undefined;
@@ -63,12 +65,15 @@ function appendToLogFile(level: string, msg: string, objOrMsg?: any, obj?: any) 
 
     let line = `[${timestamp}] [${level.toUpperCase()}] [${tag.toUpperCase()}] ${message}`;
     if (extra) {
-      line += ` | ${JSON.stringify(extra)}`;
+      if (typeof extra === 'object') {
+        line += " | " + JSON.stringify(extra);
+      } else {
+        line += " | " + extra;
+      }
     }
 
     fs.appendFileSync(logFile, line + '\n');
   } catch (err) {
-    // Fallback if file logging fails (don't crash the app)
     console.error('Failed to write to log file:', err);
   }
 }
@@ -99,9 +104,6 @@ export const logger = {
     appendToLogFile('DEBUG', msg, objOrMsg, obj);
   },
 
-  /**
-   * Specialized logger for Prisma errors to reduce noise.
-   */
   prismaError: (msg: string, err: any) => {
     if (err && typeof err === 'object' && err.constructor.name.includes('Prisma')) {
       const prismaInfo = {
@@ -137,9 +139,9 @@ export const logger = {
       if (!fs.existsSync(logFile)) return [];
 
       let lines = fs.readFileSync(logFile, 'utf-8').split('\n').filter(l => l.trim());
-
+      
       if (options.level) {
-        const levelTag = `[${options.level.toUpperCase()}]`;
+        const levelTag = '[' + options.level.toUpperCase() + ']';
         lines = lines.filter(l => l.includes(levelTag));
       }
 
