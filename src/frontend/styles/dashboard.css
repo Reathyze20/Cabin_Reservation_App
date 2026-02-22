@@ -1,9 +1,9 @@
 /* ============================================================================
-   Dashboard â€” Mobile-First Nordic Style
+   Dashboard — Premium Glassmorphism UI
    ============================================================================ */
 .nordic-dashboard {
   width: 100%;
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
   min-height: 100%;
   padding: 16px;
@@ -11,30 +11,43 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  gap: 24px;
 }
 
 @media (min-width: 768px) {
   .nordic-dashboard {
-    padding: 0;
-    justify-content: stretch;
+    padding: 24px;
     height: 100%;
     overflow: hidden;
   }
 }
 
-/* â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ¦¦ Global Card Styling (Glassmorphism) ¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦ */
+.glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* ¦¦ Header ¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦ */
 .dashboard-mobile-header {
   position: relative;
-  border-radius: 16px;
+  border-radius: 24px;
   overflow: hidden;
-  margin-bottom: 24px;
-  background: var(--color-bg);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  margin-bottom: 8px;
 }
 
 .header-bg {
-  height: 80px;
-  background: linear-gradient(135deg, #a3b18a 0%, #588157 100%);
+  height: 100px;
+  background: linear-gradient(135deg, rgba(163, 177, 138, 0.9) 0%, rgba(88, 129, 87, 0.9) 100%);
+  backdrop-filter: blur(10px);
 }
 
 @media (min-width: 768px) {
@@ -46,457 +59,462 @@
 .header-content {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 0 20px 20px 20px;
-  margin-top: -30px;
+  gap: 20px;
+  padding: 0 24px 24px 24px;
+  margin-top: -40px;
 }
 
 .dashboard-avatar-picker {
-  width: 64px;
-  height: 64px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 28px;
-  font-weight: bold;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border: 3px solid #ffffff;
+  font-size: 36px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  border: 4px solid rgba(255, 255, 255, 0.8);
   color: var(--color-primary-dark);
   cursor: pointer;
   z-index: 2;
+  transition: transform 0.2s ease;
+}
+
+.dashboard-avatar-picker:hover {
+  transform: scale(1.05);
 }
 
 .greeting-text {
-  font-size: 22px;
+  font-size: 26px;
   color: var(--color-text-dark);
-  margin-top: 30px;
+  margin-top: 40px;
+  text-shadow: 0 2px 4px rgba(255, 255, 255, 0.5);
 }
 
 .greeting-text strong {
-  font-weight: 700;
+  font-weight: 800;
 }
 
-/* â”€â”€ Cards Layout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ¦¦ Cards Layout ¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦ */
 .dashboard-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 16px;
-  padding-bottom: 32px;
+  gap: 20px;
 }
 
 @media (min-width: 768px) {
   .dashboard-grid {
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
+    grid-template-rows: auto auto;
     gap: 24px;
-    height: auto;
     flex-grow: 1;
     min-height: 0;
-    padding-bottom: 24px;
   }
-}
-
-.dashboard-card {
-  background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
-.card-highlight {
-  background: #fcf6e5;
-  /* SvÄ›tle bÃ©Å¾ovÃ¡/Å¾lutÃ¡ */
 }
 
 .card-body-full {
   padding: 24px;
   flex: 1;
-  overflow-y: auto;
-  min-height: 0;
   display: flex;
   flex-direction: column;
+  justify-content: center;
 }
 
-.dashboard-card-link-footer {
-  display: block;
-  text-align: center;
-  padding: 12px 20px 16px 20px;
-  color: var(--color-text-muted);
-  text-decoration: underline;
-  font-size: 14px;
-  font-weight: 500;
-  transition: color 0.2s;
+/* ¦¦ Karta 1: Status (Právì na chatì) ¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦ */
+.status-card {
+  position: relative;
 }
 
-.dashboard-card-link-footer:hover {
-  color: var(--color-primary);
+.status-card.is-free {
+  background: linear-gradient(135deg, rgba(236, 253, 245, 0.9), rgba(209, 250, 229, 0.85));
+  border-color: rgba(167, 243, 208, 0.5);
 }
 
-/* â”€â”€ Karta 1: PrÃ¡vÄ› na chatÄ› â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-.nordic-active-state {
+.status-card.is-occupied {
+  background: linear-gradient(135deg, rgba(254, 242, 242, 0.9), rgba(254, 226, 226, 0.85));
+  border-color: rgba(254, 202, 202, 0.5);
+}
+
+.status-content {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   text-align: center;
-  gap: 4px;
-  flex: 1;
+  gap: 16px;
 }
 
-.nas-bubble {
-  width: 56px;
-  height: 56px;
+.status-icon-wrapper {
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 28px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.is-free .status-icon-wrapper {
+  background: #10b981;
   color: white;
-  font-size: 24px;
-  font-weight: bold;
-  margin-bottom: 12px;
 }
 
-.nas-text {
-  font-size: 18px;
-  color: var(--color-text-dark);
-  margin: 0;
+.is-occupied .status-icon-wrapper {
+  background: #ef4444;
+  color: white;
 }
 
-.nas-text strong {
+.status-text {
+  font-size: 20px;
   font-weight: 700;
+  color: #1f2937;
+  line-height: 1.3;
 }
 
-.nas-dates {
-  font-size: 14px;
-  color: var(--color-text-light);
-  margin: 4px 0 16px 0;
+.status-subtext {
+  font-size: 15px;
+  color: #4b5563;
+  font-weight: 500;
 }
 
-.nas-cta {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 44px;
-  border-radius: 12px;
-  background-color: #658c65;
-  /* TlumenÃ¡ pÅ™Ã­rodnÃ­ zelenÃ¡ */
-  color: white;
-  font-size: 16px;
-  font-weight: 600;
-  text-decoration: none;
-  border: none;
-  cursor: pointer;
+.status-cta {
   margin-top: 8px;
-  box-shadow: 0 4px 12px rgba(88, 129, 87, 0.15);
-  transition: background-color 0.2s;
+  padding: 12px 32px;
+  border-radius: 99px;
+  font-weight: 600;
+  font-size: 16px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.nas-cta:hover {
-  background-color: #557755;
+.is-free .status-cta {
+  background: #059669;
+  color: white;
 }
 
-/* â”€â”€ Karta 2: PoÄasÃ­ â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-.nordic-weather-main {
+.is-free .status-cta:hover {
+  background: #047857;
+  transform: translateY(-2px);
+}
+
+.is-occupied .status-cta {
+  background: #dc2626;
+  color: white;
+}
+
+.is-occupied .status-cta:hover {
+  background: #b91c1c;
+  transform: translateY(-2px);
+}
+
+/* ¦¦ Karta 2: Poèasí ¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦ */
+.weather-card {
+  /* Default gradient, overridden by JS based on weather */
+  background: linear-gradient(135deg, rgba(240, 249, 255, 0.9), rgba(224, 242, 254, 0.85));
+}
+
+.weather-main {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
-  text-align: center;
-  margin-bottom: 24px;
-  flex: 1;
+  margin-bottom: 20px;
 }
 
-.nw-primary {
+.weather-current {
   display: flex;
   align-items: center;
   gap: 16px;
 }
 
-.nw-icon {
+.weather-icon-large {
   font-size: 48px;
-  /* VÃ½chozÃ­ barva, pokud by chybÄ›la specifickÃ¡ */
-  color: #9ca3af;
+  color: #0284c7;
+  filter: drop-shadow(0 4px 6px rgba(2, 132, 199, 0.2));
 }
 
-/* â”€â”€ Barvy pro specifickÃ© ikony poÄasÃ­ â”€â”€ */
-.nw-icon .fa-sun {
-  color: #f59e0b;
+.weather-temp-box {
+  display: flex;
+  flex-direction: column;
 }
 
-.nw-icon .fa-cloud-sun {
-  color: #fbbf24;
-}
-
-.nw-icon .fa-cloud {
-  color: #9ca3af;
-}
-
-.nw-icon .fa-smog {
-  color: #a8a29e;
-}
-
-.nw-icon .fa-cloud-rain {
-  color: #60a5fa;
-}
-
-.nw-icon .fa-cloud-showers-heavy {
-  color: #3b82f6;
-}
-
-.nw-icon .fa-snowflake {
-  color: #bfdbfe;
-}
-
-.nw-icon .fa-cloud-sun-rain {
-  color: #38bdf8;
-}
-
-.nw-icon .fa-bolt {
-  color: #eab308;
-}
-
-.nw-temp {
-  font-size: 56px;
-  font-weight: 700;
-  color: var(--color-text-dark);
+.weather-temp {
+  font-size: 42px;
+  font-weight: 800;
+  color: #0f172a;
   line-height: 1;
-  letter-spacing: -2px;
 }
 
-.nw-desc {
-  font-size: 18px;
+.weather-desc {
+  font-size: 16px;
   font-weight: 600;
-  color: var(--color-text-dark);
-  margin-top: 12px;
+  color: #334155;
+  text-transform: capitalize;
 }
 
-.nw-city {
-  font-size: 14px;
-  color: var(--color-text-light);
-  margin-top: 4px;
-}
-
-.nordic-weather-secondary {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+.weather-details {
+  display: flex;
+  flex-direction: column;
   gap: 8px;
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
-  padding-top: 16px;
+  text-align: right;
 }
 
-.nw-sec-item {
+.weather-detail-item {
+  font-size: 14px;
+  color: #475569;
+  font-weight: 500;
+}
+
+.weather-detail-item strong {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.weather-divider {
+  height: 1px;
+  background: rgba(0, 0, 0, 0.1);
+  margin: 16px 0;
+}
+
+.weather-forecast {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.forecast-day {
   display: flex;
   flex-direction: column;
   align-items: center;
-  text-align: center;
-}
-
-.nw-sec-item span {
-  font-size: 12px;
-  color: var(--color-text-light);
-  margin-bottom: 4px;
-}
-
-.nw-sec-item strong {
-  font-size: 15px;
-  color: var(--color-text-dark);
-  font-weight: 600;
-}
-
-/* â”€â”€ Karta 3 & 4: Lists & Empty States â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-.nordic-empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 16px 0;
-  color: var(--color-text-light);
+  gap: 6px;
   flex: 1;
 }
 
-.nordic-icon-wrapper {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.03);
+.forecast-day-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  text-transform: uppercase;
+}
+
+.forecast-icon {
+  font-size: 20px;
+  color: #0284c7;
+}
+
+.forecast-temps {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.forecast-temps span {
+  color: #64748b;
+  font-weight: 500;
+  margin-left: 4px;
+}
+
+/* ¦¦ Karta 3 & 4: Prázdné stavy a Seznamy ¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦ */
+.empty-state-card {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #adb5bd;
-  font-size: 20px;
-  margin-bottom: 12px;
+  text-align: center;
+  gap: 16px;
+  height: 100%;
+  padding: 20px;
 }
 
-.nordic-empty-state p {
-  font-size: 16px;
-  margin: 0;
-  color: var(--color-text-dark);
+.empty-icon-duotone {
+  font-size: 48px;
+  color: var(--color-primary);
+  opacity: 0.8;
+  margin-bottom: 8px;
+  filter: drop-shadow(0 4px 8px rgba(217, 119, 6, 0.2));
 }
 
-.nordic-list-item {
+.empty-text {
+  font-size: 18px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.empty-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  background: rgba(217, 119, 6, 0.1);
+  color: var(--color-primary-dark);
+  border: 2px dashed var(--color-primary);
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 15px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.empty-cta:hover {
+  background: var(--color-primary);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.2);
+}
+
+/* List Items (when not empty) */
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.list-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.list-link {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.list-link:hover {
+  text-decoration: underline;
+}
+
+.list-item {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 12px 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-.nordic-list-item:last-child {
+.list-item:last-child {
   border-bottom: none;
 }
 
-.nli-color {
-  width: 4px;
-  height: 36px;
-  border-radius: 2px;
-}
-
-.nli-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #a3b18a;
-  margin: 0 6px;
-}
-
-.nli-icon {
+.list-item-icon {
   width: 40px;
   height: 40px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.04);
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #588157;
-  font-size: 16px;
+  font-size: 18px;
+  font-weight: bold;
+  color: white;
   flex-shrink: 0;
 }
 
-.nli-meta {
-  font-size: 12px;
-  color: var(--color-text-light);
-  white-space: nowrap;
-  margin-left: auto;
-  padding-left: 12px;
-}
-
-.nli-content {
+.list-item-content {
   flex: 1;
+  min-width: 0;
 }
 
-.nli-title {
-  font-size: 16px;
+.list-item-title {
   font-weight: 600;
-  color: var(--color-text-dark);
+  color: #1f2937;
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.nli-subtitle {
-  font-size: 14px;
-  color: var(--color-text-light);
+.list-item-subtitle {
+  font-size: 13px;
+  color: #6b7280;
   margin-top: 2px;
 }
 
-.nli-more {
-  text-align: center;
-  font-size: 13px;
-  color: var(--color-text-muted);
-  padding-top: 12px;
-}
-
-/* â”€â”€ Spinnery a Utility â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-.spinner-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100px;
-}
-
-/* PonechÃ¡me nÄ›jakou zÃ¡lohu pro tmavÃ½ reÅ¾im */
-[data-theme="dark"] .dashboard-card {
-  background: #232323;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-}
-
-[data-theme="dark"] .card-highlight {
-  background: #2a2a22;
-}
-
-[data-theme="dark"] .nordic-list-item {
-  border-bottom-color: rgba(255, 255, 255, 0.05);
-}
-
-[data-theme="dark"] .nordic-weather-secondary {
-  border-top-color: rgba(255, 255, 255, 0.05);
-}
-
-/* â”€â”€ Desktop Only Utilities â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-.desktop-only {
-  display: none !important;
-}
-
-.mobile-only {
-  display: block;
+/* ¦¦ Spodní statistické karty (4 v øadì) ¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦ */
+.dashboard-stats-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-top: 8px;
 }
 
 @media (min-width: 768px) {
-  .desktop-only:not(.dashboard-card):not(.dashboard-stats) {
-    display: block !important;
-  }
-
-  .dashboard-card.desktop-only {
-    display: flex !important;
-  }
-
-  .dashboard-stats.desktop-only {
-    display: grid !important;
-    padding-bottom: 0;
-    flex-shrink: 0;
-  }
-
-  .mobile-only {
-    display: none !important;
+  .dashboard-stats-row {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
   }
 }
 
-/* â”€â”€ Stats row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-.dashboard-stats {
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  padding-bottom: 32px;
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  text-decoration: none;
+  color: inherit;
 }
 
-.dashboard-stat {
-  background: #ffffff;
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+  border-color: rgba(255, 255, 255, 0.8);
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
   border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-  padding: 16px 20px;
-  text-align: center;
-  display: flex !important;
-  flex-direction: column;
+  background: rgba(217, 119, 6, 0.1);
+  color: var(--color-primary);
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  font-size: 22px;
+  flex-shrink: 0;
 }
 
-.dashboard-stat i {
-  font-size: 24px;
-  color: #a3b18a;
+.stat-info {
+  display: flex;
+  flex-direction: column;
 }
 
-.dashboard-stat-value {
+.stat-value {
   font-size: 28px;
-  font-weight: 700;
-  color: var(--color-text-dark);
+  font-weight: 800;
+  color: #111827;
+  line-height: 1;
 }
 
-.dashboard-stat-label {
+.stat-label {
   font-size: 14px;
-  color: var(--color-text-light);
+  font-weight: 600;
+  color: #6b7280;
+  margin-top: 4px;
 }
+
+/* Loading Spinner */
+.spinner-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  min-height: 150px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(217, 119, 6, 0.2);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+

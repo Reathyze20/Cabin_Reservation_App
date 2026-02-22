@@ -5,9 +5,11 @@ import compression from "compression";
 import rateLimit from "express-rate-limit";
 import path from "path";
 import fs from "fs";
+import { v4 as uuidv4 } from "uuid";
 import { PORT, UPLOADS_PATH } from "../config/config";
 import prisma from "../utils/prisma";
 import logger from "../utils/logger";
+import { requestContext } from "../utils/asyncContext";
 
 // Import routes
 import authRoutes from "./routes/auth";
@@ -65,6 +67,26 @@ if (isProd) {
 } else {
   app.use(cors());
 }
+
+// Request ID & Context middleware
+app.use((req, res, next) => {
+  const requestId = uuidv4().split('-')[0]; // 8-character ID
+  req.headers['x-request-id'] = requestId;
+  res.setHeader('X-Request-ID', requestId);
+
+  // Override res.json to automatically inject errorId on 500 errors
+  const originalJson = res.json;
+  res.json = function (body) {
+    if (res.statusCode >= 500 && typeof body === 'object' && body !== null) {
+      body.errorId = requestId;
+    }
+    return originalJson.call(this, body);
+  };
+
+  requestContext.run(requestId, () => {
+    next();
+  });
+});
 
 // Request logging
 app.use((req, res, next) => {

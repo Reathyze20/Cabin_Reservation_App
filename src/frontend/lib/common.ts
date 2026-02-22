@@ -129,8 +129,12 @@ export async function authFetch<T = unknown>(
       return null;
     }
     if (!response.ok) {
-      const err: { message?: string } = await response.json().catch(() => ({}));
-      throw new Error(err.message || response.statusText || 'Chyba serveru');
+      const err: { message?: string; errorId?: string } = await response.json().catch(() => ({}));
+      let errMsg = err.message || response.statusText || 'Chyba serveru';
+      if (err.errorId) {
+        errMsg += ` (ID: ${err.errorId})`;
+      }
+      throw new Error(errMsg);
     }
     if (response.status === 204) return true as unknown as T;
     return (await response.json()) as T;
@@ -140,6 +144,9 @@ export async function authFetch<T = unknown>(
 
     const method = (options.method || '').toUpperCase();
     if (!options.silent && ['DELETE', 'POST', 'PATCH', 'PUT'].includes(method)) {
+      showToast(msg, 'error');
+    } else if (!options.silent && msg.includes('(ID:')) {
+      // Always show toast for 500 errors with ID, even on GET requests
       showToast(msg, 'error');
     }
     return null;
@@ -168,8 +175,12 @@ export async function authUpload<T = unknown>(
       return null;
     }
     if (!response.ok) {
-      const err: { message?: string } = await response.json().catch(() => ({}));
-      throw new Error(err.message || response.statusText || 'Chyba uploadu');
+      const err: { message?: string; errorId?: string } = await response.json().catch(() => ({}));
+      let errMsg = err.message || response.statusText || 'Chyba uploadu';
+      if (err.errorId) {
+        errMsg += ` (ID: ${err.errorId})`;
+      }
+      throw new Error(errMsg);
     }
     if (response.status === 204) return true as unknown as T;
     return (await response.json()) as T;

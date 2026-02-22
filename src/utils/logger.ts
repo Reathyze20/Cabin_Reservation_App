@@ -5,6 +5,7 @@
 
 import fs from "fs";
 import path from "path";
+import { requestContext } from "./asyncContext";
 
 const __dirname = import.meta.dirname;
 const logsDir = path.join(__dirname, "../../data/logs");
@@ -27,8 +28,10 @@ function getLogFilePath(): string {
 
 function writeLog(level: LogLevel, category: string, message: string, data?: any): void {
   const timestamp = getTimestamp();
+  const reqId = requestContext.getStore();
+  const reqIdStr = reqId ? ` [${reqId}]` : "";
   const dataStr = data ? ` | ${JSON.stringify(data)}` : "";
-  const line = `[${timestamp}] [${level}] [${category}] ${message}${dataStr}\n`;
+  const line = `[${timestamp}] [${level}] [${category}]${reqIdStr} ${message}${dataStr}\n`;
 
   // Write to file
   try {
@@ -39,7 +42,7 @@ function writeLog(level: LogLevel, category: string, message: string, data?: any
 
   // Also output to console
   const consoleMethod = level === "ERROR" ? console.error : level === "WARN" ? console.warn : console.log;
-  consoleMethod(`[${level}] [${category}] ${message}`, data || "");
+  consoleMethod(`[${level}] [${category}]${reqIdStr} ${message}`, data || "");
 }
 
 const logger = {

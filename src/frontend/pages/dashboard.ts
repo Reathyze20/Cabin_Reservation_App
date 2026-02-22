@@ -65,6 +65,13 @@ interface WeatherData {
   windSpeed: number;
   feelsLike: number;
   city: string;
+  forecast: {
+    date: string;
+    dayName: string;
+    icon: string;
+    tempMin: number;
+    tempMax: number;
+  }[];
 }
 
 // ─── Module state ─────────────────────────────────────────────────────
@@ -137,14 +144,32 @@ function getWeatherIcon(iconCode: string): string {
 async function fetchWeather(): Promise<WeatherData | null> {
   try {
     // Using open-meteo (no API key needed)
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${CABIN_LAT}&longitude=${CABIN_LON}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&timezone=Europe/Prague`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${CABIN_LAT}&longitude=${CABIN_LON}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Europe/Prague&forecast_days=4`;
     const res = await fetch(url);
     if (!res.ok) return null;
     const data = await res.json();
     const current = data.current;
+    const daily = data.daily;
 
     // Map WMO weather codes to descriptions and icons
     const weatherInfo = mapWMOCode(current.weather_code);
+
+    const forecast = [];
+    // Start from index 1 (tomorrow) to 3
+    for (let i = 1; i <= 3; i++) {
+      if (daily.time[i]) {
+        const dateObj = new Date(daily.time[i]);
+        const dayName = dateObj.toLocaleDateString('cs-CZ', { weekday: 'short' });
+        const fInfo = mapWMOCode(daily.weather_code[i]);
+        forecast.push({
+          date: daily.time[i],
+          dayName: dayName,
+          icon: fInfo.icon,
+          tempMin: Math.round(daily.temperature_2m_min[i]),
+          tempMax: Math.round(daily.temperature_2m_max[i])
+        });
+      }
+    }
 
     return {
       temp: Math.round(current.temperature_2m),
@@ -154,6 +179,7 @@ async function fetchWeather(): Promise<WeatherData | null> {
       windSpeed: Math.round(current.wind_speed_10m),
       feelsLike: Math.round(current.apparent_temperature),
       city: 'Třebenice',
+      forecast
     };
   } catch {
     return null;
@@ -212,65 +238,67 @@ function getTemplate(): string {
       </div>
     </div>
 
-    <!-- Cards Layout: 1 sloupec, gap 16px na mobilu -->
+    <!-- Cards Layout -->
     <div class="dashboard-grid">
       <!-- Karta 1: Právě na chatě -->
-      <div class="dashboard-card card-highlight">
-        <div id="dashboard-active-reservation" class="card-body-full">
+      <div class="glass-card status-card" id="dashboard-active-reservation">
+        <div class="card-body-full">
           <div class="spinner-container"><div class="spinner"></div></div>
         </div>
       </div>
 
       <!-- Karta 2: Počasí na chatě -->
-      <div class="dashboard-card card-weather">
-        <div id="dashboard-weather" class="card-body-full">
+      <div class="glass-card weather-card" id="dashboard-weather">
+        <div class="card-body-full">
           <div class="spinner-container"><div class="spinner"></div></div>
         </div>
       </div>
 
       <!-- Karta 3: Nadcházející rezervace -->
-      <div class="dashboard-card">
-        <div id="dashboard-reservations" class="card-body-full">
+      <div class="glass-card">
+        <div class="card-body-full" id="dashboard-reservations">
           <div class="spinner-container"><div class="spinner"></div></div>
         </div>
-        <a href="#/reservations" class="dashboard-card-link-footer">
-          Všechny rezervace
-        </a>
       </div>
 
       <!-- Karta 4: K dokoupení -->
-      <div class="dashboard-card">
-        <div id="dashboard-shopping" class="card-body-full">
+      <div class="glass-card">
+        <div class="card-body-full" id="dashboard-shopping">
           <div class="spinner-container"><div class="spinner"></div></div>
         </div>
-        <a href="#/shopping" class="dashboard-card-link-footer">
-          Nákupní seznamy
-        </a>
       </div>
     </div>
 
     <!-- Desktop-only: Stats -->
-    <div class="dashboard-stats desktop-only">
-      <div class="dashboard-stat">
-        <i class="fas fa-calendar-check"></i>
-        <span class="dashboard-stat-value" id="stat-reservations">-</span>
-        <span class="dashboard-stat-label">Rezervací</span>
-      </div>
-      <div class="dashboard-stat">
-        <i class="fas fa-camera"></i>
-        <span class="dashboard-stat-value" id="stat-photos">-</span>
-        <span class="dashboard-stat-label">Fotek</span>
-      </div>
-      <div class="dashboard-stat">
-        <i class="fas fa-pen-nib"></i>
-        <span class="dashboard-stat-value" id="stat-diary">-</span>
-        <span class="dashboard-stat-label">Zápisů</span>
-      </div>
-      <div class="dashboard-stat">
-        <i class="fas fa-shopping-basket"></i>
-        <span class="dashboard-stat-value" id="stat-shopping">-</span>
-        <span class="dashboard-stat-label">Ke koupi</span>
-      </div>
+    <div class="dashboard-stats-row desktop-only">
+      <a href="#/reservations" class="glass-card stat-card">
+        <div class="stat-icon"><i class="fas fa-calendar-check"></i></div>
+        <div class="stat-info">
+          <span class="stat-value" id="stat-reservations">-</span>
+          <span class="stat-label">Rezervací</span>
+        </div>
+      </a>
+      <a href="#/gallery" class="glass-card stat-card">
+        <div class="stat-icon"><i class="fas fa-camera"></i></div>
+        <div class="stat-info">
+          <span class="stat-value" id="stat-photos">-</span>
+          <span class="stat-label">Fotek</span>
+        </div>
+      </a>
+      <a href="#/diary" class="glass-card stat-card">
+        <div class="stat-icon"><i class="fas fa-pen-nib"></i></div>
+        <div class="stat-info">
+          <span class="stat-value" id="stat-diary">-</span>
+          <span class="stat-label">Zápisů</span>
+        </div>
+      </a>
+      <a href="#/shopping" class="glass-card stat-card">
+        <div class="stat-icon"><i class="fas fa-shopping-basket"></i></div>
+        <div class="stat-info">
+          <span class="stat-value" id="stat-shopping">-</span>
+          <span class="stat-label">Ke koupi</span>
+        </div>
+      </a>
     </div>
   </div>`;
 }
@@ -283,35 +311,54 @@ function renderWeather(weather: WeatherData | null): void {
 
   if (!weather) {
     el.innerHTML = `
-      <div class="nordic-empty-state">
-        <i class="fas fa-cloud-slash" style="font-size: 24px; color: #cbd5e1; margin-bottom: 8px;"></i>
-        <p>Nepodařilo se načíst počasí</p>
+      <div class="card-body-full empty-state-card">
+        <i class="fas fa-cloud-slash empty-icon-duotone"></i>
+        <p class="empty-text">Nepodařilo se načíst počasí</p>
       </div>`;
     return;
   }
 
-  el.innerHTML = `
-    <div class="nordic-weather-main">
-      <div class="nw-primary">
-        <i class="fas ${weather.icon} nw-icon"></i>
-        <div class="nw-temp">${weather.temp}°C</div>
-      </div>
-      <div class="nw-desc">${weather.description}</div>
-      <div class="nw-city">Třebenice</div>
+  // Set gradient based on weather
+  let gradient = 'linear-gradient(135deg, rgba(240, 249, 255, 0.9), rgba(224, 242, 254, 0.85))'; // default clear
+  if (weather.icon.includes('rain') || weather.icon.includes('showers')) {
+    gradient = 'linear-gradient(135deg, rgba(226, 232, 240, 0.9), rgba(203, 213, 225, 0.85))'; // rain
+  } else if (weather.icon.includes('sun')) {
+    gradient = 'linear-gradient(135deg, rgba(254, 252, 232, 0.9), rgba(254, 240, 138, 0.85))'; // sun
+  } else if (weather.icon.includes('cloud')) {
+    gradient = 'linear-gradient(135deg, rgba(241, 245, 249, 0.9), rgba(226, 232, 240, 0.85))'; // clouds
+  }
+  el.style.background = gradient;
+
+  const forecastHtml = weather.forecast && weather.forecast.length > 0 ? `
+    <div class="weather-divider"></div>
+    <div class="weather-forecast">
+      ${weather.forecast.map(f => `
+        <div class="forecast-day">
+          <span class="forecast-day-name">${f.dayName}</span>
+          <i class="fas ${f.icon} forecast-icon"></i>
+          <div class="forecast-temps">${f.tempMax}°<span>${f.tempMin}°</span></div>
+        </div>
+      `).join('')}
     </div>
-    <div class="nordic-weather-secondary">
-      <div class="nw-sec-item">
-        <span>Pocitově</span>
-        <strong>${weather.feelsLike}°</strong>
+  ` : '';
+
+  el.innerHTML = `
+    <div class="card-body-full">
+      <div class="weather-main">
+        <div class="weather-current">
+          <i class="fas ${weather.icon} weather-icon-large"></i>
+          <div class="weather-temp-box">
+            <span class="weather-temp">${weather.temp}°C</span>
+            <span class="weather-desc">${weather.description}</span>
+          </div>
+        </div>
+        <div class="weather-details">
+          <div class="weather-detail-item">Pocitově <strong>${weather.feelsLike}°</strong></div>
+          <div class="weather-detail-item">Vlhkost <strong>${weather.humidity}%</strong></div>
+          <div class="weather-detail-item">Vítr <strong>${weather.windSpeed} km/h</strong></div>
+        </div>
       </div>
-      <div class="nw-sec-item">
-        <span>Vlhkost</span>
-        <strong>${weather.humidity}%</strong>
-      </div>
-      <div class="nw-sec-item">
-        <span>Vítr</span>
-        <strong>${weather.windSpeed} km/h</strong>
-      </div>
+      ${forecastHtml}
     </div>`;
 }
 
@@ -321,29 +368,38 @@ function renderActiveReservation(data: DashboardData): void {
 
   if (data.activeReservation) {
     const r = data.activeReservation;
+    el.className = 'glass-card status-card is-occupied';
     el.innerHTML = `
-      <div class="nordic-active-state">
-        <div class="nas-bubble" style="background: ${r.userColor || '#E07A5F'}">
-          ${r.username.charAt(0).toUpperCase()}
+      <div class="card-body-full status-content">
+        <div class="status-icon-wrapper">
+          <i class="fas fa-home"></i>
         </div>
-        <p class="nas-text"><strong>${r.username}</strong> je na chatě</p>
-        <p class="nas-dates">${formatDate(r.from)} — ${formatDate(r.to)}</p>
+        <div class="status-text">Nyní zde pobývá:<br>${r.username}</div>
+        <div class="status-subtext">${formatDate(r.from)} — ${formatDate(r.to)}</div>
+        <a href="#/reservations" class="status-cta">Zobrazit kalendář</a>
       </div>`;
   } else if (data.myNextReservation) {
     const days = daysUntil(data.myNextReservation.from);
+    el.className = 'glass-card status-card is-free';
     el.innerHTML = `
-      <div class="nordic-active-state">
-        <div class="nas-bubble" style="background: #a3b18a">
-          <i class="fas fa-calendar-day"></i>
+      <div class="card-body-full status-content">
+        <div class="status-icon-wrapper">
+          <i class="fas fa-calendar-check"></i>
         </div>
-        <p class="nas-text">Tvoje návštěva za <strong>${days}</strong> ${days === 1 ? 'den' : days < 5 && days > 0 ? 'dny' : 'dní'}</p>
-        <p class="nas-dates">${formatDate(data.myNextReservation.from)} — ${formatDate(data.myNextReservation.to)}</p>
+        <div class="status-text">Tvoje návštěva za ${days} ${days === 1 ? 'den' : days < 5 && days > 0 ? 'dny' : 'dní'}</div>
+        <div class="status-subtext">${formatDate(data.myNextReservation.from)} — ${formatDate(data.myNextReservation.to)}</div>
+        <a href="#/reservations" class="status-cta">Upravit rezervaci</a>
       </div>`;
   } else {
+    el.className = 'glass-card status-card is-free';
     el.innerHTML = `
-      <div class="nordic-active-state empty">
-        <p class="nas-text" style="font-weight: 600; font-size: 18px;">Chata je momentálně volná</p>
-        <a href="#/reservations" class="nas-cta">Zarezervovat</a>
+      <div class="card-body-full status-content">
+        <div class="status-icon-wrapper">
+          <i class="fas fa-door-open"></i>
+        </div>
+        <div class="status-text">Chata je momentálně volná</div>
+        <div class="status-subtext">Naplánujte si další pobyt</div>
+        <a href="#/reservations" class="status-cta">Zarezervovat</a>
       </div>`;
   }
 }
@@ -354,24 +410,33 @@ function renderUpcoming(reservations: DashboardData['upcomingReservations']): vo
 
   if (reservations.length === 0) {
     el.innerHTML = `
-      <div class="nordic-empty-state">
-        <div class="nordic-icon-wrapper"><i class="fas fa-calendar-alt"></i></div>
-        <p>Žádné nadcházející rezervace</p>
+      <div class="empty-state-card">
+        <i class="fas fa-calendar-alt empty-icon-duotone"></i>
+        <p class="empty-text">Žádné nadcházející rezervace</p>
+        <a href="#/reservations" class="empty-cta"><i class="fas fa-plus"></i> Naplánovat pobyt</a>
       </div>`;
     return;
   }
 
   const toShow = reservations.slice(0, 3);
-  el.innerHTML = toShow.map((r) => {
-    return `
-    <div class="nordic-list-item">
-      <div class="nli-color" style="background: ${r.userColor || '#808080'}"></div>
-      <div class="nli-content">
-        <div class="nli-title">${r.username}</div>
-        <div class="nli-subtitle">${formatDateShort(r.from)} — ${formatDateShort(r.to)}</div>
-      </div>
+  el.innerHTML = `
+    <div class="list-header">
+      <span class="list-title">Nadcházející rezervace</span>
+      <a href="#/reservations" class="list-link">Všechny</a>
+    </div>
+    <div class="list-content">
+      ${toShow.map((r) => `
+        <div class="list-item">
+          <div class="list-item-icon" style="background: ${r.userColor || '#808080'}">
+            ${r.username.charAt(0).toUpperCase()}
+          </div>
+          <div class="list-item-content">
+            <div class="list-item-title">${r.username}</div>
+            <div class="list-item-subtitle">${formatDateShort(r.from)} — ${formatDateShort(r.to)}</div>
+          </div>
+        </div>
+      `).join('')}
     </div>`;
-  }).join('');
 }
 
 function renderShopping(items: DashboardData['unpurchasedItems'], count: number): void {
@@ -380,21 +445,33 @@ function renderShopping(items: DashboardData['unpurchasedItems'], count: number)
 
   if (items.length === 0) {
     el.innerHTML = `
-      <div class="nordic-empty-state">
-        <p style="font-size: 16px; font-weight: 500;">Na chatě nic nechybí!</p>
+      <div class="empty-state-card">
+        <i class="fas fa-shopping-basket empty-icon-duotone"></i>
+        <p class="empty-text">Na chatě nic nechybí!</p>
+        <a href="#/shopping" class="empty-cta"><i class="fas fa-plus"></i> Přidat položku</a>
       </div>`;
     return;
   }
 
   const toShow = items.slice(0, 3);
-  el.innerHTML = toShow.map((item) => `
-    <div class="nordic-list-item">
-      <div class="nli-dot"></div>
-      <div class="nli-content">
-        <div class="nli-title">${item.name}</div>
-      </div>
+  el.innerHTML = `
+    <div class="list-header">
+      <span class="list-title">K dokoupení</span>
+      <a href="#/shopping" class="list-link">Všechny (${count})</a>
     </div>
-  `).join('') + (count > 3 ? `<div class="nli-more">a dalších ${count - 3} položek…</div>` : '');
+    <div class="list-content">
+      ${toShow.map((item) => `
+        <div class="list-item">
+          <div class="list-item-icon" style="background: var(--color-primary); font-size: 14px;">
+            <i class="fas fa-shopping-cart"></i>
+          </div>
+          <div class="list-item-content">
+            <div class="list-item-title">${item.name}</div>
+            <div class="list-item-subtitle">Přidal(a) ${item.addedBy}</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>`;
 }
 
 
