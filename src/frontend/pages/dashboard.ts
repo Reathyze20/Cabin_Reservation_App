@@ -218,7 +218,7 @@ function getTemplate(): string {
     <div class="dashboard-mobile-header">
       <div class="header-bg"></div>
       <div class="header-content">
-        <div class="dashboard-avatar-picker avatar-picker-btn" title="Změnit avatar">
+        <div class="dashboard-avatar-picker avatar-picker-btn" title="Změnit avatar" style="${currentIcon ? 'background: transparent; font-size: 48px;' : ''}">
           ${avatarDisplay}
         </div>
         <div class="greeting-text">
@@ -564,7 +564,11 @@ async function loadDashboard(): Promise<void> {
         saveAnimalIcon(null);
         showToast('Ikona byla odebrána', 'success');
         const username = getUsername() || 'U';
-        avatarBtns.forEach(b => b.innerHTML = username.charAt(0).toUpperCase());
+        avatarBtns.forEach(b => {
+          b.innerHTML = username.charAt(0).toUpperCase();
+          (b as HTMLElement).style.background = 'rgba(255, 255, 255, 0.95)';
+          (b as HTMLElement).style.fontSize = '36px';
+        });
         avatarModal.style.display = 'none';
       }
     });
@@ -582,7 +586,11 @@ async function loadDashboard(): Promise<void> {
         if (res) {
           saveAnimalIcon(emoji);
           showToast('Ikona úspěšně změněna', 'success');
-          avatarBtns.forEach(b => b.innerHTML = emoji);
+          avatarBtns.forEach(b => {
+            b.innerHTML = emoji;
+            (b as HTMLElement).style.background = 'transparent';
+            (b as HTMLElement).style.fontSize = '48px';
+          });
           avatarModal.style.display = 'none';
         }
       });

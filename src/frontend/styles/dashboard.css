@@ -91,6 +91,7 @@
   cursor: pointer;
   z-index: 2;
   transition: transform 0.2s ease;
+  overflow: hidden;
 }
 
 .dashboard-avatar-picker:hover {
