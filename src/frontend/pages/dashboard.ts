@@ -194,7 +194,7 @@ function getTemplate(): string {
           <h1 class="dashboard-greeting" style="margin-bottom: 5px;">
             ${getGreeting()}, <strong>${username}</strong>!
           </h1>
-          <p class="dashboard-subtitle" style="margin: 0;">Zde je přehled vaší chaty</p>
+          <p class="dashboard-subtitle" style="margin: 0;">Zde je přehled chaty</p>
         </div>
       </div>
     </div>
