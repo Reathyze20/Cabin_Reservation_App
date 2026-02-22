@@ -114,7 +114,8 @@ app.use((req, res, next) => {
 });
 
 // Static files
-const __dirname = import.meta.dirname;
+import { fileURLToPath } from "url";
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const distPath = path.join(__dirname, "../../dist/frontend");
 const uploadsPath = UPLOADS_PATH;
 

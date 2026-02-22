@@ -8,7 +8,9 @@ const isTest = process.env.NODE_ENV === 'test';
 
 const level = isTest ? 'warn' : isDev ? 'debug' : 'info';
 
-const LOGS_DIR = path.join(import.meta.dirname, '../../data/logs');
+import { fileURLToPath } from 'url';
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const LOGS_DIR = path.join(__dirname, '../../data/logs');
 if (!fs.existsSync(LOGS_DIR) && !isTest) {
   try {
     fs.mkdirSync(LOGS_DIR, { recursive: true });
@@ -48,7 +50,7 @@ function appendToLogFile(level: string, msg: string, objOrMsg?: any, obj?: any) 
     const date = new Date().toISOString().split('T')[0];
     const logFile = path.join(LOGS_DIR, `${date}.log`);
     const timestamp = new Date().toISOString();
-    
+
     let tag = 'SERVER';
     let message = msg;
     let extra = objOrMsg;
@@ -139,7 +141,7 @@ export const logger = {
       if (!fs.existsSync(logFile)) return [];
 
       let lines = fs.readFileSync(logFile, 'utf-8').split('\n').filter(l => l.trim());
-      
+
       if (options.level) {
         const levelTag = '[' + options.level.toUpperCase() + ']';
         lines = lines.filter(l => l.includes(levelTag));

@@ -2,7 +2,8 @@ import dotenv from "dotenv";
 import path from "path";
 import logger from "../utils/logger";
 
-const __dirname = import.meta.dirname;
+import { fileURLToPath } from "url";
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.join(__dirname, "../../.env") });
 
 // JWT Configuration

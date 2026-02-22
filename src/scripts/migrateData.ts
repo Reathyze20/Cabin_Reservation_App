@@ -17,7 +17,8 @@ const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
 const prisma = new PrismaClient({ adapter });
 
 // JSON file paths
-const __dirname = import.meta.dirname;
+import { fileURLToPath } from "url";
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dataDir = path.join(__dirname, "../../data/archive");
 const usersFile = path.join(dataDir, "users.json");
 const reservationsFile = path.join(dataDir, "reservations.json");
@@ -164,7 +165,7 @@ async function migrate() {
     // ========================================================================
     console.log("5️⃣  Migrating gallery folders...");
     let galleryFolders = readJSON(galleryFoldersFile);
-    
+
     // Check if data is in combined gallery.json file
     if (galleryFolders.length === 0 && fs.existsSync(galleryFile)) {
       const galleryData = JSON.parse(fs.readFileSync(galleryFile, "utf-8"));
@@ -192,7 +193,7 @@ async function migrate() {
     // ========================================================================
     console.log("6️⃣  Migrating gallery photos...");
     let galleryPhotos = readJSON(galleryPhotosFile);
-    
+
     // Check if data is in combined gallery.json file
     if (galleryPhotos.length === 0 && fs.existsSync(galleryFile)) {
       const galleryData = JSON.parse(fs.readFileSync(galleryFile, "utf-8"));
