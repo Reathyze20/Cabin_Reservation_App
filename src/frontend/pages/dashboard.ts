@@ -2,7 +2,7 @@
    pages/dashboard.ts — Přehled (Dashboard) — hlavní stránka po přihlášení
    ============================================================================ */
 import type { PageModule } from '../lib/router';
-import { authFetch, getUsername, getAnimalIcon, saveAnimalIcon, showToast, pluralizeCzech } from '../lib/common';
+import { authFetch, getUsername, showToast, pluralizeCzech } from '../lib/common';
 import { navigate } from '../lib/router';
 
 // ─── Types ────────────────────────────────────────────────────────────
@@ -208,40 +208,8 @@ function mapWMOCode(code: number): { description: string; icon: string } {
 const ANIMAL_EMOJIS = ['🦊', '🐻', '🐸', '🐰', '🐯', '🦁', '🐼', '🐨', '🦉', '🦄', '🦖', '🐢', '🐙', '🦋', '🐞', '🐌', '🐶', '🐱'];
 
 function getTemplate(): string {
-  const username = getUsername() || 'uživateli';
-  const currentIcon = getAnimalIcon();
-  const avatarDisplay = currentIcon ? currentIcon : username.charAt(0).toUpperCase();
-
   return `
   <div class="dashboard nordic-dashboard">
-    <!-- Header -->
-    <div class="dashboard-mobile-header">
-      <div class="header-bg"></div>
-      <div class="header-content">
-        <div class="dashboard-avatar-picker avatar-picker-btn" title="Změnit avatar" style="${currentIcon ? 'background: transparent; font-size: 48px;' : ''}">
-          ${avatarDisplay}
-        </div>
-        <div class="greeting-text">
-          Ahoj, <strong>${username.split(' ')[0]}</strong>!
-        </div>
-      </div>
-    </div>
-
-    <!-- Avatar Modal -->
-    <div id="avatar-modal" class="modal-overlay" style="display: none; z-index: 2000;">
-      <div class="modal-content" style="max-width: 400px; text-align: center;">
-        <h2>Vyberte si svého avatara</h2>
-        <p style="margin-bottom: 20px; color: var(--color-text-light);">Tato ikona se bude zobrazovat u vašich rezervací a vzkazů.</p>
-        <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 20px;">
-          ${ANIMAL_EMOJIS.map(e => `<div class="avatar-option" data-emoji="${e}" style="font-size: 30px; cursor: pointer; padding: 10px; border-radius: 12px; background: var(--color-bg-alt); transition: all 0.2s; border: 2px solid transparent;">${e}</div>`).join('')}
-        </div>
-        <div style="display: flex; gap: 10px; justify-content: center;">
-          <button id="avatar-cancel-btn" class="button-secondary">Zrušit</button>
-          <button id="avatar-clear-btn" class="button-secondary" style="border-color: #ef4444; color: #ef4444;">Odebrat ikonu</button>
-        </div>
-      </div>
-    </div>
-
     <!-- Cards Layout -->
     <div class="dashboard-grid">
       <!-- Karta 1: Právě na chatě -->
@@ -372,15 +340,11 @@ function renderActiveReservation(data: DashboardData): void {
 
   if (data.activeReservation) {
     const r = data.activeReservation;
-    const avatarHtml = r.userAnimalIcon
-      ? `<div style="font-size: 32px;">${r.userAnimalIcon}</div>`
-      : `<i class="fas fa-home"></i>`;
-
     el.className = 'glass-card status-card is-occupied';
     el.innerHTML = `
       <div class="card-body-full status-content">
-        <div class="status-icon-wrapper" style="${r.userAnimalIcon ? 'background: transparent; box-shadow: none;' : ''}">
-          ${avatarHtml}
+        <div class="status-icon-wrapper">
+          <i class="fas fa-home"></i>
         </div>
         <div class="status-text">Nyní zde pobývá:<br>${r.username}</div>
         <div class="status-subtext">${formatDate(r.from)} — ${formatDate(r.to)}</div>
@@ -435,8 +399,8 @@ function renderUpcoming(reservations: DashboardData['upcomingReservations']): vo
     <div class="list-content">
       ${toShow.map((r) => `
         <div class="list-item">
-          <div class="list-item-icon" style="${r.userAnimalIcon ? 'background: transparent; font-size: 24px;' : `background: ${r.userColor || '#808080'}`}">
-            ${r.userAnimalIcon || r.username.charAt(0).toUpperCase()}
+          <div class="list-item-icon" style="background: ${r.userColor || '#808080'}">
+            ${r.username.charAt(0).toUpperCase()}
           </div>
           <div class="list-item-content">
             <div class="list-item-title">${r.username}</div>
@@ -524,94 +488,6 @@ async function loadDashboard(): Promise<void> {
     renderUpcoming(data.upcomingReservations);
     renderShopping(data.activeShoppingLists, data.stats.unpurchasedCount);
     renderStats(data.stats);
-  }
-
-  // Setup Avatar Picker Events
-  const avatarBtns = document.querySelectorAll('.avatar-picker-btn');
-  const avatarModal = document.getElementById('avatar-modal');
-  const avatarCancelBtn = document.getElementById('avatar-cancel-btn');
-  const avatarClearBtn = document.getElementById('avatar-clear-btn');
-  const avatarOptions = document.querySelectorAll('.avatar-option');
-
-  if (avatarBtns.length > 0 && avatarModal) {
-    avatarBtns.forEach((btn) => {
-      btn.addEventListener('click', () => {
-        avatarModal.style.display = 'flex';
-        // Highlight current
-        const current = getAnimalIcon();
-        avatarOptions.forEach(opt => {
-          if (opt.getAttribute('data-emoji') === current) {
-            (opt as HTMLElement).style.borderColor = 'var(--color-primary)';
-            (opt as HTMLElement).style.background = 'var(--color-primary-bg)';
-          } else {
-            (opt as HTMLElement).style.borderColor = 'transparent';
-            (opt as HTMLElement).style.background = 'var(--color-bg-alt)';
-          }
-        });
-      });
-    });
-
-    avatarCancelBtn?.addEventListener('click', () => {
-      avatarModal.style.display = 'none';
-    });
-
-    avatarClearBtn?.addEventListener('click', async () => {
-      const res = await authFetch('/api/users/me', {
-        method: 'PATCH',
-        body: JSON.stringify({ animalIcon: null }),
-      });
-      if (res) {
-        saveAnimalIcon(null);
-        showToast('Ikona byla odebrána', 'success');
-        const username = getUsername() || 'U';
-        avatarBtns.forEach(b => {
-          b.innerHTML = username.charAt(0).toUpperCase();
-          (b as HTMLElement).style.background = 'rgba(255, 255, 255, 0.95)';
-          (b as HTMLElement).style.fontSize = '36px';
-        });
-        avatarModal.style.display = 'none';
-      }
-    });
-
-    avatarOptions.forEach(opt => {
-      opt.addEventListener('click', async () => {
-        const emoji = opt.getAttribute('data-emoji');
-        if (!emoji) return;
-
-        const res = await authFetch('/api/users/me', {
-          method: 'PATCH',
-          body: JSON.stringify({ animalIcon: emoji }),
-        });
-
-        if (res) {
-          saveAnimalIcon(emoji);
-          showToast('Ikona úspěšně změněna', 'success');
-          avatarBtns.forEach(b => {
-            b.innerHTML = emoji;
-            (b as HTMLElement).style.background = 'transparent';
-            (b as HTMLElement).style.fontSize = '48px';
-          });
-          avatarModal.style.display = 'none';
-        }
-      });
-      // Hover effects
-      opt.addEventListener('mouseenter', () => {
-        (opt as HTMLElement).style.transform = 'scale(1.1)';
-      });
-      opt.addEventListener('mouseleave', () => {
-        (opt as HTMLElement).style.transform = 'scale(1)';
-      });
-    });
-
-    // Hover effect on main button
-    avatarBtns.forEach((btn) => {
-      btn.addEventListener('mouseenter', () => {
-        (btn as HTMLElement).style.transform = 'scale(1.05)';
-      });
-      btn.addEventListener('mouseleave', () => {
-        (btn as HTMLElement).style.transform = 'scale(1)';
-      });
-    });
   }
 }
 
