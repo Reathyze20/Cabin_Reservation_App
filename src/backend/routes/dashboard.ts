@@ -76,10 +76,7 @@ router.get("/", protect, async (req: Request, res: Response) => {
     const topShoppingItems = await prisma.shoppingListItem.findMany({
       where: {
         purchased: false,
-        OR: [
-          { listId: null },
-          { list: { isResolved: false } }
-        ]
+        list: { isResolved: false }
       },
       include: {
         list: { select: { name: true } }
