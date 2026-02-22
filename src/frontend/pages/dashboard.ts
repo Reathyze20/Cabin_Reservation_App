@@ -185,17 +185,15 @@ function getTemplate(): string {
   return `
   <div class="dashboard nordic-dashboard">
     <!-- Desktop Header -->
-    <div class="dashboard-desktop-header desktop-only">
-      <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 32px;">
-        <div class="dashboard-avatar-picker avatar-picker-btn" title="Změnit avatar">
-          ${avatarDisplay}
-        </div>
-        <div>
-          <h1 class="dashboard-greeting" style="margin: 0 0 4px 0; font-size: 28px; font-weight: 700; color: var(--color-text-dark);">
-            ${getGreeting()}, <strong>${username.split(' ')[0]}</strong>!
-          </h1>
-          <p class="dashboard-subtitle" style="margin: 0; font-size: 16px; color: var(--color-text-light);">Zde je přehled chaty</p>
-        </div>
+    <div class="dashboard-desktop-header desktop-only dashboard-card" style="margin-bottom: 24px; padding: 24px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); text-align: center;">
+      <div class="dashboard-avatar-picker avatar-picker-btn" title="Změnit avatar" style="margin: 0; border: 2px solid var(--color-primary-light);">
+        ${avatarDisplay}
+      </div>
+      <div>
+        <h1 class="dashboard-greeting" style="margin: 0 0 4px 0; font-size: 28px; font-weight: 700; color: var(--color-text-dark);">
+          ${getGreeting()}, <strong>${username.split(' ')[0]}</strong>!
+        </h1>
+        <p class="dashboard-subtitle" style="margin: 0; font-size: 16px; color: var(--color-text-light);">Zde je přehled chaty</p>
       </div>
     </div>
 
@@ -261,22 +259,6 @@ function getTemplate(): string {
         <a href="#/shopping" class="dashboard-card-link-footer">
           Nákupní seznamy
         </a>
-      </div>
-
-      <!-- Desktop-only: Poslední zprávy -->
-      <div class="dashboard-card desktop-only">
-        <div id="dashboard-notes" class="card-body-full">
-          <div class="spinner-container"><div class="spinner"></div></div>
-        </div>
-        <a href="#/notes" class="dashboard-card-link-footer">Přejít do chatu</a>
-      </div>
-
-      <!-- Desktop-only: Deník -->
-      <div class="dashboard-card desktop-only">
-        <div id="dashboard-diary" class="card-body-full">
-          <div class="spinner-container"><div class="spinner"></div></div>
-        </div>
-        <a href="#/diary" class="dashboard-card-link-footer">Celý deník</a>
       </div>
     </div>
 
@@ -428,55 +410,7 @@ function renderShopping(items: DashboardData['unpurchasedItems'], count: number)
   `).join('') + (count > 3 ? `<div class="nli-more">a dalších ${count - 3} položek…</div>` : '');
 }
 
-function renderNotes(notes: DashboardData['latestNotes']): void {
-  const el = document.getElementById('dashboard-notes');
-  if (!el) return;
 
-  if (notes.length === 0) {
-    el.innerHTML = `
-      <div class="dashboard-empty">
-        <i class="fas fa-sticky-note"></i>
-        <p>Žádné vzkazy</p>
-      </div>`;
-    return;
-  }
-
-  el.innerHTML = notes.map((note) => `
-    <div class="dashboard-list-item">
-      <div class="dashboard-list-icon"><i class="fas fa-comment"></i></div>
-      <div class="dashboard-list-content">
-        <div class="dashboard-list-title">${note.username}</div>
-        <div class="dashboard-list-subtitle">${note.message.substring(0, 80)}${note.message.length > 80 ? '…' : ''}</div>
-        <div class="dashboard-list-meta">${timeAgo(note.createdAt)}</div>
-      </div>
-    </div>
-  `).join('');
-}
-
-function renderDiary(entries: DashboardData['recentDiary']): void {
-  const el = document.getElementById('dashboard-diary');
-  if (!el) return;
-
-  if (entries.length === 0) {
-    el.innerHTML = `
-      <div class="dashboard-empty">
-        <i class="fas fa-feather-alt"></i>
-        <p>Zatím žádné zápisky</p>
-      </div>`;
-    return;
-  }
-
-  el.innerHTML = entries.map((entry) => `
-    <div class="dashboard-list-item">
-      <div class="dashboard-list-icon"><i class="fas fa-pen-nib"></i></div>
-      <div class="dashboard-list-content">
-        <div class="dashboard-list-title">${entry.folderName} · ${entry.author}</div>
-        <div class="dashboard-list-subtitle">${entry.content}${entry.content.length >= 150 ? '…' : ''}</div>
-        <div class="dashboard-list-meta">${formatDate(entry.date)}</div>
-      </div>
-    </div>
-  `).join('');
-}
 
 function renderStats(stats: DashboardData['stats']): void {
   const statRes = document.getElementById('stat-reservations');
@@ -505,8 +439,6 @@ async function loadDashboard(): Promise<void> {
     renderActiveReservation(data);
     renderUpcoming(data.upcomingReservations);
     renderShopping(data.unpurchasedItems, data.stats.unpurchasedCount);
-    renderNotes(data.latestNotes);
-    renderDiary(data.recentDiary);
     renderStats(data.stats);
   }
 
