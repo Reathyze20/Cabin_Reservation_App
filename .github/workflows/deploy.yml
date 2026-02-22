@@ -31,16 +31,26 @@ jobs:
           # Clean up any previous failed backup
           rm -rf /tmp/cabin_data_backup
 
+          # Clean up nested directories from previous bug
+          if [ -d "data/uploads/uploads" ]; then
+            echo "Cleaning up nested uploads..."
+            rm -rf data/uploads/uploads
+          fi
+          if [ -d "data/logs/logs" ]; then
+            echo "Cleaning up nested logs..."
+            rm -rf data/logs/logs
+          fi
+
           # Backup untracked/ignored data (live JSON data, logs, uploads)
           mkdir -p /tmp/cabin_data_backup
           if ls data/*.json 1>/dev/null 2>&1; then
             cp data/*.json /tmp/cabin_data_backup/
           fi
           if [ -d "data/logs" ]; then
-            cp -R data/logs /tmp/cabin_data_backup/logs
+            cp -R data/logs /tmp/cabin_data_backup/
           fi
           if [ -d "data/uploads" ]; then
-            cp -R data/uploads /tmp/cabin_data_backup/uploads
+            cp -R data/uploads /tmp/cabin_data_backup/
           fi
 
           echo "=== Updating code ==="
@@ -55,10 +65,12 @@ jobs:
             cp /tmp/cabin_data_backup/*.json data/
           fi
           if [ -d "/tmp/cabin_data_backup/logs" ]; then
-            cp -R /tmp/cabin_data_backup/logs data/logs
+            rm -rf data/logs
+            cp -R /tmp/cabin_data_backup/logs data/
           fi
           if [ -d "/tmp/cabin_data_backup/uploads" ]; then
-            cp -R /tmp/cabin_data_backup/uploads data/uploads
+            rm -rf data/uploads
+            cp -R /tmp/cabin_data_backup/uploads data/
           fi
           rm -rf /tmp/cabin_data_backup
 
