@@ -468,7 +468,7 @@ function renderShopping(items: DashboardData['unpurchasedItems'], count: number)
     el.innerHTML = `
       <div class="dashboard-empty">
         <i class="fas fa-check-circle"></i>
-        <p>Vše nakoupeno!</p>
+        <p>Na chatě nic nechybí!</p>
       </div>`;
     return;
   }
