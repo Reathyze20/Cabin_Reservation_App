@@ -12,6 +12,15 @@
   flex-grow: 1;
   overflow-y: auto;
   min-height: 0;
+  
+  /* Skrytí scrollbaru pro Firefox, IE a Edge */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+/* Skrytí scrollbaru pro Chrome, Safari a Operu */
+.dashboard::-webkit-scrollbar {
+  display: none;
 }
 
 /* ── Header ────────────────────────────────────────────────────────── */
