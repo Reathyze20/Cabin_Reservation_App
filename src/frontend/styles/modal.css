@@ -281,3 +281,9 @@
     }
   }
 }
+
+@media (max-width: 600px) {
+  .modal-content {
+    padding: var(--space-xl);
+  }
+}

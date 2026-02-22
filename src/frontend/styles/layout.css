@@ -57,6 +57,10 @@
 
 /* Mobile Layout Adjustments */
 @media (max-width: 768px) {
+  .app-container {
+    padding: 0 12px 12px 12px;
+  }
+
   .main-content {
     flex-direction: column;
     gap: var(--space-md);

@@ -480,7 +480,16 @@
   }
 
   .dashboard-greeting {
-    font-size: 1.3rem;
+    font-size: 1.5rem;
+  }
+
+  .dashboard-card-header {
+    padding: 0.8rem 1rem;
+    font-size: 0.95rem;
+  }
+
+  .dashboard-card-body {
+    padding: 1rem;
   }
 
   .dashboard-stats {
