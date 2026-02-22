@@ -4,13 +4,14 @@
 
 /* ── Layout ────────────────────────────────────────────────────────── */
 .dashboard {
+  max-width: 1400px;
+  width: 100%;
+  height: 100%;
+  margin: 0 auto;
   padding: 2rem 1.5rem;
-  background: rgba(253, 248, 240, 0.93);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(139, 115, 85, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  flex-grow: 1;
+  overflow-y: auto;
+  min-height: 0;
 }
 
 /* ── Header ────────────────────────────────────────────────────────── */
@@ -39,7 +40,7 @@
 /* ── Top row (weather + active) ────────────────────────────────────── */
 .dashboard-top-row {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: 1.2fr 1fr;
   gap: 1.5rem;
   margin-bottom: 1.5rem;
 }
@@ -52,12 +53,12 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   transition: box-shadow 0.2s, transform 0.2s;
 }
 
 .dashboard-card:hover {
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   transform: translateY(-2px);
 }
 
@@ -115,17 +116,20 @@
 
 /* ── Weather card ──────────────────────────────────────────────────── */
 .dashboard-weather-card {
-  background: #f0f7ec;
-  border-color: #CCE0AC;
+  background: #f0f9ff;
+  border-color: #bae6fd;
+}
+
+[data-theme="dark"] .dashboard-weather-card {
+  background: #1e3a5f;
+  border-color: #2563eb;
 }
 
 .dashboard-weather-content {
-  padding: 1.25rem;
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  flex: 1;
-  justify-content: center;
 }
 
 .weather-main {
@@ -141,7 +145,11 @@
 
 .weather-icon {
   font-size: 3rem;
-  color: #6B9E6B;
+  color: #0ea5e9;
+}
+
+[data-theme="dark"] .weather-icon {
+  color: #fbbf24;
 }
 
 .weather-temp-value {
@@ -176,6 +184,10 @@
   border-top: 1px solid rgba(0, 0, 0, 0.08);
 }
 
+[data-theme="dark"] .weather-details {
+  border-top-color: rgba(255, 255, 255, 0.1);
+}
+
 .weather-detail {
   display: flex;
   flex-direction: column;
@@ -193,88 +205,72 @@
 
 /* ── Active/Next reservation card ──────────────────────────────────── */
 .dashboard-active-card {
-  background: #FDF8F0;
-  border-color: #F4DEB3;
+  background: #fef3c7;
+  border-color: #fbbf24;
+}
+
+[data-theme="dark"] .dashboard-active-card {
+  background: #422006;
+  border-color: #d97706;
+  border-color: #5d4037;
 }
 
 .dashboard-active-content {
-  padding: 1.25rem;
+  padding: 1rem;
   display: flex;
   align-items: center;
-  justify-content: center;
   min-height: 120px;
-  flex: 1;
 }
 
 .active-reservation {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
+  gap: 1rem;
   width: 100%;
-  text-align: center;
 }
 
 .active-reservation-badge {
-  width: 64px;
-  height: 64px;
-  border-radius: 16px;
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 1.8rem;
+  font-size: 1.3rem;
   flex-shrink: 0;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 .active-reservation-info {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
+  flex: 1;
 }
 
 .active-reservation-info strong {
-  font-size: 1.25rem;
+  font-size: 1.05rem;
   color: var(--color-text-dark);
 }
 
 .active-reservation-dates {
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   color: var(--color-text-light);
+  margin-top: 0.2rem;
 }
 
 .active-reservation-purpose {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: var(--color-text-muted);
+  margin-top: 0.15rem;
   font-style: italic;
-  margin-top: 0.25rem;
 }
 
 .active-reservation-countdown {
-  display: flex;
-  align-items: baseline;
-  gap: 0.4rem;
-  margin-top: 0.75rem;
-  background: var(--color-primary-bg);
-  padding: 0.5rem 1.25rem;
-  border-radius: var(--radius-full);
-  color: var(--color-primary-dark);
+  font-size: 0.9rem;
+  color: var(--color-primary);
+  margin-top: 0.3rem;
 }
 
 .active-reservation-countdown strong {
-  font-size: 1.8rem;
-  line-height: 1;
-  color: var(--color-primary-dark);
-}
-
-.active-reservation-countdown span {
-  font-size: 0.9rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-size: 1.3rem;
 }
 
 /* ── List items (shared) ───────────────────────────────────────────── */
@@ -285,7 +281,7 @@
   padding: 0.6rem 0;
 }
 
-.dashboard-list-item+.dashboard-list-item {
+.dashboard-list-item + .dashboard-list-item {
   border-top: 1px solid var(--color-border);
 }
 
@@ -454,11 +450,9 @@
   .dashboard-top-row {
     grid-template-columns: 1fr;
   }
-
   .dashboard-grid {
     grid-template-columns: 1fr;
   }
-
   .dashboard-stats {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -468,20 +462,16 @@
   .dashboard {
     padding: 1rem 0.75rem;
   }
-
   .dashboard-greeting {
     font-size: 1.3rem;
   }
-
   .dashboard-stats {
     grid-template-columns: repeat(2, 1fr);
     gap: 0.5rem;
   }
-
   .weather-temp-value {
     font-size: 2rem;
   }
-
   .weather-icon {
     font-size: 2rem;
   }
