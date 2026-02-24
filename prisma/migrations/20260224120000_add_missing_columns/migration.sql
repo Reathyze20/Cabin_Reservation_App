@@ -4,7 +4,7 @@
 
 -- Create ItemStatus enum for shopping_list_items
 DO $$ BEGIN
-  CREATE TYPE "ItemStatus" AS ENUM ('pending', 'purchased');
+  CREATE TYPE "ItemStatus" AS ENUM ('pending', 'bring_from_home', 'purchased');
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
