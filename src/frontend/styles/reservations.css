@@ -159,9 +159,132 @@
   cursor: default;
 }
 
+/* ── Days from previous / next month ── */
+.cal-day.other-month {
+  background-color: #fafafa;
+  cursor: pointer;
+}
+
+.cal-day.other-month .day-num {
+  color: #d1d5db;
+  font-weight: 400;
+}
+
+.cal-day.other-month .cal-bar {
+  opacity: 0.55;
+}
+
+/* ── Past dates — read-only ── */
+.cal-day.past-date {
+  opacity: 0.42;
+  pointer-events: none;
+  cursor: default;
+}
+
+.cal-day.past-date .day-num {
+  color: #9ca3af;
+}
+
 .cal-day.weekend {
   background: #f3f4f6;
   /* Light gray for weekends */
+}
+
+/* ── Range selection states ── */
+.cal-day.is-range-start,
+.cal-day.is-range-end {
+  background: rgba(93, 155, 98, 0.28) !important;
+  border: 1px solid rgba(93, 155, 98, 0.55);
+  border-radius: 0;
+}
+
+.cal-day.is-range-start .day-num,
+.cal-day.is-range-end .day-num {
+  color: #166534;
+  font-weight: 700;
+}
+
+.cal-day.is-in-range {
+  background: rgba(93, 155, 98, 0.13) !important;
+}
+
+.cal-day.is-in-range .day-num {
+  color: #166534;
+}
+
+.cal-day.is-in-range:hover {
+  background: rgba(93, 155, 98, 0.2) !important;
+}
+
+.cal-days.is-selecting .cal-day:not(.empty):not(.past-date) {
+  cursor: pointer;
+}
+
+/* Range hint banner */
+.range-hint {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, rgba(5, 150, 105, 0.08), rgba(5, 150, 105, 0.04));
+  border: 1px solid rgba(5, 150, 105, 0.25);
+  border-radius: var(--radius-md);
+  margin: 0 0 8px 0;
+}
+
+.range-hint.hidden {
+  display: none;
+}
+
+.range-hint-icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5, 150, 105, 0.15);
+  border-radius: 50%;
+  font-size: 14px;
+  color: rgb(5, 150, 105);
+}
+
+.range-hint-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.range-hint-body strong {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: rgb(5, 150, 105);
+  line-height: 1.3;
+}
+
+.range-hint-body span {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+
+.range-hint-cancel {
+  flex-shrink: 0;
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  padding: 4px;
+  line-height: 1;
+  opacity: 0.6;
+  transition: opacity var(--transition-fast);
+  border-radius: var(--radius-sm);
+}
+
+.range-hint-cancel:hover {
+  opacity: 1;
+  background: rgba(0,0,0,0.05);
 }
 
 .cal-day.today .day-num {
@@ -193,33 +316,39 @@
 
 .cal-bar {
   font-size: 10px;
-  padding: 2px 4px;
-  border-radius: 0;
+  padding: 2px 6px;
+  border-radius: 3px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   font-weight: 600;
-  margin: 0 -4px;
-  /* Stretch to edges */
+  margin: 1px 2px;
   z-index: 1;
   position: relative;
 }
 
 .cal-bar.start {
-  border-top-left-radius: 4px;
-  border-bottom-left-radius: 4px;
-  margin-left: 2px;
+  border-top-left-radius: 12px;
+  border-bottom-left-radius: 12px;
+  margin-left: 4px;
 }
 
 .cal-bar.end {
-  border-top-right-radius: 4px;
-  border-bottom-right-radius: 4px;
-  margin-right: 2px;
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
+  margin-right: 4px;
+}
+
+.cal-bar.start.end {
+  border-radius: 12px;
+  margin-left: 4px;
+  margin-right: 4px;
 }
 
 .cal-bar.backup {
-  opacity: 0.6;
+  opacity: 0.7;
   border: 1px dashed currentColor;
+  background: transparent !important;
 }
 
 /* Panel Actions */
@@ -240,7 +369,7 @@
 /* Form row for dates */
 .form-row {
   display: flex;
-  gap: var(--space-md);
+  gap: 16px;             /* ✅ 16px gap mezi sloupci */
   margin-bottom: var(--space-md);
 }
 
@@ -249,33 +378,177 @@
   margin-bottom: 0;
 }
 
+/* ── 3. Moderní labely ─────────────────────────────────────────────── */
+.booking-modal-content .form-group label,
+.booking-modal-content .form-group .modal-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #4b5563;
+  margin-bottom: 5px;
+  line-height: 1.3;
+}
+
+.label-optional {
+  font-weight: 400;
+  color: #9ca3af;
+  font-size: 0.78rem;
+}
+
+/* ── 3. Konzistentní inputy a textarey ────────────────────────────── */
+.booking-input,
+.booking-modal-content input[type="text"],
+.booking-modal-content input[type="date"],
+.booking-modal-content textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 14px;
+  font-family: inherit;
+  color: #111827;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 9px 12px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: border-color 0.18s, box-shadow 0.18s;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+/* ✅ 3. Focus ring — primární zelená */
+.booking-input:focus,
+.booking-modal-content input[type="text"]:focus,
+.booking-modal-content input[type="date"]:focus,
+.booking-modal-content textarea:focus {
+  border-color: var(--color-primary, #5d9b62);
+  box-shadow: 0 0 0 3px rgba(93, 155, 98, 0.18),
+              0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+/* ✅ 4. Textarea — pouze vertikální resize */
+.booking-modal-content textarea {
+  resize: vertical;
+  min-height: 76px;
+  line-height: 1.5;
+}
+
 .booking-modal-content {
   width: 700px;
   max-width: 95vw;
 }
 
+/* ── 2. Checkbox — bez žlutého borderu ──────────────────────────── */
 .soft-res-group {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   margin-bottom: var(--space-lg);
-  background: #fffbeb;
-  padding: 10px 15px;
-  border-radius: var(--radius-md);
-  border-left: 4px solid #f59e0b;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 11px 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.soft-res-group:hover {
+  background: #f3f4f6;
 }
 
 .soft-res-group input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
   cursor: pointer;
+  accent-color: var(--color-primary, #5d9b62);
+  border-radius: 4px;
 }
 
+/* ✅ 2. Text — tmavě šedý, ne oranžový */
 .soft-res-group label {
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   margin: 0;
-  color: #b45309;
+  font-size: 13.5px;
+  color: #374151;
+  user-select: none;
+}
+
+.soft-res-sublabel {
+  font-weight: 400;
+  color: #9ca3af;
+  font-size: 0.78rem;
+}
+
+/* ── Backup warning banner ───────────────────────────────────────── */
+.backup-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: var(--space-md);
+  font-size: 13px;
+  color: #92400e;
+  line-height: 1.5;
+}
+
+.backup-warning i {
+  color: #f59e0b;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.backup-warning.hidden {
+  display: none;
+}
+
+/* ── 1. Footer tlačítka — smazat vlevo, uložit vpravo ───────────── */
+.booking-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--space-xl);
+  padding-top: var(--space-md);
+  border-top: 1px solid #f3f4f6;
+  gap: 10px;
+}
+
+.booking-footer-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* ✅ 1. Ghost danger — Odstranit rezervaci (vlevo, bez agresivního pozadí) */
+.btn-ghost-danger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 11px;
+  min-height: 38px;
+  background: transparent;
+  color: #f87171;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.btn-ghost-danger:hover {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.btn-ghost-danger.hidden {
+  display: none;
 }
 
 /* Right Panel Container */
@@ -312,56 +585,220 @@
 
 /* Reservation Detail Card */
 .res-detail-card {
-  background: var(--color-bg-alt);
+  background: #ffffff;
   border-radius: var(--radius-lg);
   padding: var(--space-xl);
-  box-shadow: var(--shadow-sm);
+  /* Jemný stín — nepřebíjí ostatní prvky */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.04);
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  gap: var(--space-lg);
+  /* Ztenčený pruh — 3px místo 4px */
+  border-left: 3px solid var(--user-color, #5d9b62);
+}
+
+/* Back link */
+.detail-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  padding: 0;
+  margin-bottom: 2px;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  color: #9ca3af;
+  font-weight: 500;
+  transition: color var(--transition-fast);
+}
+.detail-back-btn i {
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+}
+.detail-back-btn:hover {
+  color: #374151;
+}
+
+/* Header row */
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid #f3f4f6;
+}
+.detail-avatar {
+  width: 42px;
+  height: 42px;
+  /* Zaoblený čtverec místo kružnice */
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+.detail-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.detail-username {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.2;
+}
+/* Badge — menší, pastelový, nekřičí */
+.detail-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 20px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  width: fit-content;
+}
+.badge-success { background: #dcfce7; color: #166534; }
+.badge-warning { background: #fef3c7; color: #92400e; }
+.badge-neutral { background: #f3f4f6; color: #4b5563; }
+
+/* Meta block — bez tabulky, čistý flex */
+.detail-meta-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: none;
+  background: none;
+  padding: 0;
+}
+.detail-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  /* Žádné border — vzdušný layout */
+  border: none;
+  padding: 0;
   gap: var(--space-md);
 }
-
-.res-detail-card h3 {
-  margin: 0 0 var(--space-sm) 0;
-  font-size: 1.5rem;
-  color: var(--color-text-dark);
-  border-bottom: 1px solid var(--color-border);
-  padding-bottom: var(--space-sm);
-  width: 100%;
+.detail-meta-row--notes {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
 }
-
-.res-detail-card p {
-  margin: 0;
-  font-size: 1rem;
+.detail-meta-label {
+  flex-shrink: 0;
+  width: 60px;
+  font-size: 10.5px;
+  font-weight: 600;
+  /* Šedé, malé uppercase — štítky vlevo */
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.detail-meta-row--notes .detail-meta-label {
+  width: auto;
+}
+.detail-meta-value {
+  flex: 1;
+  font-size: 13.5px;
+  /* Tmavé a tučnější — hodnoty vpravo */
+  font-weight: 500;
+  color: #1f2937;
+  text-align: right;
+  line-height: 1.4;
+}
+.detail-meta-row--notes .detail-meta-value {
+  text-align: left;
+}
+.detail-notes-text {
+  font-size: 13px;
+  color: #4b5563;
+  font-weight: 400;
+  font-style: normal;
+  background: #f9fafb;
+  padding: 8px 10px;
+  border-radius: 8px;
   line-height: 1.5;
-  width: 100%;
-}
-
-.res-detail-card strong {
-  color: var(--color-text-dark);
-  display: inline-block;
-  width: 80px;
-}
-
-.res-handover-note {
   width: 100%;
   box-sizing: border-box;
 }
 
-.res-actions {
+/* Actions — sloupcové, zelené primary, smazat dole */
+.detail-actions {
   display: flex;
-  gap: var(--space-md);
-  margin-top: var(--space-xl);
+  flex-direction: column;
+  gap: 8px;
   padding-top: var(--space-md);
-  border-top: 1px solid var(--color-border);
-  flex-wrap: wrap;
-  width: 100%;
+  border-top: 1px solid #f3f4f6;
+  margin-top: auto;
 }
-
-.res-actions button {
-  flex: 1;
-  min-width: 120px;
+.detail-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 16px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast),
+              border-color var(--transition-fast), box-shadow var(--transition-fast),
+              transform 0.1s;
+  text-decoration: none;
+  white-space: nowrap;
+  border: 1px solid transparent;
+  width: 100%;
+  min-height: 40px;
+}
+.detail-btn:active {
+  transform: scale(0.98);
+}
+/* PRIMARY — naše aplikační zelená místo černé */
+.detail-btn-primary {
+  background: #5d9b62;
+  color: #ffffff;
+  border-color: #5d9b62;
+  box-shadow: 0 1px 3px rgba(93, 155, 98, 0.25);
+}
+.detail-btn-primary:hover {
+  background: #4a7c4e;
+  border-color: #4a7c4e;
+  box-shadow: 0 4px 10px rgba(93, 155, 98, 0.3);
+  transform: translateY(-1px);
+}
+/* SECONDARY — bílé, jemný rámeček */
+.detail-btn-secondary {
+  background: #ffffff;
+  color: #374151;
+  border-color: #d1d5db;
+}
+.detail-btn-secondary:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+/* GHOST DANGER — transparent, malý font, ne margin-left: auto */
+.detail-btn-ghost-danger {
+  background: transparent;
+  color: #f87171;
+  border-color: transparent;
+  font-size: 12.5px;
+  font-weight: 500;
+  min-height: 34px;
+  margin-left: 0;
+}
+.detail-btn-ghost-danger:hover {
+  color: #dc2626;
+  background: #fef2f2;
+  border-color: #fecaca;
 }
 
 /* Tabs Header */
@@ -716,7 +1153,21 @@
 }
 
 /* Mobile Adjustments */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
+  .res-card:hover {
+    transform: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  }
+
+  /* Rezervační karty — kompaktnější na mobilu */
+  .res-card {
+    padding: 10px 10px 10px 14px;
+  }
+
+  /* Indikátor proužek nahoře je dost */
+  .res-indicator {
+    animation: none;
+  }
   .res-card {
     flex-direction: column;
   }
@@ -789,5 +1240,172 @@
   100% {
     transform: scale(1);
     opacity: 1;
+  }
+}
+
+/* ============================================================================
+   MOBILE — Oprava kalendáře rezervací (max-width: 768px)
+   ============================================================================ */
+
+@media (max-width: 768px) {
+
+  /* ── Layout: grid → jeden sloupec ────────────────────────────── */
+
+  .reservations-layout {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    height: auto;
+    overflow-y: visible;
+  }
+
+  /* ── 1. Horní statistiky — zalomí pilulek ────────────────────── */
+
+  .calendar-stats {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .stat-badge {
+    font-size: 11px;
+    padding: 4px 10px;
+    white-space: nowrap;
+  }
+
+  .calendar-header-bar {
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  /* ── 2. Mřížka kalendáře — horizontální scroll ────────────────── */
+
+  .custom-calendar {
+    overflow-x: auto;
+    overflow-y: visible;
+    display: block;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) transparent;
+    /* ✅ Nepřebijej flex:1 z desktopu — nech' se rozpínout přirozeně */
+    flex: none;
+    height: auto;
+  }
+
+  .custom-calendar::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .custom-calendar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-calendar::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 2px;
+  }
+
+  /* Záhlaví dní v týdnu — minimální šířka buněk 44px (tap target) */
+  .cal-weekdays {
+    grid-template-columns: repeat(7, minmax(44px, 1fr));
+    min-width: 308px;
+  }
+
+  .cal-weekdays div {
+    padding: 6px 2px;
+    font-size: 10px;
+  }
+
+  /* Mřížka dní — minimální šířka, nížší řádky */
+  .cal-days {
+    grid-template-columns: repeat(7, minmax(44px, 1fr));
+    grid-template-rows: repeat(6, minmax(56px, 1fr));
+    min-width: 308px;    /* ✅ Zruš interní scroll v kalendáři na mobilu — strana scrolluje jako celek */
+    overflow: visible;
+    flex: none;
+    height: auto;  }
+
+  /* Buněky dnů — menší padding */
+  .cal-day {
+    padding: 3px 2px;
+  }
+
+  .day-num {
+    font-size: 0.78rem;
+    margin-bottom: 2px;
+    width: 20px;
+    height: 20px;
+  }
+
+  /* ── 3. Proužky rezervací — jen barva, žádný text ────────────── */
+
+  .cal-bar {
+    font-size: 0;
+    padding: 3px 0;
+    border-radius: 2px;
+    margin: 0 1px;
+    min-height: 6px;
+  }
+
+  .cal-bar.start {
+    border-top-left-radius: 3px;
+    border-bottom-left-radius: 3px;
+    margin-left: 2px;
+  }
+
+  .cal-bar.end {
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+    margin-right: 2px;
+  }
+
+  .cal-bars {
+    gap: 1px;
+  }
+
+  /* ── „Nová rezervace“ na plnou šířku ────────────────────────── */
+
+  .reservations-header-tabs {
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .res-tab {
+    padding: 6px 14px;
+    font-size: 13px;
+    min-height: 36px;
+  }
+
+  .full-calendar-card {
+    min-height: 0;
+    height: auto;
+  }
+}
+
+/* ── Extra small phones (<= 380px) ────────────────────────────────── */
+
+@media (max-width: 380px) {
+
+  .cal-weekdays,
+  .cal-days {
+    grid-template-columns: repeat(7, minmax(38px, 1fr));
+    min-width: 266px;
+  }
+
+  .cal-days {
+    grid-template-rows: repeat(6, minmax(48px, 1fr));
+  }
+
+  .day-num {
+    font-size: 0.72rem;
+    width: 18px;
+    height: 18px;
+  }
+
+  .stat-badge {
+    font-size: 10px;
+    padding: 3px 8px;
   }
 }

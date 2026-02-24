@@ -498,10 +498,6 @@ function bindEvents(): void {
   container.querySelectorAll<HTMLElement>('[data-close]').forEach((btn) => {
     btn.addEventListener('click', () => hideModal(btn.dataset.close!));
   });
-  container.querySelectorAll<HTMLElement>('.modal-overlay').forEach((ov) => {
-    ov.addEventListener('click', (e) => { if (e.target === ov) hide(ov); });
-  });
-
   // Period filter
   const pfBox = $('diary-period-filter') as HTMLSelectElement;
   if (pfBox) {

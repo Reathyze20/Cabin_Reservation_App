@@ -53,6 +53,10 @@ router.post("/", protect, async (req: Request, res: Response) => {
             return res.status(400).json({ error: "Missing required list name" });
         }
 
+        if (name.trim().length > 100) {
+            return res.status(400).json({ error: "List name is too long (max 100 characters)" });
+        }
+
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore - req.user is set by authMiddleware
         const userId = req.user.userId;

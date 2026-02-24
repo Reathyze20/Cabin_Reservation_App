@@ -207,55 +207,85 @@ async function loadLogFiles(): Promise<void> {
 }
 
 async function loadLogs(): Promise<void> {
-  const date = $<HTMLSelectElement>('log-date-select')?.value || new Date().toISOString().split('T')[0];
+  const date  = $<HTMLSelectElement>('log-date-select')?.value  || new Date().toISOString().split('T')[0];
   const level = $<HTMLSelectElement>('log-level-select')?.value || '';
-  
+
   const el = $('logs-content');
   if (el) el.textContent = 'Načítání logů...';
 
   let url = `/api/logs?date=${date}&lines=500`;
   if (level) url += `&level=${level}`;
 
-  const data = await authFetch<{ logs: string[] }>(url, { silent: true });
+  const data = await authFetch<{ logs: (Record<string, unknown> | string)[] }>(url, { silent: true });
   if (!el) return;
 
-  if (data && data.logs) {
-    if (data.logs.length === 0) {
-      el.textContent = 'Žádné logy pro tento den/filtr.';
-    } else {
-      // Colorize log levels
-      const formattedLogs = data.logs.map(line => {
-        let color = '#d4d4d4';
-        if (line.includes('[ERROR]')) color = '#f87171';
-        else if (line.includes('[WARN]')) color = '#fbbf24';
-        else if (line.includes('[INFO]')) color = '#60a5fa';
-        else if (line.includes('[DEBUG]')) color = '#9ca3af';
-        
-        // Escape HTML to prevent XSS
-        const escapedLine = line.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        return `<span style="color: ${color}">${escapedLine}</span>`;
-      }).join('\n');
-      
-      el.innerHTML = formattedLogs;
-      // Scroll to bottom
-      el.scrollTop = el.scrollHeight;
-    }
-  } else {
+  if (!data || !data.logs) {
     el.textContent = 'Nepodařilo se načíst logy.';
+    return;
   }
+
+  if (data.logs.length === 0) {
+    el.textContent = 'Žádné logy pro tento den/filtr.';
+    return;
+  }
+
+  // Podpora obou formátů: nový JSON (NDJSON) i starý textový (legacy)
+  const formattedLogs = data.logs.map(entry => {
+    let lvl = 'info';
+    let line: string;
+
+    if (typeof entry === 'string') {
+      // Starý textový formát (legacy soubory)
+      line = entry;
+      if (line.includes('[ERROR]')) lvl = 'error';
+      else if (line.includes('[WARN]'))  lvl = 'warn';
+      else if (line.includes('[DEBUG]')) lvl = 'debug';
+    } else {
+      // Nový JSON formát
+      lvl = String(entry['level'] ?? 'info').toLowerCase();
+      const time    = String(entry['time']   ?? '').replace('T', ' ').replace(/\.\d+Z$/, '');
+      const msg     = String(entry['msg']    ?? '');
+      const module  = entry['module']  ? `[${String(entry['module']).toUpperCase()}] ` : '';
+      const userId  = entry['userId']  ? ` | user:${entry['userId']}`   : '';
+      const source  = entry['source'] === 'frontend' ? ' [FE]' : '';
+      const reqId   = entry['requestId'] ? ` | req:${entry['requestId']}` : '';
+      // Extra pole – vynech standardní, zobraz zbytek
+      const SKIP    = new Set(['level', 'time', 'msg', 'module', 'userId', 'username', 'role',
+                               'source', 'requestId', 'actorId', 'app', 'env', 'pid']);
+      const extra   = Object.entries(entry)
+        .filter(([k]) => !SKIP.has(k))
+        .map(([k, v]) => `${k}:${typeof v === 'object' ? JSON.stringify(v) : v}`)
+        .join(' | ');
+
+      line = `[${time}]${source} [${lvl.toUpperCase()}] ${module}${msg}${userId}${reqId}${extra ? ' | ' + extra : ''}`;
+    }
+
+    // Barevné kódování podle levelu
+    const color = lvl === 'error' ? '#f87171'
+                : lvl === 'warn'  ? '#fbbf24'
+                : lvl === 'debug' ? '#9ca3af'
+                : '#60a5fa'; // info
+
+    const escapedLine = line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return `<span style="color: ${color}">${escapedLine}</span>`;
+  }).join('\n');
+
+  el.innerHTML = formattedLogs;
+  el.scrollTop = el.scrollHeight;
 }
 
 function downloadLogs(): void {
   const el = $('logs-content');
   if (!el) return;
-  
+
   const date = $<HTMLSelectElement>('log-date-select')?.value || 'logs';
-  const text = el.textContent || '';
-  
+  // textContent pro download (bez HTML tagů)
+  const text = (el.textContent || '').trim();
+
   const blob = new Blob([text], { type: 'text/plain' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
   a.download = `chata-logs-${date}.txt`;
   document.body.appendChild(a);
   a.click();
@@ -268,10 +298,6 @@ function bindEvents(): void {
   container.querySelectorAll<HTMLElement>('[data-close]').forEach((btn) => {
     btn.addEventListener('click', () => { const el = $(btn.dataset.close!); if (el) hide(el); });
   });
-  container.querySelectorAll<HTMLElement>('.modal-overlay').forEach((ov) => {
-    ov.addEventListener('click', (e) => { if (e.target === ov) hide(ov); });
-  });
-
   // Open edit user (event delegation)
   container.addEventListener('click', async (e) => {
     const target = e.target as HTMLElement;

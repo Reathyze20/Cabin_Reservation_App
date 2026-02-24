@@ -174,6 +174,10 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  /* ✅ 1. Klíčové: bez overflow:hidden kontejner přeteče */
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
   background-color: #fcfdfe;
 }
 
@@ -184,6 +188,9 @@
   border-bottom: 1px solid var(--color-border);
   background-color: var(--color-bg);
   gap: var(--space-md);
+  /* ✅ 4. Hlavička se nikdy nesmáčí */
+  flex-shrink: 0;
+  z-index: 10;
 }
 
 .chat-header-info {
@@ -224,6 +231,8 @@
   max-height: 200px;
   opacity: 1;
   overflow: hidden;
+  /* ✅ Filtry se nesmí smříšť — posouvají zprávy, ne input */
+  flex-shrink: 0;
 }
 
 .filters-container.collapsed {
@@ -257,10 +266,31 @@
 .chat-messages {
   flex-grow: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: var(--space-lg);
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
+  /* ✅ 2. Kritìké pro flex children se scroll obsahem */
+  min-height: 0;
+  /* Plynný scroll na iOS */
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+.chat-messages::-webkit-scrollbar {
+  width: 4px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 2px;
 }
 
 .empty-chat-state {
@@ -377,19 +407,30 @@
 
 /* Input Area */
 .chat-input-area {
-  padding: var(--space-md) var(--space-lg);
-  background-color: var(--color-bg);
-  border-top: 1px solid var(--color-border);
+  /* ✅ 3. Nikdy se nesmáčí — vždy viditelbný dole */
+  flex-shrink: 0;
+  padding: 10px 12px;
+  background: #ffffff;
+  border-top: 1px solid #e5e7eb;
+  z-index: 10;
+  position: relative;
 }
 
 .add-note-form {
   display: flex;
-  align-items: center;
-  gap: var(--space-sm);
+  /* ✅ 3b. Ikony a tlačítko vycentrované ke spodku inputu */
+  align-items: flex-end;
+  gap: 8px;
   background-color: var(--color-bg-alt);
-  padding: var(--space-sm);
-  border-radius: var(--radius-lg);
+  padding: 6px 6px 6px 12px;
+  border-radius: 24px;
   border: 1px solid var(--color-border);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.add-note-form:focus-within {
+  border-color: var(--color-primary, #5d9b62);
+  box-shadow: 0 0 0 3px rgba(93, 155, 98, 0.12);
 }
 
 .add-note-form textarea {
@@ -397,11 +438,15 @@
   border: none;
   background: transparent;
   resize: none;
-  padding: 8px 0;
+  padding: 6px 4px;
   font-size: var(--font-size-base);
   font-family: inherit;
-  max-height: 150px;
+  max-height: 120px;
+  /* ✅ min-height aby nebyla moc málá */
+  min-height: 24px;
+  line-height: 1.5;
   outline: none;
+  color: var(--color-text);
 }
 
 .button-icon {
@@ -427,19 +472,263 @@
   margin-bottom: 0;
 }
 
+/* ── Odjezdovy protokol — tlacitko ───────────────────────────────────────── */
+.handover-btn {
+  margin-bottom: 0;
+  position: relative;
+  flex-shrink: 0;
+  /* Jemny zeleny nater odlisuje od sponky */
+  color: var(--color-text-light);
+}
+
+.handover-btn:hover {
+  color: var(--color-primary, #5d9b62);
+  background: rgba(93, 155, 98, 0.12);
+}
+
+/* Tooltip */
+.handover-btn::after {
+  content: 'Odjezdovy protokol';
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1f2937;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 5px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 100;
+}
+
+.handover-btn::before {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + 2px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: #1f2937;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+  z-index: 100;
+}
+
+.handover-btn:hover::after,
+.handover-btn:hover::before {
+  opacity: 1;
+}
+
+@media (max-width: 768px) {
+  .handover-btn::after,
+  .handover-btn::before {
+    display: none;
+  }
+}
+
+/* ── Odjezdovy protokol — popup panel ───────────────────────────────────── */
+.handover-panel {
+  border-top: 1px solid var(--color-border);
+  background: #ffffff;
+  padding: 14px 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  /* Animace zobrazení */
+  animation: slideUpPanel 0.18s ease;
+}
+
+@keyframes slideUpPanel {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.handover-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.handover-panel-header i {
+  color: var(--color-primary, #5d9b62);
+  margin-right: 6px;
+}
+
+.handover-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.handover-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  padding: 5px 8px;
+  border-radius: 8px;
+  transition: background 0.12s;
+  font-size: 13.5px;
+  color: var(--color-text);
+  user-select: none;
+}
+
+.handover-item:hover {
+  background: #f0fdf4;
+}
+
+.handover-item input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #d1d5db;
+  border-radius: 5px;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  position: relative;
+}
+
+.handover-item input[type="checkbox"]:checked {
+  background: var(--color-primary, #5d9b62);
+  border-color: var(--color-primary, #5d9b62);
+}
+
+.handover-item input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 5px;
+  width: 5px;
+  height: 9px;
+  border: 2px solid #fff;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg);
+}
+
+.handover-note-row input {
+  width: 100%;
+  padding: 7px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-bg-alt);
+  color: var(--color-text);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.handover-note-row input:focus {
+  border-color: var(--color-primary, #5d9b62);
+  box-shadow: 0 0 0 3px rgba(93, 155, 98, 0.12);
+}
+
+.handover-panel-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.btn-ghost-secondary {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-light);
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.btn-ghost-secondary:hover {
+  background: var(--color-bg-alt);
+  color: var(--color-text);
+}
+
+/* ── Odjezdovy protokol — renderovani v bublinach ────────────────────────── */
+.msg-protocol {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.msg-line {
+  display: block;
+  line-height: 1.5;
+}
+
+.msg-spacer {
+  display: block;
+  height: 6px;
+}
+
+.msg-cb {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  font-size: 13px;
+  line-height: 1.6;
+  padding: 1px 0;
+}
+
+.msg-cb i {
+  font-size: 13px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.msg-cb-done i {
+  color: #16a34a;
+}
+
+.msg-cb-todo i {
+  color: #9ca3af;
+}
+
+.msg-cb-done span {
+  color: inherit;
+}
+
+.msg-cb-todo span {
+  color: inherit;
+  opacity: 0.75;
+}
+
 .send-btn {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 0;
   flex-shrink: 0;
+  /* ✅ Zelená barva aplikace */
+  background: var(--color-primary, #5d9b62) !important;
+  color: #fff !important;
+  border: none;
+  transition: background 0.15s, transform 0.1s;
 }
 
-.send-btn i {
-  margin-left: -2px; /* Optical alignment */
+.send-btn:hover {
+  background: var(--color-primary-dark, #4a7c4e) !important;
+  transform: scale(1.05);
+}
+
+.send-btn:active {
+  transform: scale(0.95);
 }
 
 /* ============================================================================
@@ -449,19 +738,96 @@
   .notes-layout {
     border-radius: 0;
     border: none;
+    height: 100%;
   }
 
   .notes-sidebar {
     width: 100%;
     max-width: none;
     border-right: none;
+    height: 100%;
   }
 
   .notes-chat-area {
     display: none; /* Toggled via JS */
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+    overflow: hidden;
+    flex-direction: column;
+  }
+
+  /* Když JS zobrazí chat area, má správný layout */
+  .notes-chat-area:not([style*="display: none"]) {
+    display: flex;
   }
 
   .mobile-only {
     display: flex;
+  }
+
+  .chat-messages {
+    padding: 12px;
+  }
+
+  .chat-input-area {
+    padding: 8px 10px;
+    /* iOS safe area */
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+  }
+
+  .message-wrapper {
+    max-width: 88%;
+  }
+}
+
+/* ============================================================================
+   Mobile: Obnov plnou výšku pro stránku chatu
+   layout.css na mobilu nastaví app-container na height:auto, což rozbije
+   flex chain. page-notes class (přidaná v notes.ts) to přepíše.
+   ============================================================================ */
+@media (max-width: 768px) {
+  body.page-notes {
+    overflow: hidden;
+    height: 100dvh;
+  }
+
+  body.page-notes .app-wrapper {
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  body.page-notes .app-container {
+    height: 100dvh !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  body.page-notes #page-container {
+    flex-grow: 1 !important;
+    overflow: hidden !important;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  body.page-notes .main-content {
+    flex-grow: 1;
+    min-height: 0;
+    overflow: hidden;
+    flex-direction: column;
+  }
+
+  body.page-notes .main-content-notes {
+    flex-grow: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  body.page-notes .notes-layout {
+    flex-grow: 1;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
   }
 }

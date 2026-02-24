@@ -16,14 +16,14 @@ export const registerSchema = z.object({
 export const createReservationSchema = z.object({
   from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Neplatný formát data"),
   to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Neplatný formát data"),
-  purpose: z.string().min(1, "Účel je povinný"),
+  purpose: z.string().min(1, "Účel je povinný").max(20, "Účel může mít maximálně 20 znaků"),
   notes: z.string().optional(),
 });
 
 export const updateReservationSchema = z.object({
   from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Neplatný formát data").optional(),
   to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Neplatný formát data").optional(),
-  purpose: z.string().optional(),
+  purpose: z.string().max(20, "Účel může mít maximálně 20 znaků").optional(),
   notes: z.string().optional(),
 });
 
