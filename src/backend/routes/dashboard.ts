@@ -45,52 +45,25 @@ router.get("/", protect, async (req: Request, res: Response) => {
       },
     });
 
-    // 3) Active shopping lists (unresolved, with at least 1 unpurchased item)
-    const activeLists = await prisma.shoppingList.findMany({
-      where: {
-        isResolved: false,
-        items: {
-          some: { purchased: false }
+    // 3) Shopping widget — newest unresolved list with progress + up to 3 pending items
+    const latestList = await prisma.shoppingList.findFirst({
+      where: { isResolved: false },
+      include: { items: { orderBy: { createdAt: "asc" } } },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const shoppingListWidget = latestList
+      ? {
+          id: latestList.id,
+          name: latestList.name,
+          pendingItems: latestList.items
+            .filter((i) => !i.purchased)
+            .slice(0, 3)
+            .map((i) => ({ id: i.id, name: i.name })),
+          totalCount: latestList.items.length,
+          doneCount: latestList.items.filter((i) => i.purchased).length,
         }
-      },
-      include: {
-        createdBy: { select: { username: true } },
-        items: true,
-      },
-      orderBy: { createdAt: "desc" },
-      take: 3,
-    });
-
-    const activeShoppingLists = activeLists.map(list => {
-      const unpurchasedCount = list.items.filter(i => !i.purchased).length;
-      return {
-        id: list.id,
-        name: list.name,
-        author: list.createdBy.username,
-        unpurchasedCount,
-        totalCount: list.items.length
-      };
-    });
-
-    // 3b) Top 5 unpurchased shopping items across all active lists
-    const topShoppingItems = await prisma.shoppingListItem.findMany({
-      where: {
-        purchased: false,
-        list: { isResolved: false }
-      },
-      include: {
-        list: { select: { name: true } }
-      },
-      orderBy: { createdAt: "desc" },
-      take: 5,
-    });
-
-    const shoppingItems = topShoppingItems.map(item => ({
-      id: item.id,
-      name: item.name,
-      listName: item.list?.name || "Obecné",
-      purchased: item.purchased
-    }));
+      : null;
 
     // 4) Latest notes (last 3)
     const latestNotes = await prisma.note.findMany({
@@ -101,31 +74,7 @@ router.get("/", protect, async (req: Request, res: Response) => {
       take: 3,
     });
 
-    // 5) Recent diary entries (last 2)
-    const recentDiary = await prisma.diaryEntry.findMany({
-      include: {
-        author: { select: { username: true } },
-        folder: { select: { name: true } },
-      },
-      orderBy: { entryDate: "desc" },
-      take: 2,
-    });
-
-    // 6) Stats
-    const totalReservations = await prisma.reservation.count();
-    const totalPhotos = await prisma.galleryPhoto.count();
-    const totalDiaryEntries = await prisma.diaryEntry.count();
-    const unpurchasedCount = await prisma.shoppingListItem.count({
-      where: {
-        purchased: false,
-        OR: [
-          { listId: null },
-          { list: { isResolved: false } }
-        ]
-      },
-    });
-
-    // 7) User's own next reservation
+    // 5) User's own next reservation
     const myNextReservation = await prisma.reservation.findFirst({
       where: {
         userId: req.user.userId,
@@ -144,6 +93,7 @@ router.get("/", protect, async (req: Request, res: Response) => {
             from: activeReservation.dateFrom.toISOString().split("T")[0],
             to: activeReservation.dateTo.toISOString().split("T")[0],
             purpose: activeReservation.purpose,
+            handoverNote: activeReservation.handoverNote ?? null,
           }
         : null,
       upcomingReservations: upcomingReservations.map((r) => ({
@@ -164,27 +114,13 @@ router.get("/", protect, async (req: Request, res: Response) => {
             purpose: myNextReservation.purpose,
           }
         : null,
-      activeShoppingLists,
-      shoppingItems,
+      shoppingListWidget,
       latestNotes: latestNotes.map((n) => ({
         id: n.id,
         username: n.user.username,
         message: n.message,
         createdAt: n.createdAt.toISOString(),
       })),
-      recentDiary: recentDiary.map((d) => ({
-        id: d.id,
-        folderName: d.folder.name,
-        author: d.author.username,
-        date: d.entryDate.toISOString().split("T")[0],
-        content: d.content.substring(0, 150),
-      })),
-      stats: {
-        totalReservations,
-        totalPhotos,
-        totalDiaryEntries,
-        unpurchasedCount,
-      },
     });
   } catch (error) {
     logger.error("DASHBOARD", "Get dashboard data error", {

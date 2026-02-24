@@ -67,8 +67,26 @@ function getTemplate(): string {
         </div>
 
         <div class="chat-input-area">
+          <!-- Odjezdovy protokol panel -->
+          <div class="handover-panel" id="handover-panel" style="display:none">
+            <div class="handover-panel-header">
+              <span><i class="fas fa-door-open"></i> Odjezdov&yacute; protokol</span>
+              <button type="button" class="button-icon" id="handover-panel-close" title="Zavrít"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="handover-checklist" id="handover-checklist">
+              <!-- Injected by JS -->
+            </div>
+            <div class="handover-note-row">
+              <input type="text" id="handover-note-input" placeholder="Poznámka (volitelná)..." autocomplete="off">
+            </div>
+            <div class="handover-panel-footer">
+              <button type="button" class="btn-ghost-secondary" id="handover-panel-cancel">Zrušit</button>
+              <button type="button" class="button-primary" id="handover-panel-insert"><i class="fas fa-check"></i> Vložit do zprávy</button>
+            </div>
+          </div>
           <form id="add-note-form" class="add-note-form">
             <button type="button" class="button-icon attachment-btn" title="Přidat přílohu"><i class="fas fa-paperclip"></i></button>
+            <button type="button" class="button-icon handover-btn" id="handover-template-btn" title="Vložit odjezdový protokol"><i class="fas fa-door-open"></i></button>
             <textarea id="note-message-input" placeholder="Napište vzkaz…" rows="1" required></textarea>
             <button type="submit" class="button-primary btn-icon-round send-btn" aria-label="Odeslat"><i class="fas fa-paper-plane"></i></button>
           </form>
@@ -111,6 +129,22 @@ function applyFilters(): void {
   renderNotes(filtered);
 }
 
+// Konverze [x]/[ ] na HTML checkboxy v bubline
+function formatMessage(raw: string): string {
+  const lines = raw.split('\n');
+  const hasChecks = lines.some(l => /^\[[ x]\]/i.test(l));
+  if (!hasChecks) return lines.join('<br>');
+
+  const parts = lines.map(line => {
+    const done = line.match(/^\[x\]\s*(.*)/i);
+    const todo = line.match(/^\[ \]\s*(.*)/);
+    if (done) return `<span class="msg-cb msg-cb-done"><i class="fas fa-check-circle"></i><span>${done[1]}</span></span>`;
+    if (todo) return `<span class="msg-cb msg-cb-todo"><i class="far fa-circle"></i><span>${todo[1]}</span></span>`;
+    return line === '' ? '<span class="msg-spacer"></span>' : `<span class="msg-line">${line}</span>`;
+  });
+  return `<div class="msg-protocol">${parts.join('')}</div>`;
+}
+
 function renderNotes(notes: any[]): void {
   const list = $('notes-list');
   if (!list) return;
@@ -146,7 +180,7 @@ function renderNotes(notes: any[]): void {
     if (isMine) {
       el.innerHTML = `
         <div class="message-bubble" title="${dateFmt} ${timeFmt}">
-          <div class="message-content">${note.message.replace(/\n/g, '<br>')}</div>
+          <div class="message-content">${formatMessage(note.message)}</div>
           ${delBtn ? `<div class="message-meta">${delBtn}</div>` : ''}
         </div>
       `;
@@ -156,7 +190,7 @@ function renderNotes(notes: any[]): void {
         <div class="message-bubble-container">
           <span class="message-sender">${note.username}</span>
           <div class="message-bubble" title="${dateFmt} ${timeFmt}">
-            <div class="message-content">${note.message.replace(/\n/g, '<br>')}</div>
+            <div class="message-content">${formatMessage(note.message)}</div>
             ${delBtn ? `<div class="message-meta">${delBtn}</div>` : ''}
           </div>
         </div>
@@ -471,10 +505,89 @@ function bindEvents(): void {
     await authFetch(`/api/notes/${noteEl.dataset.id}`, { method: 'DELETE' });
     await loadData();
   });
+
+  // ── Odjezdový protokol  —  panel s checkboxy ────────────────────
+  const HANDOVER_ITEMS = [
+    { key: 'kamna',        label: 'Kamna: Popel vybrán, vyhasnuto' },
+    { key: 'drevo',        label: 'Dřevo: Třísky a polena pro dalšího připraveny' },
+    { key: 'jidlo',        label: 'Jídlo: Uklizeno (ochrana před myšmi)' },
+    { key: 'voda',         label: 'Voda: Kohoutky zavřeny, trubky vypuštěny' },
+    { key: 'zabezpeceni',  label: 'Zabezpečení: Okenice a dveře zajištěny' },
+  ];
+
+  // Naplnit checklist
+  const checklist = $('handover-checklist');
+  if (checklist) {
+    checklist.innerHTML = HANDOVER_ITEMS.map(item => `
+      <label class="handover-item">
+        <input type="checkbox" name="${item.key}" checked>
+        <span>${item.label}</span>
+      </label>
+    `).join('');
+  }
+
+  const panel = $('handover-panel');
+
+  function openHandoverPanel(): void {
+    // Reset: vše zaškrtnuto, poznámka prázdná
+    checklist?.querySelectorAll<HTMLInputElement>('input[type=checkbox]').forEach(cb => cb.checked = true);
+    const noteInput = $<HTMLInputElement>('handover-note-input');
+    if (noteInput) noteInput.value = '';
+    if (panel) panel.style.display = 'block';
+    noteInput?.focus();
+  }
+
+  function closeHandoverPanel(): void {
+    if (panel) panel.style.display = 'none';
+  }
+
+  $('handover-template-btn')?.addEventListener('click', openHandoverPanel);
+  $('handover-panel-close')?.addEventListener('click', closeHandoverPanel);
+  $('handover-panel-cancel')?.addEventListener('click', closeHandoverPanel);
+
+  $('handover-panel-insert')?.addEventListener('click', () => {
+    const lines: string[] = ['Odjezdový protokol:', ''];
+
+    HANDOVER_ITEMS.forEach(item => {
+      const cb = checklist?.querySelector<HTMLInputElement>(`input[name="${item.key}"]`);
+      const checked = cb?.checked ?? true;
+      lines.push(`${checked ? '[x]' : '[ ]'} ${item.label}`);
+    });
+
+    const noteVal = $<HTMLInputElement>('handover-note-input')?.value.trim();
+    if (noteVal) {
+      lines.push('');
+      lines.push(`Poznámka: ${noteVal}`);
+    }
+
+    const textarea = $<HTMLTextAreaElement>('note-message-input');
+    if (textarea) {
+      const existing = textarea.value.trimEnd();
+      textarea.value = existing.length > 0
+        ? existing + '\n\n' + lines.join('\n')
+        : lines.join('\n');
+
+      textarea.style.height = 'auto';
+      textarea.style.height = Math.min(textarea.scrollHeight, 300) + 'px';
+      textarea.focus();
+      textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+    }
+
+    closeHandoverPanel();
+  });
+
+  // Zavrít panel kliknutím mimo
+  document.addEventListener('click', (e) => {
+    if (!panel || panel.style.display === 'none') return;
+    if (!(e.target as HTMLElement).closest('#handover-panel, #handover-template-btn')) {
+      closeHandoverPanel();
+    }
+  });
 }
 
 const notesPage: PageModule = {
   async mount(el) {
+    document.body.classList.add('page-notes');
     el.innerHTML = getTemplate();
     bindEvents();
     updateMobileView();
@@ -487,8 +600,24 @@ const notesPage: PageModule = {
 
     await fetchUsers();
     await loadData();
+
+    // Navigate to thread requested from another page (e.g. shopping share)
+    const gotoThread = sessionStorage.getItem('notes_goto_thread');
+    if (gotoThread !== null) {
+      sessionStorage.removeItem('notes_goto_thread');
+      activeThreadId = gotoThread === '__main__' ? null : gotoThread;
+      renderTabs();
+      applyFilters();
+      if (isMobileView) {
+        const sidebar = $('notes-sidebar');
+        const chatArea = $('notes-chat-area');
+        if (sidebar) sidebar.style.display = 'none';
+        if (chatArea) chatArea.style.display = 'flex';
+      }
+    }
   },
   unmount() {
+    document.body.classList.remove('page-notes');
     window.removeEventListener('resize', updateMobileView);
     allNotesData = [];
     allThreads = [];

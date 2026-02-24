@@ -64,10 +64,17 @@
   .app-container {
     padding: 0;
     background-color: #f7f6f3;
+    /* ✅ Odstraň fixní výšku a skryté přetečení — obsah teď scrolluje přirozeně */
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
   }
 
   #page-container {
     padding-top: 0;
+    /* ✅ Povol přirozený tok obsahu na mobilu */
+    overflow: visible;
+    flex-grow: 0;
   }
 
   .main-content {

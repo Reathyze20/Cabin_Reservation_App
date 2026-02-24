@@ -133,3 +133,9 @@ button[type="submit"]:hover {
   background-color: var(--color-danger-bg);
   color: var(--color-danger-text);
 }
+
+/* When delete-btn is used as a full danger button, keep white text */
+.button-danger.delete-btn,
+.button-danger.delete-btn:hover {
+  color: white;
+}

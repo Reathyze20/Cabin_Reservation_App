@@ -38,12 +38,23 @@
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.4);
-  border-radius: 24px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  border-radius: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04), 0 10px 20px rgba(0, 0, 0, 0.05);
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-sizing: border-box;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.glass-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.status-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.11);
 }
 
 /* �� Header ���������������������������������������������������������� */
@@ -90,31 +101,38 @@
 .dashboard-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 20px;
+  gap: 16px;
+  align-items: stretch;
 }
 
 @media (min-width: 768px) {
   .dashboard-grid {
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+    grid-auto-rows: 1fr;
     gap: 16px;
     flex-grow: 1;
     flex-shrink: 1;
     min-height: 0;
+    align-items: stretch;
   }
 }
 
+/* Každá karta v gridu vyplňuje celou výšku buňky */
+.dashboard-grid > .glass-card {
+  height: 100%;
+  box-sizing: border-box;
+}
+
 .card-body-full {
-  padding: 16px;
+  padding: 20px;
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   overflow-y: auto;
   scrollbar-width: none;
-  /* Firefox */
   -ms-overflow-style: none;
-  /* IE/Edge */
+  box-sizing: border-box;
 }
 
 .card-body-full::-webkit-scrollbar {
@@ -140,74 +158,176 @@
 .status-content {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 12px;
+  height: 100%;
+  flex: 1;
 }
 
-.status-icon-wrapper {
+.status-split-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+}
+
+.status-avatar-block {
+  flex-shrink: 0;
   width: 56px;
   height: 56px;
-  border-radius: 50%;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  font-size: 26px;
+  font-weight: 800;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
-.is-free .status-icon-wrapper {
-  background: #10b981;
-  color: white;
+.status-text-block {
+  flex: 1;
+  min-width: 0;
 }
 
-.is-occupied .status-icon-wrapper {
-  background: #ef4444;
-  color: white;
+.status-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 2px;
 }
 
-.status-text {
-  font-size: 18px;
+.status-name {
+  font-size: 20px;
   font-weight: 700;
-  color: #1f2937;
-  line-height: 1.3;
+  color: #111827;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
 }
 
-.status-subtext {
-  font-size: 15px;
+.status-dates {
+  font-size: 13px;
   color: #4b5563;
   font-weight: 500;
+  margin-top: 3px;
+}
+
+/* Remaining days label */
+.status-remaining {
+  font-size: 12px;
+  font-weight: 600;
+  color: #d97706;
+  margin-top: 4px;
+}
+
+/* Purpose icon inline with name */
+.status-purpose-icon {
+  font-size: 16px;
+  vertical-align: middle;
+  margin-left: 2px;
+}
+
+/* Handover note banner */
+.status-handover {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: rgba(251, 191, 36, 0.12);
+  border: 1px solid rgba(251, 191, 36, 0.25);
+  border-radius: 12px;
+  font-size: 13px;
+  color: #92400e;
+  line-height: 1.45;
+}
+
+.status-handover i {
+  color: #d97706;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* Purpose chip in upcoming list */
+.purpose-chip {
+  font-size: 14px;
+  margin-left: 3px;
+  vertical-align: middle;
+}
+
+/* Reservation status badges */
+.res-status-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 7px;
+  border-radius: 99px;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+
+.res-badge-soft {
+  background: rgba(251, 191, 36, 0.15);
+  color: #b45309;
+}
+
+.res-badge-backup {
+  background: rgba(156, 163, 175, 0.2);
+  color: #6b7280;
+}
+
+.status-cta-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: auto;
+  padding-top: 12px;
+  width: 100%;
+  flex-shrink: 0;
 }
 
 .status-cta {
-  margin-top: 4px;
-  padding: 10px 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
   border-radius: 99px;
+  font-size: 13px;
   font-weight: 600;
-  font-size: 15px;
   text-decoration: none;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
 }
 
-.is-free .status-cta {
+.status-cta-neutral {
+  background: rgba(0, 0, 0, 0.07);
+  color: #374151;
+}
+
+.status-cta-neutral:hover {
+  background: rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
+}
+
+.status-cta-primary {
   background: #059669;
-  color: white;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
 }
 
-.is-free .status-cta:hover {
+.status-cta-primary:hover {
   background: #047857;
-  transform: translateY(-2px);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(5, 150, 105, 0.35);
 }
 
-.is-occupied .status-cta {
-  background: #dc2626;
-  color: white;
-}
-
-.is-occupied .status-cta:hover {
-  background: #b91c1c;
-  transform: translateY(-2px);
+.status-card.is-available {
+  background: linear-gradient(135deg, rgba(236, 253, 245, 0.95), rgba(187, 247, 208, 0.85));
+  border-color: rgba(134, 239, 172, 0.4);
 }
 
 /* �� Karta 2: Po�as� ������������������������������������������������� */
@@ -323,45 +443,101 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  gap: 12px;
-  height: 100%;
-  padding: 12px;
+  flex: 1;
+  min-height: 180px;
+  gap: 10px;
+  padding: 16px;
 }
 
 .empty-icon-duotone {
-  font-size: 36px;
+  font-size: 34px;
   color: var(--color-primary);
-  opacity: 0.8;
-  margin-bottom: 4px;
-  filter: drop-shadow(0 4px 8px rgba(217, 119, 6, 0.2));
+  opacity: 0.75;
+  margin-bottom: 2px;
+  filter: drop-shadow(0 4px 8px rgba(217, 119, 6, 0.15));
 }
 
 .empty-text {
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 600;
   color: #374151;
+  margin: 0;
+}
+
+.empty-subtext {
+  font-size: 13px;
+  color: #9ca3af;
+  margin: 0;
 }
 
 .empty-cta {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 24px;
-  background: rgba(217, 119, 6, 0.1);
-  color: var(--color-primary-dark);
-  border: 2px dashed var(--color-primary);
-  border-radius: 12px;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 8px 18px;
+  background: #fff;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
   font-weight: 600;
-  font-size: 15px;
+  font-size: 14px;
   text-decoration: none;
-  transition: all 0.2s ease;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.15s, box-shadow 0.15s;
 }
 
 .empty-cta:hover {
-  background: var(--color-primary);
-  color: white;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.2);
+  background: #f9fafb;
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+}
+
+/* ── Standardizovaná hlavička karet ─────────────────────────────────── */
+.dashboard-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  flex-shrink: 0;
+  min-height: 28px;
+}
+
+.dashboard-card-header-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  line-height: 1;
+}
+
+.dashboard-card-header-title i {
+  font-size: 13px;
+  color: var(--color-primary);
+  opacity: 0.85;
+  display: inline-flex;
+  align-items: center;
+  width: 16px;
+  justify-content: center;
+}
+
+.dashboard-card-header-link {
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7280;
+  text-decoration: none;
+  white-space: nowrap;
+  line-height: 1;
+  transition: color 0.15s;
+}
+
+.dashboard-card-header-link:hover {
+  color: #111827;
+  text-decoration: underline;
 }
 
 /* List Items (when not empty) */
@@ -369,23 +545,31 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
+  flex-shrink: 0;
+  min-height: 28px;
 }
 
 .list-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: #1f2937;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
 }
 
 .list-link {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-primary);
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7280;
   text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.15s;
 }
 
 .list-link:hover {
+  color: #111827;
   text-decoration: underline;
 }
 
@@ -555,23 +739,9 @@
     gap: 12px;
   }
 
-  .status-icon-wrapper {
-    width: 48px;
-    height: 48px;
-    font-size: 20px;
-  }
-
-  .status-text {
-    font-size: 16px;
-  }
-
-  .status-subtext {
-    font-size: 14px;
-  }
-
   .status-cta {
-    padding: 8px 20px;
-    font-size: 14px;
+    padding: 6px 14px;
+    font-size: 12px;
   }
 
   .weather-icon-large {
@@ -716,4 +886,396 @@
 
 .shopping-empty {
   margin-top: 16px;
+}
+
+/* ── Notes feed card ─────────────────────────────────────────── */
+.dashboard-notes-card {
+  flex-shrink: 0;
+}
+
+.dashboard-notes-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.dashboard-notes-feed::-webkit-scrollbar {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .dashboard-notes-feed {
+    flex-direction: row;
+    gap: 16px;
+  }
+}
+
+.dashboard-note-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  padding: 8px;
+  border-radius: 10px;
+  transition: background 0.15s;
+}
+
+.dashboard-note-item:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.note-avatar {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--color-primary);
+}
+
+.note-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.note-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 3px;
+}
+
+.note-author {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.note-time {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.note-preview {
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.45;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── "Za X dní" chip v rezervacích ────────────────────────────────── */
+.upcoming-days-chip {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+  white-space: nowrap;
+  background: rgba(0, 0, 0, 0.04);
+  padding: 2px 8px;
+  border-radius: 99px;
+}
+
+/* ── Shopping progress bar ────────────────────────────────────── */
+.shopping-list-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.shopping-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.shopping-progress-bar {
+  flex: 1;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.shopping-progress-fill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+
+.shopping-progress-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+.shopping-widget-more {
+  font-size: 13px;
+  color: #9ca3af;
+  padding: 6px 12px;
+  text-align: center;
+}
+
+.shopping-done-msg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  color: var(--color-primary);
+  font-weight: 600;
+  font-size: 15px;
+}
+
+/* ============================================================================
+   MOBILE RESPONSIVE — Dashboard (max-width: 768px)
+   ============================================================================ */
+
+@media (max-width: 768px) {
+
+  /* ── 1. Hlavní kontejner — menší padding, menší gap ──────────────────── */
+
+  .nordic-dashboard {
+    padding: 12px;
+    gap: 12px;
+    overflow-y: auto;
+  }
+
+  /* ── 1b. Grid → jeden sloupec ──────────────────────────────── */
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    grid-auto-rows: auto;
+    gap: 12px;
+    flex-grow: 0;
+  }
+
+  .dashboard-grid > .glass-card {
+    height: auto;
+    min-height: 0;
+  }
+
+  .card-body-full {
+    padding: 16px;
+  }
+
+  /* ── 1c. Vypnout hover efekty na touch ───────────────────────── */
+
+  .glass-card:hover {
+    transform: none;
+    box-shadow:
+      0 4px 6px rgba(0, 0, 0, 0.04),
+      0 10px 20px rgba(0, 0, 0, 0.05);
+  }
+
+  .status-card:hover {
+    transform: none;
+    box-shadow:
+      0 4px 6px rgba(0, 0, 0, 0.04),
+      0 10px 20px rgba(0, 0, 0, 0.05);
+  }
+
+  /* ── 2. Nástěnka — zprávy pod sebe ──────────────────────────── */
+
+  .dashboard-notes-feed {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .dashboard-note-item {
+    flex: unset;
+  }
+
+  /* ── 3. Karta „Právě na chatě“ — CTA na plnou šířku ─────────────── */
+
+  .status-split-row {
+    gap: 12px;
+  }
+
+  .status-avatar-block {
+    width: 48px;
+    height: 48px;
+    font-size: 22px;
+    border-radius: 14px;
+  }
+
+  .status-name {
+    font-size: 17px;
+  }
+
+  .status-cta-row {
+    justify-content: stretch;
+    margin-top: 12px;
+  }
+
+  .status-cta-row .status-cta {
+    width: 100%;
+    justify-content: center;
+    padding: 10px 16px;
+    font-size: 14px;
+    border-radius: 12px;
+    min-height: 44px;
+  }
+
+  .status-handover {
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+
+  /* ── 4. Empty states — tlačítka na plnou šířku (44px tap target) ──── */
+
+  .empty-state-card {
+    min-height: 140px;
+    padding: 14px;
+    gap: 8px;
+  }
+
+  .empty-cta {
+    width: 100%;
+    justify-content: center;
+    padding: 10px 16px;
+    font-size: 14px;
+    min-height: 44px;
+    border-radius: 10px;
+    box-sizing: border-box;
+  }
+
+  /* ── 5. Hlavičky karet ────────────────────────────────────── */
+
+  .dashboard-card-header {
+    margin-bottom: 10px;
+  }
+
+  .dashboard-card-header-title {
+    font-size: 13px;
+  }
+
+  .dashboard-card-header-link {
+    font-size: 12px;
+  }
+
+  /* ── 6. Počasí karta ─────────────────────────────────────── */
+
+  .weather-icon-large {
+    font-size: 36px;
+  }
+
+  .weather-temp {
+    font-size: 32px;
+  }
+
+  .weather-desc {
+    font-size: 14px;
+  }
+
+  /* ── 7. Nadanávaní rezervace ─────────────────────────────── */
+
+  .list-item-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+    border-radius: 9px;
+  }
+
+  .list-item-title {
+    font-size: 13px;
+  }
+
+  .list-item-subtitle {
+    font-size: 11px;
+  }
+
+  /* ── 8. Greeting / header ────────────────────────────────── */
+
+  .header-bg {
+    height: 50px;
+  }
+
+  .header-content {
+    padding: 0 16px 12px 16px;
+    margin-top: -22px;
+    gap: 10px;
+  }
+
+  .greeting-text {
+    font-size: 16px;
+    margin-top: 10px;
+  }
+
+  /* ── 9. Note avatary a texty ─────────────────────────────── */
+
+  .note-avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+    border-radius: 8px;
+  }
+
+  .note-author {
+    font-size: 12px;
+  }
+
+  .note-time {
+    font-size: 10px;
+  }
+
+  .note-preview {
+    font-size: 12px;
+  }
+}
+
+/* ── Extra small phones (<= 380px) ────────────────────────────────── */
+
+@media (max-width: 380px) {
+
+  .nordic-dashboard {
+    padding: 8px;
+    gap: 10px;
+  }
+
+  .card-body-full {
+    padding: 12px;
+  }
+
+  .status-avatar-block {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+    border-radius: 12px;
+  }
+
+  .status-name {
+    font-size: 15px;
+  }
+
+  .greeting-text {
+    font-size: 15px;
+  }
+
+  .weather-temp {
+    font-size: 28px;
+  }
+
+  /* Skryj forecast na extra malých telefonech */
+  .weather-forecast {
+    display: none;
+  }
 }

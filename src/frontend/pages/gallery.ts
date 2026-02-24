@@ -537,11 +537,6 @@ function bindEvents(): void {
     btn.addEventListener('click', () => hideModal(btn.dataset.close!));
   });
 
-  // Overlay click to close modals
-  container.querySelectorAll<HTMLElement>('.modal-overlay').forEach((ov) => {
-    ov.addEventListener('click', (e) => { if (e.target === ov) hideModal(ov.id); });
-  });
-
   // Search and Sort
   const searchInput = $<HTMLInputElement>('folder-search-input');
   const sortSelect = $<HTMLSelectElement>('folder-sort-select');

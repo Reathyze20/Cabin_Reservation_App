@@ -16,6 +16,7 @@ import {
   saveAnimalIcon, getAnimalIcon, getToken, handleSessionExpired
 } from './lib/common';
 import { initRouter, destroyRouter } from './lib/router';
+import { initGlobalErrorHandlers } from './lib/logger';
 
 /* ---------- PWA service worker ---------- */
 
@@ -536,7 +537,11 @@ function init(): void {
 
 // Boot
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
+  document.addEventListener('DOMContentLoaded', () => {
+    initGlobalErrorHandlers();
+    init();
+  });
 } else {
+  initGlobalErrorHandlers();
   init();
 }

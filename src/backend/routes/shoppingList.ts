@@ -28,6 +28,7 @@ router.get("/", protect, async (req: Request, res: Response) => {
       addedBy: item.addedBy.username,
       addedById: item.addedById,
       createdAt: item.createdAt.toISOString(),
+      status: item.status,
       purchased: item.purchased,
       purchasedBy: item.purchasedBy?.username,
       purchasedById: item.purchasedById,
@@ -61,6 +62,10 @@ router.post("/:listId/items", protect, async (req: Request, res: Response) => {
     return res.status(400).json({ message: "Chybí název." });
   }
 
+  if (name.length > 100) {
+    return res.status(400).json({ message: "Název položky je příliš dlouhý (max 100 znaků)." });
+  }
+
   try {
     const newItem = await prisma.shoppingListItem.create({
       data: {
@@ -90,19 +95,33 @@ router.post("/:listId/items", protect, async (req: Request, res: Response) => {
 });
 
 // ============================================================================
-//                    MARK ITEM AS PURCHASED
+//                    MARK ITEM AS PURCHASED / UPDATE STATUS
 // ============================================================================
 router.put("/:itemId/purchase", protect, async (req: Request, res: Response) => {
   const { itemId } = req.params;
-  const { purchased, price, splitWith } = req.body;
+  // Accept either new `status` enum or legacy boolean `purchased`
+  let { status, purchased, price, splitWith } = req.body;
+
+  // Map legacy boolean → enum
+  if (status === undefined && purchased !== undefined) {
+    status = purchased ? "purchased" : "pending";
+  }
+
+  const validStatuses = ["pending", "bring_from_home", "purchased"];
+  if (!validStatuses.includes(status)) {
+    return res.status(400).json({ message: "Neplatný status položky." });
+  }
+
+  const isPurchased = status === "purchased";
 
   try {
     // Update main item
     const updated = await prisma.shoppingListItem.update({
       where: { id: itemId },
       data: {
-        purchased,
-        ...(purchased
+        status,
+        purchased: isPurchased,
+        ...(isPurchased
           ? {
             purchasedById: req.user!.userId,
             purchasedAt: new Date(),
@@ -121,32 +140,19 @@ router.put("/:itemId/purchase", protect, async (req: Request, res: Response) => 
     });
 
     // Handle splits
-    if (purchased && splitWith && Array.isArray(splitWith)) {
-      // Delete existing splits
-      await prisma.shoppingItemSplit.deleteMany({
-        where: { itemId },
-      });
-
-      // Create new splits
+    if (isPurchased && splitWith && Array.isArray(splitWith)) {
+      await prisma.shoppingItemSplit.deleteMany({ where: { itemId } });
       if (splitWith.length > 0) {
         await prisma.shoppingItemSplit.createMany({
-          data: splitWith.map((userId: string) => ({
-            itemId,
-            userId,
-          })),
+          data: splitWith.map((userId: string) => ({ itemId, userId })),
         });
       }
-    } else if (!purchased) {
-      // Remove splits when unpurchasing
-      await prisma.shoppingItemSplit.deleteMany({
-        where: { itemId },
-      });
+    } else if (!isPurchased) {
+      await prisma.shoppingItemSplit.deleteMany({ where: { itemId } });
     }
 
     // Fetch splits for response
-    const splits = await prisma.shoppingItemSplit.findMany({
-      where: { itemId },
-    });
+    const splits = await prisma.shoppingItemSplit.findMany({ where: { itemId } });
 
     res.json({
       id: updated.id,
@@ -154,6 +160,7 @@ router.put("/:itemId/purchase", protect, async (req: Request, res: Response) => 
       addedBy: updated.addedBy.username,
       addedById: updated.addedById,
       createdAt: updated.createdAt.toISOString(),
+      status: updated.status,
       purchased: updated.purchased,
       purchasedBy: updated.purchasedBy?.username,
       purchasedById: updated.purchasedById,

@@ -10,6 +10,7 @@ import { PORT, UPLOADS_PATH } from "../config/config";
 import prisma from "../utils/prisma";
 import logger from "../utils/logger";
 import { requestContext } from "../utils/asyncContext";
+import { httpLogger } from "../middleware/httpLogger";
 
 // Import routes
 import authRoutes from "./routes/auth";
@@ -89,29 +90,8 @@ app.use((req, res, next) => {
   });
 });
 
-// Request logging
-app.use((req, res, next) => {
-  const isApi = req.path.startsWith("/api/");
-  const isHealth = req.path === "/api/health";
-
-  if (isApi && !isHealth) {
-    const start = Date.now();
-    res.on("finish", () => {
-      const duration = Date.now() - start;
-      const isSuccessGet = req.method === "GET" && (res.statusCode === 200 || res.statusCode === 304);
-
-      // Noise reduction: Only log successful GETs as 'debug', others as 'info/warn/error'
-      let level: 'info' | 'warn' | 'error' | 'debug' = res.statusCode >= 500 ? "error" : res.statusCode >= 400 ? "warn" : "info";
-      if (isSuccessGet) level = 'debug';
-
-      logger[level](`${req.method} ${req.path} → ${res.statusCode} (${duration}ms)`, {
-        ip: req.ip,
-        user: (req as any).user?.username || "anonymous",
-      });
-    });
-  }
-  next();
-});
+// Strukturované HTTP request/response logování (httpLogger nahrazuje starý inline blok)
+app.use(httpLogger);
 
 // Static files
 import { fileURLToPath } from "url";

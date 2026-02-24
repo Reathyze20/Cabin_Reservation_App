@@ -123,6 +123,80 @@ router.post("/", protect, async (req: Request, res: Response) => {
 });
 
 // ============================================================================
+//                      UPDATE RECONSTRUCTION ITEM
+// ============================================================================
+router.put("/:id", protect, async (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({ message: "Neautorizováno" });
+  }
+
+  const { id } = req.params;
+  const { category, title, description, link, cost, status, thumbnail, tag, specialization, email, phone, deadline } = req.body;
+
+  if (!category || !title) {
+    return res.status(400).json({ message: "Chybí povinné údaje (kategorie, název)." });
+  }
+
+  try {
+    const updatedItem = await prisma.reconstructionItem.update({
+      where: { id },
+      data: {
+        category,
+        title,
+        description: description || "",
+        link: link || null,
+        cost: cost ? parseFloat(cost) : null,
+        status: status || "pending",
+        thumbnail: thumbnail || null,
+        tag: tag || null,
+        specialization: specialization || null,
+        email: email || null,
+        phone: phone || null,
+        deadline: deadline ? new Date(deadline) : null,
+      },
+      include: {
+        createdBy: {
+          select: {
+            username: true,
+          },
+        },
+        votes: {
+          include: {
+            user: {
+              select: {
+                id: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    res.json({
+      id: updatedItem.id,
+      category: updatedItem.category,
+      title: updatedItem.title,
+      description: updatedItem.description,
+      link: updatedItem.link,
+      cost: updatedItem.cost ? parseFloat(updatedItem.cost.toString()) : undefined,
+      status: updatedItem.status,
+      thumbnail: updatedItem.thumbnail,
+      tag: updatedItem.tag,
+      specialization: updatedItem.specialization,
+      email: updatedItem.email,
+      phone: updatedItem.phone,
+      deadline: updatedItem.deadline ? updatedItem.deadline.toISOString() : undefined,
+      votes: updatedItem.votes.map((v) => v.userId),
+      createdBy: updatedItem.createdBy.username,
+      createdAt: updatedItem.createdAt.toISOString(),
+    });
+  } catch (error) {
+    logger.error("RECONSTRUCTION", "Update item error", { error: String(error), id });
+    res.status(500).json({ message: "Chyba při aktualizaci." });
+  }
+});
+
+// ============================================================================
 //                      DELETE RECONSTRUCTION ITEM
 // ============================================================================
 router.delete("/:id", protect, async (req: Request, res: Response) => {

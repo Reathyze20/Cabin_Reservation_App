@@ -112,28 +112,117 @@
 
 /* Kanban Item Card Base */
 .kanban-item {
-  background-color: white;
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
-  transition: box-shadow var(--transition-fast), transform var(--transition-fast);
-  border: 1px solid var(--color-border-light);
+  background: #ffffff;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.2s, transform 0.2s;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 .kanban-item:hover {
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
 }
+
+/* ── 1. Hlavička karty ─────────────────────────────────────────── */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
 .kanban-item-title {
-  font-weight: 600; font-size: 1rem;
-  color: var(--color-text-dark);
-  line-height: 1.3;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #111827;
+  line-height: 1.35;
+  margin: 0;
+  word-break: break-word;
+  flex: 1;
 }
+
+/* ── 2. Akce (tužka + koš) ─────────────────────────────────────── */
+.card-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-top: -2px;
+}
+
+.card-action-edit,
+.card-action-del {
+  background: transparent;
+  border: none;
+  color: #d1d5db;
+  cursor: pointer;
+  padding: 4px 5px;
+  border-radius: 5px;
+  font-size: 12px;
+  line-height: 1;
+  transition: color 0.18s, background 0.18s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-action-edit:hover {
+  color: var(--color-primary, #5d9b62);
+  background: #f0fdf4;
+}
+
+.card-action-del:hover {
+  color: #ef4444;
+  background: #fee2e2;
+}
+
+/* Link-typ akce (e-shop u nápadu) */
+.card-action-link {
+  background: transparent;
+  border: none;
+  color: #d1d5db;
+  cursor: pointer;
+  padding: 4px 5px;
+  border-radius: 5px;
+  font-size: 12px;
+  line-height: 1;
+  transition: color 0.18s, background 0.18s;
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.card-action-link:hover {
+  color: var(--color-primary, #5d9b62);
+  background: #f0fdf4;
+}
+
+/* ── 3. Patička karty ───────────────────────────────────────────── */
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.card-cost {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #4b5563;
+}
+
 .kanban-item-desc {
-  font-size: var(--font-size-sm); color: var(--color-text-muted);
-  margin-top: 8px;
-  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  margin-top: 6px;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
@@ -153,80 +242,58 @@
   object-fit: cover;
 }
 .idea-content {
-  padding: 15px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
 }
-.idea-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-.idea-tag {
-  background-color: var(--color-primary-bg);
-  color: var(--color-primary-dark);
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-.idea-actions {
-  display: flex;
-  gap: 8px;
-}
+
+/* Legacy — zachovat pro zpětnou kompatibilitu */
+.idea-header { display: none; }
+.idea-actions { display: none; }
+
 .idea-link {
   color: var(--color-text-muted);
   transition: color var(--transition-fast);
 }
-.idea-link:hover {
-  color: var(--color-primary);
-}
-.idea-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px dashed var(--color-border-light);
-}
-.idea-cost {
-  font-weight: 700;
-  color: var(--color-text-dark);
-  font-size: 0.9rem;
-}
+.idea-link:hover { color: var(--color-primary); }
 
 /* Company Card */
 .company-card {
-  padding: 15px;
+  padding: 14px;
 }
-.company-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 10px;
-}
-.company-title-group {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.company-specialization {
-  font-size: 0.8rem;
-  color: var(--color-primary);
+
+/* Badge stavu — pod titulkem */
+.company-status-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 6px;
+  margin-bottom: 4px;
+  font-size: 11px;
   font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+  letter-spacing: 0.01em;
 }
-.company-status {
-  font-size: 0.75rem;
-  padding: 3px 8px;
-  border-radius: 12px;
-  font-weight: 600;
-  white-space: nowrap;
+
+.company-status-badge.status-pending   { background: #fef3c7; color: #92400e; }
+.company-status-badge.status-contacted { background: #dbeafe; color: #1e40af; }
+.company-status-badge.status-approved  { background: #d1fae5; color: #065f46; }
+.company-status-badge.status-rejected  { background: #fee2e2; color: #991b1b; }
+
+/* Kontaktní řádek */
+.company-contact-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #e5e7eb;
 }
-.status-pending { background-color: #f3f4f6; color: #4b5563; }
-.status-contacted { background-color: #fef3c7; color: #d97706; }
-.status-approved { background-color: #d1fae5; color: #059669; }
-.status-rejected { background-color: #fee2e2; color: #dc2626; }
+/* Legacy status classes — ponech pro selektor .status-X na badge */
+.status-pending   { background: #fef3c7; color: #92400e; }
+.status-contacted { background: #dbeafe; color: #1e40af; }
+.status-approved  { background: #d1fae5; color: #065f46; }
+.status-rejected  { background: #fee2e2; color: #991b1b; }
 
 .company-actions {
   display: flex;
@@ -256,12 +323,22 @@
 
 /* Task Card */
 .task-card {
-  padding: 15px;
+  padding: 14px;
 }
+
+/* Titulek + checkbox vedle sebe */
+.task-title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  flex: 1;
+  min-width: 0;
+}
+
 .task-header {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
+  gap: 8px;
 }
 .task-checkbox-wrapper {
   position: relative;
@@ -307,18 +384,21 @@
   text-decoration: line-through;
   color: var(--color-text-muted);
 }
+
+/* task-footer alias — používáme .card-footer, ale zachováme pro starý HTML */
 .task-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px dashed var(--color-border-light);
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #e5e7eb;
 }
+
 .task-cost {
-  font-weight: 600;
-  color: var(--color-text-dark);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #4b5563;
 }
 .task-deadline {
   font-size: 0.8rem;
@@ -404,4 +484,247 @@
   .reconstruction-header { padding: 15px; }
   .reconstruction-header h2 { font-size: var(--font-size-xl); }
   .kanban-board { padding: 15px; gap: 15px; }
+}
+
+/* ============================================================================
+   MODAL REDESIGN — Rekonstrukce
+   ============================================================================ */
+
+.rec-modal-content {
+  max-width: 520px;
+  width: 100%;
+  border-radius: 16px;
+  padding: 0;
+  overflow: hidden;
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.18),
+    0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Hlavička modalu */
+.rec-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 24px 14px;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.rec-modal-header h2 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+  line-height: 1.3;
+}
+
+/* Zavírací tlačítko */
+.modal-close-btn-icon {
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: none;
+  border-radius: 8px;
+  color: #9ca3af;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+
+.modal-close-btn-icon:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+/* Tělo formuláře */
+#add-reconstruction-form {
+  padding: 20px 24px 0;
+  max-height: calc(90dvh - 130px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #e5e7eb transparent;
+}
+
+#add-reconstruction-form::-webkit-scrollbar { width: 4px; }
+#add-reconstruction-form::-webkit-scrollbar-thumb {
+  background: #e5e7eb;
+  border-radius: 2px;
+}
+
+/* ── 2. Form groups ───────────────────────────────────────────────── */
+
+.rec-modal-content .form-group {
+  margin-bottom: 14px;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #4b5563;
+  margin-bottom: 5px;
+  line-height: 1.3;
+}
+
+.form-label-icon {
+  color: #9ca3af;
+  font-size: 11px;
+  margin-right: 3px;
+}
+
+.label-required {
+  color: #ef4444;
+  font-size: 0.75rem;
+  margin-left: 2px;
+}
+
+/* ── 1. Standardní vstupní pole ───────────────────────────────────── */
+
+.form-input {
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 13.5px;
+  font-family: inherit;
+  color: #111827;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 9px 12px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: border-color 0.18s, box-shadow 0.18s;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  line-height: 1.4;
+}
+
+.form-input:focus {
+  border-color: var(--color-primary, #5d9b62);
+  box-shadow:
+    0 0 0 3px rgba(93, 155, 98, 0.15),
+    0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.form-input::placeholder {
+  color: #c0c4c8;
+  font-size: 13px;
+}
+
+.form-input[rows] {
+  resize: vertical;
+  min-height: 78px;
+  line-height: 1.5;
+}
+
+select.form-input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+  cursor: pointer;
+}
+
+/* ── 3. Dvousloupcové rozložení ───────────────────────────────────── */
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.form-row > .form-group {
+  margin-bottom: 0;
+}
+
+/* ── 4. Modal footer ─────────────────────────────────────────────── */
+
+.rec-modal-footer {
+  position: sticky;
+  bottom: 0;
+  background: #ffffff;
+  padding: 14px 24px 20px;
+  margin-top: 6px;
+  border-top: 1px solid #f3f4f6;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.rec-submit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 22px;
+  min-width: 140px;
+  justify-content: center;
+  background: var(--color-primary, #5d9b62) !important;
+  color: #ffffff !important;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
+  box-shadow: 0 2px 6px rgba(93, 155, 98, 0.3);
+}
+
+.rec-submit-btn:hover {
+  background: var(--color-primary-dark, #4a7c4e) !important;
+  box-shadow: 0 4px 12px rgba(93, 155, 98, 0.4);
+  transform: translateY(-1px);
+}
+
+.rec-submit-btn:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.rec-submit-btn i { font-size: 12px; }
+
+/* Animace dynamických polí */
+.dynamic-fields {
+  animation: fieldsReveal 0.16s ease;
+}
+
+@keyframes fieldsReveal {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Mobilní přizpůsobení */
+@media (max-width: 600px) {
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .form-row > .form-group {
+    margin-bottom: 14px;
+  }
+
+  .rec-modal-content {
+    border-radius: 12px 12px 0 0;
+  }
+
+  .rec-modal-footer {
+    padding: 12px 16px;
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+
+  .rec-submit-btn {
+    width: 100%;
+    min-width: 0;
+  }
+
+  #add-reconstruction-form {
+    padding: 16px 16px 0;
+  }
+
+  .rec-modal-header {
+    padding: 14px 16px 12px;
+  }
 }

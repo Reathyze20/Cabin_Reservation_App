@@ -66,6 +66,13 @@ model Reservation {
 // ============================================================================
 // SHOPPING LIST
 // ============================================================================
+
+enum ItemStatus {
+  pending
+  bring_from_home
+  purchased
+}
+
 model ShoppingList {
   id          String             @id @default(uuid())
   name        String
@@ -81,15 +88,16 @@ model ShoppingList {
 }
 
 model ShoppingListItem {
-  id            String    @id @default(uuid())
-  listId        String?   @map("list_id") // Nullable initially for backward compatibility
+  id            String     @id @default(uuid())
+  listId        String?    @map("list_id") // Nullable initially for backward compatibility
   name          String
-  addedById     String    @map("added_by_id")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  purchased     Boolean   @default(false)
-  purchasedById String?   @map("purchased_by_id")
-  purchasedAt   DateTime? @map("purchased_at")
-  price         Decimal?  @db.Decimal(10, 2)
+  addedById     String     @map("added_by_id")
+  createdAt     DateTime   @default(now()) @map("created_at")
+  status        ItemStatus @default(pending)
+  purchased     Boolean    @default(false) // kept for backward-compat; mirrors status === purchased
+  purchasedById String?    @map("purchased_by_id")
+  purchasedAt   DateTime?  @map("purchased_at")
+  price         Decimal?   @db.Decimal(10, 2)
 
   // Relations
   list        ShoppingList?       @relation(fields: [listId], references: [id], onDelete: Cascade)
