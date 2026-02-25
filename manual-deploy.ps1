@@ -2,17 +2,22 @@
 # Run: .\manual-deploy.ps1
 
 $commands = @"
-cd /root/Cabin_Reservation_App
+cd /home/reathyze/chata
 echo "=== Pulling latest code ==="
 git fetch origin main
 git reset --hard origin/main
 echo "=== Installing dependencies ==="
 npm install
+echo "=== Running DB migrations ==="
+npx prisma migrate deploy
+echo "=== Generating Prisma client ==="
+npx prisma generate
 echo "=== Building frontend ==="
 npm run build
-echo "=== Restarting PM2 ==="
-pm2 restart chata-app
-pm2 logs chata-app --lines 20
+echo "=== Restarting app ==="
+kill `$(ss -tlnp | grep ':3000' | grep -oP 'pid=\K[0-9]+') 2>/dev/null || true
+sleep 2
+echo "=== Done ==="
 "@
 
 ssh root@89.221.217.81 $commands
