@@ -50,8 +50,8 @@ docker run --name cabin-postgres -e POSTGRES_PASSWORD=mysecretpassword -e POSTGR
 
 **Možnost C: Cloud hosting (doporučeno pro produkci)**
 - Supabase (free tier): https://supabase.com
-- Railway: https://railway.app
 - Heroku Postgres: https://www.heroku.com/postgres
+- Vlastní VPS (Wedos, Hetzner, DigitalOcean…)
 
 ---
 
@@ -72,7 +72,7 @@ JWT_SECRET=vygenerujte_silny_klic_zde
 # Lokální PostgreSQL
 DATABASE_URL="postgresql://postgres:password@localhost:5432/cabin_reservation?schema=public"
 
-# Nebo Supabase/Railway URL
+# Nebo cloudová / VPS DB URL
 # DATABASE_URL="postgresql://user:password@hostname:port/database"
 
 PORT=3000

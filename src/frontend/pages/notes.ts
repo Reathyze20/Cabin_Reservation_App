@@ -1,5 +1,5 @@
 ﻿/* ============================================================================
-   pages/notes.ts — Nástěnka / message board (Master-Detail Layout)
+   pages/notes.ts — Chat (Master-Detail Layout)
    ============================================================================ */
 import type { PageModule } from '../lib/router';
 import { $, show, hide, showToast, authFetch, getUserId, getRole } from '../lib/common';

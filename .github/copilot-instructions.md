@@ -1,7 +1,7 @@
 # Chata Třebenice — AI kontext projektu
 
 ## Obecný popis
-**Chata Třebenice** je rodinná webová aplikace (Single Page Application) pro správu chaty. Slouží ke koordinaci pobytů, nákupů, vzpomínek a rekonstrukčních plánů mezi více rodinnými uživateli. Je nasazena na Railway a přístupná z prohlížeče i mobilů jako PWA.
+**Chata Třebenice** je rodinná webová aplikace (Single Page Application) pro správu chaty. Slouží ke koordinaci pobytů, nákupů, vzpomínek a rekonstrukčních plánů mezi více rodinnými uživateli. Je nasazena na Wedos a přístupná z prohlížeče i mobilů jako PWA.
 
 ---
 
@@ -58,7 +58,7 @@ Aktuálně jde o **single-tenant MVP** pro jednu konkrétní rodinu (Třebenice)
 
 ### Deployment
 - **Docker Compose** — lokální vývoj i produkce
-- **Railway** — primární hosting
+- **Wedos** — primární hosting (VPS s doménou)
 - `.env` soubor s `DATABASE_URL`, `JWT_SECRET`, `PORT`
 
 ---

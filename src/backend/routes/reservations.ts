@@ -199,6 +199,15 @@ router.post("/delete", protect, async (req: Request, res: Response) => {
   try {
     const reservation = await prisma.reservation.findUnique({
       where: { id },
+      include: {
+        user: { select: { username: true } },
+        // Načteme hlidáče PŘED smazáním (onDelete: Cascade je smaže automaticky)
+        watchers: {
+          include: {
+            user: { select: { id: true, username: true } },
+          },
+        },
+      },
     });
 
     if (!reservation) {
@@ -209,14 +218,122 @@ router.post("/delete", protect, async (req: Request, res: Response) => {
       return res.status(403).json({ message: "Bez oprávnění." });
     }
 
-    await prisma.reservation.delete({
-      where: { id },
-    });
+    // Sestavit data pro notifikace PRZED smazáním
+    const fromStr = reservation.dateFrom.toISOString().split("T")[0];
+    const toStr   = reservation.dateTo.toISOString().split("T")[0];
+    const ownerUsername = reservation.user.username;
+    const watcherUsers  = reservation.watchers.map((w) => w.user);
+
+    // Smazat rezervaci (watchers se smažou kaskádou)
+    await prisma.reservation.delete({ where: { id } });
+
+    // ── Notifikace sledovatelů přes hlavní nástěnku ──────────────────────
+    if (watcherUsers.length > 0) {
+      const notifyPromises = watcherUsers.map((watcher) => {
+        const message =
+          `🐕 Hldácí pes: Rezervace uživatele **${ownerUsername}** ` +
+          `(${fromStr} → ${toStr}) byla právě **zrušena**. ` +
+          `Termín je nyní volný — můžeš si ho zarezervovat! 🏕️`;
+
+        return prisma.note.create({
+          data: {
+            message,
+            userId: watcher.id,
+            // threadId: null = hlavní nástěnka
+          },
+        });
+      });
+
+      await Promise.allSettled(notifyPromises);
+
+      logger.info("WATCHER", "Watchers notified via notes", {
+        reservationId: id,
+        notifiedCount: watcherUsers.length,
+        watchers: watcherUsers.map((w) => w.username),
+      });
+    }
 
     res.json({ message: "Smazáno." });
   } catch (error) {
     logger.error("RESERVATIONS", "Delete reservation error", { error: String(error), id });
     res.status(500).json({ message: "Chyba." });
+  }
+});
+
+// ============================================================================
+//        WATCH: GET /:id/watch — zjistit, zda aktuální user hlídá
+// ============================================================================
+router.get("/:id/watch", protect, async (req: Request, res: Response) => {
+  if (!req.user) return res.status(401).json({ message: "Neautorizováno." });
+  const { id: reservationId } = req.params;
+  try {
+    const watcher = await prisma.reservationWatcher.findUnique({
+      where: {
+        userId_reservationId: {
+          userId: req.user.userId,
+          reservationId,
+        },
+      },
+    });
+    res.json({ watching: !!watcher });
+  } catch (err) {
+    logger.error("WATCHER", "Watch status error", { error: String(err) });
+    res.status(500).json({ message: "Chyba." });
+  }
+});
+
+// ============================================================================
+//        WATCH: POST /:id/watch — přihlásit hlídání
+// ============================================================================
+router.post("/:id/watch", protect, async (req: Request, res: Response) => {
+  if (!req.user) return res.status(401).json({ message: "Neautorizováno." });
+  const { id: reservationId } = req.params;
+  try {
+    const reservation = await prisma.reservation.findUnique({
+      where: { id: reservationId },
+      include: { user: { select: { username: true } } },
+    });
+    if (!reservation) {
+      return res.status(404).json({ message: "Rezervace nenalezena." });
+    }
+    if (reservation.userId === req.user.userId) {
+      return res.status(400).json({ message: "Nemůžete hlídat vlastní rezervaci." });
+    }
+    await prisma.reservationWatcher.upsert({
+      where: {
+        userId_reservationId: {
+          userId: req.user.userId,
+          reservationId,
+        },
+      },
+      update: {},
+      create: { userId: req.user.userId, reservationId },
+    });
+    logger.info("WATCHER", "Watch added", { watcherId: req.user.userId, reservationId });
+    res.status(201).json({
+      watching: true,
+      message: `Hlídáš rezervaci uživatele ${reservation.user.username}.`,
+    });
+  } catch (err) {
+    logger.error("WATCHER", "Watch error", { error: String(err), reservationId });
+    res.status(500).json({ message: "Chyba při přihlášování hlídání." });
+  }
+});
+
+// ============================================================================
+//        WATCH: DELETE /:id/watch — odhlásit hlídání
+// ============================================================================
+router.delete("/:id/watch", protect, async (req: Request, res: Response) => {
+  if (!req.user) return res.status(401).json({ message: "Neautorizováno." });
+  const { id: reservationId } = req.params;
+  try {
+    await prisma.reservationWatcher.deleteMany({
+      where: { userId: req.user.userId, reservationId },
+    });
+    res.json({ watching: false, message: "Hlídání zrušeno." });
+  } catch (err) {
+    logger.error("WATCHER", "Unwatch error", { error: String(err) });
+    res.status(500).json({ message: "Chyba při rušení hlídání." });
   }
 });
 

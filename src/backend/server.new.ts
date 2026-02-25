@@ -26,6 +26,7 @@ import dashboardRoutes from "./routes/dashboard";
 import noteThreadsRoutes from "./routes/noteThreads";
 import shoppingListsRoutes from "./routes/shoppingLists";
 import adminRoutes from "./routes/admin";
+import inventoryRoutes from "./routes/inventory";
 
 const app = express();
 const isProd = process.env.NODE_ENV === "production";
@@ -154,6 +155,7 @@ app.use("/api/users", usersRoutes);
 app.use("/api/reservations", reservationsRoutes);
 app.use("/api/shopping-lists", shoppingListsRoutes);
 app.use("/api/shopping-list", shoppingListRoutes);
+app.use("/api/inventory", inventoryRoutes);
 app.use("/api/notes", notesRoutes);
 app.use("/api/note-threads", noteThreadsRoutes);
 app.use("/api/gallery", galleryRoutes);

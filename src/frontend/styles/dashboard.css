@@ -118,7 +118,7 @@
 }
 
 /* Každá karta v gridu vyplňuje celou výšku buňky */
-.dashboard-grid > .glass-card {
+.dashboard-grid>.glass-card {
   height: 100%;
   box-sizing: border-box;
 }
@@ -972,6 +972,7 @@
   margin: 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -1068,7 +1069,7 @@
     flex-grow: 0;
   }
 
-  .dashboard-grid > .glass-card {
+  .dashboard-grid>.glass-card {
     height: auto;
     min-height: 0;
   }
@@ -1277,5 +1278,40 @@
   /* Skryj forecast na extra malých telefonech */
   .weather-forecast {
     display: none;
+  }
+
+  /* ─── Departure Checklist Modal ────────────────────────────────────────── */
+  .departure-checklist {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .checklist-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 16px;
+    color: #374151;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 10px 14px;
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: background 0.2s, border-color 0.2s;
+  }
+
+  .checklist-item:hover {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.1);
+  }
+
+  .checklist-item input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--color-primary);
   }
 }

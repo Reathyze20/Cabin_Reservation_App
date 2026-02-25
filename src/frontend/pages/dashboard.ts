@@ -42,6 +42,7 @@ interface DashboardData {
     to: string;
     purpose: string;
   } | null;
+  departingToday: boolean;
   shoppingListWidget: ShoppingListWidget | null;
   latestNotes: {
     id: string;
@@ -205,31 +206,31 @@ async function fetchWeather(): Promise<WeatherData | null> {
 
 function mapWMOCode(code: number, isNight = false): { description: string; icon: string; color: string } {
   // Night: swap sun → moon, cloud-sun → cloud-moon
-  const sun      = isNight ? 'fa-moon'        : 'fa-sun';
-  const cloudSun = isNight ? 'fa-cloud-moon'  : 'fa-cloud-sun';
-  const rainSun  = isNight ? 'fa-cloud-moon-rain' : 'fa-cloud-sun-rain';
+  const sun = isNight ? 'fa-moon' : 'fa-sun';
+  const cloudSun = isNight ? 'fa-cloud-moon' : 'fa-cloud-sun';
+  const rainSun = isNight ? 'fa-cloud-moon-rain' : 'fa-cloud-sun-rain';
 
   // Colors per condition
-  const COL_SUN        = isNight ? '#c0c8d8' : '#f59e0b';  // silver night / amber day
-  const COL_CLOUD_SUN  = isNight ? '#94a3b8' : '#f0ab1f';  // gray-silver / warm yellow
-  const COL_CLOUD      = '#94a3b8';   // neutral gray
-  const COL_FOG        = '#b0b8c4';   // light gray-blue
-  const COL_DRIZZLE    = '#7ab5d8';   // muted blue
-  const COL_RAIN       = '#4a90c4';   // medium blue
-  const COL_SNOW       = '#a8c8f0';   // icy light blue
-  const COL_SHOWER     = '#60a5fa';   // bright blue
-  const COL_THUNDER    = '#f97316';   // vivid orange
+  const COL_SUN = isNight ? '#c0c8d8' : '#f59e0b';  // silver night / amber day
+  const COL_CLOUD_SUN = isNight ? '#94a3b8' : '#f0ab1f';  // gray-silver / warm yellow
+  const COL_CLOUD = '#94a3b8';   // neutral gray
+  const COL_FOG = '#b0b8c4';   // light gray-blue
+  const COL_DRIZZLE = '#7ab5d8';   // muted blue
+  const COL_RAIN = '#4a90c4';   // medium blue
+  const COL_SNOW = '#a8c8f0';   // icy light blue
+  const COL_SHOWER = '#60a5fa';   // bright blue
+  const COL_THUNDER = '#f97316';   // vivid orange
 
-  if (code === 0)  return { description: 'Jasno',               icon: sun,      color: COL_SUN };
-  if (code <= 2)   return { description: 'Polojasno',           icon: cloudSun, color: COL_CLOUD_SUN };
-  if (code === 3)  return { description: 'Zataženo',            icon: 'fa-cloud',color: COL_CLOUD };
-  if (code <= 49)  return { description: 'Mlha',                icon: 'fa-smog', color: COL_FOG };
-  if (code <= 59)  return { description: 'Mrholení',            icon: 'fa-cloud-drizzle', color: COL_DRIZZLE };
-  if (code <= 69)  return { description: 'Déšť',                icon: 'fa-cloud-showers-heavy', color: COL_RAIN };
-  if (code <= 79)  return { description: 'Sněžení',             icon: 'fa-snowflake', color: COL_SNOW };
-  if (code <= 84)  return { description: 'Přeháňky',            icon: rainSun,  color: COL_SHOWER };
-  if (code <= 94)  return { description: 'Sněhové přeháňky',   icon: 'fa-snowflake', color: COL_SNOW };
-  if (code <= 99)  return { description: 'Bouřka',              icon: 'fa-bolt', color: COL_THUNDER };
+  if (code === 0) return { description: 'Jasno', icon: sun, color: COL_SUN };
+  if (code <= 2) return { description: 'Polojasno', icon: cloudSun, color: COL_CLOUD_SUN };
+  if (code === 3) return { description: 'Zataženo', icon: 'fa-cloud', color: COL_CLOUD };
+  if (code <= 49) return { description: 'Mlha', icon: 'fa-smog', color: COL_FOG };
+  if (code <= 59) return { description: 'Mrholení', icon: 'fa-cloud-drizzle', color: COL_DRIZZLE };
+  if (code <= 69) return { description: 'Déšť', icon: 'fa-cloud-showers-heavy', color: COL_RAIN };
+  if (code <= 79) return { description: 'Sněžení', icon: 'fa-snowflake', color: COL_SNOW };
+  if (code <= 84) return { description: 'Přeháňky', icon: rainSun, color: COL_SHOWER };
+  if (code <= 94) return { description: 'Sněhové přeháňky', icon: 'fa-snowflake', color: COL_SNOW };
+  if (code <= 99) return { description: 'Bouřka', icon: 'fa-bolt', color: COL_THUNDER };
   return { description: 'Neznámé', icon: 'fa-cloud', color: COL_CLOUD };
 }
 
@@ -275,6 +276,35 @@ function getTemplate(): string {
     <div class="glass-card dashboard-notes-card" id="dashboard-notes">
       <div class="card-body-full">
         <div class="spinner-container"><div class="spinner"></div></div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Modal: Odjezdový protokol -->
+  <div id="departure-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2><i class="fas fa-clipboard-check"></i> Odjezdový protokol</h2>
+        <button class="modal-close" id="close-departure-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-subtitle">Před odjezdem, prosím, zkontrolujte:</p>
+        <div class="departure-checklist">
+          <label class="checklist-item"><input type="checkbox" /> Vypnuto a vypuštěno topení/voda</label>
+          <label class="checklist-item"><input type="checkbox" /> Zavřené okenice</label>
+          <label class="checklist-item"><input type="checkbox" /> Vybraný popel z kamen</label>
+          <label class="checklist-item"><input type="checkbox" /> Vyprázdněná lednice</label>
+          <label class="checklist-item"><input type="checkbox" /> Zamčeno</label>
+        </div>
+        <div class="form-group" style="margin-top: 15px;">
+          <label>Vzkaz dalšímu návštěvníkovi (a na nástěnku):</label>
+          <textarea id="departure-note" class="form-control" rows="3" placeholder="Např.: Vše ok, dřevo je připravené pod plachtou..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="button-primary" id="btn-submit-departure" style="width: 100%;">
+          <i class="fas fa-paper-plane"></i> Odeslat a uzavřít pobyt
+        </button>
       </div>
     </div>
   </div>`;
@@ -453,21 +483,21 @@ function renderUpcoming(reservations: DashboardData['upcomingReservations']): vo
     ${header}
     <div class="list-content">
       ${toShow.map((r) => {
-        const avatarContent = r.userAnimalIcon
-          ? `<span style="font-size:18px">${r.userAnimalIcon}</span>`
-          : r.username.charAt(0).toUpperCase();
-        const avatarBg = r.userAnimalIcon
-          ? 'background:rgba(0,0,0,0.05)'
-          : `background:${r.userColor || '#808080'}`;
-        const days = daysUntil(r.from);
-        const daysChip = days === 0 ? 'dnes' : days === 1 ? 'zítra' : `za ${days} d.`;
-        const statusBadge = r.status === 'soft'
-          ? ' <span class="res-status-badge res-badge-soft">Předběžná</span>'
-          : r.status === 'backup'
-            ? ' <span class="res-status-badge res-badge-backup">Záložní</span>'
-            : '';
-        const nights = nightsLabel(r.from, r.to);
-        return `
+    const avatarContent = r.userAnimalIcon
+      ? `<span style="font-size:18px">${r.userAnimalIcon}</span>`
+      : r.username.charAt(0).toUpperCase();
+    const avatarBg = r.userAnimalIcon
+      ? 'background:rgba(0,0,0,0.05)'
+      : `background:${r.userColor || '#808080'}`;
+    const days = daysUntil(r.from);
+    const daysChip = days === 0 ? 'dnes' : days === 1 ? 'zítra' : `za ${days} d.`;
+    const statusBadge = r.status === 'soft'
+      ? ' <span class="res-status-badge res-badge-soft">Předběžná</span>'
+      : r.status === 'backup'
+        ? ' <span class="res-status-badge res-badge-backup">Záložní</span>'
+        : '';
+    const nights = nightsLabel(r.from, r.to);
+    return `
           <div class="list-item">
             <div class="list-item-icon" style="${avatarBg}">${avatarContent}</div>
             <div class="list-item-content">
@@ -476,7 +506,7 @@ function renderUpcoming(reservations: DashboardData['upcomingReservations']): vo
             </div>
             <span class="upcoming-days-chip">${daysChip}</span>
           </div>`;
-      }).join('')}
+  }).join('')}
     </div>`;
 }
 
@@ -518,9 +548,9 @@ function renderShopping(widget: ShoppingListWidget | null): void {
             <div class="list-item-title" style="font-weight:500">${item.name}</div>
           </div>
         </div>`).join('')
-      + (pendingCount > widget.pendingItems.length
-        ? `<div class="shopping-widget-more">+${pendingCount - widget.pendingItems.length} dalších položek →</div>`
-        : '');
+    + (pendingCount > widget.pendingItems.length
+      ? `<div class="shopping-widget-more">+${pendingCount - widget.pendingItems.length} dalších položek →</div>`
+      : '');
 
   el.innerHTML = `
     ${header}
@@ -566,11 +596,11 @@ function renderNotes(notes: DashboardData['latestNotes']): void {
       ${header}
       <div class="dashboard-notes-feed">
         ${notes.map(n => {
-          const avatarContent = (n as any).userAnimalIcon ?? n.username.charAt(0).toUpperCase();
-          const avatarStyle = (n as any).userAnimalIcon
-            ? 'background:rgba(0,0,0,0.05)'
-            : `background:${(n as any).userColor || '#6b7280'}`;
-          return `
+    const avatarContent = (n as any).userAnimalIcon ?? n.username.charAt(0).toUpperCase();
+    const avatarStyle = (n as any).userAnimalIcon
+      ? 'background:rgba(0,0,0,0.05)'
+      : `background:${(n as any).userColor || '#6b7280'}`;
+    return `
             <div class="dashboard-note-item">
               <div class="note-avatar" style="${avatarStyle}">${avatarContent}</div>
               <div class="note-content">
@@ -581,7 +611,7 @@ function renderNotes(notes: DashboardData['latestNotes']): void {
                 <p class="note-preview">${renderMarkdown(n.message)}</p>
               </div>
             </div>`;
-        }).join('')}
+  }).join('')}
       </div>
     </div>`;
 }
@@ -599,6 +629,12 @@ async function loadDashboard(): Promise<void> {
 
   if (data) {
     renderActiveReservation(data);
+
+    // Departure mode hook
+    if (data.departingToday) {
+      initDepartureMode();
+    }
+
     // Pokud je někdo na chatě, vyfiltruj jeho aktivní rezervaci z nadcházejících
     const upcoming = data.activeReservation
       ? data.upcomingReservations.filter(r => r.id !== data.activeReservation!.id)
@@ -608,6 +644,96 @@ async function loadDashboard(): Promise<void> {
     renderNotes(data.latestNotes);
   }
 }
+
+// ─── Departure Mode ───────────────────────────────────────────────────
+
+function initDepartureMode(): void {
+  // Přidáme nápadný banner nad kalendář nebo mezi sekce (nebo využijeme modál)
+  const appNav = document.querySelector('.dashboard-grid');
+  if (appNav && !document.getElementById('departure-banner')) {
+    const banner = document.createElement('div');
+    banner.id = 'departure-banner';
+    banner.className = 'glass-card status-card';
+    banner.style.gridColumn = '1 / -1'; // roztáhnout přes celou šířku
+    banner.style.background = 'linear-gradient(135deg, rgba(254, 240, 138, 0.9), rgba(253, 224, 71, 0.8))';
+    banner.style.borderColor = '#eab308';
+
+    banner.innerHTML = `
+      <div class="card-body-full">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; gap:15px; align-items:center;">
+             <div style="background:#ca8a04; color:white; width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:24px;">
+               <i class="fas fa-suitcase-rolling"></i>
+             </div>
+             <div>
+               <h3 style="margin:0; font-size:1.1rem; color:#854d0e;">Dnes odjíždíte!</h3>
+               <p style="margin:4px 0 0 0; color:#a16207; font-size:0.9rem;">Nezapomeňte vyplnit odjezdový protokol a nechat vzkaz.</p>
+             </div>
+          </div>
+          <button id="btn-open-departure" class="button-primary" style="background:#ca8a04; border:none; box-shadow:none;">
+            Vyplnit protokol
+          </button>
+        </div>
+      </div>
+    `;
+    // Vložit hned na začátek gridu
+    appNav.insertBefore(banner, appNav.firstChild);
+
+    // Event listenery pro modal
+    document.getElementById('btn-open-departure')?.addEventListener('click', () => {
+      document.getElementById('departure-modal')?.classList.remove('hidden');
+    });
+
+    document.getElementById('close-departure-modal')?.addEventListener('click', () => {
+      document.getElementById('departure-modal')?.classList.add('hidden');
+    });
+
+    document.getElementById('btn-submit-departure')?.addEventListener('click', async () => {
+      const noteInput = document.getElementById('departure-note') as HTMLTextAreaElement;
+
+      const note = noteInput.value.trim();
+      let fullMessage = '**Odjezd z chaty:**\n';
+      const checkboxes = document.querySelectorAll('.departure-checklist input[type="checkbox"]');
+
+      let allChecked = true;
+      checkboxes.forEach((cb: any) => {
+        const label = cb.parentElement.innerText.trim();
+        if (cb.checked) {
+          fullMessage += `- [x] ${label}\n`;
+        } else {
+          fullMessage += `- [ ] ${label}\n`;
+          allChecked = false;
+        }
+      });
+
+      if (!allChecked) {
+        if (!confirm('Některé položky nejsou odškrtnuté. Opravdu chcete protokol odeslat?')) {
+          return;
+        }
+      }
+
+      if (note) {
+        fullMessage += `\n**Vzkaz:** ${note}`;
+      }
+
+      try {
+        const res = await authFetch('/api/notes', {
+          method: 'POST',
+          body: JSON.stringify({ message: fullMessage })
+        });
+        if (res) {
+          document.getElementById('departure-modal')?.classList.add('hidden');
+          banner.remove(); // odstranit banner po odeslání
+          loadDashboard(); // refresh
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    });
+  }
+}
+
+// ─── Module state ─────────────────────────────────────────────────────
 
 // ─── Page module ──────────────────────────────────────────────────────
 

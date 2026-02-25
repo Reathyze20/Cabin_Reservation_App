@@ -7,6 +7,73 @@ import {
   getToken, getUserId, getRole, getUsername,
 } from '../lib/common';
 import type { Reservation } from '@shared/types';
+import '../styles/reservations.css';
+
+// ─── Inventory notify ─────────────────────────────────────────────────────────
+
+interface MissingSummary {
+  count: number;
+  items: { name: string; status: 'LOW' | 'EMPTY' }[];
+  hasShoppingItems: boolean;
+  pendingShoppingCount: number;
+}
+
+function showInventoryNotifyDialog(summary: MissingSummary): Promise<boolean> {
+  return new Promise((resolve) => {
+    document.getElementById('inv-notify-modal')?.remove();
+
+    const countWord =
+      summary.count === 1 ? 'položka' :
+      summary.count < 5  ? 'položky' : 'položek';
+
+    const itemsList = summary.items.map((i) =>
+      `<li class="inv-notify-item">
+        <span class="inv-notify-item-name">${i.name}</span>
+        <span class="badge ${i.status === 'EMPTY' ? 'badge-empty' : 'badge-low'}">${i.status === 'EMPTY' ? 'Došlo' : 'Málo'}</span>
+      </li>`
+    ).join('');
+
+    const invSection = summary.count > 0
+      ? `<p class="inv-notify-subtitle"><strong>${summary.count} ${countWord}</strong> na chatě chybí nebo dochází:</p>
+         <ul class="inv-notify-list">${itemsList}</ul>`
+      : '';
+
+    const shopLine = summary.hasShoppingItems
+      ? `<p class="inv-notify-shop-line">V nákupním seznamu je také <strong>${summary.pendingShoppingCount} nekoupených položek</strong>.</p>`
+      : '';
+
+    const modal = document.createElement('div');
+    modal.id = 'inv-notify-modal';
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+      <div class="modal-content inv-notify-content">
+        <div class="inv-notify-header">
+          <h3>Rezervace uložena!</h3>
+        </div>
+        <div class="inv-notify-body">
+          ${invSection}
+          ${shopLine}
+          <p class="inv-notify-question">Chcete rovnou přejít do nákupního seznamu?</p>
+        </div>
+        <div class="inv-notify-actions">
+          <button class="button-secondary" id="inv-notify-no">Ne, zůstat v kalendáři</button>
+          <button class="button-primary" id="inv-notify-yes">Ano, přejít do nákupů</button>
+        </div>
+      </div>`;
+    document.body.appendChild(modal);
+    requestAnimationFrame(() => modal.classList.add('modal-visible'));
+
+    const cleanup = (result: boolean) => {
+      modal.classList.remove('modal-visible');
+      setTimeout(() => modal.remove(), 200);
+      resolve(result);
+    };
+
+    document.getElementById('inv-notify-yes')?.addEventListener('click', () => cleanup(true));
+    document.getElementById('inv-notify-no')?.addEventListener('click', () => cleanup(false));
+    modal.addEventListener('click', (e) => { if (e.target === modal) cleanup(false); });
+  });
+}
 
 // ─── Module state ────────────────────────────────────────────────────
 let container: HTMLElement;
@@ -599,6 +666,13 @@ function showReservationDetail(r: Reservation & { userColor?: string; userAnimal
         </button>
       </div>` : ''}
 
+      ${!isMine ? `
+      <div class="detail-actions" id="watcher-slot-${r.id}">
+        <button class="detail-btn" disabled>
+          <i class="fas fa-spinner fa-spin"></i> Načítám…
+        </button>
+      </div>` : ''}
+
     </div>
   `;
 
@@ -624,6 +698,16 @@ function showReservationDetail(r: Reservation & { userColor?: string; userAnimal
     const id = assignBtn.dataset.id;
     if (id) openAssignModal(id);
   });
+
+  // ── Async watcher button ───────────────────────────────────────────────
+  if (!isMine) {
+    fetchWatchStatus(r.id).then((watching) => {
+      const slot = document.getElementById(`watcher-slot-${r.id}`);
+      if (!slot) return;
+      slot.innerHTML = buildWatchButton(r.id, watching);
+      bindWatchButton(slot.querySelector<HTMLButtonElement>('.watch-toggle-btn'));
+    });
+  }
 }
 
 // ─── Reservation rendering ────────────────────────────────────────────
@@ -874,6 +958,57 @@ function closeAssignModal(): void {
 }
 
 
+// ─── Watcher helpers — Hlídácí pes termínů ──────────────────────────────────
+
+const watchingCache = new Map<string, boolean>();
+
+async function fetchWatchStatus(reservationId: string): Promise<boolean> {
+  if (watchingCache.has(reservationId)) return watchingCache.get(reservationId)!;
+  const data = await authFetch<{ watching: boolean }>(`/api/reservations/${reservationId}/watch`);
+  const watching = data?.watching ?? false;
+  watchingCache.set(reservationId, watching);
+  return watching;
+}
+
+async function toggleWatch(reservationId: string, currentlyWatching: boolean): Promise<boolean> {
+  const method = currentlyWatching ? 'DELETE' : 'POST';
+  const result = await authFetch<{ watching: boolean; message: string }>(
+    `/api/reservations/${reservationId}/watch`,
+    { method }
+  );
+  if (!result) return currentlyWatching;
+  watchingCache.set(reservationId, result.watching);
+  showToast(result.message, 'success');
+  return result.watching;
+}
+
+function buildWatchButton(reservationId: string, watching: boolean): string {
+  return watching
+    ? `<button class="detail-btn detail-btn-watching watch-toggle-btn" data-res-id="${reservationId}" data-watching="true">
+         <i class="fas fa-dog"></i>&nbsp; Hlídám · Zrušit hlídání
+       </button>`
+    : `<button class="detail-btn detail-btn-watch watch-toggle-btn" data-res-id="${reservationId}" data-watching="false"
+         title="Dostaneš zprávu na nástěnce, pokud bude termín uvolněn">
+         <i class="fas fa-bell"></i>&nbsp; Hlídat termín
+       </button>`;
+}
+
+function bindWatchButton(btn: HTMLButtonElement | null): void {
+  if (!btn) return;
+  btn.addEventListener('click', async () => {
+    const resId    = btn.dataset.resId!;
+    const watching = btn.dataset.watching === 'true';
+    btn.disabled   = true;
+    btn.innerHTML  = '<i class="fas fa-spinner fa-spin"></i> Ukládám…';
+    const newState = await toggleWatch(resId, watching);
+    const wrapper  = document.createElement('div');
+    wrapper.innerHTML = buildWatchButton(resId, newState);
+    const newBtn = wrapper.firstElementChild as HTMLButtonElement;
+    btn.replaceWith(newBtn);
+    bindWatchButton(newBtn);
+  });
+}
+
 
 // ─── Event Binding ────────────────────────────────────────────────────
 
@@ -988,8 +1123,27 @@ function bindEvents(): void {
     if (!result) return;
 
     closeModal('booking-modal');
-    showToast(isEdit ? 'Rezervace upravena.' : 'Rezervace vytvořena.', 'success');
     await loadReservations();
+
+    if (isEdit) {
+      showToast('Rezervace upravena.', 'success');
+      return;
+    }
+
+    // Nová rezervace — zkontroluj stav zásob na pozadí
+    showToast('Rezervace uložena! Kontroluji zásoby…', 'info');
+
+    const summary = await authFetch<MissingSummary>('/api/inventory/missing-summary');
+
+    if (!summary || (summary.count === 0 && !summary.hasShoppingItems)) {
+      showToast('Rezervace uložena! Zásoby jsou v pořádku.', 'success');
+      return;
+    }
+
+    const goShopping = await showInventoryNotifyDialog(summary);
+    if (goShopping) {
+      window.location.hash = '#/shopping';
+    }
   });
 
   // Reservation list delegation (edit, delete, assign)

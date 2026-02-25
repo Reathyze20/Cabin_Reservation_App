@@ -45,24 +45,33 @@ router.get("/", protect, async (req: Request, res: Response) => {
       },
     });
 
+    // 2.5) Reservation ending today FOR THE CURRENT USER (Departure Mode)
+    const departingTodayReservation = await prisma.reservation.findFirst({
+      where: {
+        userId: req.user.userId,
+        dateTo: new Date(todayStr),
+        status: "primary" // Assuming you only do departure for primary
+      }
+    });
+
     // 3) Shopping widget — newest unresolved list with progress + up to 3 pending items
     const latestList = await prisma.shoppingList.findFirst({
-      where: { isResolved: false },
+      where: { isResolved: false, isPantry: false },
       include: { items: { orderBy: { createdAt: "asc" } } },
       orderBy: { createdAt: "desc" },
     });
 
     const shoppingListWidget = latestList
       ? {
-          id: latestList.id,
-          name: latestList.name,
-          pendingItems: latestList.items
-            .filter((i) => !i.purchased)
-            .slice(0, 3)
-            .map((i) => ({ id: i.id, name: i.name })),
-          totalCount: latestList.items.length,
-          doneCount: latestList.items.filter((i) => i.purchased).length,
-        }
+        id: latestList.id,
+        name: latestList.name,
+        pendingItems: latestList.items
+          .filter((i) => !i.purchased)
+          .slice(0, 3)
+          .map((i) => ({ id: i.id, name: i.name })),
+        totalCount: latestList.items.length,
+        doneCount: latestList.items.filter((i) => i.purchased).length,
+      }
       : null;
 
     // 4) Latest notes (last 3)
@@ -86,15 +95,15 @@ router.get("/", protect, async (req: Request, res: Response) => {
     res.json({
       activeReservation: activeReservation
         ? {
-            id: activeReservation.id,
-            username: activeReservation.user.username,
-            userColor: activeReservation.user.color,
-            userAnimalIcon: activeReservation.user.animalIcon,
-            from: activeReservation.dateFrom.toISOString().split("T")[0],
-            to: activeReservation.dateTo.toISOString().split("T")[0],
-            purpose: activeReservation.purpose,
-            handoverNote: activeReservation.handoverNote ?? null,
-          }
+          id: activeReservation.id,
+          username: activeReservation.user.username,
+          userColor: activeReservation.user.color,
+          userAnimalIcon: activeReservation.user.animalIcon,
+          from: activeReservation.dateFrom.toISOString().split("T")[0],
+          to: activeReservation.dateTo.toISOString().split("T")[0],
+          purpose: activeReservation.purpose,
+          handoverNote: activeReservation.handoverNote ?? null,
+        }
         : null,
       upcomingReservations: upcomingReservations.map((r) => ({
         id: r.id,
@@ -109,11 +118,12 @@ router.get("/", protect, async (req: Request, res: Response) => {
       })),
       myNextReservation: myNextReservation
         ? {
-            from: myNextReservation.dateFrom.toISOString().split("T")[0],
-            to: myNextReservation.dateTo.toISOString().split("T")[0],
-            purpose: myNextReservation.purpose,
-          }
+          from: myNextReservation.dateFrom.toISOString().split("T")[0],
+          to: myNextReservation.dateTo.toISOString().split("T")[0],
+          purpose: myNextReservation.purpose,
+        }
         : null,
+      departingToday: departingTodayReservation !== null,
       shoppingListWidget,
       latestNotes: latestNotes.map((n) => ({
         id: n.id,

@@ -19,7 +19,7 @@ if (!fs.existsSync(LOGS_DIR) && !isTest) {
 
 // ─── Pino transport ────────────────────────────────────────────────────────
 // DEV: pino-pretty (barevný, čitelný výstup)
-// PROD: čistý JSON na stdout (Railway/Docker sbírá automaticky)
+// PROD: čistý JSON na stdout (Docker sbírá automaticky)
 
 const transport = isDev
   ? pino.transport({

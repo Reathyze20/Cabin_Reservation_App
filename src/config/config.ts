@@ -15,7 +15,7 @@ export const DATABASE_URL = process.env.DATABASE_URL || "";
 // Server Configuration
 export const PORT = parseInt(process.env.PORT || "3000", 10);
 
-// Uploads — configurable for Railway volumes or Docker mounts
+// Uploads — configurable via UPLOADS_PATH env var (Docker mounts, custom paths)
 const defaultUploads = path.join(__dirname, "../../data/uploads");
 export const UPLOADS_PATH = process.env.UPLOADS_PATH || defaultUploads;
 export const THUMBS_PATH = path.join(UPLOADS_PATH, "thumbs");

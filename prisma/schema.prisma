@@ -39,6 +39,8 @@ model User {
   diaryEntries              DiaryEntry[]
   reconstructionItems       ReconstructionItem[]
   reconstructionVotes       ReconstructionVote[]
+  reservationWatches        ReservationWatcher[]
+  inventoryUpdates          InventoryItem[]      @relation("UpdatedBy")
 
   @@map("users")
 }
@@ -59,6 +61,7 @@ model Reservation {
 
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  watchers ReservationWatcher[]
 
   @@map("reservations")
 }
@@ -79,6 +82,7 @@ model ShoppingList {
   createdById String             @map("created_by_id")
   createdAt   DateTime           @default(now()) @map("created_at")
   isResolved  Boolean            @default(false) @map("is_resolved")
+  isPantry    Boolean            @default(false) @map("is_pantry")
 
   // Relations
   createdBy   User               @relation(fields: [createdById], references: [id], onDelete: Cascade)
@@ -97,7 +101,8 @@ model ShoppingListItem {
   purchased     Boolean    @default(false) // kept for backward-compat; mirrors status === purchased
   purchasedById String?    @map("purchased_by_id")
   purchasedAt   DateTime?  @map("purchased_at")
-  price         Decimal?   @db.Decimal(10, 2)
+  price               Decimal?   @db.Decimal(10, 2)
+  linkedInventoryId   String?    @map("linked_inventory_id")
 
   // Relations
   list        ShoppingList?       @relation(fields: [listId], references: [id], onDelete: Cascade)
@@ -266,4 +271,41 @@ model ReconstructionVote {
 
   @@id([itemId, userId])
   @@map("reconstruction_votes")
+}
+
+// ============================================================================
+// RESERVATION WATCHER — Hlídácí pes termínů
+// ============================================================================
+model ReservationWatcher {
+  id            String   @id @default(uuid())
+  userId        String   @map("user_id")
+  reservationId String   @map("reservation_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reservation Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, reservationId])
+  @@map("reservation_watchers")
+}
+
+// ============================================================================
+// INVENTORY (Zásoby na chatě)
+// ============================================================================
+model InventoryItem {
+  id          String   @id @default(uuid())
+  name        String
+  category    String   @default("OSTATNÍ")
+  status      String   @default("OK")   // OK | LOW | EMPTY
+  location    String?                   // Kde to leží, např. "Kůlna"
+  inCart      Boolean  @default(false) @map("in_cart")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  updatedById String?  @map("updated_by_id")
+
+  // Relations
+  updatedBy   User?    @relation("UpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@map("inventory_items")
 }

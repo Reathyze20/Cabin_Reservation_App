@@ -51,6 +51,369 @@
   overflow-y: auto;
 }
 
+/* ── Segmented Tabs (iOS-style) ─────────────────────────────────────────── */
+
+.tabs-container {
+  background: #f3f4f6;
+  padding: 4px;
+  border-radius: 8px;
+  display: flex;
+  gap: 4px;
+  max-width: 400px;
+  margin: 0 auto 24px auto;
+}
+
+.tab-button {
+  flex: 1;
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  color: #4b5563;
+  font-weight: 500;
+  font-size: 0.9rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: var(--font-family);
+}
+
+.tab-button.active {
+  background: #ffffff;
+  color: #111827;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.tab-button:not(.active):hover {
+  background: rgba(255, 255, 255, 0.5);
+  color: #374151;
+}
+
+/* ── Inventory list (pantry view) ────────────────────────────────────────── */
+
+.inventory-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.inventory-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  padding: 10px 16px;
+  border-radius: 8px;
+  transition: box-shadow 0.2s;
+  gap: 8px;
+}
+
+.inventory-item:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.inventory-item .item-name {
+  font-weight: 500;
+  color: #111827;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Status Badges ───────────────────────────────────────────────────────── */
+
+.badge {
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.badge-full {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.badge-low {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* ── Inventory item actions ──────────────────────────────────────────────── */
+
+.item-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn-add-to-cart {
+  background: #f3f4f6;
+  color: var(--color-primary, #5d9b62);
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: background 0.15s;
+  font-family: var(--font-family);
+}
+
+.btn-add-to-cart:hover {
+  background: #e5e7eb;
+}
+
+/* ── Inventory Empty State ───────────────────────────────────────────────── */
+
+.inventory-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  width: 100%;
+  padding: 48px 24px;
+  color: #6b7280;
+}
+
+.inventory-empty-state .empty-icon {
+  display: block;
+  margin: 0 auto 16px auto;
+  font-size: 3rem;
+  color: var(--color-primary);
+  opacity: 0.3;
+}
+
+.inventory-empty-state h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 8px;
+}
+
+.inventory-empty-state p {
+  font-size: 0.9rem;
+  margin: 0;
+  max-width: 320px;
+}
+
+/* ── Inventory Add Form ──────────────────────────────────────────────────── */
+
+#pantry-view {
+  padding: var(--space-xl);
+  background-color: #f8fafc;
+  border-radius: var(--radius-xl);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  flex-grow: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.inventory-add-form {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 12px;
+  align-items: center;
+  max-width: 800px;
+  margin: 0 auto 32px auto;
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.inventory-input {
+  flex-grow: 1;
+  /* Override global forms.css: select, input { width: 100%; margin-top: ... } */
+  width: auto !important;
+  min-width: 0;
+  margin-top: 0 !important;
+  padding: 10px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-family: var(--font-family);
+  color: var(--color-text, #111827);
+  background: #fff;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.inventory-input:focus {
+  border-color: var(--color-primary, #5d9b62);
+  box-shadow: 0 0 0 3px rgba(93, 155, 98, 0.12);
+}
+
+.inventory-select {
+  flex-shrink: 0;
+  /* Override global forms.css: select { width: 100%; margin-top: ... } */
+  width: auto !important;
+  min-width: 130px;
+  margin-top: 0 !important;
+  padding: 10px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-family: var(--font-family);
+  background: #fff;
+  color: var(--color-text, #374151);
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.inventory-select:focus {
+  border-color: var(--color-primary, #5d9b62);
+}
+
+/* Tlačítko Přidat — přirozená šířka (override .button-primary { width: 100% }) */
+.inv-add-btn {
+  flex-shrink: 0;
+  width: auto !important;
+  min-height: 42px;
+  padding: 0 24px;
+  border-radius: 6px;
+  white-space: nowrap;
+  margin-top: 0 !important;
+}
+
+@media (max-width: 768px) {
+  .inventory-add-form {
+    flex-direction: column;
+    align-items: stretch;
+    max-width: 100%;
+    margin-bottom: 24px;
+  }
+
+  .inventory-input,
+  .inventory-select,
+  .inv-add-btn {
+    width: 100% !important;
+    min-width: 0;
+  }
+}
+
+/* ── Inventory sections ─────────────────────────────────────────────────── */
+
+.inventory-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.inventory-category-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #9ca3af;
+  padding: 2px 4px;
+}
+
+.inventory-item-name {
+  font-weight: 500;
+  color: #111827;
+  padding: 0;
+}
+
+.inventory-item-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  padding: 0 8px;
+}
+
+.inv-item-meta {
+  display: flex;
+  gap: 12px;
+  margin-top: 3px;
+  font-size: 0.75rem;
+  color: #9ca3af;
+  flex-wrap: wrap;
+}
+
+.inv-meta-location,
+.inv-meta-updated {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.inv-meta-location i,
+.inv-meta-updated i {
+  font-size: 0.7rem;
+  opacity: 0.7;
+}
+
+/* Location input in add form — slightly shorter than name */
+.inventory-input-location {
+  flex-basis: 160px;
+  flex-shrink: 1;
+}
+
+/* ── Extended badge ──────────────────────────────────────────────────────── */
+
+.badge-empty {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* ── In-cart state ───────────────────────────────────────────────────────── */
+
+.btn-in-cart {
+  background: #f3f4f6 !important;
+  color: #9ca3af !important;
+  cursor: not-allowed !important;
+  opacity: 0.75;
+}
+
+/* ── Ghost action buttons ────────────────────────────────────────────────── */
+
+.ghost-btn {
+  background: transparent;
+  border: none;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #9ca3af;
+  font-size: 0.85rem;
+  transition: background 0.15s, color 0.15s;
+  font-family: var(--font-family);
+}
+
+.ghost-btn:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.btn-inv-delete:hover {
+  background: #fee2e2 !important;
+  color: #b91c1c !important;
+}
+
+/* ── Small modal ─────────────────────────────────────────────────────────── */
+
+.modal-small {
+  max-width: 420px !important;
+  width: 100%;
+}
+
 /* Empty State */
 .empty-state {
   width: 100%;
@@ -789,4 +1152,11 @@ div.shopping-list-card.card:hover {
 .modal-actions {
   text-align: right;
   margin-top: var(--space-lg);
+}
+
+/* Override .button-primary { width: 100% } uvnitř modalů zásoby */
+.modal-buttons .button-primary,
+.modal-buttons .button-secondary {
+  width: auto !important;
+  min-width: 90px;
 }

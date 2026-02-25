@@ -33,8 +33,22 @@ interface ShoppingList {
   items: ShoppingItem[];
 }
 
+interface InventoryItem {
+  id: string;
+  name: string;
+  category: string;
+  status: 'OK' | 'LOW' | 'EMPTY';
+  location?: string | null;
+  inCart: boolean;
+  updatedBy?: { id: string; username: string } | null;
+}
+
 // ─── Module state ─────────────────────────────────────────────────────────────
 let container: HTMLElement;
+let currentTab: 'shopping' | 'pantry' = 'shopping';
+let inventoryEventsReady = false;
+let pageAC: AbortController | null = null;
+const collapsedIds = new Set<string>();
 
 // ─── Status helpers ───────────────────────────────────────────────────────────
 
@@ -46,13 +60,13 @@ function nextStatus(current: ItemStatus): ItemStatus {
 }
 
 function statusIcon(status: ItemStatus): string {
-  if (status === 'purchased')      return '<i class="fas fa-check-circle si-purchased"></i>';
+  if (status === 'purchased') return '<i class="fas fa-check-circle si-purchased"></i>';
   if (status === 'bring_from_home') return '<i class="fas fa-home si-bring"></i>';
   return '<i class="far fa-circle si-pending"></i>';
 }
 
 function statusLabel(status: ItemStatus): string {
-  if (status === 'purchased')       return 'Koupeno';
+  if (status === 'purchased') return 'Koupeno';
   if (status === 'bring_from_home') return 'Přivezu z domova';
   return 'Ke koupit';
 }
@@ -71,7 +85,14 @@ function getTemplate(): string {
       <button id="btn-new-list" class="button-primary"><i class="fas fa-plus"></i> Nový košík</button>
     </div>
 
-    <div id="shopping-lists-grid" class="shopping-lists-grid">
+    <!-- Segmented Control (iOS-style Tabs) -->
+    <div class="tabs-container">
+      <button class="tab-button active" id="tab-shopping"><i class="fas fa-shopping-cart"></i> Ke koupi</button>
+      <button class="tab-button" id="tab-pantry"><i class="fas fa-box-open"></i> Zásoby na chatě</button>
+    </div>
+
+    <!-- Single content area — swapped on tab switch -->
+    <div id="shopping-content-area">
       <div class="spinner-container"><div class="spinner"></div></div>
     </div>
   </div>
@@ -91,7 +112,7 @@ function getTemplate(): string {
     </div>
   </div>
 
-  <!-- Share to Nástěnka Dialog -->
+  <!-- Share to Chat Dialog -->
   <div id="share-note-modal" class="modal-overlay hidden">
     <div class="modal-content share-note-modal-content">
       <span class="modal-close-button" data-close="share-note-modal">&times;</span>
@@ -144,45 +165,314 @@ function getTemplate(): string {
   `;
 }
 
+// ─── Pantry template ────────────────────────────────────────────────────────────
+function getPantryTemplate(): string {
+  return `
+    <form id="inventory-add-form" class="inventory-add-form">
+      <input type="text" id="inv-name" class="inventory-input" placeholder="Název zásoby (např. Těstoviny)…" required autocomplete="off" />
+      <input type="text" id="inv-location" class="inventory-input inventory-input-location" placeholder="Kde to leží? (např. Kůlna)" autocomplete="off" />
+      <select id="inv-category" class="inventory-select">
+        <option value="TRVANLIVÉ">Trvanlivé</option>
+        <option value="NÁPOJE">Nápoje</option>
+        <option value="HYGIENA">Hygiena</option>
+        <option value="KOŘENÍ">Koření</option>
+        <option value="OSTATNÍ" selected>Ostatní</option>
+      </select>
+      <select id="inv-status" class="inventory-select">
+        <option value="OK">Dostatek</option>
+        <option value="LOW">Málo</option>
+        <option value="EMPTY">Došlo</option>
+      </select>
+      <button type="submit" class="button-primary inv-add-btn"><i class="fas fa-plus"></i> Přidat</button>
+    </form>
+    <div id="inventory-list" class="inventory-list">
+      <div class="spinner-container"><div class="spinner"></div></div>
+    </div>
+  `;
+}
+
+// ─── Inventory Loading & Rendering ────────────────────────────────────────────────────
+
+async function loadInventory(): Promise<void> {
+  const contentArea = $('shopping-content-area');
+  if (!contentArea) return;
+
+  // Inject pantry template if not already present
+  if (!$('inventory-list')) {
+    contentArea.innerHTML = getPantryTemplate();
+    bindInventoryFormEvents();
+  }
+
+  const list = $('inventory-list');
+  if (!list) return;
+
+  list.innerHTML = '<div class="spinner-container"><div class="spinner"></div></div>';
+
+  const items = await authFetch<InventoryItem[]>('/api/inventory');
+  if (!items) {
+    list.innerHTML = '<p class="error-text">Chyba při načítání zásob.</p>';
+    return;
+  }
+
+  renderInventory(items, list);
+}
+
+function bindInventoryFormEvents(): void {
+  if (inventoryEventsReady) return;
+  inventoryEventsReady = true;
+
+  const signal = pageAC!.signal;
+
+  container.addEventListener('submit', async (e) => {
+    const form = (e.target as HTMLElement).closest<HTMLFormElement>('#inventory-add-form');
+    if (!form) return;
+    e.preventDefault();
+
+    const nameEl = $<HTMLInputElement>('inv-name');
+    const catEl  = $<HTMLSelectElement>('inv-category');
+    const stEl   = $<HTMLSelectElement>('inv-status');
+    const locEl  = $<HTMLInputElement>('inv-location');
+    const name   = nameEl?.value.trim() ?? '';
+
+    if (!name) return;
+    if (name.length > 100) { showToast('Název je příliš dlouhý (max 100 znaků).', 'error'); return; }
+
+    const res = await authFetch<InventoryItem>('/api/inventory', {
+      method: 'POST',
+      body: JSON.stringify({
+        name,
+        category: catEl?.value ?? 'OSTATNÍ',
+        status: stEl?.value ?? 'OK',
+        location: locEl?.value.trim() || null,
+      }),
+    });
+    if (res) {
+      if (nameEl) nameEl.value = '';
+      if (locEl) locEl.value = '';
+      showToast('Zásoba přidána.', 'success');
+      await loadInventory();
+    }
+  }, { signal });
+
+  container.addEventListener('click', async (e) => {
+    const el = e.target as HTMLElement;
+
+    const addBtn = el.closest<HTMLButtonElement>('.btn-add-to-cart');
+    if (addBtn && addBtn.dataset.id) {
+      addBtn.disabled = true;
+      const res = await authFetch(`/api/inventory/${addBtn.dataset.id}/add-to-cart`, { method: 'POST' });
+      if (res) {
+        showToast('Přidáno do nákupního seznamu "Doplňování zásob".', 'success');
+        await loadInventory();
+      } else {
+        addBtn.disabled = false;
+      }
+      return;
+    }
+
+    const editBtn = el.closest<HTMLButtonElement>('.btn-inv-edit');
+    if (editBtn && editBtn.dataset.id) {
+      await openEditInventoryModal(editBtn.dataset.id);
+      return;
+    }
+
+    const delBtn = el.closest<HTMLButtonElement>('.btn-inv-delete');
+    if (delBtn && delBtn.dataset.id) {
+      const confirmed = await showConfirm('Smazat zásobu?', 'Opravdu chcete tuto zásobu smazat?', true);
+      if (!confirmed) return;
+      const res = await authFetch(`/api/inventory/${delBtn.dataset.id}`, { method: 'DELETE' });
+      if (res) {
+        showToast('Zásoba smazána.', 'success');
+        await loadInventory();
+      }
+    }
+  }, { signal });
+}
+
+function renderInventory(items: InventoryItem[], listEl: HTMLElement): void {
+  listEl.innerHTML = '';
+
+  if (items.length === 0) {
+    listEl.innerHTML = `
+      <div class="inventory-empty-state">
+        <i class="fas fa-box-open empty-icon"></i>
+        <h3>Žádné zásoby</h3>
+        <p>Přidejte první položku, kterou chcete na chatě sledovat.</p>
+      </div>`;
+    return;
+  }
+
+  // Group by category
+  const grouped = new Map<string, InventoryItem[]>();
+  for (const item of items) {
+    const cat = item.category || 'OSTATNÍ';
+    if (!grouped.has(cat)) grouped.set(cat, []);
+    grouped.get(cat)!.push(item);
+  }
+
+  const categoryOrder = ['TRVANLIVÉ', 'NÁPOJE', 'HYGIENA', 'KOŘENÍ', 'OSTATNÍ'];
+  const sortedKeys = [...grouped.keys()].sort((a, b) => {
+    const ai = categoryOrder.indexOf(a);
+    const bi = categoryOrder.indexOf(b);
+    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+  });
+
+  for (const cat of sortedKeys) {
+    const section = document.createElement('div');
+    section.className = 'inventory-section';
+
+    const label = document.createElement('div');
+    label.className = 'inventory-category-label';
+    label.textContent = cat;
+    section.appendChild(label);
+
+    for (const item of grouped.get(cat)!) {
+      section.appendChild(renderInventoryRow(item));
+    }
+
+    listEl.appendChild(section);
+  }
+}
+
+function renderInventoryRow(item: InventoryItem): HTMLElement {
+  const row = document.createElement('div');
+  row.className = 'inventory-item';
+  row.dataset.id = item.id;
+  if (item.location) row.dataset.location = item.location;
+
+  const badgeClass = item.status === 'OK' ? 'badge-full' : item.status === 'LOW' ? 'badge-low' : 'badge-empty';
+  const badgeLabel = item.status === 'OK' ? 'Dostatek' : item.status === 'LOW' ? 'Málo' : 'Došlo';
+
+  const locationHtml = item.location
+    ? `<span class="inv-meta-location"><i class="fas fa-map-marker-alt"></i> ${item.location}</span>`
+    : '';
+  const updatedByHtml = item.updatedBy
+    ? `<span class="inv-meta-updated"><i class="fas fa-user-pen"></i> ${item.updatedBy.username}</span>`
+    : '';
+  const metaHtml = (locationHtml || updatedByHtml)
+    ? `<div class="inv-item-meta">${locationHtml}${updatedByHtml}</div>`
+    : '';
+
+  const cartBtn = item.inCart
+    ? `<button class="btn-add-to-cart btn-in-cart" data-id="${item.id}" disabled title="Již v nákupu"><i class="fas fa-shopping-cart"></i> Na seznamu</button>`
+    : `<button class="btn-add-to-cart" data-id="${item.id}" title="Přidat do nákupního seznamu"><i class="fas fa-cart-plus"></i> Do nákupu</button>`;
+
+  row.innerHTML = `
+    <span class="badge ${badgeClass}">${badgeLabel}</span>
+    <div class="inventory-item-info">
+      <span class="inventory-item-name">${item.name}</span>
+      ${metaHtml}
+    </div>
+    <div class="item-actions">
+      ${cartBtn}
+      <button class="ghost-btn btn-inv-edit" data-id="${item.id}" title="Upravit"><i class="fas fa-pen"></i></button>
+      <button class="ghost-btn btn-inv-delete" data-id="${item.id}" title="Smazat"><i class="fas fa-trash"></i></button>
+    </div>`;
+
+  return row;
+}
+
+async function openEditInventoryModal(id: string): Promise<void> {
+  // Remove any stale modal
+  document.getElementById('inv-edit-modal')?.remove();
+
+  const item = await authFetch<InventoryItem>(`/api/inventory`);
+  // We don't have a single GET endpoint, so find from last known render
+  const row = document.querySelector<HTMLElement>(`.inventory-item[data-id="${id}"]`);
+  const nameText = row?.querySelector<HTMLElement>('.inventory-item-name')?.textContent ?? '';
+  const locationText = row?.dataset.location ?? '';
+
+  const modal = document.createElement('div');
+  modal.id = 'inv-edit-modal';
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal-content modal-small">
+      <span class="modal-close-button" id="inv-edit-close">&times;</span>
+      <h2>Upravit zásobu</h2>
+      <form id="inv-edit-form" style="margin-top: var(--space-md); display:flex; flex-direction:column; gap:var(--space-sm);">
+        <input type="text" id="inv-edit-name" class="inventory-input" value="${nameText}" placeholder="Název zásoby" required />
+        <input type="text" id="inv-edit-location" class="inventory-input" value="${locationText}" placeholder="Kde to leží? (např. Kůlna)" />
+        <select id="inv-edit-status" class="inventory-select">
+          <option value="OK">Dostatek</option>
+          <option value="LOW">Málo</option>
+          <option value="EMPTY">Došlo</option>
+        </select>
+        <div class="modal-buttons" style="justify-content: flex-end; margin-top: var(--space-md);">
+          <button type="button" id="inv-edit-cancel" class="button-secondary">Zrušit</button>
+          <button type="submit" class="button-primary">Uložit</button>
+        </div>
+      </form>
+    </div>`;
+  document.body.appendChild(modal);
+
+  // Try to pre-select current status from badge class
+  const badgeEl = row?.querySelector<HTMLElement>('.badge');
+  const currentStatus =
+    badgeEl?.classList.contains('badge-full') ? 'OK' :
+    badgeEl?.classList.contains('badge-low') ? 'LOW' : 'EMPTY';
+  const sel = modal.querySelector<HTMLSelectElement>('#inv-edit-status')!;
+  sel.value = currentStatus;
+
+  function closeModal() { modal.remove(); }
+  modal.querySelector('#inv-edit-close')?.addEventListener('click', closeModal);
+  modal.querySelector('#inv-edit-cancel')?.addEventListener('click', closeModal);
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+  modal.querySelector<HTMLFormElement>('#inv-edit-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = (modal.querySelector<HTMLInputElement>('#inv-edit-name')!).value.trim();
+    const status = (modal.querySelector<HTMLSelectElement>('#inv-edit-status')!).value;
+    const location = (modal.querySelector<HTMLInputElement>('#inv-edit-location')!).value.trim();
+    if (!name) return;
+    const res = await authFetch(`/api/inventory/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ name, status, location: location || null }),
+    });
+    if (res) {
+      showToast('Zásoba aktualizována.', 'success');
+      closeModal();
+      await loadInventory();
+    }
+  });
+}
+
 // ─── Data loading ──────────────────────────────────────────────────────────────
 
 async function loadShoppingLists(): Promise<void> {
-  const grid = $('shopping-lists-grid');
-  if (!grid) return;
+  const contentArea = $('shopping-content-area');
+  if (!contentArea) return;
 
-  if (!grid.hasChildNodes() || grid.querySelector('.spinner')) {
-    grid.innerHTML = '<div class="spinner-container"><div class="spinner"></div></div>';
+  // Create or reuse grid inside content area
+  let grid = document.getElementById('shopping-lists-grid');
+  if (!grid) {
+    grid = document.createElement('div');
+    grid.id = 'shopping-lists-grid';
+    grid.className = 'shopping-lists-grid';
+    contentArea.innerHTML = '';
+    contentArea.appendChild(grid);
   }
 
-  const lists = await authFetch<ShoppingList[]>('/api/shopping-lists');
+  grid.innerHTML = '<div class="spinner-container"><div class="spinner"></div></div>';
+
+  const lists = await authFetch<ShoppingList[]>('/api/shopping-lists?isPantry=false');
   if (!lists) {
     grid.innerHTML = '<p class="error-text">Chyba načítání nákupních seznamů.</p>';
     return;
   }
-
-  renderShoppingLists(lists);
+  renderShoppingLists(lists, grid);
 }
 
 // ─── Rendering ────────────────────────────────────────────────────────────────
 
-function renderShoppingLists(lists: ShoppingList[]): void {
-  const grid = $('shopping-lists-grid');
-  if (!grid) return;
-
-  // Zapamatuj sbalené karty před přerenderem
-  const collapsedIds = new Set<string>();
-  grid.querySelectorAll<HTMLElement>('.shopping-list-card.collapsed').forEach((el) => {
-    if (el.dataset.listId) collapsedIds.add(el.dataset.listId);
-  });
-
+function renderShoppingLists(lists: ShoppingList[], grid: HTMLElement): void {
   grid.innerHTML = '';
 
   if (lists.length === 0) {
     grid.innerHTML = `
       <div class="empty-state">
         <i class="fas fa-shopping-basket empty-icon"></i>
-        <h3>Žádné nákupní seznamy</h3>
-        <p>Klikněte na "Nový košík" pro vytvoření prvního seznamu.</p>
+        <h3>Žádné aktivní nákupy</h3>
+        <p>Klikněte na <strong>+ Nový košík</strong> a vytvořte první seznam.</p>
       </div>`;
     return;
   }
@@ -197,10 +487,10 @@ function renderShoppingLists(lists: ShoppingList[]): void {
     card.dataset.listId = list.id;
 
     const totalItems = list.items.length;
-    const doneItems  = list.items.filter((i) => isDone(i.status)).length;
+    const doneItems = list.items.filter((i) => isDone(i.status)).length;
     const progressPct = totalItems > 0 ? Math.round((doneItems / totalItems) * 100) : 0;
-    const allDone  = totalItems > 0 && doneItems === totalItems;
-    const canEdit  = list.createdById === currentUserId || isAdminUser;
+    const allDone = totalItems > 0 && doneItems === totalItems;
+    const canEdit = list.createdById === currentUserId || isAdminUser;
 
     // ── Header (vždy viditelný) ──────────────────────────────────────────────
     const headerHTML = `
@@ -265,11 +555,14 @@ function renderShoppingLists(lists: ShoppingList[]): void {
           ? `<button class="btn-delete-item" title="Smazat položku" data-item-id="${item.id}"><i class="fas fa-times"></i></button>`
           : '';
 
-        itemsHTML += `
-          <div class="shopping-item-row ${doneClass}" data-item-id="${item.id}" data-list-id="${list.id}" data-status="${item.status}">
+        const actionBtn = `
             <button class="shopping-status-btn" title="${statusLabel(item.status)}" data-item-id="${item.id}">
               ${statusIcon(item.status)}
-            </button>
+            </button>`;
+
+        itemsHTML += `
+          <div class="shopping-item-row ${doneClass}" data-item-id="${item.id}" data-list-id="${list.id}" data-status="${item.status}">
+            ${actionBtn}
             <span class="shopping-item-name">${item.name}</span>
             ${bringBadge}
             ${purchasedBadge}
@@ -313,7 +606,12 @@ function renderShoppingLists(lists: ShoppingList[]): void {
 // ─── Collapse helper ─────────────────────────────────────────────────────────
 
 function toggleCollapse(card: HTMLElement): void {
+  const listId = card.dataset.listId;
   const isNowCollapsed = card.classList.toggle('collapsed');
+  if (listId) {
+    if (isNowCollapsed) collapsedIds.add(listId);
+    else collapsedIds.delete(listId);
+  }
   const btn = card.querySelector<HTMLButtonElement>('.btn-collapse-list');
   if (btn) {
     btn.title = isNowCollapsed ? 'Rozbalit' : 'Sbalit';
@@ -328,18 +626,18 @@ function toggleCollapse(card: HTMLElement): void {
 interface NoteThread { id: string; name: string; }
 
 async function openShareDialog(listId: string, listName: string): Promise<void> {
-  const modal         = $('share-note-modal')!;
-  const subtitle      = $('share-note-list-name')!;
+  const modal = $('share-note-modal')!;
+  const subtitle = $('share-note-list-name')!;
   const targetSection = $('share-note-target-section')!;
-  const threadListEl  = $('share-note-thread-list')!;
-  const sendBtn       = $<HTMLButtonElement>('share-note-send')!;
-  const addThreadBtn  = $('share-note-add-thread')!;
+  const threadListEl = $('share-note-thread-list')!;
+  const sendBtn = $<HTMLButtonElement>('share-note-send')!;
+  const addThreadBtn = $('share-note-add-thread')!;
   const newThreadForm = $('share-note-new-thread-form')!;
   const threadNameInp = $<HTMLInputElement>('share-note-thread-name')!;
-  const createBtn     = $('share-note-create-thread')!;
-  const cancelBtn     = $('share-note-cancel-thread')!;
-  const btnNew        = $<HTMLButtonElement>('share-note-new')!;
-  const btnGoing      = $<HTMLButtonElement>('share-note-going')!;
+  const createBtn = $('share-note-create-thread')!;
+  const cancelBtn = $('share-note-cancel-thread')!;
+  const btnNew = $<HTMLButtonElement>('share-note-new')!;
+  const btnGoing = $<HTMLButtonElement>('share-note-going')!;
 
   subtitle.textContent = `seznam: "${listName}"`;
 
@@ -383,8 +681,8 @@ async function openShareDialog(listId: string, listName: string): Promise<void> 
     const mainOpt = document.createElement('button');
     mainOpt.className = 'share-thread-option';
     mainOpt.dataset.id = '__main__';
-    mainOpt.innerHTML = '<i class="fas fa-house"></i><span>Hlavní nástěnka</span>';
-    mainOpt.addEventListener('click', () => selectThread(null, 'Hlavní nástěnka'));
+    mainOpt.innerHTML = '<i class="fas fa-house"></i><span>Hlavní chat</span>';
+    mainOpt.addEventListener('click', () => selectThread(null, 'Hlavní chat'));
     threadListEl.appendChild(mainOpt);
 
     for (const t of threads) {
@@ -398,7 +696,7 @@ async function openShareDialog(listId: string, listName: string): Promise<void> 
   }
 
   // Clone action buttons to remove old listeners
-  const newBtnClone   = btnNew.cloneNode(true)   as HTMLButtonElement;
+  const newBtnClone = btnNew.cloneNode(true) as HTMLButtonElement;
   const goingBtnClone = btnGoing.cloneNode(true) as HTMLButtonElement;
   btnNew.replaceWith(newBtnClone);
   btnGoing.replaceWith(goingBtnClone);
@@ -406,7 +704,7 @@ async function openShareDialog(listId: string, listName: string): Promise<void> 
   function attachActionBtn(btn: HTMLButtonElement, action: 'new' | 'going') {
     btn.addEventListener('click', async () => {
       selectedAction = action;
-      $('share-note-new')!.classList.toggle('is-selected',   action === 'new');
+      $('share-note-new')!.classList.toggle('is-selected', action === 'new');
       $('share-note-going')!.classList.toggle('is-selected', action === 'going');
       show(targetSection);
       refreshSendBtn();
@@ -418,14 +716,14 @@ async function openShareDialog(listId: string, listName: string): Promise<void> 
       }
     });
   }
-  attachActionBtn($<HTMLButtonElement>('share-note-new')!,   'new');
+  attachActionBtn($<HTMLButtonElement>('share-note-new')!, 'new');
   attachActionBtn($<HTMLButtonElement>('share-note-going')!, 'going');
 
   // "+ Vytvořit nové vlákno" toggle
-  const addClone    = addThreadBtn.cloneNode(true) as HTMLButtonElement;
-  const sendClone   = sendBtn.cloneNode(true)      as HTMLButtonElement;
-  const createClone = createBtn.cloneNode(true)    as HTMLButtonElement;
-  const cancelClone = cancelBtn.cloneNode(true)    as HTMLButtonElement;
+  const addClone = addThreadBtn.cloneNode(true) as HTMLButtonElement;
+  const sendClone = sendBtn.cloneNode(true) as HTMLButtonElement;
+  const createClone = createBtn.cloneNode(true) as HTMLButtonElement;
+  const cancelClone = cancelBtn.cloneNode(true) as HTMLButtonElement;
   addThreadBtn.replaceWith(addClone);
   sendBtn.replaceWith(sendClone);
   createBtn.replaceWith(createClone);
@@ -481,6 +779,26 @@ async function openShareDialog(listId: string, listName: string): Promise<void> 
 // ─── Event Binding ────────────────────────────────────────────────────────────
 
 function bindEvents(): void {
+  // ── Tabs ──
+  $('tab-shopping')?.addEventListener('click', () => {
+    if (currentTab === 'shopping') return;
+    currentTab = 'shopping';
+    $('tab-shopping')?.classList.add('active');
+    $('tab-pantry')?.classList.remove('active');
+    show($('btn-new-list'));
+    void loadShoppingLists();
+  });
+
+  $('tab-pantry')?.addEventListener('click', () => {
+    if (currentTab === 'pantry') return;
+    currentTab = 'pantry';
+    $('tab-pantry')?.classList.add('active');
+    $('tab-shopping')?.classList.remove('active');
+    hide($('btn-new-list'));
+    void loadInventory();
+  });
+
+  // ── New list button ──
   $('btn-new-list')?.addEventListener('click', () => {
     show($('new-list-modal'));
     $<HTMLInputElement>('new-list-name')?.focus();
@@ -496,7 +814,7 @@ function bindEvents(): void {
   $<HTMLFormElement>('new-list-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const input = $<HTMLInputElement>('new-list-name');
-    const name  = input?.value.trim();
+    const name = input?.value.trim();
     if (!name) return;
 
     if (name.length > 100) {
@@ -548,7 +866,7 @@ function bindCardEvents(grid: HTMLElement): void {
   // ── Sdílet na nástěnku ────────────────────────────────────────────────────
   grid.querySelectorAll<HTMLButtonElement>('.btn-share-list').forEach((btn) => {
     btn.addEventListener('click', () => {
-      const listId   = btn.dataset.id!;
+      const listId = btn.dataset.id!;
       const listName = btn.dataset.name ?? listId;
       void openShareDialog(listId, listName);
     });
@@ -596,8 +914,8 @@ function bindCardEvents(grid: HTMLElement): void {
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const listId = form.dataset.listId;
-      const input  = form.querySelector<HTMLInputElement>('.shopping-add-input');
-      const name   = input?.value.trim();
+      const input = form.querySelector<HTMLInputElement>('.shopping-add-input');
+      const name = input?.value.trim();
       if (!name || !listId) return;
 
       if (name.length > 100) {
@@ -622,15 +940,15 @@ function bindCardEvents(grid: HTMLElement): void {
     btn.addEventListener('click', async () => {
       const row = btn.closest<HTMLElement>('.shopping-item-row');
       if (!row) return;
-      const itemId        = row.dataset.itemId!;
+      const itemId = row.dataset.itemId!;
       const currentStatus = (row.dataset.status ?? 'pending') as ItemStatus;
-      const newStatus     = nextStatus(currentStatus);
+      const newStatus = nextStatus(currentStatus);
 
       // Optimistic UI update
       row.dataset.status = newStatus;
       row.classList.toggle('is-done', isDone(newStatus));
       btn.innerHTML = statusIcon(newStatus);
-      btn.title     = statusLabel(newStatus);
+      btn.title = statusLabel(newStatus);
 
       const res = await authFetch(`/api/shopping-list/${itemId}/purchase`, {
         method: 'PUT',
@@ -642,7 +960,7 @@ function bindCardEvents(grid: HTMLElement): void {
         row.dataset.status = currentStatus;
         row.classList.toggle('is-done', isDone(currentStatus));
         btn.innerHTML = statusIcon(currentStatus);
-        btn.title     = statusLabel(currentStatus);
+        btn.title = statusLabel(currentStatus);
         showToast('Chyba při aktualizaci položky.', 'error');
       } else {
         // Reload to refresh progress bar + archive button visibility
@@ -650,6 +968,7 @@ function bindCardEvents(grid: HTMLElement): void {
       }
     });
   });
+
 
   // ── Smazat položku ────────────────────────────────────────────────────────
   grid.querySelectorAll<HTMLButtonElement>('.btn-delete-item').forEach((btn) => {
@@ -665,13 +984,25 @@ function bindCardEvents(grid: HTMLElement): void {
 
 const shoppingPage: PageModule = {
   async mount(el: HTMLElement) {
+    pageAC?.abort();
+    pageAC = new AbortController();
     container = el;
+    currentTab = 'shopping';
+    collapsedIds.clear();
+    inventoryEventsReady = false;
+
     el.innerHTML = getTemplate();
     bindEvents();
+
+    // Ensure the new-list button is always visible on shopping tab
+    show($('btn-new-list'));
+
     await loadShoppingLists();
   },
   unmount() {
-    // cleanup if needed
+    pageAC?.abort();
+    pageAC = null;
+    inventoryEventsReady = false;
   }
 };
 

@@ -1,4 +1,4 @@
-// Load .env if exists (skipped in Docker where env vars come from Railway/compose)
+// Load .env if exists (skipped in Docker where env vars come from compose)
 import 'dotenv/config';
 import { defineConfig } from "prisma/config";
 
@@ -8,7 +8,7 @@ export default defineConfig({
     path: 'prisma/migrations',
   },
   datasource: {
-    // Read directly from process.env (set by Docker ENV or Railway vars)
+    // Read directly from process.env (set by Docker ENV or compose vars)
     url: process.env.DATABASE_URL!,
   },
 });

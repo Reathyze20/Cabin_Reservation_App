@@ -193,6 +193,56 @@ router.put(
 );
 
 // ============================================================================
+//                 MOVE ITEM FROM PANTRY TO LATEST SHOPPING LIST
+// ============================================================================
+router.post("/:itemId/move-from-pantry", protect, async (req: Request, res: Response) => {
+  const { itemId } = req.params;
+
+  try {
+    const item = await prisma.shoppingListItem.findUnique({ where: { id: itemId } });
+    if (!item) return res.status(404).json({ message: "Položka nenalezena." });
+
+    // Najdi nejnovější normální (ne-pantry) nákupní seznam
+    let targetList = await prisma.shoppingList.findFirst({
+      where: { isResolved: false, isPantry: false },
+      orderBy: { createdAt: "desc" }
+    });
+
+    if (!targetList) {
+      // Vytvoř nový, pokud žádný není
+      targetList = await prisma.shoppingList.create({
+        data: {
+          name: "Aktuální nákup",
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          createdById: req.user.userId,
+        }
+      });
+    }
+
+    const updated = await prisma.shoppingListItem.update({
+      where: { id: itemId },
+      data: {
+        listId: targetList.id,
+        status: "pending",
+        purchased: false,
+        purchasedById: null,
+        purchasedAt: null,
+        price: null,
+      },
+      include: { addedBy: { select: { username: true } } },
+    });
+
+    await prisma.shoppingItemSplit.deleteMany({ where: { itemId } });
+
+    res.json({ message: "Přesunuto", listId: targetList.id });
+  } catch (error) {
+    logger.error("SHOPPING", "Move from pantry error", { error: String(error), itemId });
+    res.status(500).json({ message: "Chyba" });
+  }
+});
+
+// ============================================================================
 //                          DELETE ITEM
 // ============================================================================
 async function deleteItem(req: Request, res: Response) {

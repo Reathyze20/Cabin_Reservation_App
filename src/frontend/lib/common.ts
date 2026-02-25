@@ -139,12 +139,27 @@ export async function authFetch<T = unknown>(
     if (response.status === 204) return true as unknown as T;
     return (await response.json()) as T;
   } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : 'Neznámá chyba';
+    let msg = error instanceof Error ? error.message : 'Neznámá chyba';
     console.error('API Error:', error);
 
     const method = (options.method || '').toUpperCase();
-    if (!options.silent && ['DELETE', 'POST', 'PATCH', 'PUT'].includes(method)) {
+    const isMutation = ['DELETE', 'POST', 'PATCH', 'PUT'].includes(method);
+
+    if (error instanceof TypeError && (error.message === 'Failed to fetch' || error.message.includes('Network'))) {
+      if (!navigator.onLine) {
+        msg = isMutation
+          ? 'Akci nelze provést: Jste offline.'
+          : 'Jste offline. Zobrazuji uložená data.';
+      } else {
+        msg = 'Chyba připojení k serveru.';
+      }
+    }
+
+    if (!options.silent && isMutation) {
       showToast(msg, 'error');
+    } else if (!options.silent && !isMutation && msg.includes('offline')) {
+      // Show info toast for GET requests if offline
+      showToast(msg, 'info');
     } else if (!options.silent && msg.includes('(ID:')) {
       // Always show toast for 500 errors with ID, even on GET requests
       showToast(msg, 'error');
@@ -185,8 +200,13 @@ export async function authUpload<T = unknown>(
     if (response.status === 204) return true as unknown as T;
     return (await response.json()) as T;
   } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : 'Neznámá chyba';
+    let msg = error instanceof Error ? error.message : 'Neznámá chyba';
     console.error('Upload Error:', error);
+
+    if (error instanceof TypeError && (error.message === 'Failed to fetch' || error.message.includes('Network')) && !navigator.onLine) {
+      msg = 'Nahrávání selhalo: Jste offline.';
+    }
+
     showToast(msg, 'error');
     return null;
   }
