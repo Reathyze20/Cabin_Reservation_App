@@ -105,14 +105,18 @@ jobs:
           npm ci
 
           echo "=== Stopping application ==="
-          # Stop PM2 to release any file locks
+          # Stop PM2 to release file locks
           pm2 stop chata-app 2>/dev/null || true
-
+          
           echo "=== Generating Prisma client ==="
-          # Force remove with permissions fix - run as root to override any locks
-          sudo chmod -R 777 src/generated/prisma 2>/dev/null || true
-          sudo rm -rf src/generated/prisma || true
-          npx prisma generate
+          # Check and clean Prisma directory
+          if [ -d "src/generated/prisma" ]; then
+            echo "Prisma directory exists, checking permissions..."
+            ls -la src/generated/prisma/ | head -5
+            echo "Attempting to remove..."
+            chmod -R u+w src/generated/prisma 2>/dev/null || true
+            rm -rf src/generated/prisma
+          fi
 
           echo "=== Running database migrations ==="
           npx prisma migrate deploy
