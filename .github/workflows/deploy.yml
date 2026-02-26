@@ -121,6 +121,15 @@ jobs:
           echo "=== Running database migrations ==="
           npx prisma migrate deploy
 
+          echo "=== Cleaning dist directory ==="
+          # Remove old build artifacts that may have wrong permissions
+          if [ -d "dist" ]; then
+            echo "Dist directory exists, checking permissions..."
+            ls -la dist/ | head -3
+            chmod -R u+w dist 2>/dev/null || true
+            rm -rf dist
+          fi
+
           echo "=== Building frontend ==="
           npm run build
 
