@@ -92,29 +92,32 @@ export async function mountVerifyPage(container: HTMLElement): Promise<void> {
 
 function getTemplate(): string {
   return `
-  <div class="verify-page" style="display:flex;align-items:center;justify-content:center;min-height:80vh;padding:24px;">
-    <div style="max-width:480px;width:100%;text-align:center;padding:40px 32px;
+  <div class="verify-page" style="position:fixed;top:0;left:0;right:0;bottom:0;
+                                   display:flex;align-items:center;justify-content:center;
+                                   padding:24px;z-index:9999;">
+    <div style="max-width:480px;width:100%;text-align:center;padding:48px 40px;
                 background:var(--color-bg-card, #1e1e2e);border-radius:16px;
-                box-shadow:0 8px 32px rgba(0,0,0,0.3);">
+                box-shadow:0 20px 60px rgba(0,0,0,0.4);">
       
       <div id="verify-spinner" style="margin-bottom:24px;">
-        <div style="width:48px;height:48px;border:4px solid rgba(255,255,255,0.1);
-                    border-top-color:var(--color-primary, #d97706);border-radius:50%;
+        <div style="width:56px;height:56px;border:5px solid rgba(255,255,255,0.1);
+                    border-top-color:var(--color-primary, #6B9E6B);border-radius:50%;
                     animation:spin 0.8s linear infinite;margin:0 auto;"></div>
-        <p style="color:var(--color-text-light, #9ca3af);margin-top:16px;font-size:15px;">
+        <p style="color:var(--color-text-light, #9ca3af);margin-top:20px;font-size:16px;">
           Ověřuji váš účet…
         </p>
       </div>
 
       <div id="verify-result" class="hidden">
-        <div id="verify-icon" style="font-size:48px;margin-bottom:16px;"></div>
-        <h2 id="verify-title" style="margin:0 0 12px;color:var(--color-text, #e5e7eb);"></h2>
-        <p id="verify-message" style="color:var(--color-text-light, #9ca3af);margin:0 0 24px;line-height:1.6;"></p>
+        <div id="verify-icon" style="font-size:64px;margin-bottom:20px;line-height:1;"></div>
+        <h2 id="verify-title" style="margin:0 0 16px;color:var(--color-text, #e5e7eb);font-size:28px;font-weight:600;"></h2>
+        <p id="verify-message" style="color:var(--color-text-light, #9ca3af);margin:0 0 32px;line-height:1.6;font-size:16px;"></p>
         <a href="#" id="verify-back-to-login" class="btn btn-primary" 
-           style="display:inline-block;padding:12px 32px;text-decoration:none;
-                  border-radius:8px;background:var(--color-primary, #d97706);
-                  color:#fff;font-weight:600;font-size:15px;
-                  transition:opacity 0.2s;cursor:pointer;">
+           style="display:inline-block;padding:14px 36px;text-decoration:none;
+                  border-radius:10px;background:var(--color-primary, #6B9E6B);
+                  color:#fff;font-weight:600;font-size:16px;
+                  transition:all 0.2s;cursor:pointer;border:none;
+                  box-shadow:0 4px 12px rgba(107,158,107,0.3);">
           <i class="fas fa-sign-in-alt"></i> Přejít na přihlášení
         </a>
       </div>
@@ -124,6 +127,10 @@ function getTemplate(): string {
   <style>
     @keyframes spin {
       to { transform: rotate(360deg); }
+    }
+    .verify-page a:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(107,158,107,0.4);
     }
   </style>`;
 }
