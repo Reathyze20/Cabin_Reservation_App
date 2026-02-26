@@ -109,25 +109,22 @@ jobs:
           pm2 stop chata-app 2>/dev/null || true
           
           echo "=== Generating Prisma client ==="
-          # Check and clean Prisma directory
+          # Move old Prisma directory out of the way (avoids permission issues)
           if [ -d "src/generated/prisma" ]; then
-            echo "Prisma directory exists, checking permissions..."
-            ls -la src/generated/prisma/ | head -5
-            echo "Attempting to remove..."
-            chmod -R u+w src/generated/prisma 2>/dev/null || true
-            rm -rf src/generated/prisma
+            echo "Moving old Prisma directory..."
+            mv src/generated/prisma src/generated/prisma.old 2>/dev/null || rm -rf src/generated/prisma 2>/dev/null || true
           fi
+          npx prisma generate
 
           echo "=== Running database migrations ==="
           npx prisma migrate deploy
 
           echo "=== Cleaning dist directory ==="
-          # Remove old build artifacts that may have wrong permissions
+          # Move old build artifacts out of the way (avoids permission issues)
           if [ -d "dist" ]; then
-            echo "Dist directory exists, checking permissions..."
+            echo "Moving old dist directory..."
             ls -la dist/ | head -3
-            chmod -R u+w dist 2>/dev/null || true
-            rm -rf dist
+            mv dist dist.old.$(date +%s) 2>/dev/null || rm -rf dist 2>/dev/null || true
           fi
 
           echo "=== Building frontend ==="
