@@ -30,53 +30,58 @@ export async function sendVerificationEmail(
   const htmlContent = `
 <!DOCTYPE html>
 <html lang="cs">
-<head><meta charset="UTF-8" /></head>
-<body style="margin:0;padding:0;background-color:#f4f4f5;font-family:'Inter',Arial,sans-serif;">
-  <div style="max-width:560px;margin:40px auto;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', Arial, sans-serif;">
+  <div style="background-color: #f3f4f6; padding: 40px 20px;">
     
-    <!-- Header -->
-    <div style="background:linear-gradient(135deg,#d97706 0%,#b45309 100%);padding:32px 24px;text-align:center;">
-      <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:700;">Chata Třebenice</h1>
-      <p style="margin:8px 0 0;color:rgba(255,255,255,0.85);font-size:14px;">Ověření e-mailové adresy</p>
-    </div>
-
-    <!-- Body -->
-    <div style="padding:32px 24px;">
-      <p style="color:#374151;font-size:16px;line-height:1.6;margin:0 0 24px;">
-        Dobrý den,<br><br>
-        děkujeme za registraci do aplikace <strong>Chata Třebenice</strong>.
-        Pro aktivaci účtu prosím klikněte na tlačítko níže:
-      </p>
-
-      <!-- CTA Button -->
-      <div style="text-align:center;margin:32px 0;">
-        <a href="${verifyUrl}"
-           style="display:inline-block;background:#d97706;color:#ffffff;text-decoration:none;
-                  padding:14px 40px;border-radius:8px;font-size:16px;font-weight:600;
-                  box-shadow:0 2px 8px rgba(217,119,6,0.3);">
-          Aktivovat účet
-        </a>
+    <!-- Hlavní bílý kontejner -->
+    <div style="max-width: 500px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);">
+      
+      <!-- Čistá hlavička bez barevného pozadí -->
+      <div style="text-align: center; padding: 32px 32px 16px 32px;">
+        <div style="font-size: 48px; margin-bottom: 12px;">🏡</div>
+        <h1 style="margin: 0; color: #111827; font-size: 24px; font-weight: 600;">Chata Třebenice</h1>
       </div>
 
-      <p style="color:#6b7280;font-size:14px;line-height:1.5;margin:0 0 16px;">
-        Pokud tlačítko nefunguje, zkopírujte tento odkaz do prohlížeče:
-      </p>
-      <p style="word-break:break-all;background:#f9fafb;padding:12px;border-radius:6px;
-                font-size:13px;color:#4b5563;border:1px solid #e5e7eb;margin:0 0 24px;">
-        ${verifyUrl}
-      </p>
+      <!-- Tělo zprávy -->
+      <div style="padding: 0 32px 32px 32px;">
+        <p style="color: #374151; font-size: 16px; line-height: 1.5; margin: 0 0 16px 0;">
+          Dobrý den,
+        </p>
+        <p style="color: #374151; font-size: 16px; line-height: 1.5; margin: 0 0 24px 0;">
+          Děkujeme za registraci do aplikace <strong style="color: #111827;">Chata Třebenice</strong>. 
+          Pro aktivaci účtu prosím klikněte na tlačítko níže:
+        </p>
 
-      <p style="color:#9ca3af;font-size:13px;line-height:1.5;margin:0;">
-        Pokud jste o registraci nežádali, tento e-mail prosím ignorujte.
-        Odkaz je platný jednorázově.
-      </p>
+        <!-- CTA tlačítko -->
+        <div style="text-align: center; margin: 24px 0;">
+          <a href="${verifyUrl}" 
+             style="background-color: #5d9b62; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; display: inline-block; font-weight: 600; font-size: 16px;">
+            Aktivovat účet
+          </a>
+        </div>
+
+        <!-- Záložní odkaz -->
+        <p style="color: #6b7280; font-size: 14px; line-height: 1.5; margin: 24px 0 8px 0;">
+          Pokud tlačítko nefunguje, zkopírujte tento odkaz do prohlížeče:
+        </p>
+        <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 12px; margin-top: 8px;">
+          <a href="${verifyUrl}" style="color: #5d9b62; font-size: 13px; word-break: break-all; text-decoration: none;">${verifyUrl}</a>
+        </div>
+
+        <!-- Poznámka o ignorování -->
+        <p style="color: #9ca3af; font-size: 13px; line-height: 1.4; margin: 20px 0 0 0;">
+          Pokud jste o registraci nežádali, tento e-mail prosím ignorujte. Odkaz je platný jednorázově.
+        </p>
+      </div>
     </div>
 
-    <!-- Footer -->
-    <div style="background:#f9fafb;padding:16px 24px;text-align:center;border-top:1px solid #e5e7eb;">
-      <p style="margin:0;color:#9ca3af;font-size:12px;">
-        Odesláno z aplikace Chata Třebenice &bull; kdynachatu.cz
-      </p>
+    <!-- Patička mimo bílý box -->
+    <div style="text-align: center; font-size: 12px; color: #9ca3af; margin-top: 16px; padding: 0 20px;">
+      <p style="margin: 0;">Odesláno z aplikace Chata Třebenice • kdynachatu.cz</p>
     </div>
   </div>
 </body>
