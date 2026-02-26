@@ -105,8 +105,9 @@ jobs:
           npm ci
 
           echo "=== Generating Prisma client ==="
-          # Remove old generated files to avoid permission issues
-          rm -rf src/generated/prisma
+          # Fix permissions and remove old generated files
+          chmod -R u+w src/generated/prisma 2>/dev/null || true
+          rm -rf src/generated/prisma || true
           npx prisma generate
 
           echo "=== Running database migrations ==="
