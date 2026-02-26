@@ -102,7 +102,7 @@ jobs:
           fi
 
           echo "=== Installing dependencies ==="
-          npm install
+          npm ci
 
           echo "=== Generating Prisma client ==="
           npx prisma generate
