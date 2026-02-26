@@ -39,6 +39,7 @@
   flex-direction: row;
   gap: 20px;
   width: 100%;
+  min-height: 0; /* Critical: allows flex children to shrink below content size */
 }
 
 .card {

@@ -17,9 +17,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
-  <!-- Google Fonts (Inter + Kalam) -->
+  <!-- Google Fonts (Plus Jakarta Sans + Kalam) -->
   <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Kalam:wght@400;700&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Kalam:wght@400;700&display=swap"
     rel="stylesheet" />
 
   <!-- App entry -->
@@ -115,12 +115,18 @@
       <div class="top-bar">
         <nav id="app-nav" class="app-nav"></nav>
         <div class="user-info">
-          <button id="profile-button" class="profile-button" title="Můj profil"
-            style="display:flex; align-items:center; gap:8px; background:none; border:none; cursor:pointer;">
-            <span id="nav-animal-icon" style="font-size: 1.3rem;">U</span>
-            <span class="username-display">Ahoj, <strong id="logged-in-username"></strong>!</span>
+          <button id="profile-button" class="nav-icon-btn nav-profile-btn" title="Můj profil a nastavení">
+            <span id="nav-animal-icon" class="nav-avatar">U</span>
           </button>
-          <button id="logout-button" class="button-logout">Odhlásit</button>
+          <div id="user-greeting" class="profile-name"></div>
+          <div class="user-divider"></div>
+          <button id="logout-button" class="nav-icon-btn nav-logout-btn" title="Odhlásit se">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+          </button>
         </div>
       </div>
 

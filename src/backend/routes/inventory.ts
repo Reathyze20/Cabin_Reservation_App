@@ -11,7 +11,7 @@ const router = Router();
 router.get("/", protect, async (_req: Request, res: Response) => {
   try {
     const items = await prisma.inventoryItem.findMany({
-      orderBy: [{ category: "asc" }, { name: "asc" }],
+      orderBy: [{ isEssential: "desc" }, { category: "asc" }, { name: "asc" }],
       include: { updatedBy: { select: { id: true, username: true } } },
     });
     res.json(items);
@@ -26,7 +26,7 @@ router.get("/", protect, async (_req: Request, res: Response) => {
 // ============================================================================
 router.post("/", protect, async (req: Request, res: Response) => {
   try {
-    const { name, category, status, location } = req.body;
+    const { name, category, status, location, isEssential } = req.body;
     // @ts-ignore
     const userId: string = req.user.userId;
 
@@ -46,6 +46,7 @@ router.post("/", protect, async (req: Request, res: Response) => {
         category: category ? String(category).trim() : "OSTATNÍ",
         status: safeStatus,
         location: location ? String(location).trim() || null : null,
+        isEssential: Boolean(isEssential),
         updatedById: userId,
       },
       include: { updatedBy: { select: { id: true, username: true } } },
@@ -64,7 +65,7 @@ router.post("/", protect, async (req: Request, res: Response) => {
 router.put("/:id", protect, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { name, category, status, location } = req.body;
+    const { name, category, status, location, isEssential } = req.body;
     // @ts-ignore
     const userId: string = req.user.userId;
 
@@ -82,6 +83,7 @@ router.put("/:id", protect, async (req: Request, res: Response) => {
         ...(category !== undefined && { category: String(category).trim() }),
         ...(status !== undefined && validStatuses.includes(status) && { status }),
         ...(location !== undefined && { location: String(location).trim() || null }),
+        ...(isEssential !== undefined && { isEssential: Boolean(isEssential) }),
         updatedById: userId,
       },
       include: { updatedBy: { select: { id: true, username: true } } },
@@ -91,6 +93,37 @@ router.put("/:id", protect, async (req: Request, res: Response) => {
   } catch (error) {
     logger.error("INVENTORY", "Failed to update inventory item", { error: String(error) });
     res.status(500).json({ error: "Nepodařilo se aktualizovat zásobu." });
+  }
+});
+
+// ============================================================================
+//                    TOGGLE isEssential ON INVENTORY ITEM
+// PATCH /:id/toggle-essential
+// ============================================================================
+router.patch("/:id/toggle-essential", protect, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    // @ts-ignore
+    const role: string = req.user.role;
+    if (role === "guest") {
+      return res.status(403).json({ error: "Hosté nemohou měnit kritické položky." });
+    }
+
+    const item = await prisma.inventoryItem.findUnique({ where: { id } });
+    if (!item) {
+      return res.status(404).json({ error: "Zásoba nenalezena." });
+    }
+
+    const updated = await prisma.inventoryItem.update({
+      where: { id },
+      data: { isEssential: !item.isEssential },
+      include: { updatedBy: { select: { id: true, username: true } } },
+    });
+
+    res.json(updated);
+  } catch (error) {
+    logger.error("INVENTORY", "Failed to toggle essential", { error: String(error) });
+    res.status(500).json({ error: "Nepodařilo se změnit stav kritické položky." });
   }
 });
 
@@ -156,6 +189,7 @@ router.post("/:id/add-to-cart", protect, async (req: Request, res: Response) => 
           listId: list.id,
           addedById: userId,
           linkedInventoryId: invItem.id,
+          isEssential: invItem.isEssential,
         },
       });
 

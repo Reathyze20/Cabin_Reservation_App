@@ -80,9 +80,39 @@ img,
 
 
 .error-message {
-  color: var(--color-danger);
-  font-size: var(--font-size-sm);
-  margin-top: 5px;
+  display: block;
+  color: #ef4444;
+  font-size: 0.75rem;
+  margin-top: 4px;
+  min-height: 0;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out, min-height 0.2s ease-in-out;
+  overflow: hidden;
+}
+
+.error-message.show {
+  opacity: 1;
+  min-height: 16px;
+}
+
+/* ── Input error state (reusable across all forms) ───────────────── */
+.input-error {
+  border-color: #ef4444 !important;
+  background-color: #fef2f2 !important;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+}
+
+/* ── Shake animation (submit with errors) ────────────────────────── */
+.shake {
+  animation: shake 0.4s cubic-bezier(.36, .07, .19, .97) both;
+}
+
+@keyframes shake {
+  10%, 90% { transform: translate3d(-1px, 0, 0); }
+  20%, 80% { transform: translate3d(2px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+  40%, 60% { transform: translate3d(4px, 0, 0); }
 }
 
 .message {

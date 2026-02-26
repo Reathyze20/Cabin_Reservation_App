@@ -7,112 +7,157 @@
   align-items: center;
   gap: var(--space-xl);
   padding: 10px var(--space-xl);
-  background-color: rgba(253, 248, 240, 0.9);
+  background: rgba(255, 255, 255, 0.92);
   border-radius: var(--radius-xl);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.7);
   flex-shrink: 0;
   margin: 20px 0 0 0;
   z-index: 100;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.07);
 }
 
 .app-nav {
   display: flex;
-  gap: 15px;
+  gap: 24px;
   align-items: center;
 }
 
 .app-nav .nav-link {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
+  position: relative;
   text-decoration: none;
-  color: var(--color-text);
-  padding: var(--space-sm) var(--space-md);
-  border-radius: var(--radius-md);
+  color: #4b5563;
   font-weight: 500;
   font-size: var(--font-size-base);
-  background: rgba(255, 255, 255, 0.8);
-  transition: background var(--transition-fast), color var(--transition-fast);
+  padding: 4px 0;
+  white-space: nowrap;
+  transition: color 0.2s ease;
+}
+
+.app-nav .nav-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  background-color: var(--color-primary);
+  width: 100%;
+  border-radius: 2px 2px 0 0;
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .app-nav .nav-link:hover {
-  background: rgba(255, 255, 255, 1);
+  color: #111827;
+}
+
+.app-nav .nav-link:hover::after {
+  transform: scaleX(1);
 }
 
 .app-nav .nav-link.active {
-  background: var(--color-primary-gradient) !important;
-  color: white !important;
-  box-shadow: 0 2px 8px rgba(107, 158, 107, 0.3);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.app-nav .nav-link.active::after {
+  transform: scaleX(1);
 }
 
 .user-info {
   display: flex;
-  justify-content: flex-end;
   align-items: center;
-  padding: var(--space-sm) var(--space-md);
-  font-size: var(--font-size-base);
-  color: var(--color-text-dark);
-  border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.8);
+  gap: 10px;
+  padding: 0;
   flex-shrink: 0;
-  transition: background var(--transition-fast);
 }
 
-.user-info:hover {
-  background: rgba(255, 255, 255, 1);
+.profile-name {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  font-size: 0.875rem; /* 14px */
 }
 
-.user-info strong {
-  font-weight: 700;
+.profile-name .greeting {
+  color: #6b7280; /* Světelejší šedá (gray-500) */
+  font-weight: 400;
+  margin-right: 4px;
 }
 
-.username-display {
-  max-width: 150px;
+.profile-name .username {
+  color: #1f2937; /* Tmavě šedá (gray-800) */
+  font-weight: 600;
 }
 
-.user-avatar {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: var(--color-primary-bg);
-  color: var(--color-primary-dark);
+.user-divider {
+  width: 1px;
+  height: 20px;
+  background-color: #d1d5db;
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+
+/* ── Shared icon button base ─────────────────────────────────── */
+.nav-icon-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 800;
-  font-size: 16px;
-  border: 2px solid #ffffff;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-  margin-right: 12px;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  max-width: 36px;
+  min-height: 36px;
+  max-height: 36px;
   flex-shrink: 0;
-}
-
-.admin-link {
-  text-decoration: none;
-  color: var(--color-text);
-  font-weight: 600;
-  font-size: var(--font-size-sm);
-  transition: all var(--transition-fast);
-}
-
-.admin-link:hover {
-  color: #d18b00;
-}
-
-.button-logout {
-  background: none;
+  border-radius: 50%;
   border: none;
-  color: var(--color-text);
-  font-size: var(--font-size-sm);
+  background: transparent;
   cursor: pointer;
-  white-space: nowrap;
   padding: 0;
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+  color: #4b5563;
 }
 
-.button-logout:hover {
-  text-decoration: underline;
+/* ── Profile avatar circle ───────────────────────────────────── */
+.nav-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  max-width: 36px;
+  min-height: 36px;
+  max-height: 36px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--color-primary-bg);
+  color: var(--color-primary-dark);
+  font-size: 1.15rem;
+  font-weight: 700;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  line-height: 1;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.nav-profile-btn:hover .nav-avatar {
+  transform: scale(1.08);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+}
+
+/* ── Logout icon button ──────────────────────────────────────── */
+.nav-logout-btn:hover {
+  background: rgba(245, 158, 11, 0.1); /* Jemná oranžová */
+  color: #f59e0b; /* Amber/oranžová */
+}
+
+.nav-logout-btn svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
 }
 
 /* ============================================================================
@@ -132,10 +177,6 @@
 
   /* Completely remove top bar on mobile */
   .top-bar {
-    display: none !important;
-  }
-
-  .username-display {
     display: none !important;
   }
 

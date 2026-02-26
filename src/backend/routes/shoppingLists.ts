@@ -170,8 +170,26 @@ router.delete("/:id", protect, async (req: Request, res: Response) => {
             return res.status(403).json({ error: "Not authorized to delete this list" });
         }
 
-        await prisma.shoppingList.delete({
-            where: { id },
+        await prisma.$transaction(async (tx) => {
+            // Find all items with linked inventory before deleting
+            const itemsWithInventory = await tx.shoppingListItem.findMany({
+                where: { listId: id, linkedInventoryId: { not: null } },
+                select: { linkedInventoryId: true },
+            });
+
+            // Delete the list (cascades to items)
+            await tx.shoppingList.delete({ where: { id } });
+
+            // Reset inCart for all linked inventory items
+            const inventoryIds = itemsWithInventory
+                .map((i) => i.linkedInventoryId)
+                .filter((id): id is string => id !== null);
+            if (inventoryIds.length > 0) {
+                await tx.inventoryItem.updateMany({
+                    where: { id: { in: inventoryIds } },
+                    data: { inCart: false },
+                });
+            }
         });
 
         res.json({ message: "List deleted successfully" });

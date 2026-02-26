@@ -35,6 +35,7 @@ router.get("/", protect, async (req: Request, res: Response) => {
       purchasedAt: item.purchasedAt?.toISOString(),
       price: item.price ? parseFloat(item.price.toString()) : undefined,
       splitWith: item.splits.map((s) => s.userId),
+      isEssential: item.isEssential,
     }));
 
     res.json([{ id: "default", name: "Hlavní seznam", items: formatted }]);
@@ -55,7 +56,7 @@ router.post("/", protect, async (req: Request, res: Response) => {
 //                        ADD ITEM TO LIST
 // ============================================================================
 router.post("/:listId/items", protect, async (req: Request, res: Response) => {
-  const { name } = req.body;
+  const { name, isEssential, sourceMessageId } = req.body;
   const { listId } = req.params;
 
   if (!name) {
@@ -74,6 +75,8 @@ router.post("/:listId/items", protect, async (req: Request, res: Response) => {
         // @ts-ignore
         addedById: req.user.userId,
         listId: listId === "default" ? null : listId, // For legacy / transition
+        isEssential: Boolean(isEssential ?? false),
+        sourceMessageId: sourceMessageId || null,
       },
       include: {
         addedBy: { select: { username: true } },
@@ -87,6 +90,7 @@ router.post("/:listId/items", protect, async (req: Request, res: Response) => {
       addedById: newItem.addedById,
       createdAt: newItem.createdAt.toISOString(),
       purchased: newItem.purchased,
+      isEssential: newItem.isEssential,
     });
   } catch (error) {
     logger.error("SHOPPING", "Add item error", { error: String(error) });
@@ -167,6 +171,7 @@ router.put("/:itemId/purchase", protect, async (req: Request, res: Response) => 
       purchasedAt: updated.purchasedAt?.toISOString(),
       price: updated.price ? parseFloat(updated.price.toString()) : undefined,
       splitWith: splits.map((s) => s.userId),
+      isEssential: updated.isEssential,
     });
   } catch (error) {
     logger.error("SHOPPING", "Purchase item error", { error: String(error), itemId });
@@ -243,14 +248,63 @@ router.post("/:itemId/move-from-pantry", protect, async (req: Request, res: Resp
 });
 
 // ============================================================================
+//                 TOGGLE isEssential ON SHOPPING ITEM
+// ============================================================================
+router.patch("/:itemId/toggle-essential", protect, async (req: Request, res: Response) => {
+  const { itemId } = req.params;
+  try {
+    // @ts-ignore
+    const role: string = req.user.role;
+    if (role === "guest") {
+      return res.status(403).json({ message: "Hosté nemohou měnit kritické položky." });
+    }
+
+    const item = await prisma.shoppingListItem.findUnique({ where: { id: itemId } });
+    if (!item) {
+      return res.status(404).json({ message: "Položka nenalezena." });
+    }
+
+    const updated = await prisma.shoppingListItem.update({
+      where: { id: itemId },
+      data: { isEssential: !item.isEssential },
+    });
+
+    res.json({ id: updated.id, isEssential: updated.isEssential });
+  } catch (error) {
+    logger.error("SHOPPING", "Toggle essential error", { error: String(error), itemId });
+    res.status(500).json({ message: "Chyba" });
+  }
+});
+
+// ============================================================================
 //                          DELETE ITEM
 // ============================================================================
 async function deleteItem(req: Request, res: Response) {
   const { itemId } = req.params;
   try {
-    await prisma.shoppingListItem.delete({
+    // First, fetch the item to check for linked inventory
+    const item = await prisma.shoppingListItem.findUnique({
       where: { id: itemId },
+      select: { linkedInventoryId: true },
     });
+
+    if (!item) {
+      return res.status(404).json({ message: "Položka nenalezena" });
+    }
+
+    // Delete the item and reset linked inventory in a transaction
+    await prisma.$transaction(async (tx) => {
+      await tx.shoppingListItem.delete({ where: { id: itemId } });
+
+      // If linked to inventory, reset inCart flag so it shows as "not in cart" again
+      if (item.linkedInventoryId) {
+        await tx.inventoryItem.update({
+          where: { id: item.linkedInventoryId },
+          data: { inCart: false },
+        });
+      }
+    });
+
     res.json({ success: true });
   } catch (error) {
     logger.error("SHOPPING", "Delete item error", { error: String(error), itemId });

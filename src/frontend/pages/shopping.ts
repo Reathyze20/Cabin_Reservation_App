@@ -20,6 +20,7 @@ interface ShoppingItem {
   purchased: boolean;
   addedById: string;
   createdAt: string;
+  isEssential: boolean;
   addedBy?: { id: string; username: string; animalIcon?: string | null };
   purchasedBy?: { id: string; username: string; animalIcon?: string | null } | null;
 }
@@ -40,6 +41,7 @@ interface InventoryItem {
   status: 'OK' | 'LOW' | 'EMPTY';
   location?: string | null;
   inCart: boolean;
+  isEssential: boolean;
   updatedBy?: { id: string; username: string } | null;
 }
 
@@ -134,7 +136,7 @@ function getTemplate(): string {
           <span class="share-note-btn-icon">🏃</span>
           <div>
             <strong>Jdu do obchodu</strong>
-            <span>Urgentní výzva k doplňění seznamu</span>
+            <span>Urgentní výzva k doplnění seznamu</span>
           </div>
           <span class="share-note-selected-mark">✓</span>
         </button>
@@ -167,6 +169,7 @@ function getTemplate(): string {
 
 // ─── Pantry template ────────────────────────────────────────────────────────────
 function getPantryTemplate(): string {
+  const isGuest = getRole() === 'guest';
   return `
     <form id="inventory-add-form" class="inventory-add-form">
       <input type="text" id="inv-name" class="inventory-input" placeholder="Název zásoby (např. Těstoviny)…" required autocomplete="off" />
@@ -183,6 +186,7 @@ function getPantryTemplate(): string {
         <option value="LOW">Málo</option>
         <option value="EMPTY">Došlo</option>
       </select>
+      ${!isGuest ? `<label class="essential-toggle-label inv-essential-label" title="Kritická položka"><input type="checkbox" id="inv-essential" /><span class="essential-toggle-icon">❗</span></label>` : ''}
       <button type="submit" class="button-primary inv-add-btn">+ Přidat</button>
     </form>
     <div id="inventory-list" class="inventory-list">
@@ -232,6 +236,7 @@ function bindInventoryFormEvents(): void {
     const catEl  = $<HTMLSelectElement>('inv-category');
     const stEl   = $<HTMLSelectElement>('inv-status');
     const locEl  = $<HTMLInputElement>('inv-location');
+    const essEl  = $<HTMLInputElement>('inv-essential');
     const name   = nameEl?.value.trim() ?? '';
 
     if (!name) return;
@@ -244,11 +249,13 @@ function bindInventoryFormEvents(): void {
         category: catEl?.value ?? 'OSTATNÍ',
         status: stEl?.value ?? 'OK',
         location: locEl?.value.trim() || null,
+        isEssential: essEl?.checked ?? false,
       }),
     });
     if (res) {
       if (nameEl) nameEl.value = '';
       if (locEl) locEl.value = '';
+      if (essEl) essEl.checked = false;
       showToast('Zásoba přidána.', 'success');
       await loadInventory();
     }
@@ -284,6 +291,17 @@ function bindInventoryFormEvents(): void {
       if (res) {
         showToast('Zásoba smazána.', 'success');
         await loadInventory();
+      }
+    }
+
+    const essBtn = el.closest<HTMLButtonElement>('.btn-inv-essential');
+    if (essBtn && essBtn.dataset.id) {
+      essBtn.disabled = true;
+      const res = await authFetch(`/api/inventory/${essBtn.dataset.id}/toggle-essential`, { method: 'PATCH' });
+      if (res) {
+        await loadInventory();
+      } else {
+        essBtn.disabled = false;
       }
     }
   }, { signal });
@@ -336,12 +354,14 @@ function renderInventory(items: InventoryItem[], listEl: HTMLElement): void {
 
 function renderInventoryRow(item: InventoryItem): HTMLElement {
   const row = document.createElement('div');
-  row.className = 'inventory-item';
+  row.className = `inventory-item${item.isEssential ? ' is-essential' : ''}`;
   row.dataset.id = item.id;
   if (item.location) row.dataset.location = item.location;
 
   const badgeClass = item.status === 'OK' ? 'badge-full' : item.status === 'LOW' ? 'badge-low' : 'badge-empty';
   const badgeLabel = item.status === 'OK' ? 'Dostatek' : item.status === 'LOW' ? 'Málo' : 'Došlo';
+
+  const essentialIcon = item.isEssential ? '<span class="inv-essential-icon" title="Kritická položka">❗</span>' : '';
 
   const locationHtml = item.location
     ? `<span class="inv-meta-location">${item.location}</span>`
@@ -357,14 +377,20 @@ function renderInventoryRow(item: InventoryItem): HTMLElement {
     ? `<button class="btn-add-to-cart btn-in-cart" data-id="${item.id}" disabled title="Již v nákupu">Na seznamu</button>`
     : `<button class="btn-add-to-cart" data-id="${item.id}" title="Přidat do nákupního seznamu">+ Do nákupu</button>`;
 
+  const isGuest = getRole() === 'guest';
+  const essentialBtn = !isGuest
+    ? `<button class="ghost-btn btn-inv-essential ${item.isEssential ? 'is-active' : ''}" data-id="${item.id}" title="${item.isEssential ? 'Zrušit jako kritické' : 'Označit jako kritické'}">❗</button>`
+    : '';
+
   row.innerHTML = `
     <span class="badge ${badgeClass}">${badgeLabel}</span>
     <div class="inventory-item-info">
-      <span class="inventory-item-name">${item.name}</span>
+      <span class="inventory-item-name">${essentialIcon}${item.name}</span>
       ${metaHtml}
     </div>
     <div class="item-actions">
       ${cartBtn}
+      ${essentialBtn}
       <button class="ghost-btn btn-inv-edit" data-id="${item.id}" title="Upravit">✎</button>
       <button class="ghost-btn btn-inv-delete" data-id="${item.id}" title="Smazat">×</button>
     </div>`;
@@ -385,6 +411,8 @@ async function openEditInventoryModal(id: string): Promise<void> {
   const modal = document.createElement('div');
   modal.id = 'inv-edit-modal';
   modal.className = 'modal-overlay';
+  const isGuest = getRole() === 'guest';
+  const essentialRow = row?.closest('.inventory-item')?.classList.contains('is-essential');
   modal.innerHTML = `
     <div class="modal-content modal-small">
       <span class="modal-close-button" id="inv-edit-close">&times;</span>
@@ -397,6 +425,7 @@ async function openEditInventoryModal(id: string): Promise<void> {
           <option value="LOW">Málo</option>
           <option value="EMPTY">Došlo</option>
         </select>
+        ${!isGuest ? `<label class="essential-toggle-label" style="gap: var(--space-sm); align-items: center;"><input type="checkbox" id="inv-edit-essential" ${essentialRow ? 'checked' : ''} /><span>Kritická položka ❗</span></label>` : ''}
         <div class="modal-buttons" style="justify-content: flex-end; margin-top: var(--space-md);">
           <button type="button" id="inv-edit-cancel" class="button-secondary">Zrušit</button>
           <button type="submit" class="button-primary">Uložit</button>
@@ -423,10 +452,12 @@ async function openEditInventoryModal(id: string): Promise<void> {
     const name = (modal.querySelector<HTMLInputElement>('#inv-edit-name')!).value.trim();
     const status = (modal.querySelector<HTMLSelectElement>('#inv-edit-status')!).value;
     const location = (modal.querySelector<HTMLInputElement>('#inv-edit-location')!).value.trim();
+    const essentialCb = modal.querySelector<HTMLInputElement>('#inv-edit-essential');
+    const isEssential = essentialCb?.checked ?? false;
     if (!name) return;
     const res = await authFetch(`/api/inventory/${id}`, {
       method: 'PUT',
-      body: JSON.stringify({ name, status, location: location || null }),
+      body: JSON.stringify({ name, status, location: location || null, isEssential }),
     });
     if (res) {
       showToast('Zásoba aktualizována.', 'success');
@@ -463,6 +494,55 @@ async function loadShoppingLists(): Promise<void> {
 }
 
 // ─── Rendering ────────────────────────────────────────────────────────────────
+
+function renderShoppingItemRow(
+  item: ShoppingItem,
+  currentUserId: string | null,
+  listCreatedById: string,
+  isAdminUser: boolean,
+  isEssentialSection: boolean,
+): string {
+  const doneClass = isDone(item.status) ? 'is-done' : '';
+  const essentialClass = item.isEssential ? 'is-essential' : '';
+  const canDeleteItem =
+    item.addedById === currentUserId ||
+    listCreatedById === currentUserId ||
+    isAdminUser;
+
+  const bringBadge = item.status === 'bring_from_home'
+    ? '<span class="shopping-item-badge bring-badge">Z domova</span>'
+    : '';
+
+  const purchasedBadge =
+    item.status === 'purchased' && item.purchasedBy
+      ? `<span class="purchased-by-badge" title="Koupil(a) ${item.purchasedBy.username}">${item.purchasedBy.animalIcon ?? item.purchasedBy.username[0].toUpperCase()}</span>`
+      : '';
+
+  const deleteBtn = canDeleteItem
+    ? `<button class="btn-delete-item" title="Smazat položku" data-item-id="${item.id}">×</button>`
+    : '';
+
+  // Essential toggle button (only for non-guests)
+  const isGuest = getRole() === 'guest';
+  const essentialBtn = !isGuest
+    ? `<button class="btn-toggle-essential ${item.isEssential ? 'is-active' : ''}" title="${item.isEssential ? 'Zrušit jako kritické' : 'Označit jako kritické'}" data-item-id="${item.id}">❗</button>`
+    : (item.isEssential ? '<span class="essential-badge-inline">❗</span>' : '');
+
+  const actionBtn = `
+      <button class="shopping-status-btn" title="${statusLabel(item.status)}" data-item-id="${item.id}">
+        ${statusIcon(item.status)}
+      </button>`;
+
+  return `
+    <div class="shopping-item-row ${doneClass} ${essentialClass}" data-item-id="${item.id}" data-list-id="" data-status="${item.status}" data-essential="${item.isEssential}">
+      ${actionBtn}
+      <span class="shopping-item-name">${item.name}</span>
+      ${essentialBtn}
+      ${bringBadge}
+      ${purchasedBadge}
+      ${deleteBtn}
+    </div>`;
+}
 
 function renderShoppingLists(lists: ShoppingList[], grid: HTMLElement): void {
   grid.innerHTML = '';
@@ -517,10 +597,12 @@ function renderShoppingLists(lists: ShoppingList[], grid: HTMLElement): void {
       </div>`;
 
     // ── Add item form ────────────────────────────────────────────────────────
+    const isGuest = getRole() === 'guest';
     const addItemHTML = `
       <form class="shopping-add-item-form" data-list-id="${list.id}">
         <div class="shopping-input-wrapper">
           <input type="text" class="shopping-add-input" placeholder="Přidat položku..." required autocomplete="off" />
+          ${!isGuest ? `<label class="essential-toggle-label" title="Označit jako kritickou položku"><input type="checkbox" class="essential-checkbox" /><span class="essential-toggle-icon">❗</span></label>` : ''}
           <button type="submit" class="shopping-add-btn" title="Přidat">↑</button>
         </div>
       </form>`;
@@ -535,39 +617,21 @@ function renderShoppingLists(lists: ShoppingList[], grid: HTMLElement): void {
         return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
       });
 
-      for (const item of sorted) {
-        const doneClass = isDone(item.status) ? 'is-done' : '';
-        const canDeleteItem =
-          item.addedById === currentUserId ||
-          list.createdById === currentUserId ||
-          isAdminUser;
+      // Split into essential and regular
+      const essentialItems = sorted.filter(i => i.isEssential && !isDone(i.status));
+      const regularItems = sorted.filter(i => !i.isEssential || isDone(i.status));
 
-        const bringBadge = item.status === 'bring_from_home'
-          ? '<span class="shopping-item-badge bring-badge">Z domova</span>'
-          : '';
+      // Render essential section if any pending essential items exist
+      if (essentialItems.length > 0) {
+        itemsHTML += `<div class="essential-section-header">Nezapomeňte</div>`;
+        for (const item of essentialItems) {
+          itemsHTML += renderShoppingItemRow(item, currentUserId, list.createdById, isAdminUser, true);
+        }
+        itemsHTML += `<div class="essential-divider"></div>`;
+      }
 
-        const purchasedBadge =
-          item.status === 'purchased' && item.purchasedBy
-            ? `<span class="purchased-by-badge" title="Koupil(a) ${item.purchasedBy.username}">${item.purchasedBy.animalIcon ?? item.purchasedBy.username[0].toUpperCase()}</span>`
-            : '';
-
-        const deleteBtn = canDeleteItem
-          ? `<button class="btn-delete-item" title="Smazat položku" data-item-id="${item.id}">×</button>`
-          : '';
-
-        const actionBtn = `
-            <button class="shopping-status-btn" title="${statusLabel(item.status)}" data-item-id="${item.id}">
-              ${statusIcon(item.status)}
-            </button>`;
-
-        itemsHTML += `
-          <div class="shopping-item-row ${doneClass}" data-item-id="${item.id}" data-list-id="${list.id}" data-status="${item.status}">
-            ${actionBtn}
-            <span class="shopping-item-name">${item.name}</span>
-            ${bringBadge}
-            ${purchasedBadge}
-            ${deleteBtn}
-          </div>`;
+      for (const item of regularItems) {
+        itemsHTML += renderShoppingItemRow(item, currentUserId, list.createdById, isAdminUser, false);
       }
     } else {
       itemsHTML += `
@@ -915,6 +979,7 @@ function bindCardEvents(grid: HTMLElement): void {
       e.preventDefault();
       const listId = form.dataset.listId;
       const input = form.querySelector<HTMLInputElement>('.shopping-add-input');
+      const essentialCheckbox = form.querySelector<HTMLInputElement>('.essential-checkbox');
       const name = input?.value.trim();
       if (!name || !listId) return;
 
@@ -923,13 +988,16 @@ function bindCardEvents(grid: HTMLElement): void {
         return;
       }
 
+      const isEssential = essentialCheckbox?.checked ?? false;
+
       const res = await authFetch(`/api/shopping-list/${listId}/items`, {
         method: 'POST',
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ name, isEssential }),
       });
 
       if (res) {
         if (input) input.value = '';
+        if (essentialCheckbox) essentialCheckbox.checked = false;
         await loadShoppingLists();
       }
     });
@@ -976,6 +1044,28 @@ function bindCardEvents(grid: HTMLElement): void {
       const itemId = btn.dataset.itemId!;
       const res = await authFetch(`/api/shopping-list/${itemId}`, { method: 'DELETE' });
       if (res) await loadShoppingLists();
+    });
+  });
+
+  // ── Toggle essential ──────────────────────────────────────────────────────
+  grid.querySelectorAll<HTMLButtonElement>('.btn-toggle-essential').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const itemId = btn.dataset.itemId!;
+      btn.disabled = true;
+      // Optimistic toggle
+      const wasActive = btn.classList.contains('is-active');
+      btn.classList.toggle('is-active');
+      btn.title = wasActive ? 'Označit jako kritické' : 'Zrušit jako kritické';
+
+      const res = await authFetch(`/api/shopping-list/${itemId}/toggle-essential`, { method: 'PATCH' });
+      if (res) {
+        await loadShoppingLists();
+      } else {
+        // Revert on failure
+        btn.classList.toggle('is-active');
+        btn.title = wasActive ? 'Zrušit jako kritické' : 'Označit jako kritické';
+        btn.disabled = false;
+      }
     });
   });
 }

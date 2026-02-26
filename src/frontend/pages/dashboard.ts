@@ -2,17 +2,17 @@
    pages/dashboard.ts — Přehled (Dashboard) — hlavní stránka po přihlášení
    ============================================================================ */
 import type { PageModule } from '../lib/router';
-import { authFetch } from '../lib/common';
+import { authFetch, getRole, showToast } from '../lib/common';
 import { navigate } from '../lib/router';
 
 // ─── Types ────────────────────────────────────────────────────────────
 
-interface ShoppingListWidget {
+interface PendingShoppingItem {
   id: string;
   name: string;
-  pendingItems: { id: string; name: string }[];
-  totalCount: number;
-  doneCount: number;
+  isEssential: boolean;
+  listId: string;
+  listName: string;
 }
 
 interface DashboardData {
@@ -43,13 +43,17 @@ interface DashboardData {
     purpose: string;
   } | null;
   departingToday: boolean;
-  shoppingListWidget: ShoppingListWidget | null;
-  latestNotes: {
-    id: string;
-    username: string;
-    message: string;
-    createdAt: string;
-  }[];
+  pendingShoppingItems: PendingShoppingItem[];
+  totalPendingShoppingCount: number;
+  pinnedHandoverNote: string | null;
+  essentialWarning: {
+    count: number;
+    items: { id: string; name: string }[];
+  } | null;
+  nextFreeWeekend: {
+    start: string;
+    end: string;
+  } | null;
 }
 
 interface WeatherData {
@@ -74,6 +78,7 @@ interface WeatherData {
 // ─── Module state ─────────────────────────────────────────────────────
 let container: HTMLElement;
 let refreshInterval: ReturnType<typeof setInterval> | null = null;
+let currentHandoverNote: string | null = null;
 
 // Třebenice coordinates (approximate)
 const CABIN_LAT = 50.513;
@@ -96,6 +101,18 @@ function daysUntil(dateStr: string): number {
   now.setHours(0, 0, 0, 0);
   const target = new Date(dateStr + 'T00:00:00');
   return Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+const MONTH_NAMES_CZ = ['ledna', 'února', 'března', 'dubna', 'května', 'června',
+  'července', 'srpna', 'září', 'října', 'listopadu', 'prosince'];
+
+function formatWeekendRange(start: string, end: string): string {
+  const s = new Date(start + 'T00:00:00');
+  const e = new Date(end + 'T00:00:00');
+  if (s.getMonth() === e.getMonth()) {
+    return `${s.getDate()}.\u2013${e.getDate()}. ${MONTH_NAMES_CZ[s.getMonth()]}`;
+  }
+  return `${s.getDate()}. ${MONTH_NAMES_CZ[s.getMonth()]} \u2013 ${e.getDate()}. ${MONTH_NAMES_CZ[e.getMonth()]}`;
 }
 
 function nightsLabel(from: string, to: string): string {
@@ -241,6 +258,9 @@ const ANIMAL_EMOJIS = ['🦊', '🐻', '🐸', '🐰', '🐯', '🦁', '🐼', '
 function getTemplate(): string {
   return `
   <div class="dashboard nordic-dashboard">
+    <!-- Essential items warning banner -->
+    <div id="dashboard-essential-warning" class="essential-warning-banner hidden"></div>
+
     <!-- Cards Layout -->
     <div class="dashboard-grid">
       <!-- Karta 1: Právě na chatě -->
@@ -257,25 +277,38 @@ function getTemplate(): string {
         </div>
       </div>
 
-      <!-- Karta 3: Nadcházející rezervace -->
-      <div class="glass-card">
-        <div class="card-body-full" id="dashboard-reservations">
-          <div class="spinner-container"><div class="spinner"></div></div>
-        </div>
-      </div>
-
-      <!-- Karta 4: K dokoupení -->
+      <!-- Karta 3: K dokoupení -->
       <div class="glass-card">
         <div class="card-body-full" id="dashboard-shopping">
           <div class="spinner-container"><div class="spinner"></div></div>
         </div>
       </div>
-    </div>
 
-    <!-- Karta 5: Co se děje na chatě (nástěnka) -->
-    <div class="glass-card dashboard-notes-card" id="dashboard-notes">
-      <div class="card-body-full">
-        <div class="spinner-container"><div class="spinner"></div></div>
+      <!-- Karta 5: Vzkaz -->
+      <div class="glass-card dashboard-handover-card" id="dashboard-handover-note">
+        <div class="card-body-full">
+          <div class="spinner-container"><div class="spinner"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Vzkaz -->
+  <div id="handover-modal" class="modal-overlay hidden">
+    <div class="modal-content handover-modal-content">
+      <div class="modal-header">
+        <h2>Vzkaz</h2>
+        <button class="modal-close-button" id="btn-handover-modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-subtitle">Zanechte vzkaz pro ostatní návštěvníky (max 300 znaků).</p>
+        <textarea id="handover-modal-textarea" class="handover-textarea" maxlength="300"
+          placeholder="Napište vzkaz…" rows="5"></textarea>
+        <div class="handover-char-counter"><span id="handover-modal-char-count">0</span>/300</div>
+      </div>
+      <div class="modal-buttons">
+        <button class="button-secondary" id="btn-handover-modal-cancel">Zrušit</button>
+        <button class="button-primary" id="btn-handover-modal-save">Uložit vzkaz</button>
       </div>
     </div>
   </div>
@@ -325,16 +358,8 @@ function renderWeather(weather: WeatherData | null): void {
     return;
   }
 
-  // Set gradient based on weather
-  let gradient = 'linear-gradient(135deg, rgba(240, 249, 255, 0.9), rgba(224, 242, 254, 0.85))'; // default clear
-  if (weather.icon.includes('rain') || weather.icon.includes('showers')) {
-    gradient = 'linear-gradient(135deg, rgba(226, 232, 240, 0.9), rgba(203, 213, 225, 0.85))'; // rain
-  } else if (weather.icon.includes('sun')) {
-    gradient = 'linear-gradient(135deg, rgba(254, 252, 232, 0.9), rgba(254, 240, 138, 0.85))'; // sun
-  } else if (weather.icon.includes('cloud')) {
-    gradient = 'linear-gradient(135deg, rgba(241, 245, 249, 0.9), rgba(226, 232, 240, 0.85))'; // clouds
-  }
-  el.style.background = gradient;
+  // Set gradient based on weather — removed, using unified glass card
+  // el.style.background = gradient;
 
   const forecastHtml = weather.forecast && weather.forecast.length > 0 ? `
     <div class="weather-divider"></div>
@@ -343,7 +368,7 @@ function renderWeather(weather: WeatherData | null): void {
         <div class="forecast-day">
           <span class="forecast-day-name">${f.dayName}</span>
           <i class="fas ${f.icon} forecast-icon" style="color:${f.color}"></i>
-          <div class="forecast-temps">${f.tempMax}°<span>${f.tempMin}°</span></div>
+          <div class="forecast-temps">${f.tempMax}°<span>/ ${f.tempMin}°</span></div>
         </div>
       `).join('')}
     </div>
@@ -373,78 +398,103 @@ function renderActiveReservation(data: DashboardData): void {
   const el = document.getElementById('dashboard-active-reservation');
   if (!el) return;
 
-  if (data.activeReservation) {
-    const r = data.activeReservation;
-    el.className = 'glass-card status-card is-occupied';
-    const avatarContent = r.userAnimalIcon ?? r.username.charAt(0).toUpperCase();
-    const avatarStyle = r.userAnimalIcon
+  const todayStr = new Date().toISOString().split('T')[0];
+  const active = data.activeReservation;
+
+  // Odvoz nextReservation z upcomingReservations (první, která není aktivní)
+  const nextRes = active
+    ? data.upcomingReservations.find(r => r.id !== active.id) ?? null
+    : data.upcomingReservations[0] ?? null;
+
+  // Free weekend hint (shown in all states)
+  const freeWeekendHtml = data.nextFreeWeekend
+    ? `<div class="next-free-weekend"><span class="free-weekend-dot"></span> Nejbližší volný víkend: <strong>${formatWeekendRange(data.nextFreeWeekend.start, data.nextFreeWeekend.end)}</strong></div>`
+    : '';
+
+  if (active) {
+    // ── Stav C: Chata obsazena ────────────────────────────────────────
+    const departingToday = active.to === todayStr;
+    const avatarContent = active.userAnimalIcon ?? active.username.charAt(0).toUpperCase();
+    const avatarStyle = active.userAnimalIcon
       ? 'background:rgba(255,255,255,0.35)'
-      : `background:${r.userColor || '#6b7280'}`;
-    // Remaining days
-    const daysLeft = daysUntil(r.to);
-    const daysLeftLabel = daysLeft === 0 ? 'Odjezd dnes'
-      : daysLeft === 1 ? 'Ještě 1 den' : `Ještě ${daysLeft} ${daysLeft < 5 ? 'dny' : 'dní'}`;
-    // Handover note
-    const handoverHtml = r.handoverNote
-      ? `<div class="status-handover">${r.handoverNote}</div>`
+      : `background:${active.userColor || '#ea580c'}`;
+
+    const title = departingToday
+      ? `Dnes odjíždí ${active.username}`
+      : `Obsazeno — ${active.username}`;
+    const subtitle = departingToday
+      ? `Rezervace do ${formatDate(active.to)} · ${active.purpose}`
+      : `Do ${formatDate(active.to)} · ${active.purpose}`;
+
+    const nextHint = nextRes
+      ? `<div class="status-next-hint">Dále: ${nextRes.username} · ${formatDateShort(nextRes.from)} — ${formatDateShort(nextRes.to)}</div>`
       : '';
+
+    el.className = 'glass-card status-card is-occupied';
     el.innerHTML = `
       <div class="card-body-full status-content">
         <div class="status-split-row">
           <div class="status-avatar-block" style="${avatarStyle}">${avatarContent}</div>
           <div class="status-text-block">
-            <div class="status-label">Právě na chatě</div>
-            <div class="status-name">${r.username}</div>
-            <div class="status-dates">${formatDate(r.from)} — ${formatDate(r.to)} · ${r.purpose}</div>
-            <div class="status-remaining">${daysLeftLabel}</div>
+            <div class="status-label">Stav chaty</div>
+            <div class="status-name">${title}</div>
+            <div class="status-dates">${subtitle}</div>
           </div>
         </div>
-        ${handoverHtml}
+        ${nextHint}
         <div class="status-cta-row">
-          <a href="#/reservations" class="status-cta status-cta-neutral">
-            Zobrazit kalendář
-          </a>
+          ${freeWeekendHtml}
+          <a href="#/reservations" class="status-cta status-cta-neutral">Kalendář rezervací</a>
         </div>
       </div>`;
 
-  } else if (data.myNextReservation) {
-    const days = daysUntil(data.myNextReservation.from);
-    const daysLabel = days === 1 ? 'den' : days < 5 && days > 0 ? 'dny' : 'dní';
+  } else if (nextRes) {
+    // ── Stav B: Volná, ale existuje příští rezervace ──────────────────
+    const days = daysUntil(nextRes.from);
+    const daysChip = days === 0 ? 'dnes' : days === 1 ? 'zítra' : `za ${days} d.`;
+    const statusBadge = nextRes.status === 'soft'
+      ? ' <span class="res-status-badge res-badge-soft">Předběžná</span>'
+      : nextRes.status === 'backup'
+        ? ' <span class="res-status-badge res-badge-backup">Záložní</span>'
+        : '';
+
     el.className = 'glass-card status-card is-free';
     el.innerHTML = `
       <div class="card-body-full status-content">
         <div class="status-split-row">
           <div class="status-avatar-block" style="background:#059669">
-            <span style="font-size:28px">✓</span>
-          </div>
-          <div class="status-text-block">
-            <div class="status-label">Tvoje příští návštěva</div>
-            <div class="status-name">Za ${days} ${daysLabel}</div>
-            <div class="status-dates">${formatDate(data.myNextReservation.from)} — ${formatDate(data.myNextReservation.to)}</div>
-          </div>
-        </div>
-        <div class="status-cta-row">
-          <a href="#/reservations" class="status-cta status-cta-neutral">
-            Upravit rezervaci
-          </a>
-        </div>
-      </div>`;
-
-  } else {
-    el.className = 'glass-card status-card is-free is-available';
-    el.innerHTML = `
-      <div class="card-body-full status-content">
-        <div class="status-split-row">
-          <div class="status-avatar-block" style="background:#10b981">
-            <span style="font-size:32px">●</span>
+            <i class="fas fa-house-chimney" style="font-size:24px;color:#fff"></i>
           </div>
           <div class="status-text-block">
             <div class="status-label">Stav chaty</div>
             <div class="status-name">Volná!</div>
-            <div class="status-dates">Žádná plánovaná rezervace</div>
+            <div class="status-dates">Další pobyt: ${nextRes.username}${statusBadge} · ${formatDateShort(nextRes.from)} — ${formatDateShort(nextRes.to)}</div>
+          </div>
+          <span class="upcoming-days-chip">${daysChip}</span>
+        </div>
+        <div class="status-cta-row">
+          ${freeWeekendHtml}
+          <a href="#/reservations" class="status-cta status-cta-neutral">Kalendář rezervací</a>
+        </div>
+      </div>`;
+
+  } else {
+    // ── Stav A: Volná, nic neplánováno ───────────────────────────────
+    el.className = 'glass-card status-card is-free is-available';
+    el.innerHTML = `
+      <div class="card-body-full status-content">
+        <div class="status-split-row">
+          <div class="status-avatar-block" style="background:#059669">
+            <i class="fas fa-house-chimney" style="font-size:24px;color:#fff"></i>
+          </div>
+          <div class="status-text-block">
+            <div class="status-label">Stav chaty</div>
+            <div class="status-name">Volná!</div>
+            <div class="status-dates">Žádný plánovaný pobyt. Ideální čas vyrazit.</div>
           </div>
         </div>
         <div class="status-cta-row">
+          ${freeWeekendHtml}
           <button class="status-cta status-cta-primary" id="btn-go-reserve">
             + Zarezervovat termín
           </button>
@@ -455,165 +505,231 @@ function renderActiveReservation(data: DashboardData): void {
   }
 }
 
-function renderUpcoming(reservations: DashboardData['upcomingReservations']): void {
-  const el = document.getElementById('dashboard-reservations');
-  if (!el) return;
-
-  const header = `
-    <div class="dashboard-card-header">
-      <span class="dashboard-card-header-title">
-        Nadcházející rezervace
-      </span>
-      ${reservations.length > 0 ? '<a href="#/reservations" class="dashboard-card-header-link">Všechny →</a>' : ''}
-    </div>`;
-
-  if (reservations.length === 0) {
-    el.innerHTML = `
-      ${header}
-      <div class="empty-state-card">
-        <i class="fas fa-calendar-alt empty-icon-duotone" style="color:#9ca3af;opacity:0.4"></i>
-        <p class="empty-text">Žádné plánované pobyty</p>
-        <a href="#/reservations" class="empty-cta">+ Naplánovat pobyt</a>
-      </div>`;
-    return;
-  }
-
-  const toShow = reservations.slice(0, 3);
-  el.innerHTML = `
-    ${header}
-    <div class="list-content">
-      ${toShow.map((r) => {
-    const avatarContent = r.userAnimalIcon
-      ? `<span style="font-size:18px">${r.userAnimalIcon}</span>`
-      : r.username.charAt(0).toUpperCase();
-    const avatarBg = r.userAnimalIcon
-      ? 'background:rgba(0,0,0,0.05)'
-      : `background:${r.userColor || '#808080'}`;
-    const days = daysUntil(r.from);
-    const daysChip = days === 0 ? 'dnes' : days === 1 ? 'zítra' : `za ${days} d.`;
-    const statusBadge = r.status === 'soft'
-      ? ' <span class="res-status-badge res-badge-soft">Předběžná</span>'
-      : r.status === 'backup'
-        ? ' <span class="res-status-badge res-badge-backup">Záložní</span>'
-        : '';
-    const nights = nightsLabel(r.from, r.to);
-    return `
-          <div class="list-item">
-            <div class="list-item-icon" style="${avatarBg}">${avatarContent}</div>
-            <div class="list-item-content">
-              <div class="list-item-title">${r.username}${statusBadge}</div>
-              <div class="list-item-subtitle">${formatDateShort(r.from)} — ${formatDateShort(r.to)} · ${nights} · ${r.purpose}</div>
-            </div>
-            <span class="upcoming-days-chip">${daysChip}</span>
-          </div>`;
-  }).join('')}
-    </div>`;
-}
-
-function renderShopping(widget: ShoppingListWidget | null): void {
+function renderShopping(items: PendingShoppingItem[], totalCount: number): void {
   const el = document.getElementById('dashboard-shopping');
   if (!el) return;
 
   const header = `
     <div class="dashboard-card-header">
-      <span class="dashboard-card-header-title">
-        K nakoupení
-      </span>
+      <span class="dashboard-card-header-title">K nakoupení</span>
       <a href="#/shopping" class="dashboard-card-header-link">Seznamy →</a>
     </div>`;
 
-  if (!widget || widget.totalCount === 0) {
+  if (totalCount === 0) {
     el.innerHTML = `
       ${header}
       <div class="empty-state-card">
         <i class="fas fa-check-circle empty-icon-duotone" style="color:#10b981;opacity:0.4"></i>
         <p class="empty-text">Na chatě nic nechybí!</p>
-        <a href="#/shopping" class="empty-cta">+ Nový seznam</a>
+        <a href="#/shopping" class="empty-cta">Nový seznam</a>
       </div>`;
     return;
   }
 
-  const pendingCount = widget.totalCount - widget.doneCount;
-  const progressPct = widget.totalCount > 0
-    ? Math.round((widget.doneCount / widget.totalCount) * 100)
-    : 0;
-  const allDone = pendingCount === 0;
+  const shownItems = items.slice(0, 5);
+  const remaining = totalCount - shownItems.length;
 
-  const itemsHtml = allDone
-    ? `<div class="shopping-done-msg">Vše nakoupeno!</div>`
-    : widget.pendingItems.map(item => `
-        <div class="list-item" style="padding:5px 0;border-bottom:none;gap:10px">
-          <div style="width:6px;height:6px;border-radius:50%;background:#d1d5db;flex-shrink:0;margin-top:8px"></div>
-          <div class="list-item-content">
-            <div class="list-item-title" style="font-weight:500">${item.name}</div>
-          </div>
-        </div>`).join('')
-    + (pendingCount > widget.pendingItems.length
-      ? `<div class="shopping-widget-more">+${pendingCount - widget.pendingItems.length} dalších položek →</div>`
-      : '');
+  const itemsHtml = shownItems.map(item => {
+    const essentialMark = item.isEssential ? '<span class="shopping-essential-mark" title="Nutné">❗</span>' : '';
+    return `
+      <label class="dashboard-shopping-item">
+        <input type="checkbox" class="shopping-item-check" data-list-id="${item.listId}" data-item-id="${item.id}" />
+        <span class="shopping-item-name">${essentialMark}${item.name}</span>
+        <span class="shopping-item-list">${item.listName}</span>
+      </label>`;
+  }).join('');
+
+  const moreHtml = remaining > 0
+    ? `<a href="#/shopping" class="shopping-widget-more">+ ${remaining} dalších položek →</a>`
+    : '';
 
   el.innerHTML = `
     ${header}
-    <div class="shopping-list-name">${widget.name}</div>
-    <div class="shopping-progress-wrap">
-      <div class="shopping-progress-bar">
-        <div class="shopping-progress-fill" style="width:${progressPct}%;background:${allDone ? '#10b981' : 'var(--color-primary)'}"></div>
+    <div class="list-content shopping-widget-list">${itemsHtml}</div>
+    ${moreHtml}`;
+
+  // Bind checkbox clicks with optimistic update
+  el.querySelectorAll<HTMLInputElement>('.shopping-item-check').forEach(cb => {
+    cb.addEventListener('change', async () => {
+      const listId = cb.dataset.listId!;
+      const itemId = cb.dataset.itemId!;
+      const purchased = cb.checked;
+      const labelEl = cb.closest('label');
+
+      // Optimistic: dim the item
+      if (labelEl) labelEl.style.opacity = '0.4';
+
+      const result = await authFetch<{ id: string }>(
+        `/api/shopping-lists/${listId}/items/${itemId}`,
+        { method: 'PUT', body: JSON.stringify({ purchased }) }
+      );
+
+      if (result) {
+        // Remove item from list (it's now purchased)
+        if (labelEl) {
+          labelEl.style.transition = 'opacity 0.3s';
+          labelEl.style.opacity = '0';
+          setTimeout(() => {
+            labelEl.remove();
+            // Pokud nezbyly žádné položky → zobraz empty state
+            const list = el.querySelector('.shopping-widget-list');
+            if (list && list.querySelectorAll('label').length === 0) {
+              el.innerHTML = `
+                <div class="dashboard-card-header">
+                  <span class="dashboard-card-header-title">K nakoupení</span>
+                  <a href="#/shopping" class="dashboard-card-header-link">Seznamy →</a>
+                </div>
+                <div class="empty-state-card">
+                  <i class="fas fa-check-circle empty-icon-duotone" style="color:#10b981;opacity:0.4"></i>
+                  <p class="empty-text">Na chatě nic nechybí!</p>
+                  <a href="#/shopping" class="empty-cta">Nový seznam</a>
+                </div>`;
+            }
+          }, 300);
+        }
+      } else {
+        // Rollback
+        cb.checked = !purchased;
+        if (labelEl) labelEl.style.opacity = '1';
+      }
+    });
+  });
+}
+
+// ─── Vzkaz na lednici ─────────────────────────────────────────────────
+
+// Inicializuje listenery modalu JEDNOU — voláno z mount()
+function initHandoverModal(): void {
+  const modal = document.getElementById('handover-modal');
+  const textarea = document.getElementById('handover-modal-textarea') as HTMLTextAreaElement | null;
+  const charCount = document.getElementById('handover-modal-char-count');
+  const saveBtn = document.getElementById('btn-handover-modal-save') as HTMLButtonElement | null;
+
+  if (!modal || !textarea || !saveBtn) return;
+
+  // Char counter
+  textarea.addEventListener('input', () => {
+    if (charCount) charCount.textContent = String(textarea.value.length);
+  });
+
+  // Escape zavírá
+  document.addEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+      modal.classList.add('hidden');
+    }
+  });
+
+  // Klik mimo modal zavírá
+  modal.addEventListener('click', (e: MouseEvent) => {
+    if (e.target === modal) modal.classList.add('hidden');
+  });
+
+  document.getElementById('btn-handover-modal-close')?.addEventListener('click', () => {
+    modal.classList.add('hidden');
+  });
+
+  document.getElementById('btn-handover-modal-cancel')?.addEventListener('click', () => {
+    modal.classList.add('hidden');
+  });
+
+  // Uložit — listener JEDNOU, bez { once: true }
+  saveBtn.addEventListener('click', async () => {
+    saveBtn.disabled = true;
+    const newText = textarea.value;
+
+    const result = await authFetch<{ pinnedHandoverNote: string | null }>(
+      '/api/workspace/handover-note',
+      { method: 'PATCH', body: JSON.stringify({ note: newText }) }
+    );
+
+    if (result) {
+      showToast('Vzkaz uložen', 'success');
+      modal.classList.add('hidden');
+      renderHandoverNote(result.pinnedHandoverNote);
+    }
+    saveBtn.disabled = false;
+  });
+}
+
+function renderHandoverNote(note: string | null): void {
+  currentHandoverNote = note;
+  const el = document.getElementById('dashboard-handover-note');
+  if (!el) return;
+
+  const role = getRole();
+  const isGuest = role === 'guest';
+
+  // ── Render karta (read-only) ──────────────────────────────────
+  const noteText = note?.trim() || '';
+  const displayHtml = noteText
+    ? `<p class="handover-note-text">${noteText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</p>`
+    : `<p class="handover-note-empty">${isGuest ? 'Zatím žádný vzkaz.' : 'Žádný vzkaz — klikněte na tužku a napište.'}</p>`;
+
+  const editBtnHtml = isGuest ? '' : `
+    <button class="handover-edit-btn" id="btn-edit-handover" title="Upravit vzkaz">✎</button>`;
+
+  el.innerHTML = `
+    <div class="card-body-full handover-card-content">
+      <div class="dashboard-card-header">
+        <span class="dashboard-card-header-title">Vzkaz</span>
+        ${editBtnHtml}
       </div>
-      <span class="shopping-progress-label">${widget.doneCount} / ${widget.totalCount}</span>
-    </div>
-    <div class="list-content shopping-widget-list">${itemsHtml}</div>`;
+      ${displayHtml}
+    </div>`;
+
+  if (isGuest) return;
+
+  // ── Otevřít modal ─────────────────────────────────────────────
+  document.getElementById('btn-edit-handover')?.addEventListener('click', () => {
+    const modal = document.getElementById('handover-modal');
+    const textarea = document.getElementById('handover-modal-textarea') as HTMLTextAreaElement | null;
+    const charCount = document.getElementById('handover-modal-char-count');
+    const saveBtn = document.getElementById('btn-handover-modal-save') as HTMLButtonElement | null;
+    if (!modal || !textarea) return;
+
+    // Nastav aktuální text + reset stavu tlačítka
+    textarea.value = currentHandoverNote?.trim() || '';
+    if (charCount) charCount.textContent = String(textarea.value.length);
+    if (saveBtn) saveBtn.disabled = false;
+    modal.classList.remove('hidden');
+    textarea.focus();
+  });
 }
 
 
 
-function renderNotes(notes: DashboardData['latestNotes']): void {
-  const el = document.getElementById('dashboard-notes');
+// ─── Essential items warning ──────────────────────────────────────────
+
+function renderEssentialWarning(warning: DashboardData['essentialWarning']): void {
+  const el = document.getElementById('dashboard-essential-warning');
   if (!el) return;
 
-  const header = `
-    <div class="dashboard-card-header">
-      <span class="dashboard-card-header-title">
-        Co se děje na chatě
-      </span>
-      ${notes.length > 0 ? '<a href="#/notes" class="dashboard-card-header-link">Chat →</a>' : ''}
-    </div>`;
-
-  if (notes.length === 0) {
-    el.innerHTML = `
-      <div class="card-body-full">
-        ${header}
-        <div class="empty-state-card">
-          <i class="fas fa-comment-slash empty-icon-duotone" style="color:#9ca3af;opacity:0.4"></i>
-          <p class="empty-text">Zatím žádné zprávy</p>
-          <a href="#/notes" class="empty-cta">+ Napsat první zprávu</a>
-        </div>
-      </div>`;
+  if (!warning || warning.count === 0) {
+    el.classList.add('hidden');
+    el.innerHTML = '';
     return;
   }
 
+  // Zobrazíme maximálně 5 položek, zbytek shrneme
+  const itemNames = warning.items.slice(0, 5).map(i => i.name).join(', ');
+  const remaining = warning.items.length > 5 ? ` a ${warning.items.length - 5} dalších` : '';
+
+  el.classList.remove('hidden');
   el.innerHTML = `
-    <div class="card-body-full">
-      ${header}
-      <div class="dashboard-notes-feed">
-        ${notes.map(n => {
-    const avatarContent = (n as any).userAnimalIcon ?? n.username.charAt(0).toUpperCase();
-    const avatarStyle = (n as any).userAnimalIcon
-      ? 'background:rgba(0,0,0,0.05)'
-      : `background:${(n as any).userColor || '#6b7280'}`;
-    return `
-            <div class="dashboard-note-item">
-              <div class="note-avatar" style="${avatarStyle}">${avatarContent}</div>
-              <div class="note-content">
-                <div class="note-meta">
-                  <span class="note-author">${n.username}</span>
-                  <span class="note-time">${timeAgo(n.createdAt)}</span>
-                </div>
-                <p class="note-preview">${renderMarkdown(n.message)}</p>
-              </div>
-            </div>`;
-  }).join('')}
+    <div class="essential-warning-content">
+      <div class="essential-warning-text">
+        <span class="essential-warning-icon"></span>
+        <div class="essential-warning-message-block">
+          <span class="essential-warning-message">Na chatě chybí a čekají na dokoupení důležité položky:</span>
+          <span class="essential-warning-items">${itemNames}${remaining}.</span>
+        </div>
       </div>
+      <button class="btn-alert" id="btn-go-shopping">Otevřít nákupy</button>
     </div>`;
+
+  document.getElementById('btn-go-shopping')?.addEventListener('click', () => {
+    navigate('/shopping');
+  });
 }
 
 // ─── Data loading ─────────────────────────────────────────────────────
@@ -627,22 +743,41 @@ async function loadDashboard(): Promise<void> {
 
   renderWeather(weather);
 
-  if (data) {
-    renderActiveReservation(data);
-
-    // Departure mode hook
-    if (data.departingToday) {
-      initDepartureMode();
+  if (!data) {
+    // Fallback: API selhalo
+    const statusCard = document.getElementById('dashboard-active-reservation');
+    if (statusCard) {
+      statusCard.innerHTML = `
+        <div class="card-body-full status-content">
+          <div class="status-split-row">
+            <div class="status-avatar-block" style="background:#9ca3af">
+              <i class="fas fa-exclamation" style="font-size:24px;color:#fff"></i>
+            </div>
+            <div class="status-text-block">
+              <div class="status-label">Stav chaty</div>
+              <div class="status-name">Neznámý</div>
+              <div class="status-dates">Nepodařilo se načíst data.</div>
+            </div>
+          </div>
+          <div class="status-cta-row">
+            <button class="status-cta status-cta-neutral" id="btn-retry-dashboard">Zkusit znovu</button>
+          </div>
+        </div>`;
+      document.getElementById('btn-retry-dashboard')?.addEventListener('click', loadDashboard);
     }
-
-    // Pokud je někdo na chatě, vyfiltruj jeho aktivní rezervaci z nadcházejících
-    const upcoming = data.activeReservation
-      ? data.upcomingReservations.filter(r => r.id !== data.activeReservation!.id)
-      : data.upcomingReservations;
-    renderUpcoming(upcoming);
-    renderShopping(data.shoppingListWidget);
-    renderNotes(data.latestNotes);
+    return;
   }
+
+  renderActiveReservation(data);
+
+  // Departure mode hook
+  if (data.departingToday) {
+    initDepartureMode();
+  }
+
+  renderShopping(data.pendingShoppingItems, data.totalPendingShoppingCount);
+  renderHandoverNote(data.pinnedHandoverNote);
+  renderEssentialWarning(data.essentialWarning);
 }
 
 // ─── Departure Mode ───────────────────────────────────────────────────
@@ -741,6 +876,7 @@ const page: PageModule = {
   async mount(el) {
     container = el;
     container.innerHTML = getTemplate();
+    initHandoverModal();
     loadDashboard();
 
     // Auto-refresh every 5 minutes

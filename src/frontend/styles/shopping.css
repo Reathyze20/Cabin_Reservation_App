@@ -519,7 +519,7 @@ div.shopping-list-card.card:hover {
   background: var(--color-bg-alt);
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   border-bottom: 1px solid var(--color-border-light);
 }
 
@@ -1159,4 +1159,115 @@ div.shopping-list-card.card:hover {
 .modal-buttons .button-secondary {
   width: auto !important;
   min-width: 90px;
+}
+
+/* ============================================================================
+   Essential / Critical Items Styles
+   ============================================================================ */
+
+/* Section header in shopping list cards */
+.essential-section-header {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #dc2626;
+  padding: 8px 12px 4px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.essential-divider {
+  height: 1px;
+  background: linear-gradient(to right, #fecaca, transparent);
+  margin: 4px 12px 4px;
+}
+
+/* Essential item row highlight */
+.shopping-item-row.is-essential {
+  background: rgba(254, 226, 226, 0.35);
+  border-left: 3px solid #ef4444;
+  padding-left: 9px;
+}
+
+/* Essential toggle button (inline in shopping item rows) */
+.btn-toggle-essential {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  opacity: 0.3;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: opacity 0.15s, transform 0.15s;
+  flex-shrink: 0;
+}
+
+.btn-toggle-essential:hover {
+  opacity: 0.7;
+  transform: scale(1.15);
+}
+
+.btn-toggle-essential.is-active {
+  opacity: 1;
+}
+
+.essential-badge-inline {
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+/* Essential checkbox toggle in add-item forms */
+.essential-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.essential-toggle-label input[type="checkbox"] {
+  display: none;
+}
+
+.essential-toggle-icon {
+  font-size: 1rem;
+  opacity: 0.3;
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.essential-toggle-label input[type="checkbox"]:checked + .essential-toggle-icon {
+  opacity: 1;
+  transform: scale(1.15);
+}
+
+.essential-toggle-label:hover .essential-toggle-icon {
+  opacity: 0.7;
+}
+
+/* Inventory essential styles */
+.inventory-item.is-essential {
+  background: rgba(254, 226, 226, 0.25);
+  border-left: 3px solid #ef4444;
+}
+
+.inv-essential-icon {
+  margin-right: 4px;
+  font-size: 0.85rem;
+}
+
+.btn-inv-essential {
+  opacity: 0.3;
+  transition: opacity 0.15s;
+  font-size: 0.85rem;
+}
+
+.btn-inv-essential:hover {
+  opacity: 0.7;
+}
+
+.btn-inv-essential.is-active {
+  opacity: 1;
+}
+
+.inv-essential-label {
+  margin-left: auto;
 }

@@ -10,17 +10,27 @@ const router = Router();
 // ============================================================================
 router.get("/", protect, async (req: Request, res: Response) => {
   try {
-    const reservations = await prisma.reservation.findMany({
-      include: {
-        user: {
-          select: {
-            username: true,
-            color: true,
-            animalIcon: true,
+    const [reservations, availabilities] = await Promise.all([
+      prisma.reservation.findMany({
+        include: {
+          user: {
+            select: {
+              username: true,
+              color: true,
+              animalIcon: true,
+            },
           },
         },
-      },
-    });
+      }),
+      prisma.userAvailability.findMany({
+        include: {
+          user: {
+            select: { username: true, color: true, animalIcon: true },
+          },
+        },
+        orderBy: { startDate: "asc" },
+      }),
+    ]);
 
     const result = reservations.map((r) => ({
       id: r.id,
@@ -36,7 +46,17 @@ router.get("/", protect, async (req: Request, res: Response) => {
       userAnimalIcon: r.user.animalIcon,
     }));
 
-    res.json(result);
+    const availResult = availabilities.map((a) => ({
+      id: a.id,
+      userId: a.userId,
+      username: a.user.username,
+      userColor: a.user.color,
+      userAnimalIcon: a.user.animalIcon,
+      startDate: a.startDate.toISOString().split("T")[0],
+      endDate: a.endDate.toISOString().split("T")[0],
+    }));
+
+    res.json({ reservations: result, availabilities: availResult });
   } catch (error) {
     logger.error("RESERVATIONS", "Get reservations error", { error: String(error) });
     res.status(500).json({ message: "Chyba." });
@@ -370,3 +390,160 @@ router.post("/:reservationId/assign", protect, async (req: Request, res: Respons
 });
 
 export default router;
+
+// ============================================================================
+//                    USER AVAILABILITY (Osobní volno)
+// ============================================================================
+
+// GET all availabilities
+router.get("/availabilities", protect, async (req: Request, res: Response) => {
+  try {
+    const availabilities = await prisma.userAvailability.findMany({
+      include: {
+        user: {
+          select: { username: true, color: true, animalIcon: true },
+        },
+      },
+      orderBy: { startDate: "asc" },
+    });
+
+    res.json(
+      availabilities.map((a) => ({
+        id: a.id,
+        userId: a.userId,
+        username: a.user.username,
+        userColor: a.user.color,
+        userAnimalIcon: a.user.animalIcon,
+        startDate: a.startDate.toISOString().split("T")[0],
+        endDate: a.endDate.toISOString().split("T")[0],
+      }))
+    );
+  } catch (error) {
+    logger.error("AVAILABILITY", "Get availabilities error", { error: String(error) });
+    res.status(500).json({ message: "Chyba při načítání volna." });
+  }
+});
+
+// POST — create availability
+router.post("/availabilities", protect, async (req: Request, res: Response) => {
+  if (!req.user) return res.status(401).json({ message: "Neautorizováno." });
+
+  const { startDate, endDate } = req.body;
+  if (!startDate || !endDate) {
+    return res.status(400).json({ message: "Chybí startDate nebo endDate." });
+  }
+
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+    return res.status(400).json({ message: "Neplatné datum." });
+  }
+  if (end < start) {
+    return res.status(400).json({ message: "Konec nemůže být před začátkem." });
+  }
+
+  try {
+    const created = await prisma.userAvailability.create({
+      data: {
+        userId: req.user.userId,
+        startDate: start,
+        endDate: end,
+      },
+      include: {
+        user: {
+          select: { username: true, color: true, animalIcon: true },
+        },
+      },
+    });
+
+    res.status(201).json({
+      id: created.id,
+      userId: created.userId,
+      username: created.user.username,
+      userColor: created.user.color,
+      userAnimalIcon: created.user.animalIcon,
+      startDate: created.startDate.toISOString().split("T")[0],
+      endDate: created.endDate.toISOString().split("T")[0],
+    });
+  } catch (error) {
+    logger.error("AVAILABILITY", "Create availability error", { error: String(error) });
+    res.status(500).json({ message: "Chyba při ukládání volna." });
+  }
+});
+
+// PATCH — update availability
+router.patch("/availabilities/:id", protect, async (req: Request, res: Response) => {
+  if (!req.user) return res.status(401).json({ message: "Neautorizováno." });
+
+  const { id } = req.params;
+  const { startDate, endDate } = req.body;
+
+  if (!startDate || !endDate) {
+    return res.status(400).json({ message: "Chybí startDate nebo endDate." });
+  }
+
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+    return res.status(400).json({ message: "Neplatné datum." });
+  }
+  if (end < start) {
+    return res.status(400).json({ message: "Konec nemůže být před začátkem." });
+  }
+
+  try {
+    const existing = await prisma.userAvailability.findUnique({ where: { id } });
+    if (!existing) {
+      return res.status(404).json({ message: "Záznam nenalezen." });
+    }
+    if (existing.userId !== req.user.userId && req.user.role !== "admin") {
+      return res.status(403).json({ message: "Bez oprávnění." });
+    }
+
+    const updated = await prisma.userAvailability.update({
+      where: { id },
+      data: { startDate: start, endDate: end },
+      include: {
+        user: {
+          select: { username: true, color: true, animalIcon: true },
+        },
+      },
+    });
+
+    res.json({
+      id: updated.id,
+      userId: updated.userId,
+      username: updated.user.username,
+      userColor: updated.user.color,
+      userAnimalIcon: updated.user.animalIcon,
+      startDate: updated.startDate.toISOString().split("T")[0],
+      endDate: updated.endDate.toISOString().split("T")[0],
+    });
+  } catch (error) {
+    logger.error("AVAILABILITY", "Update availability error", { error: String(error) });
+    res.status(500).json({ message: "Chyba při úpravě volna." });
+  }
+});
+
+// DELETE — remove availability
+router.delete("/availabilities/:id", protect, async (req: Request, res: Response) => {
+  if (!req.user) return res.status(401).json({ message: "Neautorizováno." });
+
+  const { id } = req.params;
+
+  try {
+    const existing = await prisma.userAvailability.findUnique({ where: { id } });
+    if (!existing) {
+      return res.status(404).json({ message: "Záznam nenalezen." });
+    }
+    if (existing.userId !== req.user.userId && req.user.role !== "admin") {
+      return res.status(403).json({ message: "Bez oprávnění." });
+    }
+
+    await prisma.userAvailability.delete({ where: { id } });
+    res.json({ message: "Volno smazáno." });
+  } catch (error) {
+    logger.error("AVAILABILITY", "Delete availability error", { error: String(error) });
+    res.status(500).json({ message: "Chyba při mazání volna." });
+  }
+});

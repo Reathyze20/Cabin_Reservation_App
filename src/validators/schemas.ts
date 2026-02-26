@@ -30,12 +30,31 @@ export const updateReservationSchema = z.object({
 // Shopping list validators
 export const createShoppingItemSchema = z.object({
   name: z.string().min(1, "Název je povinný"),
+  isEssential: z.boolean().optional().default(false),
+  sourceMessageId: z.string().uuid().optional(),
 });
 
 export const updatePurchaseSchema = z.object({
   purchased: z.boolean(),
   price: z.number().positive().optional(),
   splitWith: z.array(z.string().uuid()).optional(),
+});
+
+// Inventory validators
+export const createInventoryItemSchema = z.object({
+  name: z.string().min(1, "Název je povinný").max(100, "Max 100 znaků"),
+  category: z.string().optional().default("OSTATNÍ"),
+  status: z.enum(["OK", "LOW", "EMPTY"]).optional().default("OK"),
+  location: z.string().max(100).optional().nullable(),
+  isEssential: z.boolean().optional().default(false),
+});
+
+export const updateInventoryItemSchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  category: z.string().optional(),
+  status: z.enum(["OK", "LOW", "EMPTY"]).optional(),
+  location: z.string().max(100).optional().nullable(),
+  isEssential: z.boolean().optional(),
 });
 
 // Note validators
@@ -81,6 +100,7 @@ export const createReconstructionItemSchema = z.object({
   link: z.string().url("Neplatný formát URL").optional().or(z.literal("")),
   cost: z.number().positive().optional(),
   status: z.enum(["pending", "approved", "done"]).optional(),
+  sourceMessageId: z.string().uuid().optional(),
 });
 
 export const updateReconstructionStatusSchema = z.object({

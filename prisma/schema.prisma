@@ -11,6 +11,16 @@ datasource db {
 }
 
 // ============================================================================
+// APP SETTINGS (singleton — id = "singleton")
+// ============================================================================
+model AppSettings {
+  id                 String  @id @default("singleton")
+  pinnedHandoverNote String? @map("pinned_handover_note") @db.Text
+
+  @@map("app_settings")
+}
+
+// ============================================================================
 // USERS
 // ============================================================================
 model User {
@@ -43,6 +53,7 @@ model User {
   reconstructionVotes       ReconstructionVote[]
   reservationWatches        ReservationWatcher[]
   inventoryUpdates          InventoryItem[]      @relation("UpdatedBy")
+  availabilities            UserAvailability[]
 
   @@map("users")
 }
@@ -105,6 +116,8 @@ model ShoppingListItem {
   purchasedAt   DateTime?  @map("purchased_at")
   price               Decimal?   @db.Decimal(10, 2)
   linkedInventoryId   String?    @map("linked_inventory_id")
+  isEssential         Boolean    @default(false) @map("is_essential")
+  sourceMessageId     String?    @map("source_message_id")
 
   // Relations
   list        ShoppingList?       @relation(fields: [listId], references: [id], onDelete: Cascade)
@@ -144,11 +157,12 @@ model NoteThread {
 }
 
 model Note {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
-  threadId  String?  @map("thread_id") // Null = General / Hlavní nástěnka
-  message   String   @db.Text
-  createdAt DateTime @default(now()) @map("created_at")
+  id               String   @id @default(uuid())
+  userId           String   @map("user_id")
+  threadId         String?  @map("thread_id") // Null = General / Hlavní nástěnka
+  message          String   @db.Text
+  createdAt        DateTime @default(now()) @map("created_at")
+  isResolvedAsTask Boolean  @default(false) @map("is_resolved_as_task")
 
   // Relations
   user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -255,6 +269,7 @@ model ReconstructionItem {
   deadline       DateTime? @db.Date
   createdById    String   @map("created_by_id")
   createdAt      DateTime @default(now()) @map("created_at")
+  sourceMessageId String? @map("source_message_id")
 
   // Relations
   createdBy User                 @relation(fields: [createdById], references: [id], onDelete: Cascade)
@@ -302,6 +317,7 @@ model InventoryItem {
   status      String   @default("OK")   // OK | LOW | EMPTY
   location    String?                   // Kde to leží, např. "Kůlna"
   inCart      Boolean  @default(false) @map("in_cart")
+  isEssential Boolean  @default(false) @map("is_essential")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
   updatedById String?  @map("updated_by_id")
@@ -310,4 +326,21 @@ model InventoryItem {
   updatedBy   User?    @relation("UpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
 
   @@map("inventory_items")
+}
+
+// ============================================================================
+// USER AVAILABILITY (Osobní volno / Dovolené)
+// Multi-tenant: workspaceId bude přidán po zavedení Workspace modelu
+// ============================================================================
+model UserAvailability {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  startDate DateTime @map("start_date") @db.Date
+  endDate   DateTime @map("end_date") @db.Date
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_availabilities")
 }

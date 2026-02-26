@@ -6,7 +6,7 @@ import {
   $, show, hide, showToast, authFetch,
   getToken, getUserId, getRole, getUsername,
 } from '../lib/common';
-import type { Reservation } from '@shared/types';
+import type { Reservation, UserAvailability } from '@shared/types';
 import '../styles/reservations.css';
 
 // ─── Inventory notify ─────────────────────────────────────────────────────────
@@ -78,6 +78,7 @@ function showInventoryNotifyDialog(summary: MissingSummary): Promise<boolean> {
 // ─── Module state ────────────────────────────────────────────────────
 let container: HTMLElement;
 let currentReservations: (Reservation & { userColor?: string; userAnimalIcon?: string | null })[] = [];
+let currentAvailabilities: UserAvailability[] = [];
 let allUsers: { id: string; username: string; color?: string; role?: string }[] = [];
 let reservationIdToDelete: string | null = null;
 let activeReservationTab: 'all' | 'mine' = 'all';
@@ -156,7 +157,8 @@ function getTemplate(): string {
       </div>
 
       <div class="panel-actions">
-        <button id="btn-new-reservation" class="button-primary">+ Nová rezervace</button>
+        <button id="btn-new-reservation" class="button-primary">Nová rezervace</button>
+        <button id="btn-new-availability" class="button-secondary btn-availability" title="Nahlásit osobní volno / dovolenou">Termíny dovolených</button>
       </div>
     </div>
 
@@ -238,6 +240,9 @@ function getTemplate(): string {
             <button type="submit" id="modal-submit-button" class="button-primary">Potvrdit rezervaci</button>
           </div>
         </div>
+        <div class="avail-switch-link">
+          <button type="button" id="switch-to-availability" class="btn-link-subtle">Nechci rezervovat chatu, chci si jen zapsat dovolenou</button>
+        </div>
       </form>
     </div>
   </div>
@@ -260,18 +265,46 @@ function getTemplate(): string {
       <span class="modal-close-button" data-close="assign-reservation-modal">&times;</span>
       <h2>Přiřadit rezervaci</h2>
       <p id="assign-modal-text"></p>
-      <form id="assign-reservation-form">
+      <form id="assign-reservation-form" novalidate>
         <input type="hidden" id="assign-reservation-id-input" />
         <div class="form-group">
           <label for="assign-user-select">Nový vlastník:</label>
           <select id="assign-user-select" required></select>
+          <span class="error-message" id="assign-owner-error"></span>
         </div>
         <div class="modal-buttons">
           <button type="submit" class="button-primary">Potvrdit přiřazení</button>
           <button type="button" id="cancel-assign-btn" class="button-secondary">Zrušit</button>
         </div>
-        <p id="assign-error-message" class="error-message" style="margin-top:10px"></p>
       </form>
+    </div>
+  </div>
+
+  <!-- Availability modal (Osobní volno) -->
+  <div id="availability-modal" class="modal-overlay hidden">
+    <div class="modal-content availability-modal-content">
+      <span class="modal-close-button" data-close="availability-modal">&times;</span>
+      <h2 id="avail-modal-title">Nahlásit osobní volno</h2>
+      <p class="avail-modal-desc">Zaznač dny, kdy máš dovolenou nebo volno. Ostatní uvidí v kalendáři malé tečky — snáz se najde termín, kdy můžete jet všichni.</p>
+      <form id="availability-form">
+        <input type="hidden" id="avail-edit-id" value="" />
+        <div class="form-row date-inputs-row">
+          <div class="form-group">
+            <label for="avail-date-from">Od</label>
+            <input type="date" id="avail-date-from" class="booking-input" required />
+          </div>
+          <div class="form-group">
+            <label for="avail-date-to">Do</label>
+            <input type="date" id="avail-date-to" class="booking-input" required />
+          </div>
+        </div>
+        <div class="booking-footer">
+          <div class="booking-footer-right">
+            <button type="submit" id="avail-submit-btn" class="button-primary">Uložit volno</button>
+          </div>
+        </div>
+      </form>
+      <div id="my-availabilities-list" class="my-avail-list"></div>
     </div>
   </div>
 
@@ -290,10 +323,11 @@ async function loadReservations(): Promise<void> {
   const list = $('reservations-list');
   if (list) list.innerHTML = '<div class="spinner-container"><div class="spinner"></div></div>';
 
-  const data = await authFetch<(Reservation & { userColor?: string })[]>('/api/reservations', { silent: true });
+  const data = await authFetch<{ reservations: (Reservation & { userColor?: string })[]; availabilities: UserAvailability[] }>('/api/reservations', { silent: true });
   if (!data) return;
 
-  currentReservations = data;
+  currentReservations = data.reservations;
+  currentAvailabilities = data.availabilities || [];
 
   renderCustomCalendar();
   renderReservationsOverview(currentCalMonth, currentCalYear);
@@ -449,6 +483,45 @@ function renderCustomCalendar(): void {
         });
 
         dayCell.appendChild(barsContainer);
+      }
+    }
+
+    // ── Availability dots (osobní volno) ──────────────────────────────
+    {
+      const ts = Date.UTC(cellYear, cellMonth, cellDay);
+      const forDay = currentAvailabilities.filter((a) => {
+        try {
+          const s = new Date(a.startDate + 'T00:00:00Z').getTime();
+          const e = new Date(a.endDate + 'T00:00:00Z').getTime();
+          return ts >= s && ts <= e;
+        } catch { return false; }
+      });
+
+      if (forDay.length > 0) {
+        const dotsContainer = document.createElement('div');
+        dotsContainer.className = 'cal-avail-dots';
+
+        // Tooltip: "Mají volno: Míša, Admin"
+        const names = forDay.map(a => a.username);
+        dotsContainer.title = `Mají dovolenou: ${names.join(', ')}`;
+
+        // Mobile: collapse to single grey dot if too many
+        const isMobile = window.innerWidth <= 768;
+        if (isMobile && forDay.length > 2) {
+          const dot = document.createElement('span');
+          dot.className = 'cal-avail-dot';
+          dot.style.backgroundColor = '#9ca3af';
+          dotsContainer.appendChild(dot);
+        } else {
+          forDay.forEach(a => {
+            const dot = document.createElement('span');
+            dot.className = 'cal-avail-dot';
+            dot.style.backgroundColor = a.userColor || '#808080';
+            dotsContainer.appendChild(dot);
+          });
+        }
+
+        dayCell.appendChild(dotsContainer);
       }
     }
 
@@ -935,12 +1008,15 @@ function openAssignModal(reservationId: string): void {
   const idInput = $<HTMLInputElement>('assign-reservation-id-input');
   const text = $('assign-modal-text');
   const select = $<HTMLSelectElement>('assign-user-select');
-  const errMsg = $('assign-error-message');
 
   if (!modal || !idInput || !select) return;
   idInput.value = reservationId;
-  if (errMsg) errMsg.textContent = '';
   if (text) text.textContent = `Přiřazujete rezervaci: ${formatDateForDisplay(reservation.from)} - ${formatDateForDisplay(reservation.to)}.`;
+
+  // Clear any previous error state
+  select.classList.remove('input-error');
+  const errSpan = $('assign-owner-error');
+  if (errSpan) { errSpan.classList.remove('show'); errSpan.textContent = ''; }
 
   select.innerHTML = '<option value="">-- Vyberte uživatele --</option>';
   const eligible = allUsers.filter((u) => u.role !== 'admin' && u.id !== reservation.userId);
@@ -1010,6 +1086,113 @@ function bindWatchButton(btn: HTMLButtonElement | null): void {
 }
 
 
+// ─── Availability helpers (Osobní volno) ──────────────────────────────
+
+function openAvailabilityModal(fromDate?: string, toDate?: string): void {
+  const modal = $('availability-modal');
+  const fromInput = $<HTMLInputElement>('avail-date-from');
+  const toInput = $<HTMLInputElement>('avail-date-to');
+  if (!modal) return;
+
+  // Reset to create mode
+  const editIdInput = $<HTMLInputElement>('avail-edit-id');
+  if (editIdInput) editIdInput.value = '';
+  const titleEl = $('avail-modal-title');
+  if (titleEl) titleEl.textContent = 'Nahlásit osobní volno';
+  const submitBtn = $<HTMLButtonElement>('avail-submit-btn');
+  if (submitBtn) submitBtn.textContent = 'Uložit volno';
+
+  if (fromInput) fromInput.value = fromDate || '';
+  if (toInput) toInput.value = toDate || '';
+
+  renderMyAvailabilities();
+  show(modal);
+}
+
+function openAvailabilityModalForEdit(id: string, startDate: string, endDate: string): void {
+  const modal = $('availability-modal');
+  if (!modal) return;
+
+  // Set edit mode
+  const editIdInput = $<HTMLInputElement>('avail-edit-id');
+  if (editIdInput) editIdInput.value = id;
+  const titleEl = $('avail-modal-title');
+  if (titleEl) titleEl.textContent = 'Upravit osobní volno';
+  const submitBtn = $<HTMLButtonElement>('avail-submit-btn');
+  if (submitBtn) submitBtn.textContent = 'Uložit změny';
+
+  const fromInput = $<HTMLInputElement>('avail-date-from');
+  const toInput = $<HTMLInputElement>('avail-date-to');
+  if (fromInput) fromInput.value = startDate;
+  if (toInput) toInput.value = endDate;
+
+  renderMyAvailabilities();
+  show(modal);
+}
+
+function renderMyAvailabilities(): void {
+  const listEl = $('my-availabilities-list');
+  if (!listEl) return;
+
+  const myId = getUserId();
+  const mine = currentAvailabilities.filter(a => a.userId === myId);
+
+  if (mine.length === 0) {
+    listEl.innerHTML = '<p class="empty-state" style="margin-top:12px;font-size:0.85rem;">Zatím nemáš nahlášené žádné volno.</p>';
+    return;
+  }
+
+  listEl.innerHTML = `
+    <h4 style="margin:16px 0 8px;font-size:0.9rem;color:#374151;">Moje nahlášené dovolené</h4>
+    ${mine.map(a => `
+      <div class="my-avail-item">
+        <span>${formatDateForDisplay(a.startDate)} — ${formatDateForDisplay(a.endDate)}</span>
+        <div style="display:flex;gap:4px;">
+          <button class="avail-edit-btn" data-avail-id="${a.id}" data-start="${a.startDate}" data-end="${a.endDate}" title="Upravit" style="background:none;border:none;color:#6b7280;cursor:pointer;padding:4px 8px;border-radius:4px;font-size:0.9rem;transition:all 0.15s;">✎</button>
+          <button class="btn-ghost-danger avail-delete-btn" data-avail-id="${a.id}" title="Smazat">×</button>
+        </div>
+      </div>
+    `).join('')}
+  `;
+
+  // Bind edit buttons
+  listEl.querySelectorAll<HTMLButtonElement>('.avail-edit-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.availId;
+      const start = btn.dataset.start;
+      const end = btn.dataset.end;
+      if (!id || !start || !end) return;
+      openAvailabilityModalForEdit(id, start, end);
+    });
+    // Hover effect
+    btn.addEventListener('mouseenter', () => {
+      btn.style.background = 'rgba(107, 114, 128, 0.1)';
+      btn.style.color = '#374151';
+    });
+    btn.addEventListener('mouseleave', () => {
+      btn.style.background = 'none';
+      btn.style.color = '#6b7280';
+    });
+  });
+
+  // Bind delete buttons
+  listEl.querySelectorAll<HTMLButtonElement>('.avail-delete-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.availId;
+      if (!id) return;
+      btn.disabled = true;
+      const result = await authFetch(`/api/reservations/availabilities/${id}`, { method: 'DELETE' });
+      if (result) {
+        showToast('Volno smazáno.', 'success');
+        await loadReservations();
+        renderMyAvailabilities();
+      }
+      btn.disabled = false;
+    });
+  });
+}
+
+
 // ─── Event Binding ────────────────────────────────────────────────────
 
 function bindEvents(): void {
@@ -1064,6 +1247,66 @@ function bindEvents(): void {
     const today = new Date();
     const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
     openBookingModal(todayStr, todayStr);
+  });
+
+  // Availability button
+  $('btn-new-availability')?.addEventListener('click', () => {
+    openAvailabilityModal();
+  });
+
+  // Availability form submit
+  $<HTMLFormElement>('availability-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fromInput = $<HTMLInputElement>('avail-date-from');
+    const toInput = $<HTMLInputElement>('avail-date-to');
+    const submitBtn = $<HTMLButtonElement>('avail-submit-btn');
+    const editIdInput = $<HTMLInputElement>('avail-edit-id');
+    
+    if (!fromInput?.value || !toInput?.value) {
+      showToast('Vyplňte oba datumy.', 'error');
+      return;
+    }
+    if (toInput.value < fromInput.value) {
+      showToast('Datum "Do" nemůže být před "Od".', 'error');
+      return;
+    }
+    
+    if (submitBtn) submitBtn.disabled = true;
+    
+    const isEdit = editIdInput?.value;
+    const url = isEdit 
+      ? `/api/reservations/availabilities/${editIdInput.value}` 
+      : '/api/reservations/availabilities';
+    const method = isEdit ? 'PATCH' : 'POST';
+    
+    const result = await authFetch(url, {
+      method,
+      body: JSON.stringify({ startDate: fromInput.value, endDate: toInput.value }),
+    });
+    
+    if (submitBtn) submitBtn.disabled = false;
+    
+    if (result) {
+      showToast(isEdit ? 'Volno upraveno!' : 'Volno nahlášeno!', 'success');
+      if (fromInput) fromInput.value = '';
+      if (toInput) toInput.value = '';
+      if (editIdInput) editIdInput.value = '';
+      const titleEl = $('avail-modal-title');
+      if (titleEl) titleEl.textContent = 'Nahlásit osobní volno';
+      if (submitBtn) submitBtn.textContent = 'Uložit volno';
+      await loadReservations();
+      renderMyAvailabilities();
+    }
+  });
+
+  // Switch from booking modal to availability modal
+  $('switch-to-availability')?.addEventListener('click', () => {
+    const fromInput = $<HTMLInputElement>('modal-date-from');
+    const toInput = $<HTMLInputElement>('modal-date-to');
+    const fromVal = fromInput?.value || '';
+    const toVal = toInput?.value || '';
+    closeModal('booking-modal');
+    openAvailabilityModal(fromVal, toVal);
   });
 
   // Tabs logic
@@ -1180,11 +1423,27 @@ function bindEvents(): void {
   $<HTMLFormElement>('assign-reservation-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const id = $<HTMLInputElement>('assign-reservation-id-input')?.value;
-    const newOwnerId = $<HTMLSelectElement>('assign-user-select')?.value;
-    const errMsg = $('assign-error-message');
-    if (!newOwnerId) { if (errMsg) errMsg.textContent = 'Musíte vybrat uživatele.'; return; }
+    const select = $<HTMLSelectElement>('assign-user-select');
+    const newOwnerId = select?.value;
+    const errSpan = $('assign-owner-error');
+    const form = $<HTMLFormElement>('assign-reservation-form');
 
-    const result = await authFetch(`/ api / reservations / ${id}/assign`, {
+    if (!newOwnerId) {
+      // Show inline error
+      if (select) select.classList.add('input-error');
+      if (errSpan) {
+        errSpan.textContent = 'Vyberte prosím nového vlastníka ze seznamu.';
+        errSpan.classList.add('show');
+      }
+      // Shake
+      if (form) {
+        form.classList.add('shake');
+        setTimeout(() => form.classList.remove('shake'), 400);
+      }
+      return;
+    }
+
+    const result = await authFetch(`/api/reservations/${id}/assign`, {
       method: 'POST',
       body: JSON.stringify({ newOwnerId }),
     });
@@ -1194,6 +1453,18 @@ function bindEvents(): void {
       await loadReservations();
     }
   });
+
+  // Clear assign error on change
+  $<HTMLSelectElement>('assign-user-select')?.addEventListener('change', () => {
+    const select = $<HTMLSelectElement>('assign-user-select');
+    const errSpan = $('assign-owner-error');
+    if (select) select.classList.remove('input-error');
+    if (errSpan) {
+      errSpan.classList.remove('show');
+      errSpan.textContent = '';
+    }
+  });
+
   $('cancel-assign-btn')?.addEventListener('click', closeAssignModal);
 
 
@@ -1223,6 +1494,7 @@ const reservationsPage: PageModule = {
     }
     rangeSelectStart = null;
     currentReservations = [];
+    currentAvailabilities = [];
     allUsers = [];
   },
 };

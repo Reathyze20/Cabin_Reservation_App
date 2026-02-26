@@ -130,7 +130,7 @@
 .card-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
 }
 
@@ -149,7 +149,6 @@
   display: flex;
   gap: 4px;
   flex-shrink: 0;
-  margin-top: -2px;
 }
 
 .card-action-edit,

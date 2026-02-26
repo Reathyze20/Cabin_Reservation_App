@@ -5,6 +5,58 @@ import logger from "../../utils/logger";
 
 const router = Router();
 
+// ─── Helper: Find next free weekend (Fri–Sun) ─────────────────────────
+async function findNextFreeWeekend(): Promise<{ start: string; end: string } | null> {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  // Find next Friday (or today if already Friday)
+  let friday = new Date(today);
+  const dayOfWeek = friday.getDay(); // 0=Sun, 5=Fri
+  const daysUntilFri = (5 - dayOfWeek + 7) % 7 || 7; // always move forward
+  // If today is Friday and it's still morning, allow this weekend
+  if (dayOfWeek === 5) {
+    // Use this Friday
+  } else {
+    friday.setDate(friday.getDate() + daysUntilFri);
+  }
+
+  // Search up to 26 weeks (~6 months)
+  const MAX_WEEKS = 26;
+
+  for (let i = 0; i < MAX_WEEKS; i++) {
+    const weekendStart = new Date(friday);
+    const weekendEnd = new Date(friday);
+    weekendEnd.setDate(weekendEnd.getDate() + 2); // Sunday
+
+    const startStr = weekendStart.toISOString().split("T")[0];
+    const endStr = weekendEnd.toISOString().split("T")[0];
+
+    // Check for overlapping reservations:
+    // A reservation overlaps this weekend if:
+    //   reservation.dateFrom < weekendEnd+1day AND reservation.dateTo > weekendStart
+    // Since dates are date-only, "dateTo = Friday" means they leave Friday,
+    // so the cabin is free from Friday. We check dateTo > Friday (strictly).
+    const conflict = await prisma.reservation.findFirst({
+      where: {
+        status: "primary",
+        dateFrom: { lte: new Date(endStr) },
+        dateTo: { gt: new Date(startStr) },
+      },
+      select: { id: true },
+    });
+
+    if (!conflict) {
+      return { start: startStr, end: endStr };
+    }
+
+    // Move to next Friday
+    friday.setDate(friday.getDate() + 7);
+  }
+
+  return null; // No free weekend in next 6 months
+}
+
 // ============================================================================
 //                        GET DASHBOARD DATA
 // ============================================================================
@@ -50,29 +102,35 @@ router.get("/", protect, async (req: Request, res: Response) => {
       where: {
         userId: req.user.userId,
         dateTo: new Date(todayStr),
-        status: "primary" // Assuming you only do departure for primary
+        status: "primary",
       }
     });
 
-    // 3) Shopping widget — newest unresolved list with progress + up to 3 pending items
-    const latestList = await prisma.shoppingList.findFirst({
-      where: { isResolved: false, isPantry: false },
-      include: { items: { orderBy: { createdAt: "asc" } } },
-      orderBy: { createdAt: "desc" },
+    // 3) Shopping widget — top 5 pending items across all non-resolved lists, essential first
+    const pendingShoppingItems = await prisma.shoppingListItem.findMany({
+      where: {
+        purchased: false,
+        status: { not: "purchased" },
+        list: { isResolved: false, isPantry: false },
+      },
+      include: {
+        list: { select: { id: true, name: true } },
+      },
+      orderBy: [
+        { isEssential: "desc" },
+        { createdAt: "asc" },
+      ],
+      take: 5,
     });
 
-    const shoppingListWidget = latestList
-      ? {
-        id: latestList.id,
-        name: latestList.name,
-        pendingItems: latestList.items
-          .filter((i) => !i.purchased)
-          .slice(0, 3)
-          .map((i) => ({ id: i.id, name: i.name })),
-        totalCount: latestList.items.length,
-        doneCount: latestList.items.filter((i) => i.purchased).length,
-      }
-      : null;
+    // 3b) Total pending count (for "+X dalších" label)
+    const totalPendingCount = await prisma.shoppingListItem.count({
+      where: {
+        purchased: false,
+        status: { not: "purchased" },
+        list: { isResolved: false, isPantry: false },
+      },
+    });
 
     // 4) Latest notes (last 3)
     const latestNotes = await prisma.note.findMany({
@@ -91,6 +149,24 @@ router.get("/", protect, async (req: Request, res: Response) => {
       },
       orderBy: { dateFrom: "asc" },
     });
+
+    // 6) Essential items warning — pending essential shopping items in unresolved lists
+    const essentialPendingItems = await prisma.shoppingListItem.findMany({
+      where: {
+        isEssential: true,
+        purchased: false,
+        status: { not: "purchased" },
+        list: { isResolved: false, isPantry: false },
+      },
+      select: { id: true, name: true },
+      take: 10,
+    });
+
+    // 7) App settings (pinned handover note)
+    const appSettings = await prisma.appSettings.findFirst();
+
+    // 8) Next free weekend
+    const nextFreeWeekend = await findNextFreeWeekend();
 
     res.json({
       activeReservation: activeReservation
@@ -124,13 +200,26 @@ router.get("/", protect, async (req: Request, res: Response) => {
         }
         : null,
       departingToday: departingTodayReservation !== null,
-      shoppingListWidget,
+      pendingShoppingItems: pendingShoppingItems.map((i) => ({
+        id: i.id,
+        name: i.name,
+        isEssential: i.isEssential,
+        listId: i.listId,
+        listName: i.list?.name ?? null,
+      })),
+      totalPendingShoppingCount: totalPendingCount,
+      essentialWarning: essentialPendingItems.length > 0 ? {
+        count: essentialPendingItems.length,
+        items: essentialPendingItems.map((i) => ({ id: i.id, name: i.name })),
+      } : null,
       latestNotes: latestNotes.map((n) => ({
         id: n.id,
         username: n.user.username,
         message: n.message,
         createdAt: n.createdAt.toISOString(),
       })),
+      pinnedHandoverNote: appSettings?.pinnedHandoverNote ?? null,
+      nextFreeWeekend,
     });
   } catch (error) {
     logger.error("DASHBOARD", "Get dashboard data error", {

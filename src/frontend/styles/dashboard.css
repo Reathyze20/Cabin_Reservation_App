@@ -28,28 +28,39 @@
 @media (min-width: 768px) {
   .nordic-dashboard {
     padding: 24px;
-    overflow-y: hidden;
+    overflow-y: auto;
   }
 }
 
 /* �� Global Card Styling (Glassmorphism) ����������������������������� */
 .glass-card {
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.75);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  border-radius: 20px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.04), 0 10px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
   overflow: hidden;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  isolation: isolate;
+  transform: translateZ(0);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .glass-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
+  transform: translateY(-2px) translateZ(0);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* Na mobilu snížit blur pro plynulý scroll */
+@media (max-width: 767px) {
+  .glass-card {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 20px;
+  }
 }
 
 .status-card:hover {
@@ -105,34 +116,36 @@
   align-items: stretch;
 }
 
+/* Na mobilu má karta výšku dle obsahu */
+.dashboard-grid>.glass-card {
+  height: auto;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
 @media (min-width: 768px) {
   .dashboard-grid {
     grid-template-columns: 1fr 1fr;
-    grid-auto-rows: 1fr;
+    grid-auto-rows: 260px;
     gap: 16px;
-    flex-grow: 1;
-    flex-shrink: 1;
-    min-height: 0;
     align-items: stretch;
   }
-}
 
-/* Každá karta v gridu vyplňuje celou výšku buňky */
-.dashboard-grid>.glass-card {
-  height: 100%;
-  box-sizing: border-box;
+  /* Na desktopu karta vyplní fixní výšku řádku */
+  .dashboard-grid>.glass-card {
+    height: 100%;
+  }
 }
 
 .card-body-full {
   padding: 20px;
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  overflow-y: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .card-body-full::-webkit-scrollbar {
@@ -140,19 +153,28 @@
   /* Chrome/Safari/Opera */
 }
 
+/* Scrollovatelný seznam uvnitř fixní karty */
+.list-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.list-content::-webkit-scrollbar { display: none; }
+
 /* �� Karta 1: Status (Pr�v� na chat�) �������������������������������� */
 .status-card {
   position: relative;
 }
 
 .status-card.is-free {
-  background: linear-gradient(135deg, rgba(236, 253, 245, 0.9), rgba(209, 250, 229, 0.85));
-  border-color: rgba(167, 243, 208, 0.5);
+  background: rgba(255, 255, 255, 0.75);
 }
 
 .status-card.is-occupied {
-  background: linear-gradient(135deg, rgba(254, 242, 242, 0.9), rgba(254, 226, 226, 0.85));
-  border-color: rgba(254, 202, 202, 0.5);
+  background: rgba(255, 255, 255, 0.75);
 }
 
 .status-content {
@@ -171,16 +193,16 @@
 
 .status-avatar-block {
   flex-shrink: 0;
-  width: 56px;
-  height: 56px;
-  border-radius: 16px;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 26px;
+  font-size: 22px;
   font-weight: 800;
   color: #fff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .status-text-block {
@@ -250,6 +272,16 @@
   margin-top: 2px;
 }
 
+/* Následující rezervace hint (obsazený stav) */
+.status-next-hint {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 8px;
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 8px;
+}
+
 /* Purpose chip in upcoming list */
 .purpose-chip {
   font-size: 14px;
@@ -282,58 +314,92 @@
 
 .status-cta-row {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   margin-top: auto;
   padding-top: 12px;
   width: 100%;
   flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
+/* ── Next free weekend indicator ───────────────────────────────────── */
+.next-free-weekend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.825rem;
+  color: #4b5563;
+  white-space: nowrap;
+  line-height: 1.3;
+}
+
+.next-free-weekend strong {
+  color: #1f2937;
+}
+
+.free-weekend-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #10b981;
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+/* Dashboard CTA buttons — now using global .btn-* classes */
 .status-cta {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 7px 16px;
-  border-radius: 99px;
-  font-size: 13px;
-  font-weight: 600;
+  padding: 8px 20px;
+  border-radius: 9999px;
+  font-size: 0.875rem; /* 14px */
+  font-weight: 500;
   text-decoration: none;
-  border: none;
+  border: 1px solid transparent;
   cursor: pointer;
-  transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+  transition: all 0.2s ease;
 }
 
+/* Secondary style (white/light on glass cards) */
 .status-cta-neutral {
-  background: rgba(0, 0, 0, 0.07);
+  background-color: rgba(255, 255, 255, 0.9);
   color: #374151;
+  border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .status-cta-neutral:hover {
-  background: rgba(0, 0, 0, 0.12);
-  transform: translateY(-1px);
+  background-color: #f3f4f6;
+  border-color: rgba(0, 0, 0, 0.12);
 }
 
+/* Primary style (green) */
 .status-cta-primary {
-  background: #059669;
+  background-color: #10b981;
   color: #fff;
-  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+  border: none;
+  font-weight: 600;
 }
 
 .status-cta-primary:hover {
-  background: #047857;
+  background-color: #059669;
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(5, 150, 105, 0.35);
 }
 
 .status-card.is-available {
-  background: linear-gradient(135deg, rgba(236, 253, 245, 0.95), rgba(187, 247, 208, 0.85));
-  border-color: rgba(134, 239, 172, 0.4);
+  background: rgba(255, 255, 255, 0.75);
 }
 
 /* �� Karta 2: Po�as� ������������������������������������������������� */
 .weather-card {
-  /* Default gradient, overridden by JS based on weather */
-  background: linear-gradient(135deg, rgba(240, 249, 255, 0.9), rgba(224, 242, 254, 0.85));
+  /* Background handled by glass-card base */
 }
 
 .weather-main {
@@ -469,28 +535,27 @@
   margin: 0;
 }
 
+/* Empty state CTA — uses global .btn-secondary style (pill shape) */
 .empty-cta {
   display: inline-flex;
   align-items: center;
+  gap: 6px;
   margin-top: 4px;
-  padding: 8px 18px;
-  background: #fff;
+  padding: 8px 20px;
+  background-color: rgba(255, 255, 255, 0.9);
   color: #374151;
-  border: 1px solid #d1d5db;
-  border-radius: 10px;
-  font-weight: 600;
-  font-size: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 9999px; /* Pill shape */
+  font-weight: 500;
+  font-size: 0.875rem; /* 14px */
   text-decoration: none;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+  transition: all 0.2s ease;
 }
 
 .empty-cta:hover {
-  background: #f9fafb;
-  border-color: var(--color-primary);
-  color: var(--color-primary);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+  background-color: #f3f4f6;
+  border-color: rgba(0, 0, 0, 0.12);
 }
 
 /* ── Standardizovaná hlavička karet ─────────────────────────────────── */
@@ -504,12 +569,12 @@
 }
 
 .dashboard-card-header-title {
-  display: flex;
-  align-items: center;
   font-size: 14px;
   font-weight: 600;
   color: #374151;
-  line-height: 1;
+  line-height: 1.5;
+  display: flex;
+  align-items: center;
 }
 
 .dashboard-card-header-link {
@@ -518,7 +583,9 @@
   color: #6b7280;
   text-decoration: none;
   white-space: nowrap;
-  line-height: 1;
+  line-height: 1.5;
+  display: flex;
+  align-items: center;
   transition: color 0.15s;
 }
 
@@ -805,7 +872,14 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
+
+.shopping-widget-list::-webkit-scrollbar { display: none; }
 
 .shopping-widget-item {
   display: flex;
@@ -877,7 +951,9 @@
 
 /* ── Notes feed card ─────────────────────────────────────────── */
 .dashboard-notes-card {
-  flex-shrink: 0;
+  flex-shrink: 1;
+  min-height: 0;
+  flex-basis: auto;
 }
 
 .dashboard-notes-feed {
@@ -1301,4 +1377,277 @@
     cursor: pointer;
     accent-color: var(--color-primary);
   }
+}
+
+/* ============================================================================
+   Essential Warning Banner
+   ============================================================================ */
+/* ── Essential Warning Banner (Glass Alert) ──────────────────────── */
+.essential-warning-banner {
+  background: rgba(254, 226, 226, 0.4); /* Jemná poloprohledná červená */
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 24px;
+  padding: 12px 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.05);
+}
+
+.essential-warning-banner.hidden {
+  display: none;
+}
+
+.essential-warning-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.essential-warning-text {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.essential-warning-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.essential-warning-message-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.essential-warning-message {
+  color: #1f2937; /* Tmavě šedá pro čitelnost */
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.essential-warning-items {
+  color: #374151; /* Trochu světlejší šedá */
+  font-size: 0.8125rem; /* 13px */
+  font-weight: 500;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+/* Alert Button (Pill červená) */
+.btn-alert {
+  background: #ef4444;
+  color: white;
+  border-radius: 9999px;
+  padding: 6px 16px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.btn-alert:hover {
+  background: #dc2626;
+}
+
+@media (max-width: 600px) {
+  .essential-warning-content {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .essential-warning-text {
+    align-items: flex-start;
+  }
+
+  .btn-alert {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* ── Vzkaz na lednici (Post-it karta) ────────────────────────── */
+.dashboard-handover-card {
+  background: rgba(254, 249, 195, 0.72) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-color: rgba(234, 179, 8, 0.35) !important;
+}
+
+.handover-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.handover-note-text {
+  font-size: 0.92rem;
+  color: #374151;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  max-width: 700px;
+  margin-top: 1rem;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.handover-note-text::-webkit-scrollbar { display: none; }
+
+.handover-note-empty {
+  font-size: 0.88rem;
+  color: #a16207;
+  font-style: italic;
+  margin-top: 1rem;
+}
+
+.handover-edit-btn {
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: #9ca3af;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 4px 6px;
+  line-height: 1;
+  transition: color 0.15s, background 0.15s;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.handover-edit-btn:hover {
+  color: #6b7280;
+  background: rgba(0,0,0,0.06);
+}
+
+.handover-textarea {
+  width: 100%;
+  max-width: 700px;
+  border: 1px solid var(--color-border-dark, #d1d5db);
+  border-radius: 8px;
+  background: #fafafa;
+  padding: 10px 12px;
+  font-size: 0.92rem;
+  color: #111827;
+  resize: none;
+  min-height: 100px;
+  height: 120px;
+  font-family: inherit;
+  box-sizing: border-box;
+  line-height: 1.6;
+}
+
+.handover-textarea:focus {
+  outline: none;
+  border-color: var(--color-primary, #588157);
+  box-shadow: 0 0 0 3px rgba(88, 129, 87, 0.12);
+}
+
+.handover-char-counter {
+  font-size: 0.78rem;
+  color: var(--text-secondary, #6b7280);
+  text-align: right;
+  margin-top: 4px;
+}
+
+/* Modal pro vzkaz na lednici */
+.handover-modal-content .modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.handover-modal-content .modal-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.handover-modal-content .modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.handover-modal-content .modal-subtitle {
+  font-size: 0.88rem;
+  color: var(--text-secondary, #6b7280);
+  margin: 0 0 10px 0;
+}
+
+.handover-modal-content .modal-buttons {
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+.handover-modal-content .modal-buttons .button-primary {
+  width: auto;
+}
+
+.handover-modal-content .modal-buttons .button-secondary {
+  width: auto;
+}
+
+/* ── Shopping widget – checkboxové položky ───────────────────── */
+.dashboard-shopping-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.dashboard-shopping-item:last-child {
+  border-bottom: none;
+}
+
+.dashboard-shopping-item input[type="checkbox"] {
+  accent-color: var(--color-primary, #2563eb);
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.shopping-item-name {
+  flex: 1;
+  font-weight: 500;
+  color: var(--text-primary, #111827);
+  word-break: break-word;
+}
+
+.shopping-item-list {
+  font-size: 0.78rem;
+  color: var(--text-secondary, #6b7280);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.shopping-essential-mark {
+  margin-right: 2px;
+  font-size: 0.85em;
 }

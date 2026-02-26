@@ -77,8 +77,6 @@ function showApp(): void {
   hide($('login-section'));
   hide($('register-section'));
   show($('app-section'));
-  const nameEl = $('logged-in-username');
-  if (nameEl) nameEl.textContent = getUsername() || '';
 
   const animalEl = $('nav-animal-icon');
   if (animalEl) {
@@ -88,6 +86,13 @@ function showApp(): void {
     } else {
       animalEl.textContent = (getUsername() || 'U').charAt(0).toUpperCase();
     }
+  }
+
+  // Update user greeting with typographic contrast
+  const greetingEl = $('user-greeting');
+  if (greetingEl) {
+    const username = getUsername() || 'Uživatel';
+    greetingEl.innerHTML = `<span class="greeting">Ahoj, </span><span class="username">${username}!</span>`;
   }
 
   const pageContainer = $('page-container');

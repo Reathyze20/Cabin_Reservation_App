@@ -66,7 +66,7 @@ router.post("/", protect, async (req: Request, res: Response) => {
     return res.status(401).json({ message: "Neautorizováno" });
   }
 
-  const { category, title, description, link, cost, status, thumbnail, tag, specialization, email, phone, deadline } = req.body;
+  const { category, title, description, link, cost, status, thumbnail, tag, specialization, email, phone, deadline, sourceMessageId } = req.body;
 
   if (!category || !title) {
     return res.status(400).json({ message: "Chybí povinné údaje (kategorie, název)." });
@@ -88,6 +88,7 @@ router.post("/", protect, async (req: Request, res: Response) => {
         phone: phone || undefined,
         deadline: deadline ? new Date(deadline) : undefined,
         createdById: req.user.userId,
+        sourceMessageId: sourceMessageId || null,
       },
       include: {
         createdBy: {

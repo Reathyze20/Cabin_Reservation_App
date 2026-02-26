@@ -144,6 +144,204 @@ function formatMessage(raw: string): string {
   return `<div class="msg-protocol">${parts.join('')}</div>`;
 }
 
+// Truncate message text for pre-fill (strip checkbox syntax, collapse whitespace)
+function truncateForItem(text: string, max = 100): string {
+  const cleaned = text.replace(/^\[[ x]\]\s*/gim, '').replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+  if (cleaned.length <= max) return cleaned;
+  return cleaned.substring(0, max - 3) + '...';
+}
+
+// Escape HTML for safe attribute insertion
+function escapeAttr(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// ── Context action: Add message to shopping list ──────────────────────────
+async function showAddToShoppingDialog(noteId: string, messageText: string): Promise<void> {
+  if (getRole() === 'guest') {
+    showToast('Nemáte oprávnění vytvářet položky.', 'error');
+    return;
+  }
+
+  const lists = await authFetch<any[]>('/api/shopping-lists?isPantry=false');
+  if (!lists || lists.length === 0) {
+    showToast('Nejsou žádné aktivní nákupní seznamy. Vytvořte nejprve seznam.', 'error');
+    return;
+  }
+
+  const overlay = document.createElement('div');
+  overlay.className = 'dialog-overlay';
+
+  const dialogBox = document.createElement('div');
+  dialogBox.className = 'dialog-box';
+
+  const defaultName = truncateForItem(messageText);
+
+  dialogBox.innerHTML = `
+    <div class="dialog-header"><h3>Přidat do nákupního seznamu</h3></div>
+    <form class="dialog-form">
+      <div class="dialog-body">
+        <div class="dialog-field">
+          <label>Seznam:</label>
+          <select class="dialog-input" id="ctx-shopping-list-select">
+            ${lists.map(l => `<option value="${escapeAttr(l.id)}">${escapeAttr(l.name)} (${(l.items?.filter((i: any) => !i.purchased).length) || 0} položek)</option>`).join('')}
+          </select>
+        </div>
+        <div class="dialog-field">
+          <label>Název položky:</label>
+          <input type="text" class="dialog-input" id="ctx-shopping-item-name" value="${escapeAttr(defaultName)}" maxlength="100" required />
+        </div>
+      </div>
+      <div class="dialog-footer">
+        <button type="button" class="button-secondary dialog-cancel-btn">Zrušit</button>
+        <button type="submit" class="button-primary dialog-confirm-btn">Přidat 🛒</button>
+      </div>
+    </form>
+  `;
+
+  overlay.appendChild(dialogBox);
+  document.body.appendChild(overlay);
+  requestAnimationFrame(() => overlay.classList.add('visible'));
+
+  const cleanup = () => {
+    overlay.classList.remove('visible');
+    document.removeEventListener('keydown', onEsc);
+    setTimeout(() => { if (document.body.contains(overlay)) document.body.removeChild(overlay); }, 200);
+  };
+
+  const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') cleanup(); };
+  document.addEventListener('keydown', onEsc);
+
+  return new Promise<void>((resolve) => {
+    const form = dialogBox.querySelector('form')!;
+    const cancelBtn = dialogBox.querySelector('.dialog-cancel-btn')!;
+    const nameInput = dialogBox.querySelector<HTMLInputElement>('#ctx-shopping-item-name')!;
+
+    nameInput.focus();
+    nameInput.select();
+
+    cancelBtn.addEventListener('click', () => { cleanup(); resolve(); });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const listId = (dialogBox.querySelector('#ctx-shopping-list-select') as HTMLSelectElement).value;
+      const itemName = nameInput.value.trim();
+      if (!itemName) return;
+
+      const confirmBtn = dialogBox.querySelector<HTMLButtonElement>('.dialog-confirm-btn')!;
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = 'Ukládám...';
+
+      const result = await authFetch('/api/shopping-list/' + listId + '/items', {
+        method: 'POST',
+        body: JSON.stringify({ name: itemName, sourceMessageId: noteId }),
+      });
+
+      if (result) {
+        await authFetch('/api/notes/' + noteId + '/resolve', { method: 'PATCH' });
+        const note = allNotesData.find(n => n.id === noteId);
+        if (note) note.isResolvedAsTask = true;
+        showToast('Položka přidána do nákupního seznamu ✓', 'success');
+        applyFilters();
+      }
+
+      cleanup();
+      resolve();
+    });
+  });
+}
+
+// ── Context action: Create reconstruction/repair task from message ────────
+async function showCreateRepairDialog(noteId: string, messageText: string): Promise<void> {
+  if (getRole() === 'guest') {
+    showToast('Nemáte oprávnění vytvářet úkoly.', 'error');
+    return;
+  }
+
+  const overlay = document.createElement('div');
+  overlay.className = 'dialog-overlay';
+
+  const dialogBox = document.createElement('div');
+  dialogBox.className = 'dialog-box';
+
+  const defaultTitle = truncateForItem(messageText, 200);
+
+  dialogBox.innerHTML = `
+    <div class="dialog-header"><h3>Vytvořit úkol v rekonstrukcích</h3></div>
+    <form class="dialog-form">
+      <div class="dialog-body">
+        <div class="dialog-field">
+          <label>Kategorie:</label>
+          <select class="dialog-input" id="ctx-repair-category">
+            <option value="task" selected>Úkol</option>
+            <option value="idea">Nápad</option>
+            <option value="company">Firma / Kontakt</option>
+          </select>
+        </div>
+        <div class="dialog-field">
+          <label>Název:</label>
+          <input type="text" class="dialog-input" id="ctx-repair-title" value="${escapeAttr(defaultTitle)}" required />
+        </div>
+      </div>
+      <div class="dialog-footer">
+        <button type="button" class="button-secondary dialog-cancel-btn">Zrušit</button>
+        <button type="submit" class="button-primary dialog-confirm-btn">Vytvořit 🛠️</button>
+      </div>
+    </form>
+  `;
+
+  overlay.appendChild(dialogBox);
+  document.body.appendChild(overlay);
+  requestAnimationFrame(() => overlay.classList.add('visible'));
+
+  const cleanup = () => {
+    overlay.classList.remove('visible');
+    document.removeEventListener('keydown', onEsc);
+    setTimeout(() => { if (document.body.contains(overlay)) document.body.removeChild(overlay); }, 200);
+  };
+
+  const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') cleanup(); };
+  document.addEventListener('keydown', onEsc);
+
+  return new Promise<void>((resolve) => {
+    const form = dialogBox.querySelector('form')!;
+    const cancelBtn = dialogBox.querySelector('.dialog-cancel-btn')!;
+    const titleInput = dialogBox.querySelector<HTMLInputElement>('#ctx-repair-title')!;
+
+    titleInput.focus();
+    titleInput.select();
+
+    cancelBtn.addEventListener('click', () => { cleanup(); resolve(); });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const category = (dialogBox.querySelector('#ctx-repair-category') as HTMLSelectElement).value;
+      const title = titleInput.value.trim();
+      if (!title) return;
+
+      const confirmBtn = dialogBox.querySelector<HTMLButtonElement>('.dialog-confirm-btn')!;
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = 'Ukládám...';
+
+      const result = await authFetch('/api/reconstruction', {
+        method: 'POST',
+        body: JSON.stringify({ category, title, description: messageText, sourceMessageId: noteId }),
+      });
+
+      if (result) {
+        await authFetch('/api/notes/' + noteId + '/resolve', { method: 'PATCH' });
+        const note = allNotesData.find(n => n.id === noteId);
+        if (note) note.isResolvedAsTask = true;
+        showToast('Úkol vytvořen v rekonstrukcích ✓', 'success');
+        applyFilters();
+      }
+
+      cleanup();
+      resolve();
+    });
+  });
+}
+
 function renderNotes(notes: any[]): void {
   const list = $('notes-list');
   if (!list) return;
@@ -156,10 +354,12 @@ function renderNotes(notes: any[]): void {
 
   const myId = getUserId();
   const admin = getRole() === 'admin';
+  const isGuest = getRole() === 'guest';
 
   for (const note of notes) {
     const isMine = note.userId === myId;
     const canDel = admin || isMine;
+    const resolved = note.isResolvedAsTask === true;
 
     const user = allUsers.find(u => u.username === note.username);
     const userColor = user?.color || '#a3b19b';
@@ -171,16 +371,21 @@ function renderNotes(notes: any[]): void {
     const dateFmt = `${d.getDate()}.${d.getMonth() + 1}.`;
 
     const el = document.createElement('div');
-    el.className = `message-wrapper ${isMine ? 'message-mine' : 'message-other'}`;
+    el.className = `message-wrapper ${isMine ? 'message-mine' : 'message-other'}${resolved ? ' message-resolved' : ''}`;
     el.dataset.id = note.id;
 
     const delBtn = canDel ? `<button class="delete-note-btn" title="Smazat">×</button>` : '';
+    const actionBtns = (!isGuest && !resolved) ? `<button class="msg-action-btn msg-action-shopping" title="Do nákupu">🛒</button><button class="msg-action-btn msg-action-repair" title="Nový úkol">🛠️</button>` : '';
+    const resolvedBadge = resolved ? `<span class="message-resolved-badge" title="Převedeno na úkol">✅</span>` : '';
+    const metaContent = actionBtns + delBtn;
+    const metaHtml = metaContent ? `<div class="message-meta">${metaContent}</div>` : '';
 
     if (isMine) {
       el.innerHTML = `
         <div class="message-bubble" title="${dateFmt} ${timeFmt}">
           <div class="message-content">${formatMessage(note.message)}</div>
-          ${delBtn ? `<div class="message-meta">${delBtn}</div>` : ''}
+          ${resolvedBadge}
+          ${metaHtml}
         </div>
       `;
     } else {
@@ -190,7 +395,8 @@ function renderNotes(notes: any[]): void {
           <span class="message-sender">${note.username}</span>
           <div class="message-bubble" title="${dateFmt} ${timeFmt}">
             <div class="message-content">${formatMessage(note.message)}</div>
-            ${delBtn ? `<div class="message-meta">${delBtn}</div>` : ''}
+            ${resolvedBadge}
+            ${metaHtml}
           </div>
         </div>
       `;
@@ -495,14 +701,45 @@ function bindEvents(): void {
   });
 
   $('notes-list')?.addEventListener('click', async (e) => {
-    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('.delete-note-btn');
-    if (!btn) return;
-    const noteEl = btn.closest<HTMLElement>('.message-wrapper');
-    if (!noteEl) return;
-    const confirmed = await showConfirm('Smazat zprávu?', 'Opravdu chcete smazat tuto zprávu?', true);
-    if (!confirmed) return;
-    await authFetch(`/api/notes/${noteEl.dataset.id}`, { method: 'DELETE' });
-    await loadData();
+    const target = e.target as HTMLElement;
+
+    // Delete message
+    const delBtn = target.closest<HTMLButtonElement>('.delete-note-btn');
+    if (delBtn) {
+      const noteEl = delBtn.closest<HTMLElement>('.message-wrapper');
+      if (!noteEl) return;
+      const confirmed = await showConfirm('Smazat zprávu?', 'Opravdu chcete smazat tuto zprávu?', true);
+      if (!confirmed) return;
+      await authFetch(`/api/notes/${noteEl.dataset.id}`, { method: 'DELETE' });
+      await loadData();
+      return;
+    }
+
+    // Context action: Add to shopping list
+    const shopBtn = target.closest<HTMLButtonElement>('.msg-action-shopping');
+    if (shopBtn) {
+      const noteEl = shopBtn.closest<HTMLElement>('.message-wrapper');
+      if (!noteEl?.dataset.id) return;
+      const note = allNotesData.find(n => n.id === noteEl.dataset.id);
+      if (!note) return;
+      shopBtn.disabled = true;
+      await showAddToShoppingDialog(note.id, note.message);
+      shopBtn.disabled = false;
+      return;
+    }
+
+    // Context action: Create repair/reconstruction task
+    const repairBtn = target.closest<HTMLButtonElement>('.msg-action-repair');
+    if (repairBtn) {
+      const noteEl = repairBtn.closest<HTMLElement>('.message-wrapper');
+      if (!noteEl?.dataset.id) return;
+      const note = allNotesData.find(n => n.id === noteEl.dataset.id);
+      if (!note) return;
+      repairBtn.disabled = true;
+      await showCreateRepairDialog(note.id, note.message);
+      repairBtn.disabled = false;
+      return;
+    }
   });
 
   // ── Odjezdový protokol  —  panel s checkboxy ────────────────────

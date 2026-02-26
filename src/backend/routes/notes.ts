@@ -37,6 +37,7 @@ router.get("/", protect, async (req: Request, res: Response) => {
       username: note.user.username,
       message: note.message,
       createdAt: note.createdAt.toISOString(),
+      isResolvedAsTask: note.isResolvedAsTask,
     }));
 
     res.json(formatted);
@@ -83,10 +84,43 @@ router.post("/", protect, async (req: Request, res: Response) => {
       username: newNote.user.username,
       message: newNote.message,
       createdAt: newNote.createdAt.toISOString(),
+      isResolvedAsTask: newNote.isResolvedAsTask,
     });
   } catch (error) {
     logger.error("NOTES", "Create note error", { error: String(error), stack: (error as Error).stack, userId: req.user?.userId });
     res.status(500).json({ message: "Chyba" });
+  }
+});
+
+// ============================================================================
+//                        MARK NOTE AS RESOLVED (task created)
+// ============================================================================
+router.patch("/:id/resolve", protect, async (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({ message: "Neautorizováno" });
+  }
+
+  if (req.user.role === "guest") {
+    return res.status(403).json({ message: "Nemáte oprávnění." });
+  }
+
+  const { id } = req.params;
+
+  try {
+    const note = await prisma.note.findUnique({ where: { id } });
+    if (!note) {
+      return res.status(404).json({ message: "Zpráva nenalezena." });
+    }
+
+    const updated = await prisma.note.update({
+      where: { id },
+      data: { isResolvedAsTask: true },
+    });
+
+    res.json({ id: updated.id, isResolvedAsTask: updated.isResolvedAsTask });
+  } catch (error) {
+    logger.error("NOTES", "Resolve note error", { error: String(error), noteId: id });
+    res.status(500).json({ message: "Chyba při označování zprávy." });
   }
 });
 

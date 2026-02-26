@@ -90,6 +90,17 @@ export interface DiaryEntry {
 // --- REKONSTRUKCE (NOVÉ) ---
 export type ReconstructionCategory = "idea" | "company" | "task";
 
+// --- OSOBNÍ VOLNO ---
+export interface UserAvailability {
+  id: string;
+  userId: string;
+  username: string;
+  userColor: string;
+  userAnimalIcon?: string | null;
+  startDate: string; // YYYY-MM-DD
+  endDate: string;   // YYYY-MM-DD
+}
+
 export interface ReconstructionItem {
   id: string;
   category: ReconstructionCategory;

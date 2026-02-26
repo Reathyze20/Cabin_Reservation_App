@@ -405,6 +405,79 @@
   color: var(--color-danger);
 }
 
+/* ── Context Action Buttons (🛒 🛠️) ─────────────────────────────────────── */
+.msg-action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 2px;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+  line-height: 1;
+}
+
+.msg-action-btn:hover {
+  opacity: 1;
+  transform: scale(1.15);
+}
+
+.msg-action-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ── Resolved Badge ✅ ────────────────────────────────────────────────────── */
+.message-resolved-badge {
+  font-size: 0.7rem;
+  line-height: 1;
+  flex-shrink: 0;
+  opacity: 0.7;
+  margin-left: 2px;
+}
+
+.message-resolved .message-bubble {
+  opacity: 0.75;
+}
+
+/* ── Dialog Field (for context action modals) ─────────────────────────────── */
+.dialog-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.dialog-field:last-child {
+  margin-bottom: 0;
+}
+
+.dialog-field label {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.dialog-field select.dialog-input {
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  font-size: var(--font-size-base);
+  font-family: inherit;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.dialog-field select.dialog-input:focus {
+  border-color: var(--color-primary);
+}
+
 /* Input Area */
 .chat-input-area {
   /* ✅ 3. Nikdy se nesmáčí — vždy viditelbný dole */
@@ -772,6 +845,19 @@
 
   .message-wrapper {
     max-width: 88%;
+  }
+
+  /* Mobile: always show action buttons (no hover) */
+  .message-meta {
+    opacity: 1;
+  }
+
+  .msg-action-btn {
+    opacity: 0.5;
+    font-size: 0.95rem;
+    padding: 2px 4px;
+    min-width: 32px;
+    min-height: 32px;
   }
 }
 
