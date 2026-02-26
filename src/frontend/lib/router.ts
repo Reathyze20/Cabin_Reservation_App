@@ -91,10 +91,11 @@ let mobileNavContainer: HTMLElement | null = null;
 /** Routes to show in mobile bottom nav (limited space) */
 const MOBILE_NAV_PATHS = ['/dashboard', '/reservations', '/notes', '/shopping'];
 
-/** Get the hash path, e.g. "#/gallery" → "/gallery" */
+/** Get the hash path, e.g. "#/gallery" → "/gallery", "#/verify?token=abc" → "/verify" */
 function getHashPath(): string {
   const hash = window.location.hash.slice(1); // remove "#"
-  return hash || '/dashboard'; // default route
+  const path = hash.split('?')[0]; // strip query params
+  return path || '/dashboard'; // default route
 }
 
 // ─── Skeleton Loaders ─────────────────────────────────────────────────

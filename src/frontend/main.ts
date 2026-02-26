@@ -17,6 +17,7 @@ import {
 } from './lib/common';
 import { initRouter, destroyRouter } from './lib/router';
 import { initGlobalErrorHandlers } from './lib/logger';
+import { isVerifyRoute, mountVerifyPage } from './pages/verify';
 
 /* ---------- PWA service worker ---------- */
 
@@ -121,6 +122,15 @@ function bindLoginForm(): void {
       const data = await res.json();
       if (!res.ok) {
         if (errEl) {
+          // ── Token-based verification needed (new SaaS flow) ───────────
+          if (data.needsVerification) {
+            errEl.innerHTML = `
+              <span style="color:var(--color-warning);">
+                <i class="fas fa-envelope"></i> ${data.message}
+              </span>`;
+            return;
+          }
+
           if (data.testCode) {
             errEl.innerHTML = `${data.message || data.error}<br><br><strong>Nouzový kód (login) pro testování: <span style="font-size:1.2em; letter-spacing:2px; color:var(--color-primary);">${data.testCode}</span></strong>`;
 
@@ -174,6 +184,41 @@ function bindRegisterForm(): void {
         return;
       }
 
+      // ── New token-based flow: don't login, show activation message ─────
+      if (data.requiresVerification) {
+        const registerSection = $('register-section');
+        if (registerSection) {
+          registerSection.innerHTML = `
+            <div style="text-align:center;padding:40px 24px;">
+              <div style="font-size:48px;margin-bottom:16px;">📬</div>
+              <h2 style="margin:0 0 12px;color:var(--color-text, #e5e7eb);">Zkontrolujte svůj e-mail</h2>
+              <p style="color:var(--color-text-light, #9ca3af);line-height:1.6;margin:0 0 24px;">
+                Děkujeme za registraci!<br>
+                Poslali jsme vám e-mail s odkazem pro aktivaci účtu na adresu <strong>${email}</strong>.
+              </p>
+              ${data.testToken ? `
+                <div style="background:var(--color-bg-secondary, #2a2a3e);padding:12px;border-radius:8px;margin-bottom:24px;">
+                  <p style="color:var(--color-warning);font-size:13px;margin:0 0 4px;">⚠️ E-mail se nepodařilo odeslat. Testovací token:</p>
+                  <code style="font-size:11px;word-break:break-all;color:var(--color-text-light);">${data.testToken}</code>
+                </div>
+              ` : ''}
+              <a href="#" id="back-to-login-from-verify"
+                 style="color:var(--color-primary);text-decoration:underline;cursor:pointer;">
+                ← Vrátit se na přihlášení
+              </a>
+            </div>
+          `;
+          registerSection.querySelector('#back-to-login-from-verify')?.addEventListener('click', (ev) => {
+            ev.preventDefault();
+            window.location.hash = '#';
+            window.location.reload();
+          });
+        }
+        showToast('Registrace úspěšná — zkontrolujte e-mail', 'success');
+        return;
+      }
+
+      // ── Legacy PIN-based flow (backward compat) ─────────────────────────
       if (data.message && (data.message.includes('ověřovací kód') || data.message.includes('e-mail s kódem se nepodařilo odeslat'))) {
         // Zobrazit informativní hlášku, popř. s nouzovým kódem
         if (msgEl) {
@@ -557,6 +602,19 @@ function init(): void {
 
   // Expose showLogin globally so common.ts handleSessionExpired can use it
   (window as any).__showLogin = showLogin;
+
+  // ── Token-based email verification route (works without login) ─────
+  if (isVerifyRoute()) {
+    hide($('login-section'));
+    hide($('register-section'));
+    hide($('app-section'));
+    // Use the body as container for the standalone verify page
+    const verifyContainer = document.createElement('div');
+    verifyContainer.id = 'verify-page-container';
+    document.body.appendChild(verifyContainer);
+    mountVerifyPage(verifyContainer);
+    return;
+  }
 
   if (isLoggedIn()) {
     showApp();

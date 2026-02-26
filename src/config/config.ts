@@ -33,9 +33,16 @@ if (!DATABASE_URL) {
   process.exit(1);
 }
 
-// SMTP Configuration
+// SMTP Configuration (legacy nodemailer)
 export const SMTP_HOST = process.env.SMTP_HOST || "";
 export const SMTP_PORT = parseInt(process.env.SMTP_PORT || "587", 10);
 export const SMTP_USER = process.env.SMTP_USER || "";
 export const SMTP_PASS = process.env.SMTP_PASS || "";
 export const SMTP_FROM = process.env.SMTP_FROM || '"Chata" <noreply@chata.cz>';
+
+// Resend Configuration (modern email API)
+export const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
+export const EMAIL_FROM = process.env.EMAIL_FROM || "Chata Třebenice <onboarding@resend.dev>";
+
+// Frontend URL (for verification links in emails)
+export const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";

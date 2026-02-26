@@ -1,11 +1,15 @@
 import { Router, Request, Response } from "express";
+import crypto from "crypto";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../../config/config";
 import prisma from "../../utils/prisma";
 import logger from "../../utils/logger";
 
-import { sendVerificationEmail } from "../../utils/email";
+// Legacy PIN-based email (nodemailer)
+import { sendVerificationEmail as sendPinEmail } from "../../utils/email";
+// New token-based email (Resend)
+import { sendVerificationEmail as sendTokenEmail } from "../../utils/mailer";
 
 const router = Router();
 
@@ -27,7 +31,17 @@ router.post("/login", async (req: Request, res: Response) => {
       return res.status(401).json({ message: "Nesprávné heslo." });
     }
 
-    if (!user.isEmailVerified && user.role !== "admin") {
+    // ── Token-based verification check (new SaaS flow) ──────────────────
+    if (!user.isVerified && user.role !== "admin") {
+      // If user still has a verificationToken, they used the new flow
+      if (user.verificationToken) {
+        return res.status(403).json({
+          message: "Nejprve ověřte svůj e-mail. Zkontrolujte svou schránku a klikněte na aktivační odkaz.",
+          needsVerification: true,
+        });
+      }
+
+      // ── Legacy PIN-based verification fallback ──────────────────────────
       let code = user.verificationCode;
       if (!code) {
         code = Math.floor(100000 + Math.random() * 900000).toString();
@@ -38,7 +52,7 @@ router.post("/login", async (req: Request, res: Response) => {
       }
 
       try {
-        await sendVerificationEmail(user.email as string, code as string);
+        await sendPinEmail(user.email as string, code as string);
         return res.status(403).json({ message: "Vaše e-mailová adresa ještě nebyla ověřena. Odeslali jsme vám nový ověřovací kód na e-mail." });
       } catch (err) {
         logger.error("AUTH", "Failed to resend verification email during login", { error: String(err) });
@@ -100,10 +114,18 @@ router.post("/register", async (req: Request, res: Response) => {
     const userCount = await prisma.user.count();
     const role = userCount === 0 ? "admin" : "user";
     // Admin automaticky overen (pro jistotu u prvotni instalace)
-    const isEmailVerified = role === "admin";
+    const isAdmin = role === "admin";
+    const isEmailVerified = isAdmin;
 
-    // Vygenerovat kod napr. "123456"
-    const verificationCode = isEmailVerified ? null : Math.floor(100000 + Math.random() * 900000).toString();
+    // Generate token-based verification token (new SaaS flow)
+    const verificationToken = isAdmin
+      ? null
+      : crypto.randomBytes(32).toString("hex");
+
+    // Also generate legacy PIN code for backward compat
+    const verificationCode = isAdmin
+      ? null
+      : Math.floor(100000 + Math.random() * 900000).toString();
 
     const newUser = await prisma.user.create({
       data: {
@@ -114,26 +136,41 @@ router.post("/register", async (req: Request, res: Response) => {
         role,
         isEmailVerified,
         verificationCode,
+        isVerified: isAdmin,
+        verificationToken,
       },
     });
 
-    if (!isEmailVerified) {
-      if (verificationCode) {
-        try {
-          await sendVerificationEmail(email, verificationCode);
-          res.status(201).json({ message: "Registrace proběhla úspěšně. Byl odeslán ověřovací kód." });
-        } catch (emailError) {
-          logger.error("AUTH", `E-mail se nepodařilo odeslat pro ${email}`, { error: String(emailError) });
-          logger.info("AUTH", `=== NOUZOVÝ OVĚŘOVACÍ KÓD PRO TESTOVÁNÍ: ${verificationCode} ===`);
-          // Můžeme uživatele registrovat, ale upozornit na chybu odesílání
-          res.status(201).json({
-            message: "Registrace proběhla, ale e-mail s kódem se nepodařilo odeslat. Kontaktujte prosím administrátora.",
-            testCode: verificationCode
-          });
-        }
-      }
-    } else {
-      res.status(201).json({ message: "Registrace úspěšná (jste admin)." });
+    if (isAdmin) {
+      return res.status(201).json({
+        message: "Registrace úspěšná (jste admin, účet je automaticky aktivní).",
+      });
+    }
+
+    // Send token-based verification email via Resend
+    try {
+      await sendTokenEmail(email, verificationToken!);
+
+      res.status(201).json({
+        message: "Děkujeme za registraci! Poslali jsme vám e-mail s odkazem pro aktivaci účtu. Zkontrolujte svou schránku.",
+        requiresVerification: true,
+      });
+    } catch (emailError) {
+      logger.error("AUTH", `Failed to send verification email for ${email}`, {
+        error: String(emailError),
+      });
+
+      // Fallback — log token for testing/dev
+      logger.info(
+        "AUTH",
+        `=== NOUZOVÝ OVĚŘOVACÍ TOKEN PRO TESTOVÁNÍ: ${verificationToken} ===`
+      );
+
+      res.status(201).json({
+        message: "Registrace proběhla, ale e-mail s aktivačním odkazem se nepodařilo odeslat. Kontaktujte administrátora.",
+        requiresVerification: true,
+        testToken: verificationToken, // only shown when email fails
+      });
     }
   } catch (error) {
     logger.error("AUTH", "Register error", { error: String(error), stack: (error as Error).stack });
@@ -142,7 +179,58 @@ router.post("/register", async (req: Request, res: Response) => {
 });
 
 // ============================================================================
-//                             VERIFY EMAIL
+//                       VERIFY EMAIL (token-based — new SaaS flow)
+// ============================================================================
+router.get("/verify-token", async (req: Request, res: Response) => {
+  const { token } = req.query;
+
+  if (!token || typeof token !== "string") {
+    return res.status(400).json({ message: "Chybí ověřovací token." });
+  }
+
+  try {
+    const user = await prisma.user.findFirst({
+      where: { verificationToken: token },
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        message: "Neplatný nebo expirovaný ověřovací odkaz.",
+      });
+    }
+
+    if (user.isVerified) {
+      return res.json({ message: "Tento účet již byl ověřen. Můžete se přihlásit." });
+    }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        isVerified: true,
+        verificationToken: null,
+        // Also mark legacy field as verified
+        isEmailVerified: true,
+        verificationCode: null,
+      },
+    });
+
+    logger.info("AUTH", `User ${user.username} verified via token`, {
+      userId: user.id,
+    });
+
+    res.json({
+      message: "Účet byl úspěšně aktivován! Nyní se můžete přihlásit.",
+    });
+  } catch (error) {
+    logger.error("AUTH", "Token verification error", {
+      error: String(error),
+    });
+    res.status(500).json({ message: "Chyba serveru při ověřování." });
+  }
+});
+
+// ============================================================================
+//                       VERIFY EMAIL (legacy PIN-based)
 // ============================================================================
 router.post("/verify-email", async (req: Request, res: Response) => {
   const { username, code } = req.body;
@@ -167,7 +255,12 @@ router.post("/verify-email", async (req: Request, res: Response) => {
 
     await prisma.user.update({
       where: { id: user.id },
-      data: { isEmailVerified: true, verificationCode: null }
+      data: {
+        isEmailVerified: true,
+        verificationCode: null,
+        isVerified: true,
+        verificationToken: null,
+      }
     });
 
     res.json({ message: "E-mail byl úspěšně ověřen. Nyní se můžete přihlásit." });

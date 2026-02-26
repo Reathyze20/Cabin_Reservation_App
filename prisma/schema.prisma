@@ -22,6 +22,8 @@ model User {
   email            String?  @unique
   isEmailVerified  Boolean  @default(false) @map("is_email_verified")
   verificationCode String?  @map("verification_code")
+  isVerified        Boolean  @default(false) @map("is_verified")
+  verificationToken String?  @map("verification_token")
   role             String   @default("user") // "admin" | "user" | "guest"
   createdAt        DateTime @default(now()) @map("created_at")
 
