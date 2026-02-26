@@ -36,7 +36,8 @@ export async function mountVerifyPage(container: HTMLElement): Promise<void> {
   if (!token) {
     spinner.classList.add('hidden');
     result.classList.remove('hidden');
-    icon.textContent = '⚠️';
+    icon.textContent = '!';
+    icon.style.color = '#f59e0b';
     title.textContent = 'Chybí ověřovací token';
     message.textContent = 'Odkaz je neplatný nebo nekompletní. Zkuste se zaregistrovat znovu.';
     return;
@@ -50,10 +51,21 @@ export async function mountVerifyPage(container: HTMLElement): Promise<void> {
     result.classList.remove('hidden');
 
     if (res.ok) {
-      icon.textContent = '🎉';
+      icon.textContent = '✓';
+      icon.style.color = '#10b981';
       title.textContent = 'Účet aktivován!';
       message.textContent = data.message || 'Váš účet byl úspěšně ověřen. Nyní se můžete přihlásit.';
       showToast('Účet úspěšně aktivován!', 'success');
+
+      // Bind back to login button
+      const backBtn = container.querySelector('#verify-back-to-login');
+      if (backBtn) {
+        backBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          window.location.hash = '#';
+          window.location.reload();
+        });
+      }
 
       // Auto-redirect to login after 4 seconds
       setTimeout(() => {
@@ -61,7 +73,8 @@ export async function mountVerifyPage(container: HTMLElement): Promise<void> {
         window.location.reload();
       }, 4000);
     } else {
-      icon.textContent = '❌';
+      icon.textContent = '✗';
+      icon.style.color = '#ef4444';
       title.textContent = 'Ověření selhalo';
       message.textContent = data.message || 'Neplatný nebo expirovaný odkaz.';
       showToast(data.message || 'Ověření selhalo', 'error');
@@ -69,7 +82,8 @@ export async function mountVerifyPage(container: HTMLElement): Promise<void> {
   } catch {
     spinner.classList.add('hidden');
     result.classList.remove('hidden');
-    icon.textContent = '❌';
+    icon.textContent = '✗';
+    icon.style.color = '#ef4444';
     title.textContent = 'Chyba sítě';
     message.textContent = 'Nepodařilo se spojit se serverem. Zkuste to prosím později.';
     showToast('Chyba sítě při ověřování', 'error');
@@ -96,13 +110,11 @@ function getTemplate(): string {
         <div id="verify-icon" style="font-size:48px;margin-bottom:16px;"></div>
         <h2 id="verify-title" style="margin:0 0 12px;color:var(--color-text, #e5e7eb);"></h2>
         <p id="verify-message" style="color:var(--color-text-light, #9ca3af);margin:0 0 24px;line-height:1.6;"></p>
-        <a href="#" class="btn btn-primary" 
+        <a href="#" id="verify-back-to-login" class="btn btn-primary" 
            style="display:inline-block;padding:12px 32px;text-decoration:none;
                   border-radius:8px;background:var(--color-primary, #d97706);
                   color:#fff;font-weight:600;font-size:15px;
-                  transition:opacity 0.2s;"
-           onmouseover="this.style.opacity='0.85'"
-           onmouseout="this.style.opacity='1'">
+                  transition:opacity 0.2s;cursor:pointer;">
           <i class="fas fa-sign-in-alt"></i> Přejít na přihlášení
         </a>
       </div>

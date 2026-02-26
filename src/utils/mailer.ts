@@ -36,7 +36,7 @@ export async function sendVerificationEmail(
     
     <!-- Header -->
     <div style="background:linear-gradient(135deg,#d97706 0%,#b45309 100%);padding:32px 24px;text-align:center;">
-      <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:700;">🏡 Chata Třebenice</h1>
+      <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:700;">Chata Třebenice</h1>
       <p style="margin:8px 0 0;color:rgba(255,255,255,0.85);font-size:14px;">Ověření e-mailové adresy</p>
     </div>
 
@@ -54,7 +54,7 @@ export async function sendVerificationEmail(
            style="display:inline-block;background:#d97706;color:#ffffff;text-decoration:none;
                   padding:14px 40px;border-radius:8px;font-size:16px;font-weight:600;
                   box-shadow:0 2px 8px rgba(217,119,6,0.3);">
-          ✅ Aktivovat účet
+          Aktivovat účet
         </a>
       </div>
 

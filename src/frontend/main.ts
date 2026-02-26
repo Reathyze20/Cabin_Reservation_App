@@ -190,7 +190,7 @@ function bindRegisterForm(): void {
         if (registerSection) {
           registerSection.innerHTML = `
             <div style="text-align:center;padding:40px 24px;">
-              <div style="font-size:48px;margin-bottom:16px;">📬</div>
+              <div style="font-size:48px;margin-bottom:16px;color:var(--color-primary);">✉</div>
               <h2 style="margin:0 0 12px;color:var(--color-text, #e5e7eb);">Zkontrolujte svůj e-mail</h2>
               <p style="color:var(--color-text-light, #9ca3af);line-height:1.6;margin:0 0 24px;">
                 Děkujeme za registraci!<br>
@@ -198,7 +198,7 @@ function bindRegisterForm(): void {
               </p>
               ${data.testToken ? `
                 <div style="background:var(--color-bg-secondary, #2a2a3e);padding:12px;border-radius:8px;margin-bottom:24px;">
-                  <p style="color:var(--color-warning);font-size:13px;margin:0 0 4px;">⚠️ E-mail se nepodařilo odeslat. Testovací token:</p>
+                  <p style="color:var(--color-warning);font-size:13px;margin:0 0 4px;">! E-mail se nepodařilo odeslat. Testovací token:</p>
                   <code style="font-size:11px;word-break:break-all;color:var(--color-text-light);">${data.testToken}</code>
                 </div>
               ` : ''}
