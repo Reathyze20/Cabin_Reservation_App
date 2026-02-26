@@ -13,12 +13,12 @@ function getTemplate(): string {
   <div class="main-content-admin">
     <div class="admin-page-card">
       <div class="admin-section users-section">
-        <h2><i class="fas fa-users-cog"></i> Správa uživatelů</h2>
+        <h2>Správa uživatelů</h2>
 
         <div id="users-list" class="users-list"></div>
 
         <div class="add-user-section">
-          <h3><i class="fas fa-user-plus"></i> Přidat uživatele</h3>
+          <h3>Přidat uživatele</h3>
           <form id="add-user-form" class="add-user-form">
             <div class="form-group"><label>Uživatelské jméno</label><input type="text" id="new-username" required /></div>
             <div class="form-group"><label>Heslo</label><input type="password" id="new-password" required /></div>
@@ -26,18 +26,18 @@ function getTemplate(): string {
               <label>Role</label>
               <select id="new-role" style="width: 100%; padding: var(--space-sm) 12px; border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: var(--font-size-sm);"><option value="member">Člen</option><option value="admin">Admin</option></select>
             </div>
-            <button type="submit" class="button-primary" style="height: 38px; margin-bottom: 0;"><i class="fas fa-plus"></i> Vytvořit</button>
+            <button type="submit" class="button-primary" style="height: 38px; margin-bottom: 0;">+ Vytvořit</button>
           </form>
         </div>
       </div>
 
       <div class="admin-section" id="system-info">
-        <h2><i class="fas fa-server"></i> Systém</h2>
+        <h2>Systém</h2>
         <div class="system-info" id="sys-info-content">Načítání…</div>
       </div>
 
       <div class="admin-section" id="server-logs">
-        <h2><i class="fas fa-terminal"></i> Logy serveru</h2>
+        <h2>Logy serveru</h2>
         <div class="logs-controls" style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
           <select id="log-date-select" style="padding: var(--space-sm) 12px; border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: var(--font-size-sm);"></select>
           <select id="log-level-select" style="padding: var(--space-sm) 12px; border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: var(--font-size-sm);">
@@ -47,8 +47,8 @@ function getTemplate(): string {
             <option value="ERROR">ERROR</option>
             <option value="DEBUG">DEBUG</option>
           </select>
-          <button id="btn-refresh-logs" class="button-secondary" style="margin: 0; padding: 0 15px; height: 38px;"><i class="fas fa-sync-alt"></i> Obnovit</button>
-          <button id="btn-download-logs" class="button-secondary" style="margin: 0; padding: 0 15px; height: 38px;"><i class="fas fa-download"></i> Stáhnout</button>
+          <button id="btn-refresh-logs" class="button-secondary" style="margin: 0; padding: 0 15px; height: 38px;">Obnovit</button>
+          <button id="btn-download-logs" class="button-secondary" style="margin: 0; padding: 0 15px; height: 38px;">Stáhnout</button>
         </div>
         <div class="logs-viewer" id="logs-content" style="background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 8px; font-family: monospace; height: 400px; overflow-y: auto; white-space: pre-wrap; font-size: 13px; line-height: 1.4;">Načítání logů...</div>
       </div>
@@ -74,9 +74,9 @@ function getTemplate(): string {
         <input type="password" id="edit-password" placeholder="ponechte prázdné" />
       </div>
       <div class="modal-buttons" style="gap:.5rem;flex-wrap:wrap">
-        <button class="button-primary" id="btn-save-user"><i class="fas fa-save"></i> Uložit</button>
-        <button class="button-danger" id="btn-delete-reservations"><i class="fas fa-calendar-times"></i> Smazat rezervace</button>
-        <button class="button-danger" id="btn-delete-user"><i class="fas fa-trash"></i> Smazat uživatele</button>
+        <button class="button-primary" id="btn-save-user">Uložit</button>
+        <button class="button-danger" id="btn-delete-reservations">Smazat rezervace</button>
+        <button class="button-danger" id="btn-delete-user">Smazat uživatele</button>
       </div>
     </div>
   </div>`;
@@ -105,8 +105,8 @@ function renderUsers(list: any[]): void {
         <span class="user-role-badge ${roleClass}">${roleText}</span>
       </div>
       <div class="user-row-right">
-        <i class="fas fa-pen btn-edit-user" data-uid="${u.id}" title="Upravit"></i>
-        <i class="fas fa-trash btn-delete-user-icon" data-uid="${u.id}" title="Smazat"></i>
+        <button class="btn-edit-user" data-uid="${u.id}" title="Upravit" style="cursor: pointer; border: none; background: transparent; font-size: 1.2em; padding: 4px 8px;">✎</button>
+        <button class="btn-delete-user-icon" data-uid="${u.id}" title="Smazat" style="cursor: pointer; border: none; background: transparent; font-size: 1.2em; padding: 4px 8px; color: var(--color-danger);">×</button>
       </div>
     </div>`;
   }).join('');

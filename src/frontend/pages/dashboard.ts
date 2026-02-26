@@ -284,7 +284,7 @@ function getTemplate(): string {
   <div id="departure-modal" class="modal-overlay hidden">
     <div class="modal-content">
       <div class="modal-header">
-        <h2><i class="fas fa-clipboard-check"></i> Odjezdový protokol</h2>
+        <h2>Odjezdový protokol</h2>
         <button class="modal-close" id="close-departure-modal">&times;</button>
       </div>
       <div class="modal-body">
@@ -303,7 +303,7 @@ function getTemplate(): string {
       </div>
       <div class="modal-footer">
         <button class="button-primary" id="btn-submit-departure" style="width: 100%;">
-          <i class="fas fa-paper-plane"></i> Odeslat a uzavřít pobyt
+          Odeslat a uzavřít pobyt
         </button>
       </div>
     </div>
@@ -386,7 +386,7 @@ function renderActiveReservation(data: DashboardData): void {
       : daysLeft === 1 ? 'Ještě 1 den' : `Ještě ${daysLeft} ${daysLeft < 5 ? 'dny' : 'dní'}`;
     // Handover note
     const handoverHtml = r.handoverNote
-      ? `<div class="status-handover"><i class="fas fa-sticky-note"></i> ${r.handoverNote}</div>`
+      ? `<div class="status-handover">${r.handoverNote}</div>`
       : '';
     el.innerHTML = `
       <div class="card-body-full status-content">
@@ -402,7 +402,7 @@ function renderActiveReservation(data: DashboardData): void {
         ${handoverHtml}
         <div class="status-cta-row">
           <a href="#/reservations" class="status-cta status-cta-neutral">
-            <i class="fas fa-calendar-alt"></i> Zobrazit kalendář
+            Zobrazit kalendář
           </a>
         </div>
       </div>`;
@@ -415,7 +415,7 @@ function renderActiveReservation(data: DashboardData): void {
       <div class="card-body-full status-content">
         <div class="status-split-row">
           <div class="status-avatar-block" style="background:#059669">
-            <i class="fas fa-calendar-check" style="font-size:24px"></i>
+            <span style="font-size:28px">✓</span>
           </div>
           <div class="status-text-block">
             <div class="status-label">Tvoje příští návštěva</div>
@@ -425,7 +425,7 @@ function renderActiveReservation(data: DashboardData): void {
         </div>
         <div class="status-cta-row">
           <a href="#/reservations" class="status-cta status-cta-neutral">
-            <i class="fas fa-pencil-alt"></i> Upravit rezervaci
+            Upravit rezervaci
           </a>
         </div>
       </div>`;
@@ -436,7 +436,7 @@ function renderActiveReservation(data: DashboardData): void {
       <div class="card-body-full status-content">
         <div class="status-split-row">
           <div class="status-avatar-block" style="background:#10b981">
-            <i class="fas fa-door-open" style="font-size:24px"></i>
+            <span style="font-size:32px">●</span>
           </div>
           <div class="status-text-block">
             <div class="status-label">Stav chaty</div>
@@ -446,7 +446,7 @@ function renderActiveReservation(data: DashboardData): void {
         </div>
         <div class="status-cta-row">
           <button class="status-cta status-cta-primary" id="btn-go-reserve">
-            <i class="fas fa-plus"></i> Zarezervovat termín
+            + Zarezervovat termín
           </button>
         </div>
       </div>`;
@@ -462,7 +462,7 @@ function renderUpcoming(reservations: DashboardData['upcomingReservations']): vo
   const header = `
     <div class="dashboard-card-header">
       <span class="dashboard-card-header-title">
-        <i class="fas fa-calendar-alt"></i> Nadcházející rezervace
+        Nadcházející rezervace
       </span>
       ${reservations.length > 0 ? '<a href="#/reservations" class="dashboard-card-header-link">Všechny →</a>' : ''}
     </div>`;
@@ -471,9 +471,9 @@ function renderUpcoming(reservations: DashboardData['upcomingReservations']): vo
     el.innerHTML = `
       ${header}
       <div class="empty-state-card">
-        <i class="fas fa-calendar-alt empty-icon-duotone"></i>
+        <i class="fas fa-calendar-alt empty-icon-duotone" style="color:#9ca3af;opacity:0.4"></i>
         <p class="empty-text">Žádné plánované pobyty</p>
-        <a href="#/reservations" class="empty-cta"><i class="fas fa-plus"></i> Naplánovat pobyt</a>
+        <a href="#/reservations" class="empty-cta">+ Naplánovat pobyt</a>
       </div>`;
     return;
   }
@@ -517,7 +517,7 @@ function renderShopping(widget: ShoppingListWidget | null): void {
   const header = `
     <div class="dashboard-card-header">
       <span class="dashboard-card-header-title">
-        <i class="fas fa-shopping-basket"></i> K nakoupení
+        K nakoupení
       </span>
       <a href="#/shopping" class="dashboard-card-header-link">Seznamy →</a>
     </div>`;
@@ -526,9 +526,9 @@ function renderShopping(widget: ShoppingListWidget | null): void {
     el.innerHTML = `
       ${header}
       <div class="empty-state-card">
-        <i class="fas fa-check-circle empty-icon-duotone" style="color:#10b981;opacity:1"></i>
+        <i class="fas fa-check-circle empty-icon-duotone" style="color:#10b981;opacity:0.4"></i>
         <p class="empty-text">Na chatě nic nechybí!</p>
-        <a href="#/shopping" class="empty-cta"><i class="fas fa-plus"></i> Nový seznam</a>
+        <a href="#/shopping" class="empty-cta">+ Nový seznam</a>
       </div>`;
     return;
   }
@@ -540,10 +540,10 @@ function renderShopping(widget: ShoppingListWidget | null): void {
   const allDone = pendingCount === 0;
 
   const itemsHtml = allDone
-    ? `<div class="shopping-done-msg"><i class="fas fa-check-circle" style="color:#10b981"></i> Vše nakoupeno!</div>`
+    ? `<div class="shopping-done-msg">Vše nakoupeno!</div>`
     : widget.pendingItems.map(item => `
         <div class="list-item" style="padding:5px 0;border-bottom:none;gap:10px">
-          <i class="far fa-circle" style="color:#d1d5db;font-size:13px;flex-shrink:0"></i>
+          <div style="width:6px;height:6px;border-radius:50%;background:#d1d5db;flex-shrink:0;margin-top:8px"></div>
           <div class="list-item-content">
             <div class="list-item-title" style="font-weight:500">${item.name}</div>
           </div>
@@ -573,7 +573,7 @@ function renderNotes(notes: DashboardData['latestNotes']): void {
   const header = `
     <div class="dashboard-card-header">
       <span class="dashboard-card-header-title">
-        <i class="fas fa-comments"></i> Co se děje na chatě
+        Co se děje na chatě
       </span>
       ${notes.length > 0 ? '<a href="#/notes" class="dashboard-card-header-link">Chat →</a>' : ''}
     </div>`;
@@ -583,9 +583,9 @@ function renderNotes(notes: DashboardData['latestNotes']): void {
       <div class="card-body-full">
         ${header}
         <div class="empty-state-card">
-          <i class="fas fa-comment-slash empty-icon-duotone"></i>
+          <i class="fas fa-comment-slash empty-icon-duotone" style="color:#9ca3af;opacity:0.4"></i>
           <p class="empty-text">Zatím žádné zprávy</p>
-          <a href="#/notes" class="empty-cta"><i class="fas fa-plus"></i> Napsat první zprávu</a>
+          <a href="#/notes" class="empty-cta">+ Napsat první zprávu</a>
         </div>
       </div>`;
     return;
@@ -662,8 +662,8 @@ function initDepartureMode(): void {
       <div class="card-body-full">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <div style="display:flex; gap:15px; align-items:center;">
-             <div style="background:#ca8a04; color:white; width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:24px;">
-               <i class="fas fa-suitcase-rolling"></i>
+             <div style="background:#ca8a04; color:white; width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:26px;">
+               ⏱
              </div>
              <div>
                <h3 style="margin:0; font-size:1.1rem; color:#854d0e;">Dnes odjíždíte!</h3>

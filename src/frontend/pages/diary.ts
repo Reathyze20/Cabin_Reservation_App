@@ -34,7 +34,7 @@ function getTemplate(): string {
       <!-- Folders view -->
       <div id="diary-folders-view">
         <div class="diary-header">
-          <h2><i class="fas fa-book-open"></i> Deník</h2>
+          <h2>Deník</h2>
           <div class="header-actions" style="display:flex;gap:15px;align-items:center;">
             <select id="diary-period-filter" class="form-control" style="width:auto; padding:5px 10px; font-size:0.9rem; margin-bottom:0;">
               <option value="all">Všechna období</option>
@@ -42,7 +42,7 @@ function getTemplate(): string {
               <option value="last_year">Minulý rok</option>
               <option value="older">Starší</option>
             </select>
-            <button id="create-diary-folder-btn" class="button-primary"><i class="fas fa-plus"></i> Nový pobyt</button>
+            <button id="create-diary-folder-btn" class="button-primary">+ Nový pobyt</button>
           </div>
         </div>
         <div class="diary-content-wrapper">
@@ -54,7 +54,7 @@ function getTemplate(): string {
       <div id="diary-entries-view" style="display:none">
         <div class="diary-header">
           <div style="display:flex;align-items:center;gap:10px">
-            <button id="back-to-diary-folders-btn" class="button-secondary"><i class="fas fa-arrow-left"></i> Zpět</button>
+            <button id="back-to-diary-folders-btn" class="button-secondary">← Zpět</button>
             <h2 id="current-diary-title"></h2>
           </div>
         </div>
@@ -129,7 +129,7 @@ function getTemplate(): string {
   <!-- Notebook modal -->
   <div id="notebook-modal" class="modal-overlay hidden">
     <div class="notebook-modal-content">
-      <button id="notebook-prev-btn" class="notebook-nav-btn"><i class="fas fa-chevron-left"></i></button>
+      <button id="notebook-prev-btn" class="notebook-nav-btn">←</button>
       <div class="notebook-paper">
         <div class="notebook-holes"></div>
         <div class="notebook-header">
@@ -141,12 +141,12 @@ function getTemplate(): string {
           <div id="notebook-attachments-area" class="notebook-attachments"></div>
         </div>
         <div class="notebook-footer">
-          <button id="attach-photo-btn" class="notebook-btn-attach"><i class="fas fa-camera"></i> Fotky</button>
-          <button id="delete-notebook-entry-btn" class="notebook-btn-delete" style="display:none"><i class="fas fa-eraser"></i> Vytrhnout</button>
-          <button id="save-notebook-entry-btn" class="notebook-btn-save"><i class="fas fa-save"></i> Uložit</button>
+          <button id="attach-photo-btn" class="notebook-btn-attach">📸 Fotky</button>
+          <button id="delete-notebook-entry-btn" class="notebook-btn-delete" style="display:none">Vytrhnout</button>
+          <button id="save-notebook-entry-btn" class="notebook-btn-save">Uložit</button>
         </div>
       </div>
-      <button id="notebook-next-btn" class="notebook-nav-btn"><i class="fas fa-chevron-right"></i></button>
+      <button id="notebook-next-btn" class="notebook-nav-btn">→</button>
     </div>
   </div>
 
@@ -155,7 +155,7 @@ function getTemplate(): string {
     <div class="modal-content" style="max-width:600px">
       <span class="modal-close-button" data-close="select-gallery-photo-modal">&times;</span>
       <h2>Vybrat fotky</h2>
-      <button id="gallery-picker-back-btn" class="gallery-btn" style="display:none;margin-bottom:10px"><i class="fas fa-arrow-left"></i> Zpět</button>
+      <button id="gallery-picker-back-btn" class="gallery-btn" style="display:none;margin-bottom:10px">← Zpět</button>
       <div id="gallery-picker-folders" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px"></div>
       <div id="gallery-picker-photos" style="display:none;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px"></div>
       <div class="modal-buttons" style="margin-top:10px"><button id="gallery-picker-confirm-btn" class="button-primary">Potvrdit výběr</button></div>
@@ -169,11 +169,11 @@ function getTemplate(): string {
       <div class="lightbox-caption"><span id="diary-lightbox-description"></span></div>
     </div>
     <div class="lightbox-controls">
-      <button id="diary-lightbox-close" title="Zavřít"><i class="fas fa-times"></i></button>
-      <a id="diary-lightbox-download" download="foto.jpg"><i class="fas fa-download"></i></a>
+      <button id="diary-lightbox-close" title="Zavřít">×</button>
+      <a id="diary-lightbox-download" download="foto.jpg">Stáhnout</a>
     </div>
-    <button id="diary-lightbox-prev" class="lightbox-arrow lightbox-arrow-left"><i class="fas fa-chevron-left"></i></button>
-    <button id="diary-lightbox-next" class="lightbox-arrow lightbox-arrow-right"><i class="fas fa-chevron-right"></i></button>
+    <button id="diary-lightbox-prev" class="lightbox-arrow lightbox-arrow-left">←</button>
+    <button id="diary-lightbox-next" class="lightbox-arrow lightbox-arrow-right">→</button>
   </div>`;
 }
 
@@ -185,13 +185,13 @@ function hideModal(id: string): void { const el = $(id); if (el) { el.classList.
 
 function getTagIcon(tag: string): string {
   switch (tag) {
-    case 'relax': return '<i class="fas fa-leaf" style="color: #d97706;"></i>';
-    case 'party': return '<i class="fas fa-glass-cheers" style="color: #ec4899;"></i>';
-    case 'work': return '<i class="fas fa-hammer" style="color: #64748b;"></i>';
+    case 'relax': return '<span style="font-size: 1.2em;">🍃</span>';
+    case 'party': return '<span style="font-size: 1.2em;">🍻</span>';
+    case 'work': return '<span style="font-size: 1.2em;">🔨</span>';
     case 'mushroom': return '<span style="font-size: 1.2em;">🍄</span>';
-    case 'hike': return '<i class="fas fa-shoe-prints" style="color: #10b981;"></i>';
-    case 'family': return '<i class="fas fa-users" style="color: #3b82f6;"></i>';
-    default: return '<i class="fas fa-book-journal-whills" style="color:#fbbf24;"></i>';
+    case 'hike': return '<span style="font-size: 1.2em;">👟</span>';
+    case 'family': return '<span style="font-size: 1.2em;">👥</span>';
+    default: return '<span style="font-size: 1.2em;">📖</span>';
   }
 }
 
@@ -247,13 +247,13 @@ function renderFolders(folders: any[]): void {
         <h3>${f.name}</h3>
         ${dateRange}
         <div class="folder-stats-badges">
-          <span class="badge" style="background:#f3f4f6; color:#4b5563;"><i class="fas fa-pencil"></i> ${stats.entries} dnů</span>
-          <span class="badge" style="background:#f3f4f6; color:#4b5563;"><i class="fas fa-camera"></i> ${stats.photos} fotek</span>
+          <span class="badge" style="background:#f3f4f6; color:#4b5563;">${stats.entries} dnů</span>
+          <span class="badge" style="background:#f3f4f6; color:#4b5563;">${stats.photos} fotek</span>
         </div>
       </div>
       <div class="folder-card-hover-actions">
-        <button class="icon-btn edit-folder-btn" title="Přejmenovat" data-id="${f.id}"><i class="fas fa-edit"></i></button>
-        <button class="icon-btn delete-folder-btn" title="Odstranit" data-id="${f.id}"><i class="fas fa-trash"></i></button>
+        <button class="icon-btn edit-folder-btn" title="Přejmenovat" data-id="${f.id}">✎</button>
+        <button class="icon-btn delete-folder-btn" title="Odstranit" data-id="${f.id}">×</button>
       </div>`;
     grid.appendChild(el);
   }
@@ -334,7 +334,7 @@ function renderCalendar(): void {
     card.className = `diary-day-card${entry ? ' has-entry' : ''}`;
     const dayName = d.toLocaleDateString('cs-CZ', { weekday: 'short' });
     let preview = entry ? entry.content.substring(0, 50) : '';
-    if (entry?.galleryPhotoIds?.length) preview += ' <i class="fas fa-image"></i>';
+    if (entry?.galleryPhotoIds?.length) preview += ' 📷';
     card.innerHTML = `<div class="day-header-row"><span>${dayName}</span></div><div class="day-number">${d.getDate()}</div><div class="entry-preview">${preview}</div>`;
     const clickDate = new Date(d);
     card.onclick = () => openNotebook(clickDate, entry);
@@ -437,7 +437,7 @@ function renderPickerFolders(): void {
     const d = document.createElement('div');
     d.className = 'folder-card';
     d.style.cssText = 'height:120px;padding:10px;cursor:pointer';
-    d.innerHTML = `<div class="folder-icon" style="font-size:2em;margin-bottom:5px"><i class="fas fa-folder"></i></div><div class="folder-info"><h3 style="font-size:.9em;margin:0">${f.name}</h3></div>`;
+    d.innerHTML = `<div class="folder-icon" style="font-size:2em;margin-bottom:5px">📁</div><div class="folder-info"><h3 style="font-size:.9em;margin:0">${f.name}</h3></div>`;
     d.onclick = () => openPickerFolder(f.id);
     el.appendChild(d);
   }
@@ -476,7 +476,7 @@ function renderPickerPhotos(): void {
 
     if (isSel && !isAttached) {
       const ch = document.createElement('div');
-      ch.innerHTML = '<i class="fas fa-check"></i>';
+      ch.innerHTML = '✓';
       ch.style.cssText = 'position:absolute;top:5px;right:5px;color:#d97706;font-size:1.2em';
       d.appendChild(ch);
     }

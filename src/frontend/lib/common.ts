@@ -217,15 +217,16 @@ export async function authUpload<T = unknown>(
 export type ToastType = 'success' | 'error' | 'info';
 
 const ICON_MAP: Record<ToastType, string> = {
-  success: 'fa-check-circle',
-  error: 'fa-exclamation-circle',
-  info: 'fa-info-circle',
+  success: '✓',
+  error: '!',
+  info: '',
 };
 
 export function showToast(message: string, type: ToastType = 'info'): void {
   const toast = document.createElement('div');
   toast.className = `toast toast-${type}`;
-  toast.innerHTML = `<i class="fas ${ICON_MAP[type]}"></i><span>${message}</span>`;
+  const icon = ICON_MAP[type] ? `<span style="font-weight: 600; margin-right: 8px;">${ICON_MAP[type]}</span>` : '';
+  toast.innerHTML = `${icon}<span>${message}</span>`;
   document.body.appendChild(toast);
 
   requestAnimationFrame(() => toast.classList.add('show'));

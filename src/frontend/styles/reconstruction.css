@@ -570,11 +570,7 @@
   line-height: 1.3;
 }
 
-.form-label-icon {
-  color: #9ca3af;
-  font-size: 11px;
-  margin-right: 3px;
-}
+/* Removed .form-label-icon - no longer used */
 
 .label-required {
   color: #ef4444;

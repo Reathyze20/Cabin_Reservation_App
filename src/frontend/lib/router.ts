@@ -206,7 +206,7 @@ async function handleRouteChange(): Promise<void> {
     if (appContainer) {
       appContainer.innerHTML = `
         <div style="padding: 2rem; text-align: center; color: #999;">
-          <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+          <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.4; color: #9ca3af;"></i>
           <p>Nepodařilo se načíst stránku.</p>
         </div>`;
     }
@@ -242,7 +242,7 @@ function buildNav(): void {
       a.className = `nav-link${route.navClass ? ' ' + route.navClass : ''}`;
       a.setAttribute('data-route', route.path);
       a.href = `#${route.path}`;
-      a.innerHTML = `<i class="fas ${route.icon}"></i> ${route.label}`;
+      a.innerHTML = route.label;
       a.addEventListener('click', (e) => {
         e.preventDefault();
         navigate(route.path);
@@ -264,7 +264,7 @@ function buildNav(): void {
       a.className = 'mobile-nav-link';
       a.setAttribute('data-route', route.path);
       a.href = `#${route.path}`;
-      a.innerHTML = `<i class="fas ${route.icon}"></i><span>${route.label}</span>`;
+      a.innerHTML = `<span>${route.label}</span>`;
       a.addEventListener('click', (e) => {
         e.preventDefault();
         navigate(route.path);
@@ -276,7 +276,7 @@ function buildNav(): void {
     const menuBtn = document.createElement('a');
     menuBtn.className = 'mobile-nav-link';
     menuBtn.href = '#';
-    menuBtn.innerHTML = `<i class="fas fa-bars"></i><span>Menu</span>`;
+    menuBtn.innerHTML = `<span>Menu</span>`;
     menuBtn.addEventListener('click', (e) => {
       e.preventDefault();
       // Menu functionality - open profile drawer temp logic

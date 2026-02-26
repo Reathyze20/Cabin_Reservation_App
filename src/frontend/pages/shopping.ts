@@ -60,9 +60,9 @@ function nextStatus(current: ItemStatus): ItemStatus {
 }
 
 function statusIcon(status: ItemStatus): string {
-  if (status === 'purchased') return '<i class="fas fa-check-circle si-purchased"></i>';
-  if (status === 'bring_from_home') return '<i class="fas fa-home si-bring"></i>';
-  return '<i class="far fa-circle si-pending"></i>';
+  if (status === 'purchased') return '<span class="si-purchased">✓</span>';
+  if (status === 'bring_from_home') return '<span class="si-bring">🏠</span>';
+  return '<span class="si-pending">○</span>';
 }
 
 function statusLabel(status: ItemStatus): string {
@@ -81,14 +81,14 @@ function getTemplate(): string {
   return `
   <div class="shopping-page">
     <div class="shopping-header-area">
-      <h2><i class="fas fa-shopping-basket"></i> Nákupní seznamy</h2>
-      <button id="btn-new-list" class="button-primary"><i class="fas fa-plus"></i> Nový košík</button>
+      <h2>Nákupní seznamy</h2>
+      <button id="btn-new-list" class="button-primary">+ Nový košík</button>
     </div>
 
     <!-- Segmented Control (iOS-style Tabs) -->
     <div class="tabs-container">
-      <button class="tab-button active" id="tab-shopping"><i class="fas fa-shopping-cart"></i> Ke koupi</button>
-      <button class="tab-button" id="tab-pantry"><i class="fas fa-box-open"></i> Zásoby na chatě</button>
+      <button class="tab-button active" id="tab-shopping">Ke koupi</button>
+      <button class="tab-button" id="tab-pantry">Zásoby na chatě</button>
     </div>
 
     <!-- Single content area — swapped on tab switch -->
@@ -116,27 +116,27 @@ function getTemplate(): string {
   <div id="share-note-modal" class="modal-overlay hidden">
     <div class="modal-content share-note-modal-content">
       <span class="modal-close-button" data-close="share-note-modal">&times;</span>
-      <h2><i class="fas fa-bullhorn"></i> Sdílet do chatu</h2>
+      <h2>Sdílet do chatu</h2>
       <p id="share-note-list-name" class="share-note-subtitle"></p>
 
       <!-- Krok 1: co poslat -->
       <p class="share-note-step-label">1. Vyberte typ zprávy:</p>
       <div class="share-note-options">
         <button id="share-note-new" class="share-note-btn" data-action="new">
-          <span class="share-note-btn-icon"><i class="fas fa-basket-shopping"></i></span>
+          <span class="share-note-btn-icon">📋</span>
           <div>
             <strong>Upozornit na nový seznam</strong>
             <span>Pošle zprávu ostatním, ať doplňí položky</span>
           </div>
-          <i class="fas fa-check share-note-selected-mark"></i>
+          <span class="share-note-selected-mark">✓</span>
         </button>
         <button id="share-note-going" class="share-note-btn share-note-btn-urgent" data-action="going">
-          <span class="share-note-btn-icon"><i class="fas fa-person-running"></i></span>
+          <span class="share-note-btn-icon">🏃</span>
           <div>
             <strong>Jdu do obchodu</strong>
             <span>Urgentní výzva k doplňění seznamu</span>
           </div>
-          <i class="fas fa-check share-note-selected-mark"></i>
+          <span class="share-note-selected-mark">✓</span>
         </button>
       </div>
 
@@ -147,7 +147,7 @@ function getTemplate(): string {
           <div class="spinner-container" style="padding: var(--space-md) 0"><div class="spinner"></div></div>
         </div>
         <button id="share-note-add-thread" class="share-note-add-thread-btn">
-          <i class="fas fa-plus"></i> Vytvořit nové vlákno
+          + Vytvořit nové vlákno
         </button>
         <div id="share-note-new-thread-form" class="share-note-new-thread-form hidden">
           <input type="text" id="share-note-thread-name" placeholder="Název vlákna..." />
@@ -183,7 +183,7 @@ function getPantryTemplate(): string {
         <option value="LOW">Málo</option>
         <option value="EMPTY">Došlo</option>
       </select>
-      <button type="submit" class="button-primary inv-add-btn"><i class="fas fa-plus"></i> Přidat</button>
+      <button type="submit" class="button-primary inv-add-btn">+ Přidat</button>
     </form>
     <div id="inventory-list" class="inventory-list">
       <div class="spinner-container"><div class="spinner"></div></div>
@@ -295,7 +295,7 @@ function renderInventory(items: InventoryItem[], listEl: HTMLElement): void {
   if (items.length === 0) {
     listEl.innerHTML = `
       <div class="inventory-empty-state">
-        <i class="fas fa-box-open empty-icon"></i>
+        <i class="fas fa-box-open empty-icon" style="color:#9ca3af;opacity:0.4"></i>
         <h3>Žádné zásoby</h3>
         <p>Přidejte první položku, kterou chcete na chatě sledovat.</p>
       </div>`;
@@ -344,18 +344,18 @@ function renderInventoryRow(item: InventoryItem): HTMLElement {
   const badgeLabel = item.status === 'OK' ? 'Dostatek' : item.status === 'LOW' ? 'Málo' : 'Došlo';
 
   const locationHtml = item.location
-    ? `<span class="inv-meta-location"><i class="fas fa-map-marker-alt"></i> ${item.location}</span>`
+    ? `<span class="inv-meta-location">${item.location}</span>`
     : '';
   const updatedByHtml = item.updatedBy
-    ? `<span class="inv-meta-updated"><i class="fas fa-user-pen"></i> ${item.updatedBy.username}</span>`
+    ? `<span class="inv-meta-updated">${item.updatedBy.username}</span>`
     : '';
   const metaHtml = (locationHtml || updatedByHtml)
     ? `<div class="inv-item-meta">${locationHtml}${updatedByHtml}</div>`
     : '';
 
   const cartBtn = item.inCart
-    ? `<button class="btn-add-to-cart btn-in-cart" data-id="${item.id}" disabled title="Již v nákupu"><i class="fas fa-shopping-cart"></i> Na seznamu</button>`
-    : `<button class="btn-add-to-cart" data-id="${item.id}" title="Přidat do nákupního seznamu"><i class="fas fa-cart-plus"></i> Do nákupu</button>`;
+    ? `<button class="btn-add-to-cart btn-in-cart" data-id="${item.id}" disabled title="Již v nákupu">Na seznamu</button>`
+    : `<button class="btn-add-to-cart" data-id="${item.id}" title="Přidat do nákupního seznamu">+ Do nákupu</button>`;
 
   row.innerHTML = `
     <span class="badge ${badgeClass}">${badgeLabel}</span>
@@ -365,8 +365,8 @@ function renderInventoryRow(item: InventoryItem): HTMLElement {
     </div>
     <div class="item-actions">
       ${cartBtn}
-      <button class="ghost-btn btn-inv-edit" data-id="${item.id}" title="Upravit"><i class="fas fa-pen"></i></button>
-      <button class="ghost-btn btn-inv-delete" data-id="${item.id}" title="Smazat"><i class="fas fa-trash"></i></button>
+      <button class="ghost-btn btn-inv-edit" data-id="${item.id}" title="Upravit">✎</button>
+      <button class="ghost-btn btn-inv-delete" data-id="${item.id}" title="Smazat">×</button>
     </div>`;
 
   return row;
@@ -470,7 +470,7 @@ function renderShoppingLists(lists: ShoppingList[], grid: HTMLElement): void {
   if (lists.length === 0) {
     grid.innerHTML = `
       <div class="empty-state">
-        <i class="fas fa-shopping-basket empty-icon"></i>
+        <i class="fas fa-shopping-basket empty-icon" style="color:#9ca3af;opacity:0.4"></i>
         <h3>Žádné aktivní nákupy</h3>
         <p>Klikněte na <strong>+ Nový košík</strong> a vytvořte první seznam.</p>
       </div>`;
@@ -501,11 +501,11 @@ function renderShoppingLists(lists: ShoppingList[], grid: HTMLElement): void {
           <span class="shopping-card-meta">Přidal(a) ${list.createdBy?.username ?? 'Neznámý'}</span>
         </div>
         <div class="shopping-card-header-actions">
-          <button class="btn-share-list btn-icon-action btn-icon-share" data-id="${list.id}" data-name="${list.name.replace(/"/g, '&quot;')}" title="Sdílet do chatu"><i class="fas fa-bullhorn"></i></button>
-          ${allDone ? `<button class="btn-archive-list btn-icon-action btn-icon-success" data-id="${list.id}" title="Archivovat seznam"><i class="fas fa-archive"></i></button>` : ''}
-          ${canEdit ? `<button class="btn-delete-list btn-icon-action btn-icon-danger" data-id="${list.id}" title="Smazat seznam"><i class="fas fa-trash"></i></button>` : ''}
+          <button class="btn-share-list btn-icon-action btn-icon-share" data-id="${list.id}" data-name="${list.name.replace(/"/g, '&quot;')}" title="Sdílet do chatu">↗</button>
+          ${allDone ? `<button class="btn-archive-list btn-icon-action btn-icon-success" data-id="${list.id}" title="Archivovat seznam">✓</button>` : ''}
+          ${canEdit ? `<button class="btn-delete-list btn-icon-action btn-icon-danger" data-id="${list.id}" title="Smazat seznam">×</button>` : ''}
           <button class="btn-collapse-list" title="${isCollapsed ? 'Rozbalit' : 'Sbalit'}" data-list-id="${list.id}" aria-label="Přepnout sbalení">
-            <i class="fas fa-chevron-up collapse-icon"></i>
+            <span class="collapse-icon">▼</span>
           </button>
         </div>
       </div>
@@ -521,7 +521,7 @@ function renderShoppingLists(lists: ShoppingList[], grid: HTMLElement): void {
       <form class="shopping-add-item-form" data-list-id="${list.id}">
         <div class="shopping-input-wrapper">
           <input type="text" class="shopping-add-input" placeholder="Přidat položku..." required autocomplete="off" />
-          <button type="submit" class="shopping-add-btn" title="Přidat"><i class="fas fa-arrow-up"></i></button>
+          <button type="submit" class="shopping-add-btn" title="Přidat">↑</button>
         </div>
       </form>`;
 
@@ -543,7 +543,7 @@ function renderShoppingLists(lists: ShoppingList[], grid: HTMLElement): void {
           isAdminUser;
 
         const bringBadge = item.status === 'bring_from_home'
-          ? '<span class="shopping-item-badge bring-badge"><i class="fas fa-home"></i> Z domova</span>'
+          ? '<span class="shopping-item-badge bring-badge">Z domova</span>'
           : '';
 
         const purchasedBadge =
@@ -552,7 +552,7 @@ function renderShoppingLists(lists: ShoppingList[], grid: HTMLElement): void {
             : '';
 
         const deleteBtn = canDeleteItem
-          ? `<button class="btn-delete-item" title="Smazat položku" data-item-id="${item.id}"><i class="fas fa-times"></i></button>`
+          ? `<button class="btn-delete-item" title="Smazat položku" data-item-id="${item.id}">×</button>`
           : '';
 
         const actionBtn = `
@@ -572,7 +572,7 @@ function renderShoppingLists(lists: ShoppingList[], grid: HTMLElement): void {
     } else {
       itemsHTML += `
         <div class="empty-list-container">
-          <i class="fas fa-shopping-basket empty-list-icon"></i>
+          <i class="fas fa-shopping-basket empty-list-icon" style="color:#9ca3af;opacity:0.4"></i>
           <p class="empty-list-text">Seznam je prázdný.</p>
         </div>`;
     }
@@ -582,7 +582,7 @@ function renderShoppingLists(lists: ShoppingList[], grid: HTMLElement): void {
     const footerHTML = allDone ? `
       <div class="shopping-card-footer">
         <button class="btn-resolve-list btn-archive-list" data-id="${list.id}">
-          <i class="fas fa-archive"></i> Archivovat / Uzavřít
+          Archivovat / Uzavřít
         </button>
       </div>` : '';
 
@@ -681,7 +681,7 @@ async function openShareDialog(listId: string, listName: string): Promise<void> 
     const mainOpt = document.createElement('button');
     mainOpt.className = 'share-thread-option';
     mainOpt.dataset.id = '__main__';
-    mainOpt.innerHTML = '<i class="fas fa-house"></i><span>Hlavní chat</span>';
+    mainOpt.innerHTML = '<span>Hlavní chat</span>';
     mainOpt.addEventListener('click', () => selectThread(null, 'Hlavní chat'));
     threadListEl.appendChild(mainOpt);
 
@@ -689,7 +689,7 @@ async function openShareDialog(listId: string, listName: string): Promise<void> 
       const opt = document.createElement('button');
       opt.className = 'share-thread-option';
       opt.dataset.id = t.id;
-      opt.innerHTML = `<i class="fas fa-comment"></i><span>${t.name}</span>`;
+      opt.innerHTML = `<span>${t.name}</span>`;
       opt.addEventListener('click', () => selectThread(t.id, t.name));
       threadListEl.appendChild(opt);
     }
@@ -751,7 +751,7 @@ async function openShareDialog(listId: string, listName: string): Promise<void> 
     const opt = document.createElement('button');
     opt.className = 'share-thread-option';
     opt.dataset.id = created.id;
-    opt.innerHTML = `<i class="fas fa-comment"></i><span>${created.name}</span>`;
+    opt.innerHTML = `<span>${created.name}</span>`;
     opt.addEventListener('click', () => selectThread(created.id, created.name));
     threadListEl.appendChild(opt);
     ($<HTMLInputElement>('share-note-thread-name')!).value = '';

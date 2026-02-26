@@ -13,7 +13,7 @@ function getTemplate(): string {
   <div class="main-content-reconstruction">
     <div class="reconstruction-card">
       <div class="reconstruction-header">
-        <h2><i class="fas fa-hammer"></i> Rekonstrukce</h2>
+        <h2>Rekonstrukce</h2>
         <div class="budget-container">
           <div class="budget-labels">
             <span class="budget-title">Celkový rozpočet</span>
@@ -32,24 +32,24 @@ function getTemplate(): string {
         <!-- Idea column -->
         <div class="kanban-column col-navrzeno">
           <div class="kanban-column-header">
-            <i class="fas fa-lightbulb"></i> Nápady
-            <button class="add-col-btn gallery-btn" data-category="idea" style="margin-left:auto"><i class="fas fa-plus"></i></button>
+            Nápady
+            <button class="add-col-btn gallery-btn" data-category="idea" style="margin-left:auto">+</button>
           </div>
           <div class="kanban-column-body" id="list-idea"></div>
         </div>
         <!-- Company column -->
         <div class="kanban-column col-schvaleno">
           <div class="kanban-column-header">
-            <i class="fas fa-building"></i> Firmy / Kontakty
-            <button class="add-col-btn gallery-btn" data-category="company" style="margin-left:auto"><i class="fas fa-plus"></i></button>
+            Firmy / Kontakty
+            <button class="add-col-btn gallery-btn" data-category="company" style="margin-left:auto">+</button>
           </div>
           <div class="kanban-column-body" id="list-company"></div>
         </div>
         <!-- Task column -->
         <div class="kanban-column col-probehlo">
           <div class="kanban-column-header">
-            <i class="fas fa-tasks"></i> Úkoly
-            <button class="add-col-btn gallery-btn" data-category="task" style="margin-left:auto"><i class="fas fa-plus"></i></button>
+            Úkoly
+            <button class="add-col-btn gallery-btn" data-category="task" style="margin-left:auto">+</button>
           </div>
           <div class="kanban-column-body" id="list-task"></div>
         </div>
@@ -64,7 +64,7 @@ function getTemplate(): string {
       <div class="rec-modal-header">
         <h2 id="add-reconstruction-title">Nová položka</h2>
         <button class="modal-close-btn-icon" data-close="add-reconstruction-modal" title="Zavřít">
-          <i class="fas fa-times"></i>
+          ×
         </button>
       </div>
 
@@ -90,15 +90,15 @@ function getTemplate(): string {
         <!-- Nápad -->
         <div id="dynamic-fields-idea" class="dynamic-fields">
           <div class="form-group">
-            <label class="form-label" for="rec-link-idea"><i class="fas fa-link form-label-icon"></i> Odkaz na e-shop / inspiraci</label>
+            <label class="form-label" for="rec-link-idea">Odkaz na e-shop / inspiraci</label>
             <input type="url" id="rec-link-idea" class="form-input" placeholder="https://www.example.cz/produkt" />
           </div>
           <div class="form-group">
-            <label class="form-label" for="rec-thumbnail"><i class="fas fa-image form-label-icon"></i> Náhledový obrázek (URL)</label>
+            <label class="form-label" for="rec-thumbnail">Náhledový obrázek (URL)</label>
             <input type="url" id="rec-thumbnail" class="form-input" placeholder="https://cdn.example.cz/obrazek.jpg" />
           </div>
           <div class="form-group">
-            <label class="form-label" for="rec-cost-idea"><i class="fas fa-coins form-label-icon"></i> Odhadovaná cena (Kč)</label>
+            <label class="form-label" for="rec-cost-idea">Odhadovaná cena (Kč)</label>
             <input type="number" id="rec-cost-idea" class="form-input" placeholder="0" min="0" step="100" />
           </div>
         </div>
@@ -107,16 +107,16 @@ function getTemplate(): string {
         <div id="dynamic-fields-company" class="dynamic-fields hidden">
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label" for="rec-phone"><i class="fas fa-phone form-label-icon"></i> Telefon</label>
+              <label class="form-label" for="rec-phone">Telefon</label>
               <input type="tel" id="rec-phone" class="form-input" placeholder="+420 123 456 789" />
             </div>
             <div class="form-group">
-              <label class="form-label" for="rec-email"><i class="fas fa-envelope form-label-icon"></i> E-mail</label>
+              <label class="form-label" for="rec-email">E-mail</label>
               <input type="email" id="rec-email" class="form-input" placeholder="firma@example.cz" />
             </div>
           </div>
           <div class="form-group">
-            <label class="form-label" for="rec-link-company"><i class="fas fa-globe form-label-icon"></i> Web / Odkaz</label>
+            <label class="form-label" for="rec-link-company">Web / Odkaz</label>
             <input type="url" id="rec-link-company" class="form-input" placeholder="https://www.firma.cz" />
           </div>
           <div class="form-group">
@@ -134,11 +134,11 @@ function getTemplate(): string {
         <div id="dynamic-fields-task" class="dynamic-fields hidden">
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label" for="rec-deadline"><i class="fas fa-calendar-alt form-label-icon"></i> Termín </label>
+              <label class="form-label" for="rec-deadline">Termín </label>
               <input type="date" id="rec-deadline" class="form-input" />
             </div>
             <div class="form-group">
-              <label class="form-label" for="rec-cost-task"><i class="fas fa-coins form-label-icon"></i> Odhadovaná cena (Kč)</label>
+              <label class="form-label" for="rec-cost-task">Odhadovaná cena (Kč)</label>
               <input type="number" id="rec-cost-task" class="form-input" placeholder="0" min="0" step="100" />
             </div>
           </div>
@@ -146,7 +146,6 @@ function getTemplate(): string {
 
         <div class="rec-modal-footer">
           <button type="submit" class="button-primary rec-submit-btn">
-            <i class="fas fa-check"></i>
             <span id="rec-submit-label">Přidat položku</span>
           </button>
         </div>
@@ -205,21 +204,21 @@ function renderBoard(list: any[]): void {
   if (ideaCount === 0) {
     colIdea.innerHTML = `
       <div class="kanban-empty-state">
-        <i class="fas fa-lightbulb"></i>
+        <i class="fas fa-lightbulb" style="opacity: 0.4; color: #9ca3af;"></i>
         <p>Zatím žádné nápady. Přidejte odkaz nebo fotku.</p>
       </div>`;
   }
   if (companyCount === 0) {
     colCompany.innerHTML = `
       <div class="kanban-empty-state">
-        <i class="fas fa-building"></i>
+        <i class="fas fa-building" style="opacity: 0.4; color: #9ca3af;"></i>
         <p>Zatím žádné firmy. Přidejte kontakt na řemeslníka.</p>
       </div>`;
   }
   if (taskCount === 0) {
     colTask.innerHTML = `
       <div class="kanban-empty-state">
-        <i class="fas fa-tasks"></i>
+        <i class="fas fa-tasks" style="opacity: 0.4; color: #9ca3af;"></i>
         <p>Zatím žádné úkoly. Naplánujte další krok.</p>
       </div>`;
   }
@@ -266,7 +265,7 @@ function createCard(item: any): HTMLElement {
   if (item.category === 'idea') {
     const myId = getUserId();
     const hasVoted = item.votes?.includes(myId);
-    const votesHtml = `<button class="vote-btn ${hasVoted ? 'voted-up' : ''}" data-vote="${item.id}"><i class="fas fa-heart"></i> ${item.votes?.length || 0}</button>`;
+    const votesHtml = `<button class="vote-btn ${hasVoted ? 'voted-up' : ''}" data-vote="${item.id}">❤️ ${item.votes?.length || 0}</button>`;
     
     innerHtml = `
       ${item.thumbnail ? `<div class="idea-thumbnail"><img src="${item.thumbnail}" alt="Náhled"></div>` : ''}
@@ -274,9 +273,9 @@ function createCard(item: any): HTMLElement {
         <div class="card-header">
           <div class="kanban-item-title">${item.title}</div>
           <div class="card-actions">
-            ${item.link ? `<a href="${item.link}" target="_blank" class="card-action-link" title="Otevřít e-shop"><i class="fas fa-external-link-alt"></i></a>` : ''}
-            <button class="card-action-edit" data-edit="${item.id}" title="Upravit"><i class="fas fa-edit"></i></button>
-            <button class="card-action-del" data-del="${item.id}" title="Smazat"><i class="fas fa-trash"></i></button>
+            ${item.link ? `<a href="${item.link}" target="_blank" class="card-action-link" title="Otevřít e-shop">↗</a>` : ''}
+            <button class="card-action-edit" data-edit="${item.id}" title="Upravit">✎</button>
+            <button class="card-action-del" data-del="${item.id}" title="Smazat">×</button>
           </div>
         </div>
         ${item.description ? `<div class="kanban-item-desc">${item.description.replace(/\n/g, '<br>')}</div>` : ''}
@@ -291,17 +290,17 @@ function createCard(item: any): HTMLElement {
       <div class="card-header">
         <div class="kanban-item-title">${item.title}</div>
         <div class="card-actions">
-          <button class="card-action-edit" data-edit="${item.id}" title="Upravit"><i class="fas fa-edit"></i></button>
-          <button class="card-action-del" data-del="${item.id}" title="Smazat"><i class="fas fa-trash"></i></button>
+          <button class="card-action-edit" data-edit="${item.id}" title="Upravit">✎</button>
+          <button class="card-action-del" data-del="${item.id}" title="Smazat">×</button>
         </div>
       </div>
       <div class="company-status-badge status-${item.status || 'pending'}">${getStatusLabel(item.status || 'pending')}</div>
       ${item.description ? `<div class="kanban-item-desc">${item.description.replace(/\n/g, '<br>')}</div>` : ''}
       ${(item.phone || item.email || item.link) ? `
       <div class="company-contact-row">
-        ${item.phone ? `<a href="tel:${item.phone}" class="company-action-btn"><i class="fas fa-phone"></i> Zavolat</a>` : ''}
-        ${item.email ? `<a href="mailto:${item.email}" class="company-action-btn"><i class="fas fa-envelope"></i> Napsat</a>` : ''}
-        ${item.link ? `<a href="${item.link}" target="_blank" class="company-action-btn"><i class="fas fa-globe"></i> Web</a>` : ''}
+        ${item.phone ? `<a href="tel:${item.phone}" class="company-action-btn">📞 Zavolat</a>` : ''}
+        ${item.email ? `<a href="mailto:${item.email}" class="company-action-btn">✉️ Napsat</a>` : ''}
+        ${item.link ? `<a href="${item.link}" target="_blank" class="company-action-btn">🌐 Web</a>` : ''}
       </div>` : ''}
     `;
   } else if (item.category === 'task') {
@@ -315,15 +314,15 @@ function createCard(item: any): HTMLElement {
           <div class="kanban-item-title">${item.title}</div>
         </div>
         <div class="card-actions">
-          <button class="card-action-edit" data-edit="${item.id}" title="Upravit"><i class="fas fa-edit"></i></button>
-          <button class="card-action-del" data-del="${item.id}" title="Smazat"><i class="fas fa-trash"></i></button>
+          <button class="card-action-edit" data-edit="${item.id}" title="Upravit">✎</button>
+          <button class="card-action-del" data-del="${item.id}" title="Smazat">×</button>
         </div>
       </div>
       ${item.description ? `<div class="kanban-item-desc">${item.description.replace(/\n/g, '<br>')}</div>` : ''}
       ${(item.cost || item.deadline) ? `
       <div class="card-footer">
         ${item.cost ? `<span class="card-cost">${item.cost.toLocaleString('cs-CZ')} Kč</span>` : '<span></span>'}
-        ${item.deadline ? `<span class="task-deadline ${isDeadlineNear(item.deadline) ? 'deadline-near' : ''}"><i class="far fa-calendar-alt"></i> ${formatDate(item.deadline)}</span>` : ''}
+        ${item.deadline ? `<span class="task-deadline ${isDeadlineNear(item.deadline) ? 'deadline-near' : ''}">📅 ${formatDate(item.deadline)}</span>` : ''}
       </div>` : ''}
     `;
   }

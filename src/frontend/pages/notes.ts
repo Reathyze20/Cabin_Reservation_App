@@ -21,10 +21,9 @@ function getTemplate(): string {
         <div class="notes-sidebar-header">
           <div class="notes-sidebar-title">
             <h2>Chat</h2>
-            <button id="add-tab-btn" class="button-icon" title="Nové téma"><i class="fas fa-plus"></i></button>
+            <button id="add-tab-btn" class="button-icon" title="Nové téma">+</button>
           </div>
           <div class="notes-search">
-            <i class="fas fa-search"></i>
             <input type="text" id="thread-search-input" placeholder="Hledat téma..." autocomplete="off" />
           </div>
         </div>
@@ -36,14 +35,14 @@ function getTemplate(): string {
       <!-- Right Panel: Chat Area -->
       <div class="notes-chat-area" id="notes-chat-area">
         <div class="chat-header">
-          <button id="mobile-back-btn" class="button-icon mobile-only" title="Zpět"><i class="fas fa-arrow-left"></i></button>
+          <button id="mobile-back-btn" class="button-icon mobile-only" title="Zpět">←</button>
           <div class="chat-header-info">
             <h3 id="active-thread-name">Hlavní</h3>
             <span class="chat-header-participants" id="active-thread-participants"></span>
           </div>
           <div class="chat-header-actions">
-             <button id="delete-thread-btn" class="button-icon text-danger" title="Smazat téma" style="display:none;"><i class="fas fa-trash-alt"></i></button>
-             <button id="toggle-filters-btn" class="button-icon" title="Filtry"><i class="fas fa-filter"></i></button>
+             <button id="delete-thread-btn" class="button-icon text-danger" title="Smazat téma" style="display:none;">×</button>
+             <button id="toggle-filters-btn" class="button-icon" title="Filtry">☰</button>
           </div>
         </div>
         
@@ -59,7 +58,7 @@ function getTemplate(): string {
             <label for="date-to-filter">Do:</label>
             <input type="date" id="date-to-filter" />
           </div>
-          <button id="reset-filters-btn" class="button-secondary" title="Smazat filtry"><i class="fas fa-times"></i></button>
+          <button id="reset-filters-btn" class="button-secondary" title="Smazat filtry">×</button>
         </div>
 
         <div class="chat-messages" id="notes-list">
@@ -70,8 +69,8 @@ function getTemplate(): string {
           <!-- Odjezdovy protokol panel -->
           <div class="handover-panel" id="handover-panel" style="display:none">
             <div class="handover-panel-header">
-              <span><i class="fas fa-door-open"></i> Odjezdov&yacute; protokol</span>
-              <button type="button" class="button-icon" id="handover-panel-close" title="Zavrít"><i class="fas fa-times"></i></button>
+              <span>Odjezdový protokol</span>
+              <button type="button" class="button-icon" id="handover-panel-close" title="Zavrít">×</button>
             </div>
             <div class="handover-checklist" id="handover-checklist">
               <!-- Injected by JS -->
@@ -81,14 +80,14 @@ function getTemplate(): string {
             </div>
             <div class="handover-panel-footer">
               <button type="button" class="btn-ghost-secondary" id="handover-panel-cancel">Zrušit</button>
-              <button type="button" class="button-primary" id="handover-panel-insert"><i class="fas fa-check"></i> Vložit do zprávy</button>
+              <button type="button" class="button-primary" id="handover-panel-insert">Vložit do zprávy</button>
             </div>
           </div>
           <form id="add-note-form" class="add-note-form">
-            <button type="button" class="button-icon attachment-btn" title="Přidat přílohu"><i class="fas fa-paperclip"></i></button>
-            <button type="button" class="button-icon handover-btn" id="handover-template-btn" title="Vložit odjezdový protokol"><i class="fas fa-door-open"></i></button>
+            <button type="button" class="button-icon attachment-btn" title="Přidat přílohu">📎</button>
+            <button type="button" class="button-icon handover-btn" id="handover-template-btn" title="Vložit odjezdový protokol">🚪</button>
             <textarea id="note-message-input" placeholder="Napište vzkaz…" rows="1" required></textarea>
-            <button type="submit" class="button-primary btn-icon-round send-btn" aria-label="Odeslat"><i class="fas fa-paper-plane"></i></button>
+            <button type="submit" class="button-primary btn-icon-round send-btn" aria-label="Odeslat">↑</button>
           </form>
         </div>
       </div>
@@ -138,8 +137,8 @@ function formatMessage(raw: string): string {
   const parts = lines.map(line => {
     const done = line.match(/^\[x\]\s*(.*)/i);
     const todo = line.match(/^\[ \]\s*(.*)/);
-    if (done) return `<span class="msg-cb msg-cb-done"><i class="fas fa-check-circle"></i><span>${done[1]}</span></span>`;
-    if (todo) return `<span class="msg-cb msg-cb-todo"><i class="far fa-circle"></i><span>${todo[1]}</span></span>`;
+    if (done) return `<span class="msg-cb msg-cb-done">✓ <span>${done[1]}</span></span>`;
+    if (todo) return `<span class="msg-cb msg-cb-todo">○ <span>${todo[1]}</span></span>`;
     return line === '' ? '<span class="msg-spacer"></span>' : `<span class="msg-line">${line}</span>`;
   });
   return `<div class="msg-protocol">${parts.join('')}</div>`;
@@ -175,7 +174,7 @@ function renderNotes(notes: any[]): void {
     el.className = `message-wrapper ${isMine ? 'message-mine' : 'message-other'}`;
     el.dataset.id = note.id;
 
-    const delBtn = canDel ? `<button class="delete-note-btn" title="Smazat"><i class="fas fa-trash-alt"></i></button>` : '';
+    const delBtn = canDel ? `<button class="delete-note-btn" title="Smazat">×</button>` : '';
 
     if (isMine) {
       el.innerHTML = `

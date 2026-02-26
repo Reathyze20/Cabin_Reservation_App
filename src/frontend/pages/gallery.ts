@@ -36,11 +36,10 @@ function getTemplate(): string {
       <!-- Folders view -->
       <div id="folders-view">
         <div class="gallery-header">
-        <h2><i class="fas fa-images"></i> Galerie</h2>
+        <h2>Galerie</h2>
         <div class="gallery-actions">
           <div class="search-wrapper" style="position: relative; margin-right: 10px;">
-            <i class="fas fa-search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--color-text-muted);"></i>
-            <input type="text" id="folder-search-input" placeholder="Hledat album..." style="padding-left: 35px; border-radius: var(--radius-full); border: 1px solid var(--color-border); height: 38px; width: 200px; font-size: var(--font-size-sm);">
+            <input type="text" id="folder-search-input" placeholder="Hledat album..." style="border-radius: var(--radius-full); border: 1px solid var(--color-border); height: 38px; width: 200px; font-size: var(--font-size-sm);">
           </div>
           <select id="folder-sort-select" style="border-radius: var(--radius-full); border: 1px solid var(--color-border); height: 38px; padding: 0 15px; font-size: var(--font-size-sm); background: white; cursor: pointer; margin-right: 10px;">
             <option value="date-desc">Nejnovější</option>
@@ -48,9 +47,9 @@ function getTemplate(): string {
             <option value="name-asc">A-Z</option>
             <option value="name-desc">Z-A</option>
           </select>
-          <button id="rename-folder-btn" class="gallery-btn" style="display:none"><i class="fas fa-edit"></i> Přejmenovat</button>
-          <button id="delete-folder-list-btn" class="gallery-btn gallery-btn-danger" style="display:none"><i class="fas fa-trash"></i> Smazat</button>
-          <button id="create-folder-btn" class="gallery-btn gallery-btn-primary"><i class="fas fa-plus"></i> Nové album</button>
+          <button id="rename-folder-btn" class="gallery-btn" style="display:none">Přejmenovat</button>
+          <button id="delete-folder-list-btn" class="gallery-btn gallery-btn-danger" style="display:none">Smazat</button>
+          <button id="create-folder-btn" class="gallery-btn gallery-btn-primary">+ Nové album</button>
         </div>
       </div>
       <div id="folders-grid" class="folders-grid"></div>
@@ -63,18 +62,18 @@ function getTemplate(): string {
           <h2 id="current-folder-title"></h2>
         </div>
         <div class="gallery-actions">
-          <button id="toggle-selection-btn" class="gallery-btn"><i class="fas fa-check-square"></i> Vybrat</button>
+          <button id="toggle-selection-btn" class="gallery-btn">Vybrat</button>
           <button id="delete-selected-btn" class="gallery-btn gallery-btn-danger" style="display:none">
-            <i class="fas fa-trash"></i> Smazat (<span id="selection-count">0</span>)
+            Smazat (<span id="selection-count">0</span>)
           </button>
-          <button id="upload-photo-btn" class="gallery-btn gallery-btn-primary"><i class="fas fa-cloud-upload-alt"></i> Nahrát</button>
+          <button id="upload-photo-btn" class="gallery-btn gallery-btn-primary">+ Nahrát</button>
         </div>
       </div>
       <div id="photos-grid" class="photos-grid"></div>
       <div id="pagination-controls" class="pagination-controls" style="display:none">
-        <button id="prev-page-btn" class="nav-arrow"><i class="fas fa-chevron-left"></i></button>
+        <button id="prev-page-btn" class="nav-arrow">←</button>
         <span id="page-info">1 / 1</span>
-        <button id="next-page-btn" class="nav-arrow"><i class="fas fa-chevron-right"></i></button>
+        <button id="next-page-btn" class="nav-arrow">→</button>
       </div>
     </div>
   </div>
@@ -129,7 +128,7 @@ function getTemplate(): string {
       <h2>Nahrát fotky</h2>
       <form id="upload-photo-form">
         <div class="file-upload-container">
-          <i class="fas fa-cloud-upload-alt upload-icon"></i>
+          <i class="fas fa-cloud-upload-alt upload-icon" style="opacity: 0.4; color: #9ca3af;"></i>
           <p class="file-msg">Přetáhněte soubory sem nebo klikněte na tlačítko níže.</p>
           <label class="custom-file-label">
             <input type="file" id="photo-file-input" accept="image/*" multiple />
@@ -149,7 +148,7 @@ function getTemplate(): string {
       <img id="lightbox-img" src="" alt="" />
       <div class="lightbox-caption">
         <span id="lightbox-description" class="lightbox-description"></span>
-        <button id="add-description-btn" class="add-description-btn" style="display:none"><i class="fas fa-pen"></i> Přidat vzpomínku</button>
+        <button id="add-description-btn" class="add-description-btn" style="display:none">+ Přidat vzpomínku</button>
         <div id="description-form" class="description-form" style="display:none">
           <input type="text" id="description-input" class="description-input" placeholder="Vaše vzpomínka..." />
           <button id="save-description-btn" class="save-description-btn">Uložit</button>
@@ -157,12 +156,12 @@ function getTemplate(): string {
       </div>
     </div>
     <div class="lightbox-controls">
-      <a id="lightbox-download" class="lightbox-btn" download="foto.jpg"><i class="fas fa-download"></i> Stáhnout</a>
-      <button id="lightbox-delete" class="lightbox-btn lightbox-btn-danger" style="display:none"><i class="fas fa-trash"></i> Smazat</button>
+      <a id="lightbox-download" class="lightbox-btn" download="foto.jpg">Stáhnout</a>
+      <button id="lightbox-delete" class="lightbox-btn lightbox-btn-danger" style="display:none">Smazat</button>
     </div>
-    <button id="lightbox-close" class="lightbox-close" title="Zavřít"><i class="fas fa-times"></i></button>
-    <button id="lightbox-prev" class="lightbox-arrow left"><i class="fas fa-chevron-left"></i></button>
-    <button id="lightbox-next" class="lightbox-arrow right"><i class="fas fa-chevron-right"></i></button>
+    <button id="lightbox-close" class="lightbox-close" title="Zavřít">×</button>
+    <button id="lightbox-prev" class="lightbox-arrow left">←</button>
+    <button id="lightbox-next" class="lightbox-arrow right">→</button>
   </div>
   </div>`;
 }
@@ -189,7 +188,7 @@ function renderFolders(folders: any[]): void {
   placeholder.onclick = () => showModal('create-folder-modal');
   placeholder.innerHTML = `
     <div class="folder-cover">
-      <i class="fas fa-plus"></i>
+      <i class="fas fa-plus" style="opacity: 0.4; color: #9ca3af;"></i>
     </div>
     <div class="folder-info">
       <h3>Nové album</h3>
@@ -242,7 +241,7 @@ function renderFolders(folders: any[]): void {
     // Use the first photo as cover if available, otherwise a placeholder icon
     const coverHtml = f.coverPhotoUrl 
       ? `<img src="${f.coverPhotoUrl}" alt="${f.name} cover" style="width: 100%; height: 100%; object-fit: cover;">`
-      : `<i class="fas fa-folder-open" style="font-size: 3rem; color: var(--color-primary-light); opacity: 0.5;"></i>`;
+      : `<i class="fas fa-folder-open" style="font-size: 3rem; color: #9ca3af; opacity: 0.4;"></i>`;
 
     el.innerHTML = `
       <div class="folder-checkbox-wrapper" style="${selectedFolderId ? 'opacity: 1;' : ''}">
@@ -254,8 +253,8 @@ function renderFolders(folders: any[]): void {
       <div class="folder-info">
         <h3>${f.name}</h3>
         <div class="folder-meta">
-          <span><i class="fas fa-image"></i> ${f.photoCount || 0} fotek</span>
-          <span><i class="fas fa-clock"></i> ${new Date(f.createdAt).toLocaleDateString('cs-CZ')}</span>
+          <span>${f.photoCount || 0} fotek</span>
+          <span>${new Date(f.createdAt).toLocaleDateString('cs-CZ')}</span>
         </div>
       </div>`;
     grid.appendChild(el);
@@ -330,7 +329,7 @@ function openFolder(folderId: string, name: string): void {
   currentFolderId = folderId;
   const title = $('current-folder-title');
   if (title) {
-    title.innerHTML = `<a href="#" onclick="backToFolders(); return false;" style="color: var(--color-primary); text-decoration: none;"><i class="fas fa-home"></i> Galerie</a> <i class="fas fa-chevron-right" style="font-size: 0.8em; margin: 0 5px; color: var(--color-text-muted);"></i> ${name}`;
+    title.innerHTML = `<a href="#" onclick="backToFolders(); return false;" style="color: var(--color-primary); text-decoration: none;">Galerie</a> <span style="font-size: 0.8em; margin: 0 5px; color: var(--color-text-muted);">/</span> ${name}`;
   }
   currentPage = 1;
   isSelectionMode = false;
@@ -394,9 +393,9 @@ function renderPhotos(): void {
     if (isSelectionMode && selectedPhotos.has(photo.id)) el.classList.add('selected');
     if (idx < layout.classes.length && layout.classes[idx]) el.classList.add(layout.classes[idx]);
     
-    let innerHTML = `<img src="${photo.thumb || photo.src}" alt="Foto" loading="lazy"><div class="photo-overlay"><i class="fas fa-search-plus"></i></div>`;
+    let innerHTML = `<img src="${photo.thumb || photo.src}" alt="Foto" loading="lazy"><div class="photo-overlay"></div>`;
     if (isSelectionMode) {
-      innerHTML += `<div class="photo-select-indicator">${selectedPhotos.has(photo.id) ? '<i class="fas fa-check"></i>' : ''}</div>`;
+      innerHTML += `<div class="photo-select-indicator">${selectedPhotos.has(photo.id) ? '✓' : ''}</div>`;
     }
     el.innerHTML = innerHTML;
     
@@ -428,12 +427,12 @@ function updateSelectionUI(): void {
   const sc = $('selection-count');
   if (isSelectionMode) {
     tb?.classList.add('gallery-btn-primary');
-    if (tb) tb.innerHTML = '<i class="fas fa-times"></i> Zrušit výběr';
+    if (tb) tb.innerHTML = '× Zrušit výběr';
     if (db) db.style.display = 'inline-flex';
     if (sc) sc.textContent = String(selectedPhotos.size);
   } else {
     tb?.classList.remove('gallery-btn-primary');
-    if (tb) tb.innerHTML = '<i class="fas fa-check-square"></i> Vybrat';
+    if (tb) tb.innerHTML = 'Vybrat';
     if (db) db.style.display = 'none';
   }
 }
@@ -447,7 +446,7 @@ function togglePhotoSel(id: string, el: HTMLElement): void {
   } else { 
     selectedPhotos.add(id); 
     el.classList.add('selected'); 
-    if (ind) ind.innerHTML = '<i class="fas fa-check"></i>';
+    if (ind) ind.innerHTML = '✓';
   }
   const sc = $('selection-count');
   if (sc) sc.textContent = String(selectedPhotos.size);

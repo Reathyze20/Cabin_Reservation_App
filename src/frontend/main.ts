@@ -27,7 +27,7 @@ const updateSW = registerSW({
     const toast = document.createElement('div');
     toast.className = 'toast toast-info show';
     toast.style.cursor = 'pointer';
-    toast.innerHTML = `<i class="fas fa-arrow-up-from-bracket"></i><span>Nová verze k dispozici — klikněte pro aktualizaci</span>`;
+    toast.innerHTML = `<span>Nová verze k dispozici — klikněte pro aktualizaci</span>`;
     toast.addEventListener('click', () => {
       updateSW(true);
       toast.remove();
@@ -86,7 +86,7 @@ function showApp(): void {
     if (icon) {
       animalEl.textContent = icon;
     } else {
-      animalEl.innerHTML = '<i class="fas fa-user-circle" style="color: var(--color-primary);"></i>';
+      animalEl.textContent = (getUsername() || 'U').charAt(0).toUpperCase();
     }
   }
 
@@ -126,7 +126,7 @@ function bindLoginForm(): void {
           if (data.needsVerification) {
             errEl.innerHTML = `
               <span style="color:var(--color-warning);">
-                <i class="fas fa-envelope"></i> ${data.message}
+                ✉️ ${data.message}
               </span>`;
             return;
           }
@@ -433,7 +433,7 @@ function initProfileDrawer(): void {
           if (payload.animalIcon) {
             navIcon.textContent = payload.animalIcon;
           } else {
-            navIcon.innerHTML = '<i class="fas fa-user-circle" style="color: var(--color-primary);"></i>';
+            navIcon.textContent = (getUsername() || 'U').charAt(0).toUpperCase();
           }
         }
         const dashIcon = $('avatar-picker-btn');

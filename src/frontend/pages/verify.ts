@@ -118,7 +118,7 @@ function getTemplate(): string {
                   color:#fff;font-weight:600;font-size:16px;
                   transition:all 0.2s;cursor:pointer;border:none;
                   box-shadow:0 4px 12px rgba(107,158,107,0.3);">
-          <i class="fas fa-sign-in-alt"></i> Přejít na přihlášení
+          Přejít na přihlášení
         </a>
       </div>
     </div>

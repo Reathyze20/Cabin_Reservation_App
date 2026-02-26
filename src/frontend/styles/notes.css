@@ -683,17 +683,11 @@
   padding: 1px 0;
 }
 
-.msg-cb i {
-  font-size: 13px;
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.msg-cb-done i {
+.msg-cb-done {
   color: #16a34a;
 }
 
-.msg-cb-todo i {
+.msg-cb-todo {
   color: #9ca3af;
 }
 

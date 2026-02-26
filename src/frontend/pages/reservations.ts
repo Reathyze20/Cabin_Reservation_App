@@ -126,9 +126,9 @@ function getTemplate(): string {
     <div class="card calendar-card full-calendar-card">
       <div class="calendar-header-bar">
         <div class="calendar-nav">
-          <button id="cal-prev-month" class="icon-button"><i class="fas fa-chevron-left"></i></button>
+          <button id="cal-prev-month" class="icon-button">←</button>
           <h2 id="cal-month-year-display">Březen 2026</h2>
-          <button id="cal-next-month" class="icon-button"><i class="fas fa-chevron-right"></i></button>
+          <button id="cal-next-month" class="icon-button">→</button>
         </div>
         <div class="calendar-stats" id="calendar-quick-stats">
           <!-- Quick stats will be injected here -->
@@ -145,18 +145,18 @@ function getTemplate(): string {
       </div>
 
       <div id="range-selection-hint" class="range-hint hidden">
-        <div class="range-hint-icon"><i class="fas fa-check-circle"></i></div>
+        <div class="range-hint-icon">✓</div>
         <div class="range-hint-body">
           <strong id="range-hint-text">Vyberte datum odjezdu</strong>
           <span>Klikněte na den v kalendáři</span>
         </div>
         <button type="button" id="range-cancel-btn" class="range-hint-cancel" title="Zrušit výběr">
-          <i class="fas fa-times"></i>
+          ×
         </button>
       </div>
 
       <div class="panel-actions">
-        <button id="btn-new-reservation" class="button-primary"><i class="fas fa-plus"></i> Nová rezervace</button>
+        <button id="btn-new-reservation" class="button-primary">+ Nová rezervace</button>
       </div>
     </div>
 
@@ -192,7 +192,7 @@ function getTemplate(): string {
         <input type="hidden" id="reservation-id" />
         
         <div id="backup-warning-message" class="backup-warning hidden">
-          <i class="fas fa-exclamation-triangle"></i>
+          <span style="color:#f59e0b;font-size:18px">⚠</span>
           <div><strong>Pozor:</strong> Vybraný termín je již obsazen.<br>Rezervace bude vytvořena jako <strong>záložní</strong>.</div>
         </div>
 
@@ -232,7 +232,7 @@ function getTemplate(): string {
 
         <div class="booking-footer">
           <button type="button" id="modal-delete-button" class="btn-ghost-danger hidden">
-            <i class="fas fa-trash-alt"></i> Odstranit rezervaci
+            Odstranit rezervaci
           </button>
           <div class="booking-footer-right">
             <button type="submit" id="modal-submit-button" class="button-primary">Potvrdit rezervaci</button>
@@ -577,9 +577,9 @@ function updateQuickStats() {
   }
 
   statsContainer.innerHTML = `
-    <span class="stat-badge"><i class="fas fa-bed"></i> Obsazeno: <strong>${bookedDays.size}</strong> dní</span>
-    <span class="stat-badge free"><i class="fas fa-door-open"></i> Volno: <strong>${freeDays}</strong> dní</span>
-    <span class="stat-badge weekend"><i class="fas fa-calendar-check"></i> Volné víkendy: <strong>${freeWeekends}</strong></span>
+    <span class="stat-badge">Obsazeno: <strong>${bookedDays.size}</strong> dní</span>
+    <span class="stat-badge free">Volno: <strong>${freeDays}</strong> dní</span>
+    <span class="stat-badge weekend">Volné víkendy: <strong>${freeWeekends}</strong></span>
   `;
 }
 
@@ -617,7 +617,7 @@ function showReservationDetail(r: Reservation & { userColor?: string; userAnimal
     <div class="res-detail-card" style="--user-color: ${c};">
 
       <button class="detail-back-btn">
-        <i class="fas fa-arrow-left"></i> Zpět na seznam
+        ← Zpět na seznam
       </button>
 
       <div class="detail-header">
@@ -649,27 +649,27 @@ function showReservationDetail(r: Reservation & { userColor?: string; userAnimal
         ${r.handoverNote ? `
         <div class="detail-meta-row detail-meta-row--notes">
           <span class="detail-meta-label">Vzkaz</span>
-          <span class="detail-meta-value detail-notes-text"><i class="fas fa-handshake" style="color:#f59e0b;margin-right:4px;"></i>${r.handoverNote.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>
+          <span class="detail-meta-value detail-notes-text">${r.handoverNote.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>
         </div>` : ''}
       </div>
 
       ${canEdit ? `
       <div class="detail-actions">
         <button class="detail-btn detail-btn-primary edit-btn" data-id="${r.id}">
-          <i class="fas fa-pencil-alt"></i> Upravit
+          Upravit
         </button>
         ${admin ? `<button class="detail-btn detail-btn-secondary assign-btn" data-id="${r.id}">
-          <i class="fas fa-user-tag"></i> Přiřadit jinému
+          Přiřadit jinému
         </button>` : ''}
         <button class="detail-btn detail-btn-ghost-danger delete-btn" data-id="${r.id}">
-          <i class="fas fa-trash-alt"></i> Smazat rezervaci
+          Smazat rezervaci
         </button>
       </div>` : ''}
 
       ${!isMine ? `
       <div class="detail-actions" id="watcher-slot-${r.id}">
         <button class="detail-btn" disabled>
-          <i class="fas fa-spinner fa-spin"></i> Načítám…
+          Načítám…
         </button>
       </div>` : ''}
 
@@ -786,20 +786,20 @@ function renderReservationList(reservations: typeof currentReservations, emptyMs
     const d2 = new Date(r.to);
 
     const notesHTML = r.notes
-      ? `<p class="res-notes" style="margin-top: 5px;"><i class="fas fa-sticky-note"></i> ${r.notes.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>`
+      ? `<p class="res-notes" style="margin-top: 5px;">${r.notes.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>`
       : '';
 
     const handoverHTML = r.handoverNote
-      ? `<div class="res-handover-note" style="margin-top: 10px; background: #fffbeb; padding: 10px; border-radius: 8px; border-left: 4px solid #f59e0b;"><i class="fas fa-handshake"></i> <strong>Vzkaz pro další:</strong> ${r.handoverNote.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>`
+      ? `<div class="res-handover-note" style="margin-top: 10px; background: #fffbeb; padding: 10px; border-radius: 8px; border-left: 4px solid #f59e0b;"><strong>Vzkaz pro další:</strong> ${r.handoverNote.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>`
       : '';
 
     let actions = '';
     if (isMine || admin) {
       actions = `
         <div class="res-card-actions">
-          <button class="edit-btn" data-id="${r.id}" title="Upravit"><i class="fas fa-pencil-alt"></i></button>
-          ${admin ? `<button class="assign-btn" data-id="${r.id}" title="Přiřadit"><i class="fas fa-user-plus"></i></button>` : ''}
-          <button class="delete-btn" data-id="${r.id}" title="Smazat"><i class="fas fa-trash-alt"></i></button>
+          <button class="edit-btn" data-id="${r.id}" title="Upravit">✎</button>
+          ${admin ? `<button class="assign-btn" data-id="${r.id}" title="Přiřadit">➤</button>` : ''}
+          <button class="delete-btn" data-id="${r.id}" title="Smazat">×</button>
         </div>`;
     }
 
@@ -985,11 +985,11 @@ async function toggleWatch(reservationId: string, currentlyWatching: boolean): P
 function buildWatchButton(reservationId: string, watching: boolean): string {
   return watching
     ? `<button class="detail-btn detail-btn-watching watch-toggle-btn" data-res-id="${reservationId}" data-watching="true">
-         <i class="fas fa-dog"></i>&nbsp; Hlídám · Zrušit hlídání
+         🐕 Hlídám · Zrušit hlídání
        </button>`
     : `<button class="detail-btn detail-btn-watch watch-toggle-btn" data-res-id="${reservationId}" data-watching="false"
          title="Dostaneš zprávu na nástěnce, pokud bude termín uvolněn">
-         <i class="fas fa-bell"></i>&nbsp; Hlídat termín
+         🔔 Hlídat termín
        </button>`;
 }
 
@@ -999,7 +999,7 @@ function bindWatchButton(btn: HTMLButtonElement | null): void {
     const resId    = btn.dataset.resId!;
     const watching = btn.dataset.watching === 'true';
     btn.disabled   = true;
-    btn.innerHTML  = '<i class="fas fa-spinner fa-spin"></i> Ukládám…';
+    btn.innerHTML  = '⏳ Ukládám…';
     const newState = await toggleWatch(resId, watching);
     const wrapper  = document.createElement('div');
     wrapper.innerHTML = buildWatchButton(resId, newState);

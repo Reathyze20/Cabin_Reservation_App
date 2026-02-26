@@ -451,10 +451,9 @@
 
 .empty-icon-duotone {
   font-size: 34px;
-  color: var(--color-primary);
-  opacity: 0.75;
+  color: #9ca3af;
+  opacity: 0.4;
   margin-bottom: 2px;
-  filter: drop-shadow(0 4px 8px rgba(217, 119, 6, 0.15));
 }
 
 .empty-text {
@@ -473,7 +472,6 @@
 .empty-cta {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
   margin-top: 4px;
   padding: 8px 18px;
   background: #fff;
@@ -508,21 +506,10 @@
 .dashboard-card-header-title {
   display: flex;
   align-items: center;
-  gap: 7px;
   font-size: 14px;
   font-weight: 600;
   color: #374151;
   line-height: 1;
-}
-
-.dashboard-card-header-title i {
-  font-size: 13px;
-  color: var(--color-primary);
-  opacity: 0.85;
-  display: inline-flex;
-  align-items: center;
-  width: 16px;
-  justify-content: center;
 }
 
 .dashboard-card-header-link {

@@ -970,13 +970,13 @@ div.shopping-list-card.card:hover {
   transform: scale(1.12);
 }
 
-.shopping-status-btn i {
+.shopping-status-btn span {
   font-size: 19px;
   transition: color 0.18s;
 }
 
 .si-pending   { color: var(--color-border); }
-.si-bring     { color: #f59e0b; }
+.si-bring     { color: #f59e0b; font-size: 16px; }
 .si-purchased { color: var(--color-success, #22c55e); }
 
 /* ── Item name ─────────────────────────────────────────────────────────────── */
