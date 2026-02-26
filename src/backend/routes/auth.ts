@@ -5,6 +5,8 @@ import { JWT_SECRET } from "../../config/config";
 import prisma from "../../utils/prisma";
 import logger from "../../utils/logger";
 
+import { sendVerificationEmail } from "../../utils/email";
+
 const router = Router();
 
 // ============================================================================
@@ -26,7 +28,25 @@ router.post("/login", async (req: Request, res: Response) => {
     }
 
     if (!user.isEmailVerified && user.role !== "admin") {
-      return res.status(403).json({ message: "Vaše e-mailová adresa ještě nebyla ověřena. Prosím, dokončete registraci." });
+      let code = user.verificationCode;
+      if (!code) {
+        code = Math.floor(100000 + Math.random() * 900000).toString();
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { verificationCode: code }
+        });
+      }
+
+      try {
+        await sendVerificationEmail(user.email as string, code as string);
+        return res.status(403).json({ message: "Vaše e-mailová adresa ještě nebyla ověřena. Odeslali jsme vám nový ověřovací kód na e-mail." });
+      } catch (err) {
+        logger.error("AUTH", "Failed to resend verification email during login", { error: String(err) });
+        return res.status(403).json({
+          message: "Vaše e-mailová adresa ještě nebyla ověřena a e-mail se nepodařilo odeslat. Kontaktujte administrátora.",
+          testCode: code
+        });
+      }
     }
 
     const token = jwt.sign(
@@ -98,12 +118,20 @@ router.post("/register", async (req: Request, res: Response) => {
     });
 
     if (!isEmailVerified) {
-      // Zde simulujeme odeslani emailu
-      logger.info("AUTH", `=========================================`);
-      logger.info("AUTH", `SIMULACE E-MAILU pro ${email}`);
-      logger.info("AUTH", `Váš ověřovací kód je: ${verificationCode}`);
-      logger.info("AUTH", `=========================================`);
-      res.status(201).json({ message: "Registrace proběhla úspěšně. Byl odeslán ověřovací kód." });
+      if (verificationCode) {
+        try {
+          await sendVerificationEmail(email, verificationCode);
+          res.status(201).json({ message: "Registrace proběhla úspěšně. Byl odeslán ověřovací kód." });
+        } catch (emailError) {
+          logger.error("AUTH", `E-mail se nepodařilo odeslat pro ${email}`, { error: String(emailError) });
+          logger.info("AUTH", `=== NOUZOVÝ OVĚŘOVACÍ KÓD PRO TESTOVÁNÍ: ${verificationCode} ===`);
+          // Můžeme uživatele registrovat, ale upozornit na chybu odesílání
+          res.status(201).json({
+            message: "Registrace proběhla, ale e-mail s kódem se nepodařilo odeslat. Kontaktujte prosím administrátora.",
+            testCode: verificationCode
+          });
+        }
+      }
     } else {
       res.status(201).json({ message: "Registrace úspěšná (jste admin)." });
     }

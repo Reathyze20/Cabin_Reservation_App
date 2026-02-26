@@ -120,7 +120,21 @@ function bindLoginForm(): void {
       });
       const data = await res.json();
       if (!res.ok) {
-        if (errEl) errEl.textContent = data.message || data.error || 'Chyba přihlášení';
+        if (errEl) {
+          if (data.testCode) {
+            errEl.innerHTML = `${data.message || data.error}<br><br><strong>Nouzový kód (login) pro testování: <span style="font-size:1.2em; letter-spacing:2px; color:var(--color-primary);">${data.testCode}</span></strong>`;
+
+            // Automaticky ukázat verify section po chvíli
+            setTimeout(() => {
+              hide($('login-section'));
+              show($('verify-section'));
+              $<HTMLInputElement>('verify-username')!.value = username;
+              $<HTMLInputElement>('verify-code')!.value = data.testCode;
+            }, 4000);
+          } else {
+            errEl.textContent = data.message || data.error || 'Chyba přihlášení';
+          }
+        }
         return;
       }
       setAuth({
@@ -160,11 +174,27 @@ function bindRegisterForm(): void {
         return;
       }
 
-      if (data.message && data.message.includes('ověřovací kód')) {
-        // Skrýt registraci, ukázat verify section
-        hide($('register-section'));
-        show($('verify-section'));
-        $<HTMLInputElement>('verify-username')!.value = username;
+      if (data.message && (data.message.includes('ověřovací kód') || data.message.includes('e-mail s kódem se nepodařilo odeslat'))) {
+        // Zobrazit informativní hlášku, popř. s nouzovým kódem
+        if (msgEl) {
+          if (data.testCode) {
+            msgEl.innerHTML = `${data.message}<br><br><strong>Nouzový kód pro testování: <span style="font-size:1.2em; letter-spacing:2px; color:var(--color-primary);">${data.testCode}</span></strong>`;
+            msgEl.style.color = 'var(--color-warning)';
+          } else {
+            msgEl.textContent = data.message;
+            msgEl.style.color = data.message.includes('nepodařilo') ? 'var(--color-danger)' : 'var(--color-success)';
+          }
+        }
+
+        setTimeout(() => {
+          hide($('register-section'));
+          show($('verify-section'));
+          $<HTMLInputElement>('verify-username')!.value = username;
+          // Pokusíme-li se usnadnit práci, můžeme kód rovnou vypsat
+          if (data.testCode) {
+            $<HTMLInputElement>('verify-code')!.value = data.testCode;
+          }
+        }, data.testCode || data.message.includes('nepodařilo') ? 4000 : 1000); // Necháme chybu svítit déle
       } else {
         if (msgEl) { msgEl.textContent = 'Registrace úspěšná, přihlaste se.'; msgEl.style.color = 'var(--color-success)'; }
         setTimeout(() => {
