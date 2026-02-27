@@ -53,6 +53,12 @@ jobs:
             cp -R data/uploads /tmp/cabin_data_backup/
           fi
 
+          # Backup .env file (contains sensitive credentials)
+          if [ -f ".env" ]; then
+            echo "Backing up .env file..."
+            cp .env /tmp/cabin_data_backup/.env
+          fi
+
           echo "=== Updating code ==="
           # Force-reset to remote main (avoids merge conflicts from
           # package-lock.json or any server-side file modifications)
@@ -72,33 +78,40 @@ jobs:
             rm -rf data/uploads
             cp -R /tmp/cabin_data_backup/uploads data/
           fi
+
+          # Restore .env file
+          if [ -f "/tmp/cabin_data_backup/.env" ]; then
+            echo "Restoring .env file..."
+            cp /tmp/cabin_data_backup/.env .env
+          fi
+
           rm -rf /tmp/cabin_data_backup
 
           echo "=== Configuring environment ==="
-          # Create .env file from GitHub secrets if provided
-          if [ -n "${{ secrets.DATABASE_URL }}" ] && [ "${{ secrets.DATABASE_URL }}" != "" ]; then
-            echo "Creating .env from GitHub secrets..."
-            cat > .env << EOF
+          # Create .env file from GitHub secrets ONLY if .env doesn't already exist
+          if [ ! -f ".env" ]; then
+            if [ -n "${{ secrets.DATABASE_URL }}" ] && [ "${{ secrets.DATABASE_URL }}" != "" ]; then
+              echo "Creating .env from GitHub secrets..."
+              cat > .env << EOF
           DATABASE_URL=${{ secrets.DATABASE_URL }}
           JWT_SECRET=${{ secrets.JWT_SECRET }}
           PORT=3000
           EOF
-          fi
-          
-          if [ ! -f ".env" ]; then
-            echo "ERROR: .env file not found and no GitHub secrets configured!"
-            echo ""
-            echo "Option 1: Create .env manually on server with:"
-            echo "  DATABASE_URL=postgresql://user:password@localhost:5432/dbname"
-            echo "  JWT_SECRET=your-secret-key"
-            echo "  PORT=3000"
-            echo ""
-            echo "Option 2: Add these secrets to GitHub repository:"
-            echo "  - DATABASE_URL"
-            echo "  - JWT_SECRET"
-            exit 1
+            else
+              echo "ERROR: .env file not found and no GitHub secrets configured!"
+              echo ""
+              echo "Option 1: Create .env manually on server with:"
+              echo "  DATABASE_URL=postgresql://user:password@localhost:5432/dbname"
+              echo "  JWT_SECRET=your-secret-key"
+              echo "  PORT=3000"
+              echo ""
+              echo "Option 2: Add these secrets to GitHub repository:"
+              echo "  - DATABASE_URL"
+              echo "  - JWT_SECRET"
+              exit 1
+            fi
           else
-            echo ".env file found on server"
+            echo ".env file exists (restored from backup or already on server)"
           fi
 
           echo "=== Installing dependencies ==="
