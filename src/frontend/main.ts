@@ -191,6 +191,17 @@ function bindRegisterForm(): void {
 
       // ── New token-based flow: don't login, show activation message ─────
       if (data.requiresVerification) {
+        // ✨ AUTO-VERIFY: Pokud máme testToken (e-mail se nepodařilo odeslat), automaticky spustíme verify
+        if (data.testToken) {
+          showToast('E-mail se nepodařil odeslat — automaticky aktivujeme váš účet...', 'info');
+          setTimeout(() => {
+            window.location.hash = `#/verify?token=${data.testToken}`;
+            window.location.reload();
+          }, 1500);
+          return;
+        }
+
+        // Standardní flow: e-mail byl odeslán, čekáme na kliknutí na odkaz
         const registerSection = $('register-section');
         if (registerSection) {
           registerSection.innerHTML = `
@@ -201,12 +212,6 @@ function bindRegisterForm(): void {
                 Děkujeme za registraci!<br>
                 Poslali jsme vám e-mail s odkazem pro aktivaci účtu na adresu <strong>${email}</strong>.
               </p>
-              ${data.testToken ? `
-                <div style="background:var(--color-bg-secondary, #2a2a3e);padding:12px;border-radius:8px;margin-bottom:24px;">
-                  <p style="color:var(--color-warning);font-size:13px;margin:0 0 4px;">! E-mail se nepodařilo odeslat. Testovací token:</p>
-                  <code style="font-size:11px;word-break:break-all;color:var(--color-text-light);">${data.testToken}</code>
-                </div>
-              ` : ''}
               <a href="#" id="back-to-login-from-verify"
                  style="color:var(--color-primary);text-decoration:underline;cursor:pointer;">
                 ← Vrátit se na přihlášení
