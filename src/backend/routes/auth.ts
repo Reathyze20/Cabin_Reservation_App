@@ -5,11 +5,7 @@ import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../../config/config";
 import prisma from "../../utils/prisma";
 import logger from "../../utils/logger";
-
-// Legacy PIN-based email (nodemailer)
-import { sendVerificationEmail as sendPinEmail } from "../../utils/email";
-// New token-based email (Resend)
-import { sendVerificationEmail as sendTokenEmail } from "../../utils/mailer";
+import { sendVerificationEmailWithPIN, sendVerificationEmailWithToken } from "../../utils/email";
 
 const router = Router();
 
@@ -52,7 +48,7 @@ router.post("/login", async (req: Request, res: Response) => {
       }
 
       try {
-        await sendPinEmail(user.email as string, code as string);
+        await sendVerificationEmailWithPIN(user.email as string, code as string);
         return res.status(403).json({ message: "Vaše e-mailová adresa ještě nebyla ověřena. Odeslali jsme vám nový ověřovací kód na e-mail." });
       } catch (err) {
         logger.error("AUTH", "Failed to resend verification email during login", { error: String(err) });
@@ -147,9 +143,9 @@ router.post("/register", async (req: Request, res: Response) => {
       });
     }
 
-    // Send token-based verification email via Resend
+    // Send token-based verification email via Amazon SES
     try {
-      await sendTokenEmail(email, verificationToken!);
+      await sendVerificationEmailWithToken(email, verificationToken!);
 
       res.status(201).json({
         message: "Děkujeme za registraci! Poslali jsme vám e-mail s odkazem pro aktivaci účtu. Zkontrolujte svou schránku.",
