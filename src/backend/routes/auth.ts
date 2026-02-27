@@ -60,7 +60,7 @@ router.post("/login", async (req: Request, res: Response) => {
     }
 
     const token = jwt.sign(
-      { userId: user.id, username: user.username, role: user.role },
+      { userId: user.id, username: user.username, role: user.role, isSuperAdmin: user.isSuperAdmin },
       JWT_SECRET,
       { expiresIn: "30d" }
     );
@@ -72,6 +72,7 @@ router.post("/login", async (req: Request, res: Response) => {
       role: user.role,
       color: user.color,
       animalIcon: user.animalIcon,
+      isSuperAdmin: user.isSuperAdmin,
     });
   } catch (error) {
     logger.error("AUTH", "Login error", { error: String(error), stack: (error as Error).stack });

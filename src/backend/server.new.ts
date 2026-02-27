@@ -11,6 +11,7 @@ import prisma from "../utils/prisma";
 import logger from "../utils/logger";
 import { requestContext } from "../utils/asyncContext";
 import { httpLogger } from "../middleware/httpLogger";
+import { checkBannedUser } from "../middleware/bannedUserMiddleware";
 
 // Import routes
 import authRoutes from "./routes/auth";
@@ -28,6 +29,7 @@ import shoppingListsRoutes from "./routes/shoppingLists";
 import adminRoutes from "./routes/admin";
 import inventoryRoutes from "./routes/inventory";
 import workspaceRoutes from "./routes/workspace";
+import superadminRoutes from "./routes/superadmin";
 
 const app = express();
 const isProd = process.env.NODE_ENV === "production";
@@ -150,6 +152,10 @@ app.use("/api/login", authLimiter);
 app.use("/api/register", authLimiter);
 app.use("/api", authRoutes);
 
+// Banned user middleware (read-only enforcement for banned users)
+// Applied to all API routes except auth endpoints
+app.use("/api", checkBannedUser);
+
 // API routes
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/workspace", workspaceRoutes);
@@ -165,6 +171,7 @@ app.use("/api/diary", diaryRoutes);
 app.use("/api/reconstruction", reconstructionRoutes);
 app.use("/api/logs", logsRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/superadmin", superadminRoutes);
 
 // ============================================================================
 //                            SPA FALLBACK
@@ -180,6 +187,58 @@ if (isProd) {
 // ============================================================================
 //                          ERROR HANDLING
 // ============================================================================
+
+// Global error handler — automaticky loguje chyby do SystemLog
+app.use(async (err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  // Extract requestId from headers (set by earlier middleware)
+  const requestId = (req.headers['x-request-id'] as string) || 'unknown';
+  
+  // Determine error level
+  const statusCode = err.status || err.statusCode || 500;
+  const level = statusCode >= 500 ? "ERROR" : "WARN";
+
+  // Log to console via logger
+  logger.error("GLOBAL_ERROR", err.message || "Unhandled error", {
+    requestId,
+    statusCode,
+    method: req.method,
+    path: req.path,
+    userId: (req as any).user?.userId,
+    stack: err.stack,
+  });
+
+  // Log to SystemLog database (only for 500+ errors and if user is known)
+  if (statusCode >= 500) {
+    try {
+      await prisma.systemLog.create({
+        data: {
+          level,
+          message: err.message || "Internal Server Error",
+          metadata: {
+            requestId,
+            method: req.method,
+            path: req.path,
+            statusCode,
+            stack: err.stack,
+            body: req.body,
+          },
+          userId: (req as any).user?.userId || null,
+        },
+      });
+    } catch (dbError) {
+      // If database logging fails, just log to console — don't break the response
+      logger.error("GLOBAL_ERROR", "Failed to save error to SystemLog", {
+        error: String(dbError),
+      });
+    }
+  }
+
+  // Send error response
+  res.status(statusCode).json({
+    message: statusCode >= 500 ? "Interní chyba serveru" : err.message || "Chyba při zpracování požadavku",
+    errorId: requestId,
+  });
+});
 
 process.on("SIGINT", async () => {
   logger.info("Gracefully shutting down (SIGINT)...");

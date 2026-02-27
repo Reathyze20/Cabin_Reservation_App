@@ -3,6 +3,7 @@ export interface JwtPayload {
   userId: string;
   username: string;
   role: string;
+  isSuperAdmin?: boolean;
 }
 
 export interface User {

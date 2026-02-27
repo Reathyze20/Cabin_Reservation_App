@@ -27,6 +27,7 @@ export interface PageModule {
 // ─── Route Table ──────────────────────────────────────────────────────
 
 const isAdmin = () => localStorage.getItem('role') === 'admin';
+const isSuperAdmin = () => localStorage.getItem('isSuperAdmin') === 'true';
 
 export const routes: Route[] = [
   {
@@ -77,6 +78,14 @@ export const routes: Route[] = [
     icon: 'fa-cog',
     loader: () => import('../pages/admin').then((m) => m.default),
     guard: isAdmin,
+  },
+  {
+    path: '/superadmin',
+    label: 'Velení',
+    icon: 'fa-shield-alt',
+    loader: () => import('../pages/superadmin'),
+    guard: isSuperAdmin,
+    navClass: 'nav-superadmin',
   },
 ];
 

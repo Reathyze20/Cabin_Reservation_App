@@ -232,3 +232,20 @@
     padding-bottom: 72px;
   }
 }
+
+/* ─── Super Admin Nav Link ───────────────────────────────────────────────── */
+.nav-superadmin {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700 !important;
+}
+
+.nav-superadmin::after {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+
+.nav-superadmin:hover {
+  opacity: 0.8;
+}

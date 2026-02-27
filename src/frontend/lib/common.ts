@@ -53,24 +53,26 @@ export function setAuth(data: {
   userId: string;
   role: string;
   animalIcon?: string | null;
+  isSuperAdmin?: boolean;
   remember?: boolean;
 }): void {
   const store = data.remember ? localStorage : sessionStorage;
   // Clear the other storage to avoid stale data
   const otherStore = data.remember ? sessionStorage : localStorage;
-  ['authToken', 'username', 'userId', 'role', 'animalIcon'].forEach((k) => otherStore.removeItem(k));
+  ['authToken', 'username', 'userId', 'role', 'animalIcon', 'isSuperAdmin'].forEach((k) => otherStore.removeItem(k));
 
   store.setItem('authToken', data.token);
   store.setItem('username', data.username);
   store.setItem('userId', data.userId);
   store.setItem('role', data.role);
   if (data.animalIcon) store.setItem('animalIcon', data.animalIcon);
+  if (data.isSuperAdmin !== undefined) store.setItem('isSuperAdmin', String(data.isSuperAdmin));
 }
 
 /** Clear all auth data from both storages */
 function clearAuth(): void {
   const savedTheme = localStorage.getItem('theme');
-  ['authToken', 'username', 'userId', 'role', 'animalIcon'].forEach((k) => {
+  ['authToken', 'username', 'userId', 'role', 'animalIcon', 'isSuperAdmin'].forEach((k) => {
     localStorage.removeItem(k);
     sessionStorage.removeItem(k);
   });

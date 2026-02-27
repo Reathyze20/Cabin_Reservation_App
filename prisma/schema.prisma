@@ -35,6 +35,8 @@ model User {
   isVerified        Boolean  @default(false) @map("is_verified")
   verificationToken String?  @map("verification_token")
   role             String   @default("user") // "admin" | "user" | "guest"
+  isSuperAdmin     Boolean  @default(false) @map("is_super_admin")
+  isBanned         Boolean  @default(false) @map("is_banned")
   createdAt        DateTime @default(now()) @map("created_at")
 
   // Relations
@@ -54,6 +56,7 @@ model User {
   reservationWatches        ReservationWatcher[]
   inventoryUpdates          InventoryItem[]      @relation("UpdatedBy")
   availabilities            UserAvailability[]
+  systemLogs                SystemLog[]
 
   @@map("users")
 }
@@ -343,4 +346,21 @@ model UserAvailability {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_availabilities")
+}
+
+// ============================================================================
+// SYSTEM LOG (centrální logování chyb pro Super Admin)
+// ============================================================================
+model SystemLog {
+  id        String   @id @default(uuid())
+  level     String   // "ERROR", "WARN", "INFO"
+  message   String   @db.Text
+  metadata  Json?    // stack trace, request body, error details
+  userId    String?  @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("system_logs")
 }
