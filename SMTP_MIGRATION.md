@@ -126,3 +126,57 @@ Zkontrolujte tyto soubory:
 ---
 
 **Máte všechno připraveno!** Stačí vyplnit `.env` a restartovat aplikaci. 🎉
+---
+
+## 🔧 WORKAROUND: Auto-aktivace účtu (Sandbox mód)
+
+### Problém
+Amazon SES je ve výchozím stavu v **Sandbox módu**, který umožňuje posílat e-maily pouze na:
+- Ověřené e-mailové adresy
+- Ověřené domény
+
+Pokud uživatel zadá neověřený e-mail, registrace selže s chybou `535 Authentication Credentials Invalid`.
+
+### Řešení
+Implementovali jsme **automatickou aktivaci účtu** když se e-mail nepodaří odeslat:
+
+1. **Backend** (`auth.ts`):
+   - Pokud `sendVerificationEmailWithToken()` vyhodí chybu
+   - Vrátí `testToken` v response: `{ requiresVerification: true, testToken: "..." }`
+
+2. **Frontend** (`main.ts`):
+   - Detekuje přítomnost `testToken` v registrační odpovědi
+   - Automaticky přesměruje na `#/verify?token=XXX`
+   - Stránka `verify.ts` automaticky submitne token a aktivuje účet
+   - **Uživatel se zaregistruje bez čekání na e-mail!**
+
+### Jak to funguje pro uživatele
+
+```
+1. Uživatel vyplní registrační formulář
+   ↓
+2. Backend zkusí odeslat e-mail přes Amazon SES
+   ↓
+3. SES odmítne (Sandbox mód)
+   ↓
+4. Backend vrátí testToken
+   ↓
+5. Frontend zobrazí toast: "E-mail se nepodařil odeslat — automaticky aktivujeme váš účet..."
+   ↓
+6. Přesměrování na #/verify?token=XXX
+   ↓
+7. ✅ Účet automaticky aktivován
+   ↓
+8. Redirect na login
+```
+
+### Kdy tento workaround přestat používat?
+
+Jakmile Amazon schválí **Production Access** pro SES:
+1. Jděte do AWS Console → SES → Account dashboard
+2. Klikněte **"Request production access"**
+3. Vyplňte formulář (Use case: "Transactional emails for SaaS app")
+4. Obvykle schváleno do 24 hodin
+5. Po schválení uživatelé dostanou normální e-maily a workaround už není potřeba (ale pořád funguje jako fallback)
+
+---
