@@ -103,6 +103,9 @@ router.get("/", protect, async (req: Request, res: Response) => {
         userId: req.user.userId,
         dateTo: new Date(todayStr),
         status: "primary",
+      },
+      select: {
+        handoverNote: true,
       }
     });
 
@@ -199,7 +202,7 @@ router.get("/", protect, async (req: Request, res: Response) => {
           purpose: myNextReservation.purpose,
         }
         : null,
-      departingToday: departingTodayReservation !== null,
+      departingToday: departingTodayReservation !== null && !departingTodayReservation.handoverNote,
       pendingShoppingItems: pendingShoppingItems.map((i) => ({
         id: i.id,
         name: i.name,

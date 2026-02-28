@@ -44,7 +44,7 @@ export function getTemplate(): string {
 
       <div id="tab-content-users" class="tab-content active">
         <div class="toolbar">
-          <button id="btn-add-user" class="btn btn-primary">+ Přidat uživatele</button>
+          <button id="btn-add-user" class="btn btn-primary">Přidat uživatele</button>
           <button id="btn-refresh-users" class="btn btn-secondary">🔄 Obnovit</button>
         </div>
         <div id="users-table-container"></div>

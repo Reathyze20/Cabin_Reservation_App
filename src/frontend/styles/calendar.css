@@ -71,7 +71,7 @@
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background-color: #fff7ed;
+  background-color: var(--color-primary-bg, #e8f4ef);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -81,14 +81,14 @@
 
 .flatpickr-months .flatpickr-prev-month:hover,
 .flatpickr-months .flatpickr-next-month:hover {
-  background-color: #ffedd5;
+  background-color: var(--color-primary-light, #d4ede4);
 }
 
 .flatpickr-months .flatpickr-prev-month svg,
 .flatpickr-months .flatpickr-next-month svg {
   width: 14px;
   height: 14px;
-  fill: #fb923c;
+  fill: var(--color-primary, #3f7b63);
 }
 
 .flatpickr-current-month {
@@ -109,7 +109,7 @@
 }
 
 span.flatpickr-weekday {
-  color: #f97316;
+  color: var(--color-primary, #3f7b63);
   font-weight: 600;
   font-size: var(--font-size-xs);
   text-transform: uppercase;

@@ -2,8 +2,9 @@
    pages/reconstruction.ts — Kanban board for reconstruction ideas/tasks
    ============================================================================ */
 import type { PageModule } from '../lib/router';
-import { $, show, hide, showToast, authFetch, getUserId } from '../lib/common';
+import { $, show, hide, showToast, authFetch, getUserId, setupCharCounters, validateForm } from '../lib/common';
 import { showConfirm } from '../lib/dialogs';
+import { icons } from '../lib/icons';
 
 let container: HTMLElement;
 let items: any[] = [];
@@ -64,11 +65,11 @@ function getTemplate(): string {
       <div class="rec-modal-header">
         <h2 id="add-reconstruction-title">Nová položka</h2>
         <button class="modal-close-btn-icon" data-close="add-reconstruction-modal" title="Zavřít">
-          ×
+          ${icons.close(18)}
         </button>
       </div>
 
-      <form id="add-reconstruction-form">
+      <form id="add-reconstruction-form" novalidate>
         <input type="hidden" id="rec-id" />
         <div class="form-group hidden">
           <select id="rec-category">
@@ -80,26 +81,26 @@ function getTemplate(): string {
 
         <div class="form-group">
           <label class="form-label" for="rec-title">Název <span class="label-required">*</span></label>
-          <input type="text" id="rec-title" class="form-input" placeholder="Stručný název položky" required />
+          <input type="text" id="rec-title" class="form-input" placeholder="Stručný název položky" maxlength="100" required />
         </div>
         <div class="form-group">
           <label class="form-label" for="rec-desc">Popis / Poznámka</label>
-          <textarea id="rec-desc" class="form-input" rows="3" placeholder="Podrobnosti, důvody, parametry…"></textarea>
+          <textarea id="rec-desc" class="form-input" rows="3" placeholder="Podrobnosti, důvody, parametry…" maxlength="2000"></textarea>
+          <div class="char-counter" style="text-align: right; font-size: 0.8rem; color: #6b7280; margin-top: 4px;">0 / 2000</div>
         </div>
 
-        <!-- Nápad -->
         <div id="dynamic-fields-idea" class="dynamic-fields">
           <div class="form-group">
             <label class="form-label" for="rec-link-idea">Odkaz na e-shop / inspiraci</label>
-            <input type="url" id="rec-link-idea" class="form-input" placeholder="https://www.example.cz/produkt" />
+            <input type="url" id="rec-link-idea" class="form-input" placeholder="https://www.example.cz/produkt" maxlength="1000" />
           </div>
           <div class="form-group">
             <label class="form-label" for="rec-thumbnail">Náhledový obrázek (URL)</label>
-            <input type="url" id="rec-thumbnail" class="form-input" placeholder="https://cdn.example.cz/obrazek.jpg" />
+            <input type="url" id="rec-thumbnail" class="form-input" placeholder="https://cdn.example.cz/obrazek.jpg" maxlength="1000" />
           </div>
           <div class="form-group">
             <label class="form-label" for="rec-cost-idea">Odhadovaná cena (Kč)</label>
-            <input type="number" id="rec-cost-idea" class="form-input" placeholder="0" min="0" step="100" />
+            <input type="number" id="rec-cost-idea" class="form-input" placeholder="0" min="0" max="999999999" step="1" />
           </div>
         </div>
 
@@ -112,12 +113,12 @@ function getTemplate(): string {
             </div>
             <div class="form-group">
               <label class="form-label" for="rec-email">E-mail</label>
-              <input type="email" id="rec-email" class="form-input" placeholder="firma@example.cz" />
+              <input type="email" id="rec-email" class="form-input" placeholder="firma@example.cz" pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}$" />
             </div>
           </div>
           <div class="form-group">
             <label class="form-label" for="rec-link-company">Web / Odkaz</label>
-            <input type="url" id="rec-link-company" class="form-input" placeholder="https://www.firma.cz" />
+            <input type="url" id="rec-link-company" class="form-input" placeholder="https://www.firma.cz" maxlength="1000" />
           </div>
           <div class="form-group">
             <label class="form-label" for="rec-status-company">Stav spolupráce</label>
@@ -139,7 +140,7 @@ function getTemplate(): string {
             </div>
             <div class="form-group">
               <label class="form-label" for="rec-cost-task">Odhadovaná cena (Kč)</label>
-              <input type="number" id="rec-cost-task" class="form-input" placeholder="0" min="0" step="100" />
+              <input type="number" id="rec-cost-task" class="form-input" placeholder="0" min="0" max="999999999" step="1" />
             </div>
           </div>
         </div>
@@ -168,12 +169,12 @@ function renderBoard(list: any[]): void {
   const budgetSpentEl = $('budget-spent');
   const budgetPlannedEl = $('budget-planned');
   const budgetProgressEl = $('budget-progress');
-  
+
   if (!colIdea || !colCompany || !colTask) return;
   colIdea.innerHTML = '';
   colCompany.innerHTML = '';
   colTask.innerHTML = '';
-  
+
   let totalBudget = 0;
   let spentBudget = 0;
   let ideaCount = 0;
@@ -204,21 +205,21 @@ function renderBoard(list: any[]): void {
   if (ideaCount === 0) {
     colIdea.innerHTML = `
       <div class="kanban-empty-state">
-        <i class="fas fa-lightbulb" style="opacity: 0.4; color: #9ca3af;"></i>
+        <span class="empty-state-icon">${icons.lightbulb()}</span>
         <p>Zatím žádné nápady. Přidejte odkaz nebo fotku.</p>
       </div>`;
   }
   if (companyCount === 0) {
     colCompany.innerHTML = `
       <div class="kanban-empty-state">
-        <i class="fas fa-building" style="opacity: 0.4; color: #9ca3af;"></i>
+        <span class="empty-state-icon">${icons.building()}</span>
         <p>Zatím žádné firmy. Přidejte kontakt na řemeslníka.</p>
       </div>`;
   }
   if (taskCount === 0) {
     colTask.innerHTML = `
       <div class="kanban-empty-state">
-        <i class="fas fa-tasks" style="opacity: 0.4; color: #9ca3af;"></i>
+        <span class="empty-state-icon">${icons.listChecks()}</span>
         <p>Zatím žádné úkoly. Naplánujte další krok.</p>
       </div>`;
   }
@@ -266,16 +267,16 @@ function createCard(item: any): HTMLElement {
     const myId = getUserId();
     const hasVoted = item.votes?.includes(myId);
     const votesHtml = `<button class="vote-btn ${hasVoted ? 'voted-up' : ''}" data-vote="${item.id}">❤️ ${item.votes?.length || 0}</button>`;
-    
+
     innerHtml = `
       ${item.thumbnail ? `<div class="idea-thumbnail"><img src="${item.thumbnail}" alt="Náhled"></div>` : ''}
       <div class="idea-content">
         <div class="card-header">
           <div class="kanban-item-title">${item.title}</div>
           <div class="card-actions">
-            ${item.link ? `<a href="${item.link}" target="_blank" class="card-action-link" title="Otevřít e-shop">↗</a>` : ''}
-            <button class="card-action-edit" data-edit="${item.id}" title="Upravit">✎</button>
-            <button class="card-action-del" data-del="${item.id}" title="Smazat">×</button>
+            ${item.link ? `<a href="${item.link}" target="_blank" class="card-action-link" title="Otevřít e-shop">${icons.externalLink()}</a>` : ''}
+            <button class="card-action-edit" data-edit="${item.id}" title="Upravit">${icons.edit(14)}</button>
+            <button class="card-action-del" data-del="${item.id}" title="Smazat">${icons.close(14)}</button>
           </div>
         </div>
         ${item.description ? `<div class="kanban-item-desc">${item.description.replace(/\n/g, '<br>')}</div>` : ''}
@@ -290,8 +291,8 @@ function createCard(item: any): HTMLElement {
       <div class="card-header">
         <div class="kanban-item-title">${item.title}</div>
         <div class="card-actions">
-          <button class="card-action-edit" data-edit="${item.id}" title="Upravit">✎</button>
-          <button class="card-action-del" data-del="${item.id}" title="Smazat">×</button>
+          <button class="card-action-edit" data-edit="${item.id}" title="Upravit">${icons.edit(14)}</button>
+          <button class="card-action-del" data-del="${item.id}" title="Smazat">${icons.close(14)}</button>
         </div>
       </div>
       <div class="company-status-badge status-${item.status || 'pending'}">${getStatusLabel(item.status || 'pending')}</div>
@@ -314,8 +315,8 @@ function createCard(item: any): HTMLElement {
           <div class="kanban-item-title">${item.title}</div>
         </div>
         <div class="card-actions">
-          <button class="card-action-edit" data-edit="${item.id}" title="Upravit">✎</button>
-          <button class="card-action-del" data-del="${item.id}" title="Smazat">×</button>
+          <button class="card-action-edit" data-edit="${item.id}" title="Upravit">${icons.edit(14)}</button>
+          <button class="card-action-del" data-del="${item.id}" title="Smazat">${icons.close(14)}</button>
         </div>
       </div>
       ${item.description ? `<div class="kanban-item-desc">${item.description.replace(/\n/g, '<br>')}</div>` : ''}
@@ -372,54 +373,72 @@ function bindEvents(): void {
   // Form submit
   $<HTMLFormElement>('add-reconstruction-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
+    const form = e.currentTarget as HTMLFormElement;
+    if (!validateForm(form)) return;
+
     const cat = $<HTMLSelectElement>('rec-category')!.value;
     const id = $<HTMLInputElement>('rec-id')?.value;
-    
-    const data: any = {
-      category: cat,
-      title: $<HTMLInputElement>('rec-title')!.value,
-      description: $<HTMLTextAreaElement>('rec-desc')?.value || '',
-    };
 
-    if (cat === 'idea') {
-      data.link = $<HTMLInputElement>('rec-link-idea')?.value || '';
-      data.thumbnail = $<HTMLInputElement>('rec-thumbnail')?.value || '';
-      data.cost = $<HTMLInputElement>('rec-cost-idea')?.value ? Number($<HTMLInputElement>('rec-cost-idea')?.value) : undefined;
-    } else if (cat === 'company') {
-      data.phone = $<HTMLInputElement>('rec-phone')?.value || '';
-      data.email = $<HTMLInputElement>('rec-email')?.value || '';
-      data.link = $<HTMLInputElement>('rec-link-company')?.value || '';
-      data.status = $<HTMLSelectElement>('rec-status-company')?.value || 'pending';
-    } else if (cat === 'task') {
-      data.deadline = $<HTMLInputElement>('rec-deadline')?.value || '';
-      data.cost = $<HTMLInputElement>('rec-cost-task')?.value ? Number($<HTMLInputElement>('rec-cost-task')?.value) : undefined;
+    const submitBtn = document.querySelector<HTMLButtonElement>('.rec-submit-btn');
+    const submitLabelEl = document.getElementById('rec-submit-label');
+    const origText = submitLabelEl?.textContent ?? '';
+    if (submitBtn && submitLabelEl) {
+      submitBtn.disabled = true;
+      submitLabelEl.textContent = 'Ukládám…';
     }
 
-    const url = id ? `/api/reconstruction/${id}` : '/api/reconstruction';
-    const method = id ? 'PUT' : 'POST';
+    try {
+      const data: any = {
+        category: cat,
+        title: $<HTMLInputElement>('rec-title')!.value,
+        description: $<HTMLTextAreaElement>('rec-desc')?.value || '',
+      };
 
-    const r = await authFetch(url, { method, body: JSON.stringify(data) });
-    if (r) {
-      hide($('add-reconstruction-modal'));
-      $<HTMLFormElement>('add-reconstruction-form')?.reset();
-      $<HTMLInputElement>('rec-id')!.value = '';
-      // Reset dynamic fields visibility
-      $<HTMLSelectElement>('rec-category')?.dispatchEvent(new Event('change'));
-      loadItems();
+      if (cat === 'idea') {
+        data.link = $<HTMLInputElement>('rec-link-idea')?.value || '';
+        data.thumbnail = $<HTMLInputElement>('rec-thumbnail')?.value || '';
+        data.cost = $<HTMLInputElement>('rec-cost-idea')?.value ? Number($<HTMLInputElement>('rec-cost-idea')?.value) : undefined;
+      } else if (cat === 'company') {
+        data.phone = $<HTMLInputElement>('rec-phone')?.value || '';
+        data.email = $<HTMLInputElement>('rec-email')?.value || '';
+        data.link = $<HTMLInputElement>('rec-link-company')?.value || '';
+        data.status = $<HTMLSelectElement>('rec-status-company')?.value || 'pending';
+      } else if (cat === 'task') {
+        data.deadline = $<HTMLInputElement>('rec-deadline')?.value || '';
+        data.cost = $<HTMLInputElement>('rec-cost-task')?.value ? Number($<HTMLInputElement>('rec-cost-task')?.value) : undefined;
+      }
+
+      const url = id ? `/api/reconstruction/${id}` : '/api/reconstruction';
+      const method = id ? 'PUT' : 'POST';
+
+      const r = await authFetch(url, { method, body: JSON.stringify(data) });
+      if (r) {
+        hide($('add-reconstruction-modal'));
+        $<HTMLFormElement>('add-reconstruction-form')?.reset();
+        $<HTMLInputElement>('rec-id')!.value = '';
+        // Reset dynamic fields visibility
+        $<HTMLSelectElement>('rec-category')?.dispatchEvent(new Event('change'));
+        loadItems();
+      }
+    } finally {
+      if (submitBtn && submitLabelEl) {
+        submitBtn.disabled = false;
+        submitLabelEl.textContent = origText;
+      }
     }
   });
 
   // Event delegation for cards (vote, delete, status)
   container.addEventListener('click', async (e) => {
     const target = e.target as HTMLElement;
-    
+
     // Task checkbox
     if (target.classList.contains('task-checkbox')) {
       const cb = target as HTMLInputElement;
       const id = cb.dataset.taskId;
       if (id) {
         const newStatus = cb.checked ? 'done' : 'pending';
-        await authFetch(`/api/reconstruction/${id}/status`, { 
+        await authFetch(`/api/reconstruction/${id}/status`, {
           method: 'PATCH',
           body: JSON.stringify({ status: newStatus })
         });
@@ -451,9 +470,11 @@ function bindEvents(): void {
         $<HTMLInputElement>('rec-id')!.value = item.id;
         const sel = $<HTMLSelectElement>('rec-category');
         if (sel) { sel.value = item.category; sel.dispatchEvent(new Event('change')); }
-        
+
         $<HTMLInputElement>('rec-title')!.value = item.title || '';
-        $<HTMLTextAreaElement>('rec-desc')!.value = item.description || '';
+        const descEl = $<HTMLTextAreaElement>('rec-desc')!;
+        descEl.value = item.description || '';
+        descEl.dispatchEvent(new Event('input')); // Aktualizuje char-counter
 
         if (item.category === 'idea') {
           $<HTMLInputElement>('rec-link-idea')!.value = item.link || '';
@@ -487,10 +508,11 @@ function bindEvents(): void {
 }
 
 const reconstructionPage: PageModule = {
-  async mount(el) {
+  async mount(el: HTMLElement) {
     container = el;
-    el.innerHTML = getTemplate();
+    container.innerHTML = getTemplate();
     bindEvents();
+    setupCharCounters($('add-reconstruction-modal')!);
     await loadItems();
   },
   unmount() { items = []; },

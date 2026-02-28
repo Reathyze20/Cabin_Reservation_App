@@ -7,13 +7,81 @@
   align-items: center;
   gap: var(--space-xl);
   padding: 10px var(--space-xl);
-  background: rgba(255, 255, 255, 0.92);
+  /* Glassmorphismus — obsah prosvítá při scrollu */
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border-radius: var(--radius-xl);
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.6);
   flex-shrink: 0;
   margin: 20px 0 0 0;
   z-index: 100;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.07);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.05),
+    0 1px 0 rgba(0, 0, 0, 0.03);
+}
+
+/* ── Left group: Logo + Nav Links ────────────────────────────── */
+.nav-left-group {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+/* ── Brand Logo Lockup (Nav) ──────────────────────────────────── */
+.brand-logo-lockup {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  text-decoration: none;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.nav-logo-icon {
+  height: 24px;
+  width: auto;
+  object-fit: contain;
+  opacity: 0.85;
+  transition: opacity 0.2s ease;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.nav-logo-icon:hover {
+  opacity: 1;
+}
+
+/* ── Auth Brand (Login/Register screens) ─────────────────────── */
+.auth-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.auth-logo-icon {
+  height: 64px;
+  width: auto;
+}
+
+.auth-brand-text {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-main, #1f2937);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.auth-subtitle {
+  text-align: center;
+  color: var(--color-text-light, #6b7280);
+  font-size: 0.95rem;
+  margin: 0 0 1.5rem 0;
+  font-weight: 500;
 }
 
 .app-nav {
@@ -76,17 +144,20 @@
   display: flex;
   align-items: center;
   white-space: nowrap;
-  font-size: 0.875rem; /* 14px */
+  font-size: 0.875rem;
+  /* 14px */
 }
 
 .profile-name .greeting {
-  color: #6b7280; /* Světelejší šedá (gray-500) */
+  color: #6b7280;
+  /* Světelejší šedá (gray-500) */
   font-weight: 400;
   margin-right: 4px;
 }
 
 .profile-name .username {
-  color: #1f2937; /* Tmavě šedá (gray-800) */
+  color: #1f2937;
+  /* Tmavě šedá (gray-800) */
   font-weight: 600;
 }
 
@@ -149,8 +220,10 @@
 
 /* ── Logout icon button ──────────────────────────────────────── */
 .nav-logout-btn:hover {
-  background: rgba(245, 158, 11, 0.1); /* Jemná oranžová */
-  color: #f59e0b; /* Amber/oranžová */
+  background: rgba(245, 158, 11, 0.1);
+  /* Jemná oranžová */
+  color: #f59e0b;
+  /* Amber/oranžová */
 }
 
 .nav-logout-btn svg {
@@ -161,14 +234,91 @@
 }
 
 /* ============================================================================
+   Mobile Header (top bar on mobile only)
+   ============================================================================ */
+.mobile-header {
+  display: none;
+}
+
+.mobile-header-logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  gap: 8px;
+}
+
+.mobile-header-logo-img {
+  width: auto;
+  height: 22px;
+  border-radius: 4px;
+}
+
+.mobile-header-logo-text {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text, #111827);
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.mobile-menu-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--color-border-light, #e5e7eb);
+  background: var(--color-bg-alt, #f3f4f6);
+  border-radius: 50%;
+  cursor: pointer;
+  padding: 0;
+  overflow: hidden;
+  transition: background 0.15s, transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-menu-trigger:active {
+  transform: scale(0.93);
+  background: var(--color-border-light, #e5e7eb);
+}
+
+.mobile-menu-avatar {
+  font-size: 16px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+}
+
+/* ============================================================================
    Mobile Bottom Navigation
    ============================================================================ */
 .mobile-nav {
   display: none !important;
-  /* Hidden on desktop */
 }
 
 @media (max-width: 768px) {
+
+  /* ── Mobile Header — fixed top ─────────────────────────────── */
+  .mobile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    padding: 0 16px;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--color-border-light, rgba(0, 0, 0, 0.06));
+    z-index: var(--z-modal, 1000);
+    box-sizing: border-box;
+  }
 
   /* Hide desktop nav links on mobile */
   .app-nav {
@@ -185,7 +335,7 @@
     gap: var(--space-sm);
   }
 
-  /* Show mobile bottom nav */
+  /* ── Mobile Bottom Nav — Core 5 ────────────────────────────── */
   .mobile-nav {
     display: flex !important;
     position: fixed;
@@ -194,8 +344,6 @@
     right: 0;
     z-index: var(--z-sticky);
     background: #ffffff;
-    /* Čisté bílé pozadí pro nordic styl */
-    /* Glassmorphism */
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-top: 1px solid rgba(0, 0, 0, 0.05);
@@ -207,19 +355,21 @@
   }
 
   .mobile-nav-link {
+    flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     text-decoration: none;
     color: var(--color-text-muted);
-    font-size: 13px;
+    font-size: 0.65rem;
     font-weight: 500;
-    padding: 10px 8px;
-    /* Increased touch target */
+    padding: 8px 4px;
     border-radius: var(--radius-md);
     transition: color var(--transition-fast), background var(--transition-fast);
-    min-width: 56px;
+    min-width: 0;
+    gap: 3px;
+    -webkit-tap-highlight-color: transparent;
   }
 
   .mobile-nav-link.active {
@@ -228,8 +378,10 @@
     background: var(--color-primary-bg);
   }
 
+  /* ── Content offset — fixed header + fixed bottom nav ──────── */
   #page-container {
-    padding-bottom: 72px;
+    padding-top: 64px !important;
+    padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important;
   }
 }
 

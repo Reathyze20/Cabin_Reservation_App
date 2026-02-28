@@ -360,3 +360,113 @@ export function decodeJwtPayload<T = Record<string, unknown>>(
     return null;
   }
 }
+
+// ─── Utility: Počítadlo znaků ─────────────────────────────────────────
+
+export function setupCharCounters(container: HTMLElement | Document = document) {
+  const textareas = container.querySelectorAll<HTMLTextAreaElement | HTMLInputElement>('textarea[maxlength], input[type="text"][maxlength]');
+  textareas.forEach(el => {
+    // Umožníme mít counter rovnou za inputem (na stejné úrovni), nebo obalený
+    const counterEl = el.parentElement?.querySelector('.char-counter') || el.nextElementSibling;
+    if (counterEl && counterEl.classList.contains('char-counter')) {
+      const update = () => {
+        counterEl.textContent = `${el.value.length} / ${el.maxLength}`;
+      };
+      // Zabráníme vícenásobnému event listeneru při opětovném volání
+      el.removeEventListener('input', update);
+      el.addEventListener('input', update);
+      update();
+    }
+  });
+}
+
+// ─── Utility: České skloňování ────────────────────────────────────────
+
+/**
+ * Czech pluralization helper.
+ * Returns form1 for count=1, form2 for count=2–4, form5 for count=0 or 5+.
+ * Example: pluralize(3, 'Rezervace', 'Rezervace', 'Rezervací') → 'Rezervace'
+ */
+export function pluralize(count: number, form1: string, form2: string, form5: string): string {
+  const abs = Math.abs(count);
+  if (abs === 1) return form1;
+  if (abs >= 2 && abs <= 4) return form2;
+  return form5;
+}
+
+// ─── Utility: Custom UI Form Validation ───────────────────────────────────
+
+/**
+ * Validuje formulář a vykresluje vlastní chybové hlášky místo HTML5 bublin.
+ * @returns true pokud je formulář validní a odeslání může pokračovat.
+ */
+export function validateForm(form: HTMLFormElement): boolean {
+  // 1. Vypnutí nativní validace
+  form.setAttribute('novalidate', 'true');
+
+  // 2. Kontrola platnosti
+  if (form.checkValidity()) {
+    // Odstranění předchozích chyb (pro jistotu)
+    form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+    form.querySelectorAll('.field-error-msg').forEach(el => el.remove());
+    return true;
+  }
+
+  // Zpracování chyb - projít všechny inputy
+  let firstInvalid: HTMLElement | null = null;
+  for (const element of Array.from(form.elements)) {
+    const el = element as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+
+    // Ignorujeme elementy, které nepodporují validaci
+    if (!('validity' in el)) continue;
+
+    if (el.validity.valid) {
+      el.classList.remove('is-invalid');
+      const existingError = el.parentElement?.querySelector('.field-error-msg');
+      if (existingError) existingError.remove();
+      continue;
+    }
+
+    // Aplikace chybového stavu
+    el.classList.add('is-invalid');
+    if (!firstInvalid) firstInvalid = el;
+
+    // Změna textu podle typu chyby (lokalizace HTML5 zpráv)
+    let errorMsg = el.validationMessage;
+    if (el.validity.valueMissing) errorMsg = 'Toto pole je povinné.';
+    else if (el.validity.tooLong && 'maxLength' in el && el.maxLength > 0) errorMsg = `Maximální délka je ${el.maxLength} znaků.`;
+    else if (el.validity.tooShort && 'minLength' in el && el.minLength > 0) errorMsg = `Minimální délka je ${el.minLength} znaků.`;
+    else if (el.validity.typeMismatch && el.type === 'email') errorMsg = 'Zadejte platný e-mail.';
+
+    // Vložení/Aktualizace elementu s chybou
+    let errorDiv = el.parentElement?.querySelector('.field-error-msg') as HTMLElement;
+    if (!errorDiv) {
+      errorDiv = document.createElement('div');
+      errorDiv.className = 'field-error-msg';
+      el.insertAdjacentElement('afterend', errorDiv);
+    }
+    errorDiv.textContent = errorMsg;
+
+    // Pridani listeneru pro odstranění chyby při psaní
+    const removeError = () => {
+      el.classList.remove('is-invalid');
+      if (errorDiv && errorDiv.parentNode) errorDiv.remove();
+      el.removeEventListener('input', removeError);
+      el.removeEventListener('change', removeError);
+    };
+    el.addEventListener('input', removeError);
+    el.addEventListener('change', removeError);
+  }
+
+  // Focus na pole a zatřepání formulářem
+  if (firstInvalid) {
+    firstInvalid.focus();
+    form.classList.remove('form-shake');
+    // malý timeout pro re-trigger animace
+    setTimeout(() => {
+      form.classList.add('form-shake');
+    }, 10);
+  }
+
+  return false;
+}

@@ -8,7 +8,8 @@
   flex-direction: column;
   flex-grow: 1;
   min-height: 0;
-  padding: 0; /* Remove padding to let layout fill the screen */
+  padding: 0;
+  /* Remove padding to let layout fill the screen */
 }
 
 .notes-layout {
@@ -125,7 +126,8 @@
 
 .thread-info {
   flex-grow: 1;
-  min-width: 0; /* For text truncation */
+  min-width: 0;
+  /* For text truncation */
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -328,7 +330,8 @@
   font-weight: bold;
   font-size: var(--font-size-base);
   flex-shrink: 0;
-  margin-top: auto; /* Align to bottom of bubble */
+  margin-top: auto;
+  /* Align to bottom of bubble */
 }
 
 .message-bubble-container {
@@ -351,11 +354,12 @@
   flex-direction: row;
   align-items: center;
   gap: 8px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .message-mine .message-bubble {
-  background-color: #dcf8c6; /* WhatsApp-like green */
+  background-color: #dcf8c6;
+  /* WhatsApp-like green */
   border-bottom-right-radius: 4px;
   color: #000;
 }
@@ -392,7 +396,7 @@
 .delete-note-btn {
   background: none;
   border: none;
-  color: rgba(0,0,0,0.3);
+  color: rgba(0, 0, 0, 0.3);
   cursor: pointer;
   padding: 0;
   font-size: 0.8rem;
@@ -599,6 +603,7 @@
 }
 
 @media (max-width: 768px) {
+
   .handover-btn::after,
   .handover-btn::before {
     display: none;
@@ -618,8 +623,15 @@
 }
 
 @keyframes slideUpPanel {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .handover-panel-header {
@@ -776,12 +788,17 @@
 .send-btn {
   width: 36px;
   height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0 !important;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 0;
   flex-shrink: 0;
+  font-size: 18px;
+  line-height: 1;
   /* ✅ Zelená barva aplikace */
   background: var(--color-primary, #5d9b62) !important;
   color: #fff !important;
@@ -816,7 +833,8 @@
   }
 
   .notes-chat-area {
-    display: none; /* Toggled via JS */
+    display: none;
+    /* Toggled via JS */
     width: 100%;
     height: 100%;
     max-height: 100%;

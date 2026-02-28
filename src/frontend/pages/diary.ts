@@ -1,12 +1,10 @@
 /* ============================================================================
    pages/diary.ts — Diary / Journal with folders, calendar, notebook modal
    ============================================================================ */
-import type { PageModule } from '../lib/router';
-import {
-  $, show, hide, showToast, authFetch,
-  getUsername, getRole, getUserId,
-} from '../lib/common';
-import { showConfirm } from '../lib/dialogs';
+import type { PageModule } from "../lib/router";
+import { $, show, hide, showToast, authFetch, getUsername, getRole, getUserId, setupCharCounters, validateForm } from "../lib/common";
+import { showConfirm } from "../lib/dialogs";
+import { setFieldError } from "../lib/validation";
 
 // ─── State ────────────────────────────────────────────────────────────
 let container: HTMLElement;
@@ -18,13 +16,14 @@ let currentEntryPhotoIds: string[] = [];
 let currentNotebookPhotosData: any[] = [];
 let currentLightboxIndex = 0;
 let selectedFolderId: string | null = null;
+const validationCleanups: Array<() => void> = [];
 let allFolders: any[] = [];
 let pickerCurrentFolderId: string | null = null;
 let pickerSelectedPhotoIds = new Set<string>();
 let allGalleryFolders: any[] = [];
 let currentGalleryPhotos: any[] = [];
 let keydownHandler: ((e: KeyboardEvent) => void) | null = null;
-let currentPeriodFilter: string = 'all';
+let currentPeriodFilter: string = "all";
 
 // ─── Template ─────────────────────────────────────────────────────────
 function getTemplate(): string {
@@ -42,7 +41,7 @@ function getTemplate(): string {
               <option value="last_year">Minulý rok</option>
               <option value="older">Starší</option>
             </select>
-            <button id="create-diary-folder-btn" class="button-primary">+ Nový pobyt</button>
+            <button id="create-diary-folder-btn" class="button-primary">Nový pobyt</button>
           </div>
         </div>
         <div class="diary-content-wrapper">
@@ -79,10 +78,10 @@ function getTemplate(): string {
         </select>
         <small class="text-muted">Předvyplní název a data podle tvé rezervace.</small>
       </div>
-      <form id="create-diary-folder-form">
-        <div class="form-group"><label>Název</label><input type="text" id="diary-folder-name-input" required /></div>
-        <div class="form-group"><label>Od</label><input type="date" id="diary-start-date" required /></div>
-        <div class="form-group"><label>Do</label><input type="date" id="diary-end-date" required /></div>
+      <form id="create-diary-folder-form" novalidate>
+        <div class="form-group"><label>Název</label><input type="text" id="diary-folder-name-input" class="form-input" required minlength="1" maxlength="100" placeholder="Letní prázdniny 2025" data-error-message="Zadejte název pobytu." /></div>
+        <div class="form-group"><label>Od</label><input type="date" id="diary-start-date" class="form-input" required data-error-message="Vyberte datum začátku pobytu." /></div>
+        <div class="form-group"><label>Do</label><input type="date" id="diary-end-date" class="form-input" required data-error-message="Vyberte datum konce pobytu." /></div>
         <div class="form-group">
           <label>Téma / Štítek</label>
           <select id="diary-activity-tag" class="form-control">
@@ -106,8 +105,8 @@ function getTemplate(): string {
       <span class="modal-close-button" data-close="rename-diary-folder-modal">&times;</span>
       <h2>Přejmenovat</h2>
       <p>Původní: <strong id="old-diary-folder-name"></strong></p>
-      <form id="rename-diary-folder-form">
-        <div class="form-group"><input type="text" id="new-diary-folder-name-input" required /></div>
+      <form id="rename-diary-folder-form" novalidate>
+        <div class="form-group"><input type="text" id="new-diary-folder-name-input" class="form-input" required minlength="1" maxlength="100" placeholder="Nový název" data-error-message="Zadejte nový název pobytu." /></div>
         <div class="modal-buttons"><button type="submit" class="button-primary">Přejmenovat</button></div>
       </form>
     </div>
@@ -119,8 +118,8 @@ function getTemplate(): string {
       <span class="modal-close-button" data-close="delete-diary-folder-modal">&times;</span>
       <h2>Smazat pobyt</h2>
       <p>Pro potvrzení napište <strong>DELETE</strong>:</p>
-      <form id="delete-diary-folder-form">
-        <div class="form-group"><input type="text" id="delete-diary-confirm-input" required /></div>
+      <form id="delete-diary-folder-form" novalidate>
+        <div class="form-group"><input type="text" id="delete-diary-confirm-input" class="form-input input-danger" required autocomplete="off" placeholder="DELETE" data-error-message="Napište DELETE pro potvrzení." /></div>
         <div class="modal-buttons"><button type="submit" class="button-danger">Smazat</button></div>
       </form>
     </div>
@@ -136,8 +135,9 @@ function getTemplate(): string {
           <span id="notebook-date-display"></span>
           <span class="notebook-close-button">&times;</span>
         </div>
-        <div class="notebook-body">
-          <textarea id="notebook-textarea" placeholder="Co se dnes dělo..."></textarea>
+        <div class="notebook-body" style="display: flex; flex-direction: column;">
+          <textarea id="notebook-textarea" placeholder="Co se dnes dělo..." maxlength="20000"></textarea>
+          <div class="char-counter" style="text-align: right; font-size: 0.8rem; color: #6b7280; margin-top: 4px;">0 / 20000</div>
           <div id="notebook-attachments-area" class="notebook-attachments"></div>
         </div>
         <div class="notebook-footer">
@@ -178,41 +178,63 @@ function getTemplate(): string {
 }
 
 // ─── Modal helpers ────────────────────────────────────────────────────
-function showModal(id: string): void { const el = $(id); if (el) { el.classList.remove('hidden'); el.style.display = 'flex'; } }
-function hideModal(id: string): void { const el = $(id); if (el) { el.classList.add('hidden'); el.style.display = 'none'; } }
+function showModal(id: string): void {
+  const el = $(id);
+  if (el) {
+    el.classList.remove("hidden");
+    el.style.display = "flex";
+  }
+}
+function hideModal(id: string): void {
+  const el = $(id);
+  if (el) {
+    el.classList.add("hidden");
+    el.style.display = "none";
+  }
+}
 
 // ─── Folders ──────────────────────────────────────────────────────────
 
 function getTagIcon(tag: string): string {
   switch (tag) {
-    case 'relax': return '<span style="font-size: 1.2em;">🍃</span>';
-    case 'party': return '<span style="font-size: 1.2em;">🍻</span>';
-    case 'work': return '<span style="font-size: 1.2em;">🔨</span>';
-    case 'mushroom': return '<span style="font-size: 1.2em;">🍄</span>';
-    case 'hike': return '<span style="font-size: 1.2em;">👟</span>';
-    case 'family': return '<span style="font-size: 1.2em;">👥</span>';
-    default: return '<span style="font-size: 1.2em;">📖</span>';
+    case "relax":
+      return '<span style="font-size: 1.2em;">🍃</span>';
+    case "party":
+      return '<span style="font-size: 1.2em;">🍻</span>';
+    case "work":
+      return '<span style="font-size: 1.2em;">🔨</span>';
+    case "mushroom":
+      return '<span style="font-size: 1.2em;">🍄</span>';
+    case "hike":
+      return '<span style="font-size: 1.2em;">👟</span>';
+    case "family":
+      return '<span style="font-size: 1.2em;">👥</span>';
+    default:
+      return '<span style="font-size: 1.2em;">📖</span>';
   }
 }
 
 async function loadFolders(): Promise<void> {
-  const data = await authFetch<any[]>('/api/diary/folders', { silent: true });
-  if (data) { allFolders = data; renderFolders(data); }
+  const data = await authFetch<any[]>("/api/diary/folders", { silent: true });
+  if (data) {
+    allFolders = data;
+    renderFolders(data);
+  }
 }
 
 function renderFolders(folders: any[]): void {
-  const grid = $('diary-folders-grid');
+  const grid = $("diary-folders-grid");
   if (!grid) return;
-  grid.innerHTML = '';
+  grid.innerHTML = "";
 
   const currentYear = new Date().getFullYear();
-  const filteredFolders = folders.filter(f => {
-    if (currentPeriodFilter === 'all') return true;
+  const filteredFolders = folders.filter((f) => {
+    if (currentPeriodFilter === "all") return true;
     const pDate = f.startDate ? new Date(f.startDate) : new Date(f.createdAt);
     const folderYear = pDate.getFullYear();
-    if (currentPeriodFilter === 'current_year') return folderYear === currentYear;
-    if (currentPeriodFilter === 'last_year') return folderYear === currentYear - 1;
-    if (currentPeriodFilter === 'older') return folderYear < currentYear - 1;
+    if (currentPeriodFilter === "current_year") return folderYear === currentYear;
+    if (currentPeriodFilter === "last_year") return folderYear === currentYear - 1;
+    if (currentPeriodFilter === "older") return folderYear < currentYear - 1;
     return true;
   });
 
@@ -222,20 +244,20 @@ function renderFolders(folders: any[]): void {
   }
 
   for (const f of filteredFolders) {
-    const el = document.createElement('div');
-    el.className = 'folder-card diary-folder';
+    const el = document.createElement("div");
+    el.className = "folder-card diary-folder";
     el.dataset.id = f.id;
     el.onclick = (e) => {
       // Ignore clicks on buttons inside the card
-      if (!(e.target as HTMLElement).closest('button')) {
+      if (!(e.target as HTMLElement).closest("button")) {
         openFolder(f.id, f.name);
       }
     };
 
-    let dateRange = '';
+    let dateRange = "";
     if (f.startDate && f.endDate) {
-      const d1 = new Date(f.startDate).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'short' });
-      const d2 = new Date(f.endDate).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'short', year: 'numeric' });
+      const d1 = new Date(f.startDate).toLocaleDateString("cs-CZ", { day: "numeric", month: "short" });
+      const d2 = new Date(f.endDate).toLocaleDateString("cs-CZ", { day: "numeric", month: "short", year: "numeric" });
       dateRange = `<div class="folder-dates">${d1} — ${d2}</div>`;
     }
 
@@ -259,17 +281,17 @@ function renderFolders(folders: any[]): void {
   }
 
   // Attach direct action listeners for the hover buttons
-  grid.querySelectorAll('.edit-folder-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
+  grid.querySelectorAll(".edit-folder-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
       e.stopPropagation();
       const id = (e.currentTarget as HTMLElement).dataset.id!;
-      const f = allFolders.find(x => x.id === id);
+      const f = allFolders.find((x) => x.id === id);
       if (f) triggerRename(id, f.name);
     });
   });
 
-  grid.querySelectorAll('.delete-folder-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
+  grid.querySelectorAll(".delete-folder-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
       e.stopPropagation();
       const id = (e.currentTarget as HTMLElement).dataset.id!;
       triggerDelete(id);
@@ -279,34 +301,34 @@ function renderFolders(folders: any[]): void {
 
 function triggerRename(id: string, currentName: string): void {
   selectedFolderId = id;
-  $<HTMLInputElement>('new-diary-folder-name-input')!.value = currentName;
-  const old = $('old-diary-folder-name');
+  $<HTMLInputElement>("new-diary-folder-name-input")!.value = currentName;
+  const old = $("old-diary-folder-name");
   if (old) old.textContent = currentName;
-  showModal('rename-diary-folder-modal');
+  showModal("rename-diary-folder-modal");
 }
 
 function triggerDelete(id: string): void {
   selectedFolderId = id;
-  showModal('delete-diary-folder-modal');
+  showModal("delete-diary-folder-modal");
 }
 
 function openFolder(id: string, name: string): void {
   currentFolderId = id;
-  const t = $('current-diary-title');
+  const t = $("current-diary-title");
   if (t) t.textContent = name;
-  const fv = $('diary-folders-view');
-  const ev = $('diary-entries-view');
-  if (fv) fv.style.display = 'none';
-  if (ev) ev.style.display = 'flex';
+  const fv = $("diary-folders-view");
+  const ev = $("diary-entries-view");
+  if (fv) fv.style.display = "none";
+  if (ev) ev.style.display = "flex";
   selectedFolderId = null;
   loadEntries(id);
 }
 
 function backToFolders(): void {
-  const ev = $('diary-entries-view');
-  const fv = $('diary-folders-view');
-  if (ev) ev.style.display = 'none';
-  if (fv) fv.style.display = 'flex';
+  const ev = $("diary-entries-view");
+  const fv = $("diary-folders-view");
+  if (ev) ev.style.display = "none";
+  if (fv) fv.style.display = "flex";
   currentFolderId = null;
   loadFolders();
 }
@@ -315,26 +337,29 @@ function backToFolders(): void {
 
 async function loadEntries(folderId: string): Promise<void> {
   const data = await authFetch<any[]>(`/api/diary/entries?folderId=${folderId}`);
-  if (data) { currentEntries = data; renderCalendar(); }
+  if (data) {
+    currentEntries = data;
+    renderCalendar();
+  }
 }
 
 function renderCalendar(): void {
-  const cal = $('diary-calendar');
+  const cal = $("diary-calendar");
   if (!cal) return;
-  cal.innerHTML = '';
+  cal.innerHTML = "";
   const folder = allFolders.find((f: any) => f.id === currentFolderId);
   if (!folder) return;
   const start = new Date(folder.startDate);
   const end = new Date(folder.endDate);
 
   for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    const ds = d.toISOString().split('T')[0];
+    const ds = d.toISOString().split("T")[0];
     const entry = currentEntries.find((e: any) => e.date === ds);
-    const card = document.createElement('div');
-    card.className = `diary-day-card${entry ? ' has-entry' : ''}`;
-    const dayName = d.toLocaleDateString('cs-CZ', { weekday: 'short' });
-    let preview = entry ? entry.content.substring(0, 50) : '';
-    if (entry?.galleryPhotoIds?.length) preview += ' 📷';
+    const card = document.createElement("div");
+    card.className = `diary-day-card${entry ? " has-entry" : ""}`;
+    const dayName = d.toLocaleDateString("cs-CZ", { weekday: "short" });
+    let preview = entry ? entry.content.substring(0, 50) : "";
+    if (entry?.galleryPhotoIds?.length) preview += " 📷";
     card.innerHTML = `<div class="day-header-row"><span>${dayName}</span></div><div class="day-number">${d.getDate()}</div><div class="entry-preview">${preview}</div>`;
     const clickDate = new Date(d);
     card.onclick = () => openNotebook(clickDate, entry);
@@ -345,30 +370,33 @@ function renderCalendar(): void {
 // ─── Notebook ─────────────────────────────────────────────────────────
 
 async function openNotebook(dateObj: Date, entry: any): Promise<void> {
-  currentSelectedDate = dateObj.toISOString().split('T')[0];
+  currentSelectedDate = dateObj.toISOString().split("T")[0];
   currentEntryId = entry?.id || null;
   currentEntryPhotoIds = entry?.galleryPhotoIds ? [...entry.galleryPhotoIds] : [];
 
-  const dd = $('notebook-date-display');
-  if (dd) dd.textContent = dateObj.toLocaleDateString('cs-CZ', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-  const ta = $<HTMLTextAreaElement>('notebook-textarea');
-  if (ta) { ta.value = entry?.content || ''; }
-  const del = $('delete-notebook-entry-btn');
-  if (del) del.style.display = entry ? 'flex' : 'none';
+  const dd = $("notebook-date-display");
+  if (dd) dd.textContent = dateObj.toLocaleDateString("cs-CZ", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+  const ta = $<HTMLTextAreaElement>("notebook-textarea");
+  if (ta) {
+    ta.value = entry?.content || "";
+    ta.dispatchEvent(new Event('input')); // Aktualizuje char-counter
+  }
+  const del = $("delete-notebook-entry-btn");
+  if (del) del.style.display = entry ? "flex" : "none";
 
   await renderNotebookAttachments();
-  showModal('notebook-modal');
+  showModal("notebook-modal");
   if (ta) ta.scrollTop = 0;
 }
 
 async function renderNotebookAttachments(): Promise<void> {
-  const area = $('notebook-attachments-area');
+  const area = $("notebook-attachments-area");
   if (!area) return;
-  area.innerHTML = '';
+  area.innerHTML = "";
   currentNotebookPhotosData = [];
   if (!currentEntryPhotoIds.length) return;
 
-  const ids = currentEntryPhotoIds.join(',');
+  const ids = currentEntryPhotoIds.join(",");
   const photos = await authFetch<any[]>(`/api/gallery/photos?ids=${ids}`);
   if (!photos) return;
 
@@ -377,19 +405,19 @@ async function renderNotebookAttachments(): Promise<void> {
     if (!photo) return;
     currentNotebookPhotosData.push(photo);
 
-    const wrap = document.createElement('div');
-    wrap.className = 'attachment-thumbnail-wrapper';
-    const img = document.createElement('img');
+    const wrap = document.createElement("div");
+    wrap.className = "attachment-thumbnail-wrapper";
+    const img = document.createElement("img");
     img.src = photo.thumb || photo.src;
-    img.className = 'attachment-thumbnail';
-    img.alt = 'Foto';
-    img.loading = 'lazy';
+    img.className = "attachment-thumbnail";
+    img.alt = "Foto";
+    img.loading = "lazy";
     img.onclick = () => openLightbox(idx);
 
-    const rm = document.createElement('div');
-    rm.className = 'attachment-remove-btn';
-    rm.innerHTML = '&times;';
-    rm.title = 'Odebrat';
+    const rm = document.createElement("div");
+    rm.className = "attachment-remove-btn";
+    rm.innerHTML = "&times;";
+    rm.title = "Odebrat";
     rm.onclick = (e) => {
       e.stopPropagation();
       currentEntryPhotoIds = currentEntryPhotoIds.filter((id) => id !== pid);
@@ -407,36 +435,36 @@ async function renderNotebookAttachments(): Promise<void> {
 function openLightbox(index: number): void {
   currentLightboxIndex = index;
   updateLightboxContent();
-  const m = $('diary-lightbox-modal');
-  if (m) m.style.display = 'flex';
+  const m = $("diary-lightbox-modal");
+  if (m) m.style.display = "flex";
 }
 
 function updateLightboxContent(): void {
   const photo = currentNotebookPhotosData[currentLightboxIndex];
   if (!photo) return;
-  const img = $<HTMLImageElement>('diary-lightbox-img');
-  const dl = $<HTMLAnchorElement>('diary-lightbox-download');
-  const desc = $('diary-lightbox-description');
+  const img = $<HTMLImageElement>("diary-lightbox-img");
+  const dl = $<HTMLAnchorElement>("diary-lightbox-download");
+  const desc = $("diary-lightbox-description");
   if (img) img.src = photo.src;
   if (dl) dl.href = photo.src;
-  if (desc) desc.textContent = photo.description || '';
+  if (desc) desc.textContent = photo.description || "";
 }
 
 function closeLightbox(): void {
-  const m = $('diary-lightbox-modal');
-  if (m) m.style.display = 'none';
+  const m = $("diary-lightbox-modal");
+  if (m) m.style.display = "none";
 }
 
 // ─── Gallery Picker ───────────────────────────────────────────────────
 
 function renderPickerFolders(): void {
-  const el = $('gallery-picker-folders');
+  const el = $("gallery-picker-folders");
   if (!el) return;
-  el.innerHTML = '';
+  el.innerHTML = "";
   for (const f of allGalleryFolders) {
-    const d = document.createElement('div');
-    d.className = 'folder-card';
-    d.style.cssText = 'height:120px;padding:10px;cursor:pointer';
+    const d = document.createElement("div");
+    d.className = "folder-card";
+    d.style.cssText = "height:120px;padding:10px;cursor:pointer";
     d.innerHTML = `<div class="folder-icon" style="font-size:2em;margin-bottom:5px">📁</div><div class="folder-info"><h3 style="font-size:.9em;margin:0">${f.name}</h3></div>`;
     d.onclick = () => openPickerFolder(f.id);
     el.appendChild(d);
@@ -447,37 +475,43 @@ async function openPickerFolder(folderId: string): Promise<void> {
   pickerCurrentFolderId = folderId;
   const photos = await authFetch<any[]>(`/api/gallery/photos?folderId=${folderId}`);
   currentGalleryPhotos = photos || [];
-  const pf = $('gallery-picker-folders');
-  const pp = $('gallery-picker-photos');
-  const bb = $('gallery-picker-back-btn');
-  if (pf) pf.style.display = 'none';
-  if (pp) pp.style.display = 'grid';
-  if (bb) bb.style.display = 'flex';
+  const pf = $("gallery-picker-folders");
+  const pp = $("gallery-picker-photos");
+  const bb = $("gallery-picker-back-btn");
+  if (pf) pf.style.display = "none";
+  if (pp) pp.style.display = "grid";
+  if (bb) bb.style.display = "flex";
   renderPickerPhotos();
 }
 
 function renderPickerPhotos(): void {
-  const el = $('gallery-picker-photos');
+  const el = $("gallery-picker-photos");
   if (!el) return;
-  el.innerHTML = '';
+  el.innerHTML = "";
   for (const photo of currentGalleryPhotos) {
-    const d = document.createElement('div');
-    d.style.cssText = 'position:relative;cursor:pointer';
+    const d = document.createElement("div");
+    d.style.cssText = "position:relative;cursor:pointer";
     const isSel = pickerSelectedPhotoIds.has(photo.id) || currentEntryPhotoIds.includes(photo.id);
     const isAttached = currentEntryPhotoIds.includes(photo.id);
 
-    const img = document.createElement('img');
+    const img = document.createElement("img");
     img.src = photo.thumb || photo.src;
-    img.loading = 'lazy';
-    img.style.cssText = 'width:100%;height:100px;object-fit:cover;border-radius:4px';
-    if (isSel) { img.style.border = '3px solid #d97706'; img.style.opacity = '0.7'; }
-    if (isAttached) { img.style.filter = 'grayscale(100%)'; d.title = 'Již připojeno'; }
+    img.loading = "lazy";
+    img.style.cssText = "width:100%;height:100px;object-fit:cover;border-radius:4px";
+    if (isSel) {
+      img.style.border = "3px solid #d97706";
+      img.style.opacity = "0.7";
+    }
+    if (isAttached) {
+      img.style.filter = "grayscale(100%)";
+      d.title = "Již připojeno";
+    }
     d.appendChild(img);
 
     if (isSel && !isAttached) {
-      const ch = document.createElement('div');
-      ch.innerHTML = '✓';
-      ch.style.cssText = 'position:absolute;top:5px;right:5px;color:#d97706;font-size:1.2em';
+      const ch = document.createElement("div");
+      ch.innerHTML = "✓";
+      ch.style.cssText = "position:absolute;top:5px;right:5px;color:#d97706;font-size:1.2em";
       d.appendChild(ch);
     }
     if (!isAttached) {
@@ -495,27 +529,27 @@ function renderPickerPhotos(): void {
 
 function bindEvents(): void {
   // Close buttons
-  container.querySelectorAll<HTMLElement>('[data-close]').forEach((btn) => {
-    btn.addEventListener('click', () => hideModal(btn.dataset.close!));
+  container.querySelectorAll<HTMLElement>("[data-close]").forEach((btn) => {
+    btn.addEventListener("click", () => hideModal(btn.dataset.close!));
   });
   // Period filter
-  const pfBox = $('diary-period-filter') as HTMLSelectElement;
+  const pfBox = $("diary-period-filter") as HTMLSelectElement;
   if (pfBox) {
     pfBox.value = currentPeriodFilter; // Zajištění stavu při re-renderu
-    pfBox.addEventListener('change', (e) => {
+    pfBox.addEventListener("change", (e) => {
       currentPeriodFilter = (e.target as HTMLSelectElement).value;
       renderFolders(allFolders);
     });
   }
 
   // Folder CRUD
-  $('create-diary-folder-btn')?.addEventListener('click', async () => {
-    showModal('create-diary-folder-modal');
+  $("create-diary-folder-btn")?.addEventListener("click", async () => {
+    showModal("create-diary-folder-modal");
     // Load reservations for the dropdown
-    const select = $<HTMLSelectElement>('diary-reservation-select');
+    const select = $<HTMLSelectElement>("diary-reservation-select");
     if (select) {
       select.innerHTML = '<option value="">-- Nevybráno (Zadat ručně) --</option>';
-      const res = await authFetch<any[]>('/api/reservations', { silent: true });
+      const res = await authFetch<any[]>("/api/reservations", { silent: true });
       if (res) {
         const myId = getUserId();
         const myReservations = res.filter((r) => String(r.userId) === String(myId));
@@ -523,148 +557,204 @@ function bindEvents(): void {
         myReservations.sort((a, b) => new Date(b.from).getTime() - new Date(a.from).getTime());
 
         myReservations.forEach((r) => {
-          const opt = document.createElement('option');
-          opt.value = JSON.stringify({ name: r.purpose || 'Pobyt na chatě', from: r.from, to: r.to });
-          const d1 = new Date(r.from).toLocaleDateString('cs-CZ');
-          const d2 = new Date(r.to).toLocaleDateString('cs-CZ');
-          opt.textContent = `${d1} - ${d2} (${r.purpose || 'Pobyt'})`;
+          const opt = document.createElement("option");
+          opt.value = JSON.stringify({ name: r.purpose || "Pobyt na chatě", from: r.from, to: r.to });
+          const d1 = new Date(r.from).toLocaleDateString("cs-CZ");
+          const d2 = new Date(r.to).toLocaleDateString("cs-CZ");
+          opt.textContent = `${d1} - ${d2} (${r.purpose || "Pobyt"})`;
           select.appendChild(opt);
         });
       }
     }
   });
 
-  $<HTMLSelectElement>('diary-reservation-select')?.addEventListener('change', (e) => {
+  $<HTMLSelectElement>("diary-reservation-select")?.addEventListener("change", (e) => {
     const val = (e.target as HTMLSelectElement).value;
     if (val) {
       try {
         const data = JSON.parse(val);
-        $<HTMLInputElement>('diary-folder-name-input')!.value = data.name;
-        $<HTMLInputElement>('diary-start-date')!.value = data.from;
-        $<HTMLInputElement>('diary-end-date')!.value = data.to;
+        $<HTMLInputElement>("diary-folder-name-input")!.value = data.name;
+        $<HTMLInputElement>("diary-start-date")!.value = data.from;
+        $<HTMLInputElement>("diary-end-date")!.value = data.to;
       } catch (e) { }
     } else {
-      $<HTMLInputElement>('diary-folder-name-input')!.value = '';
-      $<HTMLInputElement>('diary-start-date')!.value = '';
-      $<HTMLInputElement>('diary-end-date')!.value = '';
+      $<HTMLInputElement>("diary-folder-name-input")!.value = "";
+      $<HTMLInputElement>("diary-start-date")!.value = "";
+      $<HTMLInputElement>("diary-end-date")!.value = "";
     }
   });
-  $<HTMLFormElement>('create-diary-folder-form')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const r = await authFetch('/api/diary/folders', {
-      method: 'POST', body: JSON.stringify({
-        name: $<HTMLInputElement>('diary-folder-name-input')!.value,
-        startDate: $<HTMLInputElement>('diary-start-date')!.value,
-        endDate: $<HTMLInputElement>('diary-end-date')!.value,
-        activityTag: $<HTMLSelectElement>('diary-activity-tag')?.value || null,
-      }),
+  const _createFolderForm = $<HTMLFormElement>("create-diary-folder-form");
+  if (_createFolderForm) {
+    _createFolderForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.currentTarget as HTMLFormElement;
+      if (!validateForm(form)) return;
+
+      const r = await authFetch("/api/diary/folders", {
+        method: "POST",
+        body: JSON.stringify({
+          name: $<HTMLInputElement>("diary-folder-name-input")!.value,
+          startDate: $<HTMLInputElement>("diary-start-date")!.value,
+          endDate: $<HTMLInputElement>("diary-end-date")!.value,
+          activityTag: $<HTMLSelectElement>("diary-activity-tag")?.value || null,
+        }),
+      });
+      if (r) {
+        hideModal("create-diary-folder-modal");
+        showToast("Vytvořeno.", "success");
+        loadFolders();
+      }
     });
-    if (r) { hideModal('create-diary-folder-modal'); showToast('Vytvořeno.', 'success'); loadFolders(); }
-  });
+  }
 
-  $<HTMLFormElement>('rename-diary-folder-form')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const name = $<HTMLInputElement>('new-diary-folder-name-input')?.value;
-    const r = await authFetch(`/api/diary/folders/${selectedFolderId}`, { method: 'PATCH', body: JSON.stringify({ name }) });
-    if (r) { hideModal('rename-diary-folder-modal'); selectedFolderId = null; showToast('Přejmenováno.', 'success'); loadFolders(); }
-  });
+  const _renameFolderForm = $<HTMLFormElement>("rename-diary-folder-form");
+  if (_renameFolderForm) {
+    _renameFolderForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.currentTarget as HTMLFormElement;
+      if (!validateForm(form)) return;
 
-  $<HTMLFormElement>('delete-diary-folder-form')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if ($<HTMLInputElement>('delete-diary-confirm-input')?.value === 'DELETE') {
-      await authFetch(`/api/diary/folders/${selectedFolderId}`, { method: 'DELETE' });
-      hideModal('delete-diary-folder-modal');
+      const name = $<HTMLInputElement>("new-diary-folder-name-input")?.value;
+      const r = await authFetch(`/api/diary/folders/${selectedFolderId}`, { method: "PATCH", body: JSON.stringify({ name }) });
+      if (r) {
+        hideModal("rename-diary-folder-modal");
+        selectedFolderId = null;
+        showToast("Přejmenováno.", "success");
+        loadFolders();
+      }
+    });
+  }
+
+  const _deleteFolderForm = $<HTMLFormElement>("delete-diary-folder-form");
+  if (_deleteFolderForm) {
+    _deleteFolderForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.currentTarget as HTMLFormElement;
+      if (!validateForm(form)) return;
+
+      const confirmInput = $<HTMLInputElement>("delete-diary-confirm-input");
+      if (confirmInput?.value !== "DELETE") {
+        setFieldError(confirmInput!, 'Napište přesně "DELETE" pro potvrzení.');
+        return;
+      }
+      await authFetch(`/api/diary/folders/${selectedFolderId}`, { method: "DELETE" });
+      hideModal("delete-diary-folder-modal");
       selectedFolderId = null;
-      showToast('Smazáno.', 'success');
+      showToast("Smazáno.", "success");
       loadFolders();
-    }
-  });
+    });
+  }
 
-  $('back-to-diary-folders-btn')?.addEventListener('click', backToFolders);
+  $("back-to-diary-folders-btn")?.addEventListener("click", backToFolders);
 
   // Notebook actions
-  container.querySelector('.notebook-close-button')?.addEventListener('click', () => hideModal('notebook-modal'));
+  container.querySelector(".notebook-close-button")?.addEventListener("click", () => hideModal("notebook-modal"));
 
-  $('save-notebook-entry-btn')?.addEventListener('click', async () => {
-    const content = $<HTMLTextAreaElement>('notebook-textarea')?.value || '';
-    if (!content.trim() && !currentEntryPhotoIds.length) { showToast('Stránka je prázdná.', 'error'); return; }
+  $("save-notebook-entry-btn")?.addEventListener("click", async () => {
+    const content = $<HTMLTextAreaElement>("notebook-textarea")?.value || "";
+    if (!content.trim() && !currentEntryPhotoIds.length) {
+      showToast("Stránka je prázdná.", "error");
+      return;
+    }
 
     let result;
     if (currentEntryId) {
       result = await authFetch(`/api/diary/entries/${currentEntryId}`, {
-        method: 'PUT', body: JSON.stringify({ content, galleryPhotoIds: currentEntryPhotoIds }),
+        method: "PUT",
+        body: JSON.stringify({ content, galleryPhotoIds: currentEntryPhotoIds }),
       });
     } else {
-      result = await authFetch('/api/diary/entries', {
-        method: 'POST', body: JSON.stringify({ folderId: currentFolderId, date: currentSelectedDate, content, galleryPhotoIds: currentEntryPhotoIds }),
+      result = await authFetch("/api/diary/entries", {
+        method: "POST",
+        body: JSON.stringify({ folderId: currentFolderId, date: currentSelectedDate, content, galleryPhotoIds: currentEntryPhotoIds }),
       });
     }
-    if (result) { showToast('Uloženo.', 'success'); hideModal('notebook-modal'); if (currentFolderId) loadEntries(currentFolderId); }
+    if (result) {
+      showToast("Uloženo.", "success");
+      hideModal("notebook-modal");
+      if (currentFolderId) loadEntries(currentFolderId);
+    }
   });
 
-  $('delete-notebook-entry-btn')?.addEventListener('click', async () => {
+  $("delete-notebook-entry-btn")?.addEventListener("click", async () => {
     if (!currentEntryId) return;
-    const confirmed = await showConfirm('Vytrhnout stránku?', 'Opravdu chcete smazat tento zápis?', true);
+    const confirmed = await showConfirm("Vytrhnout stránku?", "Opravdu chcete smazat tento zápis?", true);
     if (!confirmed) return;
-    const r = await authFetch(`/api/diary/entries/${currentEntryId}`, { method: 'DELETE' });
-    if (r) { showToast('Vytrženo.', 'success'); hideModal('notebook-modal'); if (currentFolderId) loadEntries(currentFolderId); }
+    const r = await authFetch(`/api/diary/entries/${currentEntryId}`, { method: "DELETE" });
+    if (r) {
+      showToast("Vytrženo.", "success");
+      hideModal("notebook-modal");
+      if (currentFolderId) loadEntries(currentFolderId);
+    }
   });
 
   // Gallery picker
-  $('attach-photo-btn')?.addEventListener('click', async () => {
-    const folders = await authFetch<any[]>('/api/gallery/folders');
+  $("attach-photo-btn")?.addEventListener("click", async () => {
+    const folders = await authFetch<any[]>("/api/gallery/folders");
     if (!folders) return;
     allGalleryFolders = folders;
     renderPickerFolders();
     pickerSelectedPhotoIds.clear();
-    const pp = $('gallery-picker-photos');
-    const pf = $('gallery-picker-folders');
-    const bb = $('gallery-picker-back-btn');
-    if (pp) pp.style.display = 'none';
-    if (pf) pf.style.display = 'grid';
-    if (bb) bb.style.display = 'none';
-    showModal('select-gallery-photo-modal');
+    const pp = $("gallery-picker-photos");
+    const pf = $("gallery-picker-folders");
+    const bb = $("gallery-picker-back-btn");
+    if (pp) pp.style.display = "none";
+    if (pf) pf.style.display = "grid";
+    if (bb) bb.style.display = "none";
+    showModal("select-gallery-photo-modal");
   });
 
-  $('gallery-picker-back-btn')?.addEventListener('click', () => {
-    const pp = $('gallery-picker-photos');
-    const pf = $('gallery-picker-folders');
-    const bb = $('gallery-picker-back-btn');
-    if (pp) pp.style.display = 'none';
-    if (pf) pf.style.display = 'grid';
-    if (bb) bb.style.display = 'none';
+  $("gallery-picker-back-btn")?.addEventListener("click", () => {
+    const pp = $("gallery-picker-photos");
+    const pf = $("gallery-picker-folders");
+    const bb = $("gallery-picker-back-btn");
+    if (pp) pp.style.display = "none";
+    if (pf) pf.style.display = "grid";
+    if (bb) bb.style.display = "none";
   });
 
-  $('gallery-picker-confirm-btn')?.addEventListener('click', () => {
+  $("gallery-picker-confirm-btn")?.addEventListener("click", () => {
     pickerSelectedPhotoIds.forEach((id) => {
       if (!currentEntryPhotoIds.includes(id)) currentEntryPhotoIds.push(id);
     });
     renderNotebookAttachments();
-    hideModal('select-gallery-photo-modal');
+    hideModal("select-gallery-photo-modal");
   });
 
   // Lightbox
-  $('diary-lightbox-close')?.addEventListener('click', closeLightbox);
-  $('diary-lightbox-modal')?.addEventListener('click', (e) => {
-    if ((e.target as HTMLElement).classList.contains('lightbox-overlay')) closeLightbox();
+  $("diary-lightbox-close")?.addEventListener("click", closeLightbox);
+  $("diary-lightbox-modal")?.addEventListener("click", (e) => {
+    if ((e.target as HTMLElement).classList.contains("lightbox-overlay")) closeLightbox();
   });
-  $('diary-lightbox-prev')?.addEventListener('click', (e) => {
+  $("diary-lightbox-prev")?.addEventListener("click", (e) => {
     e.stopPropagation();
-    if (currentLightboxIndex > 0) { currentLightboxIndex--; updateLightboxContent(); }
+    if (currentLightboxIndex > 0) {
+      currentLightboxIndex--;
+      updateLightboxContent();
+    }
   });
-  $('diary-lightbox-next')?.addEventListener('click', (e) => {
+  $("diary-lightbox-next")?.addEventListener("click", (e) => {
     e.stopPropagation();
-    if (currentLightboxIndex < currentNotebookPhotosData.length - 1) { currentLightboxIndex++; updateLightboxContent(); }
+    if (currentLightboxIndex < currentNotebookPhotosData.length - 1) {
+      currentLightboxIndex++;
+      updateLightboxContent();
+    }
   });
 
   keydownHandler = (e) => {
-    const m = $('diary-lightbox-modal');
-    if (!m || m.style.display !== 'flex') return;
-    if (e.key === 'Escape') closeLightbox();
-    if (e.key === 'ArrowLeft' && currentLightboxIndex > 0) { currentLightboxIndex--; updateLightboxContent(); }
-    if (e.key === 'ArrowRight' && currentLightboxIndex < currentNotebookPhotosData.length - 1) { currentLightboxIndex++; updateLightboxContent(); }
+    const m = $("diary-lightbox-modal");
+    if (!m || m.style.display !== "flex") return;
+    if (e.key === "Escape") closeLightbox();
+    if (e.key === "ArrowLeft" && currentLightboxIndex > 0) {
+      currentLightboxIndex--;
+      updateLightboxContent();
+    }
+    if (e.key === "ArrowRight" && currentLightboxIndex < currentNotebookPhotosData.length - 1) {
+      currentLightboxIndex++;
+      updateLightboxContent();
+    }
   };
-  document.addEventListener('keydown', keydownHandler);
+  document.addEventListener("keydown", keydownHandler);
 }
 
 // ─── Page Module ──────────────────────────────────────────────────────
@@ -673,11 +763,17 @@ const diaryPage: PageModule = {
   async mount(el) {
     container = el;
     el.innerHTML = getTemplate();
+    setupCharCounters(container);
     bindEvents();
     await loadFolders();
   },
   unmount() {
-    if (keydownHandler) { document.removeEventListener('keydown', keydownHandler); keydownHandler = null; }
+    validationCleanups.forEach((fn) => fn());
+    validationCleanups.length = 0;
+    if (keydownHandler) {
+      document.removeEventListener("keydown", keydownHandler);
+      keydownHandler = null;
+    }
     currentFolderId = null;
     currentEntries = [];
     allFolders = [];

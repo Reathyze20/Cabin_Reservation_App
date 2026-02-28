@@ -7,7 +7,10 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.6);
+  /* Glassmorphism overlay — jemný blur místo tvrdé šedi */
+  background-color: rgba(17, 24, 39, 0.28);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -16,10 +19,13 @@
 }
 
 .modal-content {
-  background: white;
+  background: rgba(255, 255, 255, 0.97);
   padding: var(--space-3xl);
   border-radius: var(--radius-xl);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  box-shadow:
+    0 20px 60px -10px rgba(0, 0, 0, 0.18),
+    0 8px 20px -5px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
   width: 500px;
   height: auto;
   max-width: 95vw;
@@ -279,6 +285,14 @@
     to {
       transform: translateY(0);
     }
+  }
+}
+
+@media (max-width: 768px) {
+  .modal-content {
+    background-color: #ffffff !important;
+    border: 1px solid var(--border-strong, #e5e7eb) !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04) !important;
   }
 }
 

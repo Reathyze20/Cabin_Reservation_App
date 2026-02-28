@@ -98,7 +98,7 @@ let navContainer: HTMLElement | null = null;
 let mobileNavContainer: HTMLElement | null = null;
 
 /** Routes to show in mobile bottom nav (limited space) */
-const MOBILE_NAV_PATHS = ['/dashboard', '/reservations', '/notes', '/shopping'];
+const MOBILE_NAV_PATHS = ['/dashboard', '/reservations', '/notes', '/shopping', '/diary'];
 
 /** Get the hash path, e.g. "#/gallery" → "/gallery", "#/verify?token=abc" → "/verify" */
 function getHashPath(): string {
@@ -280,19 +280,7 @@ function buildNav(): void {
       });
       mobileNavContainer.appendChild(a);
     }
-
-    // Add static Menu item
-    const menuBtn = document.createElement('a');
-    menuBtn.className = 'mobile-nav-link';
-    menuBtn.href = '#';
-    menuBtn.innerHTML = `<span>Menu</span>`;
-    menuBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      // Menu functionality - open profile drawer temp logic
-      const drawer = document.getElementById('profile-drawer-overlay');
-      if (drawer) drawer.classList.remove('hidden');
-    });
-    mobileNavContainer.appendChild(menuBtn);
+    // Menu button removed — now lives in .mobile-header
   }
 }
 

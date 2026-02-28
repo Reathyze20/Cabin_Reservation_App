@@ -1,0 +1,195 @@
+/* ============================================================================
+   Help FAB & Modal Styles
+   ============================================================================ */
+
+/* ── Floating Action Button ─────────────────────────────────────────── */
+.fab-help {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background-color: var(--brand-primary);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    z-index: 90;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.fab-help svg {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    display: block;
+}
+
+.fab-help span,
+.fab-help i {
+    font-size: 24px;
+    line-height: 1;
+    display: block;
+    flex-shrink: 0;
+}
+
+.fab-help:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    background-color: var(--brand-primary-hover);
+}
+
+.fab-help:active {
+    transform: translateY(-1px) scale(0.98);
+}
+
+/* ── Help Modal ─────────────────────────────────────────────────────── */
+.help-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: var(--z-modal, 1000);
+    padding: 24px;
+    animation: help-fade-in 0.2s ease-out;
+}
+
+@keyframes help-fade-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.help-modal-card {
+    background: white;
+    border-radius: var(--radius-xl, 16px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    width: 520px;
+    max-width: 95vw;
+    max-height: 80vh;
+    overflow-y: auto;
+    animation: help-slide-up 0.3s ease-out;
+}
+
+@keyframes help-slide-up {
+    from {
+        opacity: 0;
+        transform: translateY(24px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.help-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--color-border, #e5e7eb);
+    position: sticky;
+    top: 0;
+    background: white;
+    border-radius: var(--radius-xl, 16px) var(--radius-xl, 16px) 0 0;
+    z-index: 1;
+}
+
+.help-modal-header h2 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--color-text-dark, #111827);
+}
+
+.help-modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--color-text-light, #9ca3af);
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: var(--radius-md, 8px);
+    transition: background 0.15s, color 0.15s;
+    line-height: 1;
+}
+
+.help-modal-close:hover {
+    background: var(--color-bg-alt, #f3f4f6);
+    color: var(--color-text-dark, #111827);
+}
+
+/* ── Help Content Body ──────────────────────────────────────────────── */
+.help-modal-body {
+    padding: 24px;
+    color: var(--color-text, #374151);
+    line-height: 1.7;
+    font-size: 0.95rem;
+}
+
+.help-modal-body h3 {
+    margin: 0 0 12px 0;
+    font-size: 1.15rem;
+    color: var(--color-text-dark, #111827);
+}
+
+.help-modal-body p {
+    margin: 0 0 12px 0;
+}
+
+.help-modal-body ul {
+    margin: 0 0 12px 0;
+    padding-left: 20px;
+}
+
+.help-modal-body li {
+    margin-bottom: 6px;
+}
+
+.help-modal-body li strong {
+    color: var(--brand-primary, #8BB88B);
+}
+
+/* ── Mobile adjustments ─────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .fab-help {
+        bottom: 80px;
+        /* above mobile bottom nav */
+        right: 16px;
+        width: 48px;
+        height: 48px;
+    }
+
+    .fab-help svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    .fab-help span,
+    .fab-help i {
+        font-size: 22px;
+    }
+
+    .help-modal-card {
+        max-height: 75vh;
+    }
+
+    .help-modal-body {
+        padding: 16px;
+        font-size: 0.9rem;
+    }
+}

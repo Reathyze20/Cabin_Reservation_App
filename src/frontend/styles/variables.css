@@ -1,101 +1,182 @@
 /* ============================================================================
-   Design Tokens — CSS Custom Properties
-   Family-friendly palette: Peach · Beige · Yellow · Sage
+   Design Tokens — Dvoupatrová architektura
+   
+   VRSTVA 1 — Raw Palette:  Sem vkládáme nové barvy při změně tématu
+   VRSTVA 2 — Semantic Tokens: Toto používáme ve všech komponentách
+   
+   Pro změnu celého tématu stačí přepsat pouze Vrstvu 1.
    ============================================================================ */
 :root {
-  /* ── Primary (Sage green — friendly, natural) ──────────────────────── */
-  --color-primary: #6B9E6B;
-  --color-primary-light: #8BB88B;
-  --color-primary-lighter: #CCE0AC;
-  --color-primary-bg: #f0f7ec;
-  --color-primary-gradient: linear-gradient(135deg, #8BB88B 0%, #6B9E6B 100%);
-  --color-primary-gradient-hover: linear-gradient(135deg, #9FC99F 0%, #5B8C5A 100%);
+  /* =========================================================================
+     VRSTVA 1 — RAW PALETTE  "Moderní Les" (zeleno-šedá)
+     ========================================================================= */
 
-  /* ── Accent (Peach — warm, inviting) ────────────────────────────────── */
-  --color-accent: #FF8A8A;
-  --color-accent-light: #FFB3B3;
-  --color-accent-bg: #fff0f0;
+  --raw-color-1: #1a2721; /* Nejtmavší      — Velmi tmavá zeleno-šedá (Texty)       */
+  --raw-color-2: #3f7b63; /* Výrazná/Akcent  — Svěží šalvějová zelená (Tlačítka)    */
+  --raw-color-3: #6b7280; /* Střední tón     — Neutrální šedá (Sekundární texty)    */
+  --raw-color-4: #e5e7eb; /* Světlejší tón   — Světle šedá (Rámečky, oddělovače)   */
+  --raw-color-5: #f4f7f5; /* Nejsvětlejší    — Jemně mentolově-bílý nádech (Pozadí) */
 
-  /* ── Semantic colors ────────────────────────────────────────────────── */
-  --color-danger: #e85d5d;
-  --color-danger-dark: #d44545;
-  --color-danger-bg: #fee2e2;
-  --color-danger-text: #b91c1c;
+  /* Stálé barvy — nemění se mezi paletami */
+  --raw-white: #ffffff;
+  --raw-off-white: #f4f7f5; /* Jemně mentolově-bílý nádech — pozadí */
+  --raw-danger: #dc2626;
+  --raw-danger-light: #fee2e2;
+  --raw-danger-dark: #991b1c;
+  --raw-success: #16a34a;
+  --raw-success-light: #dcfce7;
+  --raw-warning: #d97706;
+  --raw-warning-light: #fef3c7;
+  --raw-info: #2563eb;
+  --raw-info-light: #dbeafe;
 
-  --color-success: #6B9E6B;
-  --color-success-dark: #5B8C5A;
-  --color-success-bg: #d1fae5;
-  --color-success-text: #065f46;
+  /* =========================================================================
+     VRSTVA 2 — SEMANTIC TOKENS
+     Toto jsou jediné proměnné, které smíme používat v komponentách!
+     ========================================================================= */
 
-  --color-info: #5b9bd5;
-  --color-info-dark: #4a8cc7;
-  --color-info-bg: #dbeafe;
-  --color-info-text: #1e40af;
+  /* ── Pozadí ────────────────────────────────────────────────────────── */
+  --bg-app: var(--raw-off-white);
+  --bg-card: var(--raw-white);
+  --bg-card-hover: #edf1ee; /* Mírné ztmavení karet na hover        */
+  --bg-hover: #e8ece9; /* Hover stav řádků, listů              */
 
-  --color-warning-bg: #F0EAAC;
-  --color-warning-text: #7a6c14;
-  --color-warning-border: #e0d87a;
+  /* ── Texty ─────────────────────────────────────────────────────────── */
+  --text-main: var(--raw-color-1); /* Hlavní text — max. kontrast */
+  --text-muted: #4b5563;           /* Sekundární, labely — zaručený kontrast na bílém */
+  --text-placeholder: #9ca3af;     /* Placeholder inputů — viditelný, odlišený */
+  --text-on-primary: var(--raw-white); /* Text NA barevném pozadí     */
 
-  /* ── Text ────────────────────────────────────────────────────────────── */
-  --color-text: #4a4a4a;
-  --color-text-dark: #2d2d2d;
-  --color-text-light: #7a7a7a;
-  --color-text-muted: #a0a0a0;
+  /* ── Brand ─────────────────────────────────────────────────────────── */
+  --brand-primary: var(--raw-color-2); /* Okr — hlavní akce        */
+  --brand-primary-hover: var(--raw-color-1); /* Tmavší na hover          */
+  --brand-primary-light: #e8f4ef; /* Jemné pozadí pro outline */
 
-  /* ── Backgrounds ─────────────────────────────────────────────────────── */
-  --color-bg: #ffffff;
-  --color-bg-alt: #fdfaf5;
-  --color-bg-hover: #f7f2eb;
-  --color-bg-warm: #FDF8F0;
+  /* ── Linky a rámečky ────────────────────────────────────────────────── */
+  --border-light: var(--raw-color-5); /* Jemné oddělovače             */
+  --border-strong: var(--raw-color-4); /* Výraznější rámečky           */
 
-  /* ── Borders ─────────────────────────────────────────────────────────── */
-  --color-border: #e8e0d4;
-  --color-border-light: #f0e8db;
-  --color-border-dark: #d4cbbf;
+  /* ── Stavy ─────────────────────────────────────────────────────────── */
+  --status-error: var(--raw-danger);
+  --status-error-light: var(--raw-danger-light);
+  --status-error-dark: var(--raw-danger-dark);
+  --status-success: var(--raw-success);
+  --status-success-light: var(--raw-success-light);
+  --status-warning: var(--raw-warning);
+  --status-warning-light: var(--raw-warning-light);
+  --status-info: var(--raw-info);
+  --status-info-light: var(--raw-info-light);
 
-  /* ── Typography ─────────────────────────────────────────────────────── */
-  --font-family: "Plus Jakarta Sans", sans-serif;
-  --font-diary: "Kalam", cursive;
+  /* ── Tvary ──────────────────────────────────────────────────────────── */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 28px;
+  --radius-full: 9999px;
 
-  --font-size-xs: 0.8em;
-  --font-size-sm: 0.85em;
-  --font-size-base: 1em;
-  --font-size-lg: 1.1em;
-  --font-size-xl: 1.3em;
-  --font-size-2xl: 1.5em;
+  /* ── Stíny (tónované do tmavé barvy palety) ─────────────────────────── */
+  --shadow-xs: 0 1px 2px rgba(26, 39, 33, 0.04);
+  --shadow-sm: 0 2px 4px rgba(26, 39, 33, 0.05);
+  --shadow-md: 0 4px 12px rgba(26, 39, 33, 0.08);
+  --shadow-lg: 0 8px 24px rgba(26, 39, 33, 0.1);
+  --shadow-hover: 0 10px 20px rgba(26, 39, 33, 0.12);
+  --shadow-xl: 0 16px 40px rgba(26, 39, 33, 0.14);
 
-  /* ── Spacing ─────────────────────────────────────────────────────────── */
+  /* ── Spacing ────────────────────────────────────────────────────────── */
   --space-xs: 4px;
   --space-sm: 8px;
   --space-md: 12px;
   --space-lg: 16px;
-  --space-xl: 20px;
-  --space-2xl: 24px;
-  --space-3xl: 30px;
+  --space-xl: 24px;
+  --space-2xl: 32px;
+  --space-3xl: 48px;
 
-  /* ── Radii (softer, friendlier) ──────────────────────────────────────── */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
-  --radius-full: 50px;
+  /* ── Typografie ─────────────────────────────────────────────────────── */
+  --font-family: "Plus Jakarta Sans", sans-serif;
+  --font-diary: "Kalam", cursive;
 
-  /* ── Shadows (warm-toned) ────────────────────────────────────────────── */
-  --shadow-sm: 0 2px 8px rgba(139, 115, 85, 0.06);
-  --shadow-md: 0 4px 12px rgba(139, 115, 85, 0.08);
-  --shadow-lg: 0 8px 24px rgba(139, 115, 85, 0.12);
-  --shadow-xl: 0 16px 40px rgba(139, 115, 85, 0.16);
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.85rem;
+  --font-size-base: 0.9375rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
 
-  /* ── Transitions ─────────────────────────────────────────────────────── */
-  --transition-fast: 0.2s ease;
-  --transition-base: 0.3s ease;
+  /* ── Transitions ────────────────────────────────────────────────────── */
+  --transition-fast: 0.15s ease;
+  --transition-base: 0.2s ease;
+  --transition-slow: 0.3s ease;
   --transition-bounce: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* ── Z-index layers ──────────────────────────────────────────────────── */
+  /* ── Z-index vrstvy ─────────────────────────────────────────────────── */
   --z-sticky: 10;
   --z-modal: 1000;
   --z-lightbox: 2000;
   --z-toast: 3000;
 
+  /* ── Pozadí aplikace (fotka) ────────────────────────────────────────── */
   --bg-image: url("https://i0.wp.com/www.zazracnestredohori.cz/wp-content/uploads/2020/05/Kostalov_vyhled_hrad_panorama_01-05-2020_C.jpg?fit=1600%2C727&ssl=1");
+
+  /* =========================================================================
+     ZPĚTNÁ KOMPATIBILITA — aliasy --color-* → Semantic Tokens
+     Existující kód funguje beze změny. Nový kód píšeme přes Semantic Tokens!
+     ========================================================================= */
+
+  --color-primary: var(--brand-primary);
+  --color-primary-hover: var(--brand-primary-hover);
+  --color-primary-dark: var(--brand-primary-hover);
+  --color-primary-light: var(--raw-color-4);
+  --color-primary-lighter: var(--raw-color-5);
+  --color-primary-bg: var(--brand-primary-light);
+  --color-primary-gradient: linear-gradient(135deg, var(--raw-color-4) 0%, var(--raw-color-2) 100%);
+  --color-primary-gradient-hover: linear-gradient(135deg, var(--raw-color-3) 0%, var(--raw-color-1) 100%);
+
+  --color-accent: var(--raw-color-4);
+  --color-accent-light: var(--raw-color-5);
+  --color-accent-bg: var(--brand-primary-light);
+
+  --color-danger: var(--status-error);
+  --color-danger-hover: var(--status-error-dark);
+  --color-danger-dark: var(--status-error-dark);
+  --color-danger-light: var(--status-error-light);
+  --color-danger-bg: var(--status-error-light);
+  --color-danger-text: var(--status-error-dark);
+
+  --color-success: var(--status-success);
+  --color-success-hover: #15803d;
+  --color-success-dark: #15803d;
+  --color-success-bg: var(--status-success-light);
+  --color-success-text: #14532d;
+
+  --color-warning: var(--status-warning);
+  --color-warning-hover: #b45309;
+  --color-warning-bg: var(--status-warning-light);
+  --color-warning-text: #78350f;
+  --color-warning-border: #fcd34d;
+
+  --color-info: var(--status-info);
+  --color-info-hover: #1d4ed8;
+  --color-info-dark: #1d4ed8;
+  --color-info-bg: var(--status-info-light);
+  --color-info-text: #1e3a8a;
+
+  --color-text: var(--text-main);
+  --color-text-main: var(--text-main);
+  --color-text-dark: var(--raw-color-1);
+  --color-text-light: var(--text-muted);
+  --color-text-muted: var(--text-muted); /* bylo var(--text-placeholder) = #9ca3af — příliš světlé! */
+
+  --color-bg: var(--bg-card);
+  --color-bg-main: var(--bg-app);
+  --color-bg-card: var(--bg-card);
+  --color-bg-alt: var(--raw-off-white);
+  --color-bg-hover: var(--bg-hover);
+  --color-bg-warm: var(--raw-off-white);
+
+  --color-border: var(--border-light);
+  --color-border-light: var(--border-light);
+  --color-border-dark: var(--border-strong);
 }

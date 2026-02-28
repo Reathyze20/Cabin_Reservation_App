@@ -8,15 +8,19 @@
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
+  /* Glassmorphismus — konzistentní s .modal-overlay */
+  background-color: rgba(17, 24, 39, 0.28);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: center;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.2s ease, visibility 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease;
 }
 
 .dialog-overlay.visible {
@@ -74,13 +78,15 @@
   border-radius: var(--radius-md, 6px);
   font-size: 1rem;
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
   box-sizing: border-box;
 }
 
 .dialog-input:focus {
-  border-color: var(--color-primary, #4CAF50);
-  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(93, 155, 98, 0.2);
 }
 
 .dialog-footer {
@@ -113,18 +119,27 @@
 }
 
 .dialog-confirm-btn {
-  background-color: var(--color-primary, #4CAF50);
+  background-color: var(--color-primary);
   color: white;
 }
 
 .dialog-confirm-btn:hover {
-  background-color: var(--color-primary-hover, #45a049);
+  background-color: var(--color-primary-hover);
 }
 
 .dialog-confirm-btn.destructive {
-  background-color: var(--color-danger, #f44336);
+  background-color: var(--color-danger);
 }
 
 .dialog-confirm-btn.destructive:hover {
-  background-color: var(--color-danger-hover, #d32f2f);
+  background-color: var(--color-danger-hover);
+}
+
+/* ── Mobile: solid card feel ─────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .dialog-box {
+    background-color: #ffffff !important;
+    border: 1px solid var(--border-strong, #e5e7eb) !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04) !important;
+  }
 }

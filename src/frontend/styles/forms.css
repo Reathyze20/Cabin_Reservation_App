@@ -1,6 +1,9 @@
 /* ============================================================================
-   Form Elements
+   Form Elements — Unified Design System
    ============================================================================ */
+
+/* ── .form-input — Universal input class ───────────────────────────────── */
+.form-input,
 input[type="text"],
 input[type="email"],
 input[type="password"],
@@ -10,46 +13,71 @@ textarea,
 select,
 input[type="date"] {
   width: 100%;
-  padding: 0 var(--space-md);
-  min-height: 42px;
+  box-sizing: border-box;
+  padding: 9px 12px;
+  min-height: 40px;
   line-height: normal;
-  border: 1px solid var(--color-border-dark);
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1 !important;
+  color: var(--text-main, #1a2721);
   border-radius: var(--radius-md);
-  margin-top: var(--space-xs);
   font-family: var(--font-family);
   font-size: var(--font-size-sm);
-  background-color: var(--color-bg);
-  color: var(--color-text-dark);
-  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  box-shadow: var(--shadow-xs);
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
 }
 
 textarea {
-  min-height: 100px;
+  min-height: 90px;
   padding: var(--space-md);
   resize: vertical;
+  line-height: 1.5;
 }
 
+.form-input::placeholder,
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-text-muted);
+  opacity: 0.7;
+}
+
+.form-input:focus,
 input:focus,
 textarea:focus,
 select:focus {
   outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(107, 158, 107, 0.15);
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 3px rgba(93, 155, 98, 0.15);
+}
+
+.form-input:disabled,
+input:disabled,
+textarea:disabled,
+select:disabled {
+  background-color: var(--color-bg-main);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
 }
 
 .form-group {
-  margin-bottom: var(--space-xl);
+  margin-bottom: var(--space-lg);
 }
 
 .form-group label {
   display: block;
   margin-bottom: 6px;
   font-weight: 600;
-  color: #555;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-light);
 }
 
 .input-danger {
-  border: 2px solid #fca5a5;
+  border: 2px solid var(--color-accent-light);
   color: var(--color-danger-text);
   font-weight: bold;
   text-align: center;
@@ -60,4 +88,66 @@ select:focus {
   outline: none;
   border-color: var(--color-danger);
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+}
+
+/* ============================================================================
+   Form Validation — Unified error states
+   ============================================================================ */
+
+/* ── Nevalidní input ────────────────────────────────────────────────────── */
+.is-invalid {
+  border-color: var(--status-error, #dc2626) !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1) !important;
+  background-color: rgba(220, 38, 38, 0.02) !important;
+}
+
+.is-invalid:focus {
+  border-color: var(--status-error, #dc2626) !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15) !important;
+}
+
+/* ── Zpráva pod inputem ─────────────────────────────────────────────────── */
+.field-error-msg {
+  color: var(--status-error, #dc2626);
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-top: 4px;
+  display: block;
+  animation: validationFadeIn 0.18s ease-in-out;
+}
+
+/* ── Shake animace na formuláři ─────────────────────────────────────────── */
+.form-shake {
+  animation: formShake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes formShake {
+  10%,
+  90% {
+    transform: translate3d(-2px, 0, 0);
+  }
+  20%,
+  80% {
+    transform: translate3d(3px, 0, 0);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translate3d(-4px, 0, 0);
+  }
+  40%,
+  60% {
+    transform: translate3d(4px, 0, 0);
+  }
+}
+
+@keyframes validationFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

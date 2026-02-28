@@ -4,9 +4,11 @@
 import type { PageModule } from '../lib/router';
 import { navigate } from '../lib/router';
 import {
-  $, show, hide, showToast, authFetch, getUserId, getRole
+  $, show, hide, showToast, authFetch, getUserId, getRole, setupCharCounters, validateForm
 } from '../lib/common';
 import { showConfirm } from '../lib/dialogs';
+import { initCustomSelects, destroyCustomSelects } from '../lib/custom-select';
+import { icons } from '../lib/icons';
 import '../styles/shopping.css';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -51,6 +53,8 @@ let currentTab: 'shopping' | 'pantry' = 'shopping';
 let inventoryEventsReady = false;
 let pageAC: AbortController | null = null;
 const collapsedIds = new Set<string>();
+let currentInventoryIdToAdd: string | null = null;
+let currentInventoryNameToAdd: string | null = null;
 
 // ─── Status helpers ───────────────────────────────────────────────────────────
 
@@ -84,7 +88,7 @@ function getTemplate(): string {
   <div class="shopping-page">
     <div class="shopping-header-area">
       <h2>Nákupní seznamy</h2>
-      <button id="btn-new-list" class="button-primary">+ Nový košík</button>
+      <button id="btn-new-list" class="button-primary">Nový košík</button>
     </div>
 
     <!-- Segmented Control (iOS-style Tabs) -->
@@ -104,8 +108,8 @@ function getTemplate(): string {
     <div class="modal-content" style="max-width: 400px;">
       <span class="modal-close-button" data-close="new-list-modal">&times;</span>
       <h2>Vytvořit nový nákupní seznam</h2>
-      <form id="new-list-form" style="margin-top: var(--space-md);">
-        <input type="text" id="new-list-name" placeholder="Název (např. Nákup na víkend)" required style="width: 100%; margin-bottom: var(--space-md);" />
+      <form id="new-list-form" style="margin-top: var(--space-md);" novalidate>
+        <input type="text" id="new-list-name" placeholder="Název (např. Nákup na víkend)" required maxlength="100" style="width: 100%; margin-bottom: var(--space-md);" />
         <div class="modal-actions">
           <button type="button" class="button-secondary" data-close="new-list-modal">Zrušit</button>
           <button type="submit" class="button-primary">Vytvořit</button>
@@ -151,8 +155,8 @@ function getTemplate(): string {
         <button id="share-note-add-thread" class="share-note-add-thread-btn">
           + Vytvořit nové vlákno
         </button>
-        <div id="share-note-new-thread-form" class="share-note-new-thread-form hidden">
-          <input type="text" id="share-note-thread-name" placeholder="Název vlákna..." />
+        <form id="share-note-new-thread-form" class="share-note-new-thread-form hidden" novalidate>
+          <input type="text" id="share-note-thread-name" placeholder="Název vlákna..." required />
           <div style="display:flex;gap:var(--space-sm);margin-top:var(--space-sm)">
             <button id="share-note-create-thread" class="button-primary">Vytvořit a vybrat</button>
             <button id="share-note-cancel-thread" class="button-secondary">Zrušit</button>
@@ -164,6 +168,32 @@ function getTemplate(): string {
       </div>
     </div>
   </div>
+
+  <!-- ── Přidat zásobu do nákupu — výběr seznamu ── -->
+  <div id="add-to-cart-modal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 420px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-md);">
+        <h2 id="add-to-cart-modal-title" style="margin:0; font-size:1.1rem;">Přidat do nákupu</h2>
+        <button class="modal-close-button" data-close="add-to-cart-modal" style="position:static;">&times;</button>
+      </div>
+      <p style="font-size:0.85rem; color:var(--color-text-muted); margin:0 0 var(--space-md);">
+        Vyberte, do kterého seznamu chcete položku přidat:
+      </p>
+      <!-- Existující aktivní seznamy -->
+      <div id="add-to-cart-lists" style="display:flex; flex-direction:column; gap:8px; margin-bottom:var(--space-md);">
+        <div class="spinner-container" style="padding:var(--space-sm) 0;"><div class="spinner"></div></div>
+      </div>
+      <!-- Oddělovaè -->
+      <div class="modal-divider">— nebo vytvořte nový —</div>
+      <!-- Formulář nového seznamu -->
+      <form id="new-list-for-item-form" novalidate style="display:flex; gap:8px; margin-top:var(--space-sm);">
+        <input type="text" id="new-list-name-for-item"
+               class="form-input" placeholder="Název nového seznamu..."
+               required maxlength="100" style="flex:1; min-width:0;" />
+        <button type="submit" class="button-primary" style="flex-shrink:0; white-space:nowrap;">Vytvořit</button>
+      </form>
+    </div>
+  </div>
   `;
 }
 
@@ -171,9 +201,12 @@ function getTemplate(): string {
 function getPantryTemplate(): string {
   const isGuest = getRole() === 'guest';
   return `
-    <form id="inventory-add-form" class="inventory-add-form">
-      <input type="text" id="inv-name" class="inventory-input" placeholder="Název zásoby (např. Těstoviny)…" required autocomplete="off" />
-      <input type="text" id="inv-location" class="inventory-input inventory-input-location" placeholder="Kde to leží? (např. Kůlna)" autocomplete="off" />
+    <form id="inventory-add-form" class="inventory-add-form" novalidate>
+      <div class="inv-name-field">
+        <input type="text" id="inv-name" class="inventory-input" maxlength="100" placeholder="Název zásoby" autocomplete="off" />
+        <span id="inv-name-error" class="error-message">Zadejte název zásoby.</span>
+      </div>
+      <input type="text" id="inv-location" class="inventory-input inventory-input-location" maxlength="100" placeholder="Kde to leží?" autocomplete="off" />
       <select id="inv-category" class="inventory-select">
         <option value="TRVANLIVÉ">Trvanlivé</option>
         <option value="NÁPOJE">Nápoje</option>
@@ -186,8 +219,7 @@ function getPantryTemplate(): string {
         <option value="LOW">Málo</option>
         <option value="EMPTY">Došlo</option>
       </select>
-      ${!isGuest ? `<label class="essential-toggle-label inv-essential-label" title="Kritická položka"><input type="checkbox" id="inv-essential" /><span class="essential-toggle-icon">❗</span></label>` : ''}
-      <button type="submit" class="button-primary inv-add-btn">+ Přidat</button>
+      <button type="submit" class="button-primary inv-add-btn" title="Přidat položku">↑</button>
     </form>
     <div id="inventory-list" class="inventory-list">
       <div class="spinner-container"><div class="spinner"></div></div>
@@ -205,6 +237,7 @@ async function loadInventory(): Promise<void> {
   if (!$('inventory-list')) {
     contentArea.innerHTML = getPantryTemplate();
     bindInventoryFormEvents();
+    initCustomSelects(contentArea);
   }
 
   const list = $('inventory-list');
@@ -219,6 +252,7 @@ async function loadInventory(): Promise<void> {
   }
 
   renderInventory(items, list);
+  setupCharCounters(contentArea);
 }
 
 function bindInventoryFormEvents(): void {
@@ -231,15 +265,17 @@ function bindInventoryFormEvents(): void {
     const form = (e.target as HTMLElement).closest<HTMLFormElement>('#inventory-add-form');
     if (!form) return;
     e.preventDefault();
+    if (!validateForm(form)) return;
 
     const nameEl = $<HTMLInputElement>('inv-name');
-    const catEl  = $<HTMLSelectElement>('inv-category');
-    const stEl   = $<HTMLSelectElement>('inv-status');
-    const locEl  = $<HTMLInputElement>('inv-location');
-    const essEl  = $<HTMLInputElement>('inv-essential');
-    const name   = nameEl?.value.trim() ?? '';
-
+    const catEl = $<HTMLSelectElement>('inv-category');
+    const stEl = $<HTMLSelectElement>('inv-status');
+    const locEl = $<HTMLInputElement>('inv-location');
+    const essEl = $<HTMLInputElement>('inv-essential');
+    const name = nameEl?.value.trim() ?? '';
+    // Custom validation message handled by validateForm for `required` but here we also check if manual empty check occurs
     if (!name) return;
+
     if (name.length > 100) { showToast('Název je příliš dlouhý (max 100 znaků).', 'error'); return; }
 
     const res = await authFetch<InventoryItem>('/api/inventory', {
@@ -256,7 +292,7 @@ function bindInventoryFormEvents(): void {
       if (nameEl) nameEl.value = '';
       if (locEl) locEl.value = '';
       if (essEl) essEl.checked = false;
-      showToast('Zásoba přidána.', 'success');
+      showToast('Položka přidána.', 'success');
       await loadInventory();
     }
   }, { signal });
@@ -265,15 +301,12 @@ function bindInventoryFormEvents(): void {
     const el = e.target as HTMLElement;
 
     const addBtn = el.closest<HTMLButtonElement>('.btn-add-to-cart');
-    if (addBtn && addBtn.dataset.id) {
-      addBtn.disabled = true;
-      const res = await authFetch(`/api/inventory/${addBtn.dataset.id}/add-to-cart`, { method: 'POST' });
-      if (res) {
-        showToast('Přidáno do nákupního seznamu "Doplňování zásob".', 'success');
-        await loadInventory();
-      } else {
-        addBtn.disabled = false;
-      }
+    if (addBtn && addBtn.dataset.id && !addBtn.disabled) {
+      const row = addBtn.closest<HTMLElement>('.inventory-item');
+      const rawName = row?.querySelector<HTMLElement>('.inventory-item-name')?.textContent?.trim() ?? '';
+      // Strip leading SVG icon text
+      const invName = rawName.replace(/^[^\w\u00C0-\u017E]+/, '').trim() || rawName;
+      await openAddToCartModal(addBtn.dataset.id, invName);
       return;
     }
 
@@ -289,7 +322,7 @@ function bindInventoryFormEvents(): void {
       if (!confirmed) return;
       const res = await authFetch(`/api/inventory/${delBtn.dataset.id}`, { method: 'DELETE' });
       if (res) {
-        showToast('Zásoba smazána.', 'success');
+        showToast('Položka smazána.', 'success');
         await loadInventory();
       }
     }
@@ -313,7 +346,7 @@ function renderInventory(items: InventoryItem[], listEl: HTMLElement): void {
   if (items.length === 0) {
     listEl.innerHTML = `
       <div class="inventory-empty-state">
-        <i class="fas fa-box-open empty-icon" style="color:#9ca3af;opacity:0.4"></i>
+        <span class="empty-state-icon">${icons.box()}</span>
         <h3>Žádné zásoby</h3>
         <p>Přidejte první položku, kterou chcete na chatě sledovat.</p>
       </div>`;
@@ -354,14 +387,14 @@ function renderInventory(items: InventoryItem[], listEl: HTMLElement): void {
 
 function renderInventoryRow(item: InventoryItem): HTMLElement {
   const row = document.createElement('div');
-  row.className = `inventory-item${item.isEssential ? ' is-essential' : ''}`;
+  row.className = `inventory-item${item.isEssential ? ' is-essential' : ''}${item.status === 'EMPTY' ? ' item-empty' : ''}`;
   row.dataset.id = item.id;
   if (item.location) row.dataset.location = item.location;
 
   const badgeClass = item.status === 'OK' ? 'badge-full' : item.status === 'LOW' ? 'badge-low' : 'badge-empty';
   const badgeLabel = item.status === 'OK' ? 'Dostatek' : item.status === 'LOW' ? 'Málo' : 'Došlo';
 
-  const essentialIcon = item.isEssential ? '<span class="inv-essential-icon" title="Kritická položka">❗</span>' : '';
+  const essentialIcon = '';
 
   const locationHtml = item.location
     ? `<span class="inv-meta-location">${item.location}</span>`
@@ -373,14 +406,15 @@ function renderInventoryRow(item: InventoryItem): HTMLElement {
     ? `<div class="inv-item-meta">${locationHtml}${updatedByHtml}</div>`
     : '';
 
-  const cartBtn = item.inCart
-    ? `<button class="btn-add-to-cart btn-in-cart" data-id="${item.id}" disabled title="Již v nákupu">Na seznamu</button>`
-    : `<button class="btn-add-to-cart" data-id="${item.id}" title="Přidat do nákupního seznamu">+ Do nákupu</button>`;
+  // Only show cart button for LOW or EMPTY items
+  let cartBtn = '';
+  if (item.inCart) {
+    cartBtn = `<span class="text-muted" style="font-size: 0.8rem; white-space: nowrap;">V nákupním seznamu 🛒</span>`;
+  } else if (item.status === 'LOW' || item.status === 'EMPTY') {
+    cartBtn = `<button class="btn-add-to-cart" data-id="${item.id}" title="Přidat do nákupního seznamu">Přidat do nákupu</button>`;
+  }
 
-  const isGuest = getRole() === 'guest';
-  const essentialBtn = !isGuest
-    ? `<button class="ghost-btn btn-inv-essential ${item.isEssential ? 'is-active' : ''}" data-id="${item.id}" title="${item.isEssential ? 'Zrušit jako kritické' : 'Označit jako kritické'}">❗</button>`
-    : '';
+  const essentialBtn = '';
 
   row.innerHTML = `
     <span class="badge ${badgeClass}">${badgeLabel}</span>
@@ -391,8 +425,8 @@ function renderInventoryRow(item: InventoryItem): HTMLElement {
     <div class="item-actions">
       ${cartBtn}
       ${essentialBtn}
-      <button class="ghost-btn btn-inv-edit" data-id="${item.id}" title="Upravit">✎</button>
-      <button class="ghost-btn btn-inv-delete" data-id="${item.id}" title="Smazat">×</button>
+      <button class="ghost-btn btn-inv-edit" data-id="${item.id}" title="Upravit">${icons.edit(14)}</button>
+      <button class="ghost-btn btn-inv-delete" data-id="${item.id}" title="Smazat">${icons.close(12)}</button>
     </div>`;
 
   return row;
@@ -417,18 +451,21 @@ async function openEditInventoryModal(id: string): Promise<void> {
     <div class="modal-content modal-small">
       <span class="modal-close-button" id="inv-edit-close">&times;</span>
       <h2>Upravit zásobu</h2>
-      <form id="inv-edit-form" style="margin-top: var(--space-md); display:flex; flex-direction:column; gap:var(--space-sm);">
-        <input type="text" id="inv-edit-name" class="inventory-input" value="${nameText}" placeholder="Název zásoby" required />
-        <input type="text" id="inv-edit-location" class="inventory-input" value="${locationText}" placeholder="Kde to leží? (např. Kůlna)" />
+      <form id="inv-edit-form" style="margin-top: var(--space-md); display:flex; flex-direction:column; gap:var(--space-sm);" novalidate>
+        <input type="text" id="inv-edit-name" class="inventory-input" value="${nameText}" maxlength="100" placeholder="Název zásoby" />
+        <input type="text" id="inv-edit-location" class="inventory-input" value="${locationText}" maxlength="100" placeholder="Kde to leží? (např. Kůlna)" />
         <select id="inv-edit-status" class="inventory-select">
           <option value="OK">Dostatek</option>
           <option value="LOW">Málo</option>
           <option value="EMPTY">Došlo</option>
         </select>
-        ${!isGuest ? `<label class="essential-toggle-label" style="gap: var(--space-sm); align-items: center;"><input type="checkbox" id="inv-edit-essential" ${essentialRow ? 'checked' : ''} /><span>Kritická položka ❗</span></label>` : ''}
-        <div class="modal-buttons" style="justify-content: flex-end; margin-top: var(--space-md);">
-          <button type="button" id="inv-edit-cancel" class="button-secondary">Zrušit</button>
-          <button type="submit" class="button-primary">Uložit</button>
+        ${!isGuest ? `<label class="essential-toggle-label essential-toggle-label--form"><input type="checkbox" id="inv-edit-essential" ${essentialRow ? 'checked' : ''} /><span class="essential-toggle-icon">★</span><span>Důležitá položka</span></label>` : ''}
+        <div class="inv-modal-footer">
+          ${!isGuest ? `<button type="button" id="inv-edit-delete" class="btn-modal-delete">Smazat zásobu</button>` : '<span></span>'}
+          <div style="display:flex; gap:8px;">
+            <button type="button" id="inv-edit-cancel" class="button-secondary">Zrušit</button>
+            <button type="submit" class="button-primary">Uložit</button>
+          </div>
         </div>
       </form>
     </div>`;
@@ -438,36 +475,157 @@ async function openEditInventoryModal(id: string): Promise<void> {
   const badgeEl = row?.querySelector<HTMLElement>('.badge');
   const currentStatus =
     badgeEl?.classList.contains('badge-full') ? 'OK' :
-    badgeEl?.classList.contains('badge-low') ? 'LOW' : 'EMPTY';
+      badgeEl?.classList.contains('badge-low') ? 'LOW' : 'EMPTY';
   const sel = modal.querySelector<HTMLSelectElement>('#inv-edit-status')!;
   sel.value = currentStatus;
+
+  setupCharCounters(modal);
 
   function closeModal() { modal.remove(); }
   modal.querySelector('#inv-edit-close')?.addEventListener('click', closeModal);
   modal.querySelector('#inv-edit-cancel')?.addEventListener('click', closeModal);
   modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
+  // ── Smazat zásobu ─────────────────────────────────────────────────
+  modal.querySelector<HTMLButtonElement>('#inv-edit-delete')?.addEventListener('click', async () => {
+    const confirmed = await showConfirm(
+      'Smazat zásobu?',
+      'Opravdu chcete tuto zásobu smazat? Tato akce je nevratná.',
+      true,
+    );
+    if (!confirmed) return;
+    const res = await authFetch(`/api/inventory/${id}`, { method: 'DELETE' });
+    if (res) {
+      showToast('Položka smazána.', 'success');
+      closeModal();
+      await loadInventory();
+    }
+  });
+
   modal.querySelector<HTMLFormElement>('#inv-edit-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const name = (modal.querySelector<HTMLInputElement>('#inv-edit-name')!).value.trim();
+    const nameInput = modal.querySelector<HTMLInputElement>('#inv-edit-name')!;
+    const name = nameInput.value.trim();
+    if (!name) {
+      nameInput.classList.add('input-error');
+      nameInput.focus();
+      showToast('Zadejte název zásoby.', 'error');
+      return;
+    }
+    if (name.length > 100) { showToast('Název je příliš dlouhý (max 100 znaků).', 'error'); return; }
+    nameInput.classList.remove('input-error');
     const status = (modal.querySelector<HTMLSelectElement>('#inv-edit-status')!).value;
     const location = (modal.querySelector<HTMLInputElement>('#inv-edit-location')!).value.trim();
     const essentialCb = modal.querySelector<HTMLInputElement>('#inv-edit-essential');
     const isEssential = essentialCb?.checked ?? false;
-    if (!name) return;
     const res = await authFetch(`/api/inventory/${id}`, {
       method: 'PUT',
       body: JSON.stringify({ name, status, location: location || null, isEssential }),
     });
     if (res) {
-      showToast('Zásoba aktualizována.', 'success');
+      showToast('Položka aktualizována.', 'success');
       closeModal();
       await loadInventory();
     }
   });
 }
 
+// ─── Add-to-cart modal ──────────────────────────────────────────────────────────
+
+async function openAddToCartModal(invId: string, invName: string): Promise<void> {
+  currentInventoryIdToAdd = invId;
+  currentInventoryNameToAdd = invName;
+
+  const modal = $('add-to-cart-modal')!;
+  const title = $('add-to-cart-modal-title')!;
+  const listsEl = $('add-to-cart-lists')!;
+  const nameInp = $<HTMLInputElement>('new-list-name-for-item')!;
+
+  title.textContent = `Přidat „${invName}" do nákupu`;
+  nameInp.value = '';
+  listsEl.innerHTML = '<div class="spinner-container" style="padding:var(--space-sm) 0;"><div class="spinner"></div></div>';
+  show(modal);
+
+  const lists = await authFetch<ShoppingList[]>('/api/shopping-lists');
+  const active = (lists ?? []).filter((l) => !l.isResolved);
+
+  if (active.length === 0) {
+    listsEl.innerHTML = '<p style="font-size:0.85rem;color:var(--color-text-muted);margin:0;">Zatím žádné aktivní seznamy.</p>';
+  } else {
+    listsEl.innerHTML = active
+      .map((l) => {
+        const pending = l.items.filter((i) => !isDone(i.status)).length;
+        return `
+          <button type="button" class="add-to-cart-list-btn button-secondary" data-list-id="${l.id}">
+            <span class="atc-list-name">${l.name}</span>
+            <span class="atc-list-count">${pending} nekoupených</span>
+          </button>`;
+      })
+      .join('');
+
+    listsEl.querySelectorAll<HTMLButtonElement>('.add-to-cart-list-btn').forEach((btn) => {
+      btn.addEventListener('click', () => submitAddToCart({ listId: btn.dataset.listId! }));
+    });
+  }
+
+  // Replace form to strip any stale listeners
+  const oldForm = $('new-list-for-item-form') as HTMLFormElement;
+  const newForm = oldForm.cloneNode(true) as HTMLFormElement;
+  oldForm.replaceWith(newForm);
+  newForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const newName = newForm.querySelector<HTMLInputElement>('#new-list-name-for-item')!.value.trim();
+    if (!newName) return;
+    if (newName.length > 100) { showToast('Název je příliš dlouhý (max 100 znaků).', 'error'); return; }
+    await submitAddToCart({ newListName: newName });
+  });
+}
+
+async function submitAddToCart(payload: { listId?: string; newListName?: string }): Promise<void> {
+  if (!currentInventoryIdToAdd) return;
+  const invId = currentInventoryIdToAdd;
+  const invName = currentInventoryNameToAdd;
+  currentInventoryIdToAdd = null;
+  currentInventoryNameToAdd = null;
+
+  hide($('add-to-cart-modal')!);
+
+  const res = await authFetch(`/api/inventory/${invId}/add-to-cart`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+  if (res) {
+    showToast(`„${invName}" přidáno do nákupu.`, 'success');
+    await Promise.all([
+      loadInventory(),
+      currentTab === 'shopping' ? loadShoppingLists() : Promise.resolve(),
+    ]);
+  }
+}
+
 // ─── Data loading ──────────────────────────────────────────────────────────────
+
+// ── Scroll-position helpers ────────────────────────────────────────────────────────
+function saveScrollPositions(grid: HTMLElement): Map<string, number> {
+  const map = new Map<string, number>();
+  grid.querySelectorAll<HTMLElement>('.shopping-list-card').forEach((card) => {
+    const listId = card.dataset.listId;
+    const list = card.querySelector<HTMLElement>('.shopping-items-list');
+    if (listId && list) map.set(listId, list.scrollTop);
+  });
+  return map;
+}
+
+function restoreScrollPositions(grid: HTMLElement, positions: Map<string, number>): void {
+  grid.querySelectorAll<HTMLElement>('.shopping-list-card').forEach((card) => {
+    const listId = card.dataset.listId;
+    const list = card.querySelector<HTMLElement>('.shopping-items-list');
+    if (listId && list && positions.has(listId)) {
+      list.scrollTop = positions.get(listId)!;
+    }
+  });
+}
 
 async function loadShoppingLists(): Promise<void> {
   const contentArea = $('shopping-content-area');
@@ -483,6 +641,9 @@ async function loadShoppingLists(): Promise<void> {
     contentArea.appendChild(grid);
   }
 
+  // Zachovat scroll pozice před překreslením
+  const scrollPositions = saveScrollPositions(grid);
+
   grid.innerHTML = '<div class="spinner-container"><div class="spinner"></div></div>';
 
   const lists = await authFetch<ShoppingList[]>('/api/shopping-lists?isPantry=false');
@@ -491,6 +652,10 @@ async function loadShoppingLists(): Promise<void> {
     return;
   }
   renderShoppingLists(lists, grid);
+  setupCharCounters(contentArea);
+
+  // Obnovit scroll pozice po překreslení
+  restoreScrollPositions(grid, scrollPositions);
 }
 
 // ─── Rendering ────────────────────────────────────────────────────────────────
@@ -502,45 +667,49 @@ function renderShoppingItemRow(
   isAdminUser: boolean,
   isEssentialSection: boolean,
 ): string {
-  const doneClass = isDone(item.status) ? 'is-done' : '';
+  const isPurchased = item.status === 'purchased';
+  const isFromHome = item.status === 'bring_from_home';
+  const doneClass = isPurchased ? 'is-purchased' : isFromHome ? 'is-from-home' : '';
   const essentialClass = item.isEssential ? 'is-essential' : '';
   const canDeleteItem =
     item.addedById === currentUserId ||
     listCreatedById === currentUserId ||
     isAdminUser;
 
-  const bringBadge = item.status === 'bring_from_home'
-    ? '<span class="shopping-item-badge bring-badge">Z domova</span>'
-    : '';
+  // ── Levý checkbox — pouze Koupeno / Nekoupeno ──────────────────────────────
+  const svgCheck = icons.check(12);
+  const checkboxBtn = `<button class="item-checkbox${isPurchased ? ' is-checked' : ''}" title="${isPurchased ? 'Zrušit koupení' : 'Označit jako koupené'}" data-item-id="${item.id}">${isPurchased ? svgCheck : ''}</button>`;
 
+  // ── Pravá strana: badge + 🏠 + ❗ + × ────────────────────────────────────────
   const purchasedBadge =
-    item.status === 'purchased' && item.purchasedBy
+    isPurchased && item.purchasedBy
       ? `<span class="purchased-by-badge" title="Koupil(a) ${item.purchasedBy.username}">${item.purchasedBy.animalIcon ?? item.purchasedBy.username[0].toUpperCase()}</span>`
       : '';
 
-  const deleteBtn = canDeleteItem
-    ? `<button class="btn-delete-item" title="Smazat položku" data-item-id="${item.id}">×</button>`
-    : '';
+  const svgHome = icons.homeSmall(14);
+  const fromHomeBtn = `<button class="btn-action btn-home${isFromHome ? ' is-active' : ''}" title="${isFromHome ? 'Zrušit „Z domova“' : 'Přivezu z domova'}" data-item-id="${item.id}">${svgHome}</button>`;
 
-  // Essential toggle button (only for non-guests)
   const isGuest = getRole() === 'guest';
   const essentialBtn = !isGuest
-    ? `<button class="btn-toggle-essential ${item.isEssential ? 'is-active' : ''}" title="${item.isEssential ? 'Zrušit jako kritické' : 'Označit jako kritické'}" data-item-id="${item.id}">❗</button>`
-    : (item.isEssential ? '<span class="essential-badge-inline">❗</span>' : '');
+    ? `<button class="btn-action btn-essential${item.isEssential ? ' is-active' : ''}" title="${item.isEssential ? 'Zrušit jako důležité' : 'Označit jako důležité'}" data-item-id="${item.id}"><span class="critical-badge${item.isEssential ? ' is-active' : ''}">★</span></button>`
+    : (item.isEssential ? '<span class="critical-badge is-active">★</span>' : '');
 
-  const actionBtn = `
-      <button class="shopping-status-btn" title="${statusLabel(item.status)}" data-item-id="${item.id}">
-        ${statusIcon(item.status)}
-      </button>`;
+  const svgX = icons.close(12);
+  const deleteBtn = canDeleteItem
+    ? `<button class="btn-action btn-delete-item" title="Smazat položku" data-item-id="${item.id}">${svgX}</button>`
+    : '';
 
   return `
     <div class="shopping-item-row ${doneClass} ${essentialClass}" data-item-id="${item.id}" data-list-id="" data-status="${item.status}" data-essential="${item.isEssential}">
-      ${actionBtn}
+      ${checkboxBtn}
       <span class="shopping-item-name">${item.name}</span>
-      ${essentialBtn}
-      ${bringBadge}
+      ${item.isEssential ? '<span class="from-inventory-badge">Ze zásob</span>' : ''}
       ${purchasedBadge}
-      ${deleteBtn}
+      <div class="item-actions">
+        ${fromHomeBtn}
+        ${essentialBtn}
+        ${deleteBtn}
+      </div>
     </div>`;
 }
 
@@ -550,9 +719,9 @@ function renderShoppingLists(lists: ShoppingList[], grid: HTMLElement): void {
   if (lists.length === 0) {
     grid.innerHTML = `
       <div class="empty-state">
-        <i class="fas fa-shopping-basket empty-icon" style="color:#9ca3af;opacity:0.4"></i>
+        <span class="empty-state-icon">${icons.shoppingBasket()}</span>
         <h3>Žádné aktivní nákupy</h3>
-        <p>Klikněte na <strong>+ Nový košík</strong> a vytvořte první seznam.</p>
+        <p>Klikněte na <strong>Nový košík</strong> a vytvořte první seznam.</p>
       </div>`;
     return;
   }
@@ -581,9 +750,9 @@ function renderShoppingLists(lists: ShoppingList[], grid: HTMLElement): void {
           <span class="shopping-card-meta">Přidal(a) ${list.createdBy?.username ?? 'Neznámý'}</span>
         </div>
         <div class="shopping-card-header-actions">
-          <button class="btn-share-list btn-icon-action btn-icon-share" data-id="${list.id}" data-name="${list.name.replace(/"/g, '&quot;')}" title="Sdílet do chatu">↗</button>
-          ${allDone ? `<button class="btn-archive-list btn-icon-action btn-icon-success" data-id="${list.id}" title="Archivovat seznam">✓</button>` : ''}
-          ${canEdit ? `<button class="btn-delete-list btn-icon-action btn-icon-danger" data-id="${list.id}" title="Smazat seznam">×</button>` : ''}
+          <button class="btn-share-list btn-icon-action btn-icon-share" data-id="${list.id}" data-name="${list.name.replace(/"/g, '&quot;')}" title="Sdílet do chatu">${icons.externalLink()}</button>
+          ${allDone ? `<button class="btn-archive-list btn-icon-action btn-icon-success" data-id="${list.id}" title="Archivovat seznam">${icons.check(14)}</button>` : ''}
+          ${canEdit ? `<button class="btn-delete-list btn-icon-action btn-icon-danger" data-id="${list.id}" title="Smazat seznam">${icons.close(14)}</button>` : ''}
           <button class="btn-collapse-list" title="${isCollapsed ? 'Rozbalit' : 'Sbalit'}" data-list-id="${list.id}" aria-label="Přepnout sbalení">
             <span class="collapse-icon">▼</span>
           </button>
@@ -599,11 +768,10 @@ function renderShoppingLists(lists: ShoppingList[], grid: HTMLElement): void {
     // ── Add item form ────────────────────────────────────────────────────────
     const isGuest = getRole() === 'guest';
     const addItemHTML = `
-      <form class="shopping-add-item-form" data-list-id="${list.id}">
+      <form class="shopping-add-item-form" data-list-id="${list.id}" novalidate>
         <div class="shopping-input-wrapper">
-          <input type="text" class="shopping-add-input" placeholder="Přidat položku..." required autocomplete="off" />
-          ${!isGuest ? `<label class="essential-toggle-label" title="Označit jako kritickou položku"><input type="checkbox" class="essential-checkbox" /><span class="essential-toggle-icon">❗</span></label>` : ''}
-          <button type="submit" class="shopping-add-btn" title="Přidat">↑</button>
+          <input type="text" class="shopping-add-input" placeholder="Přidat položku..." maxlength="100" required autocomplete="off" />
+          <button type="submit" class="shopping-add-btn" title="Přidat položku">↑</button>
         </div>
       </form>`;
 
@@ -617,20 +785,8 @@ function renderShoppingLists(lists: ShoppingList[], grid: HTMLElement): void {
         return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
       });
 
-      // Split into essential and regular
-      const essentialItems = sorted.filter(i => i.isEssential && !isDone(i.status));
-      const regularItems = sorted.filter(i => !i.isEssential || isDone(i.status));
-
-      // Render essential section if any pending essential items exist
-      if (essentialItems.length > 0) {
-        itemsHTML += `<div class="essential-section-header">Nezapomeňte</div>`;
-        for (const item of essentialItems) {
-          itemsHTML += renderShoppingItemRow(item, currentUserId, list.createdById, isAdminUser, true);
-        }
-        itemsHTML += `<div class="essential-divider"></div>`;
-      }
-
-      for (const item of regularItems) {
+      // Render all items uniformly — no separate "NEZAPOMEŇTE" section
+      for (const item of sorted) {
         itemsHTML += renderShoppingItemRow(item, currentUserId, list.createdById, isAdminUser, false);
       }
     } else {
@@ -642,21 +798,12 @@ function renderShoppingLists(lists: ShoppingList[], grid: HTMLElement): void {
     }
     itemsHTML += '</div>';
 
-    // ── Footer (archivace) ───────────────────────────────────────────────────
-    const footerHTML = allDone ? `
-      <div class="shopping-card-footer">
-        <button class="btn-resolve-list btn-archive-list" data-id="${list.id}">
-          Archivovat / Uzavřít
-        </button>
-      </div>` : '';
-
     // Zabal měnitelný obsah – skrývá se při sbalení
     const collapsibleHTML = `
       <div class="shopping-collapsible">
         <div class="shopping-collapsible-inner">
           ${addItemHTML}
           ${itemsHTML}
-          ${footerHTML}
         </div>
       </div>`;
 
@@ -875,6 +1022,11 @@ function bindEvents(): void {
     });
   });
 
+  // Klik mimo add-to-cart modal ho zavře
+  $('add-to-cart-modal')?.addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) hide($('add-to-cart-modal')!);
+  });
+
   $<HTMLFormElement>('new-list-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const input = $<HTMLInputElement>('new-list-name');
@@ -1003,20 +1155,26 @@ function bindCardEvents(grid: HTMLElement): void {
     });
   });
 
-  // ── Třístavový přepínač statusu ───────────────────────────────────────────
-  grid.querySelectorAll<HTMLButtonElement>('.shopping-status-btn').forEach((btn) => {
+  // ── Toggle PURCHASED (levý checkbox) ────────────────────────────────────
+  grid.querySelectorAll<HTMLButtonElement>('.item-checkbox').forEach((btn) => {
     btn.addEventListener('click', async () => {
+      btn.disabled = true;
       const row = btn.closest<HTMLElement>('.shopping-item-row');
-      if (!row) return;
+      if (!row) { btn.disabled = false; return; }
       const itemId = row.dataset.itemId!;
-      const currentStatus = (row.dataset.status ?? 'pending') as ItemStatus;
-      const newStatus = nextStatus(currentStatus);
+      const wasPurchased = row.dataset.status === 'purchased';
+      const newStatus: ItemStatus = wasPurchased ? 'pending' : 'purchased';
+      const svgCheck = icons.check(12);
 
-      // Optimistic UI update
+      // Optimistic update
       row.dataset.status = newStatus;
-      row.classList.toggle('is-done', isDone(newStatus));
-      btn.innerHTML = statusIcon(newStatus);
-      btn.title = statusLabel(newStatus);
+      row.classList.toggle('is-purchased', !wasPurchased);
+      row.classList.remove('is-from-home');
+      btn.classList.toggle('is-checked', !wasPurchased);
+      btn.innerHTML = !wasPurchased ? svgCheck : '';
+      btn.title = !wasPurchased ? 'Zrušit koupení' : 'Označit jako koupené';
+      const fhBtn = row.querySelector<HTMLButtonElement>('.btn-home');
+      if (fhBtn) { fhBtn.classList.remove('is-active'); fhBtn.title = 'Přivezu z domova'; }
 
       const res = await authFetch(`/api/shopping-list/${itemId}/purchase`, {
         method: 'PUT',
@@ -1024,19 +1182,54 @@ function bindCardEvents(grid: HTMLElement): void {
       });
 
       if (!res) {
-        // Revert on failure
-        row.dataset.status = currentStatus;
-        row.classList.toggle('is-done', isDone(currentStatus));
-        btn.innerHTML = statusIcon(currentStatus);
-        btn.title = statusLabel(currentStatus);
+        row.dataset.status = wasPurchased ? 'purchased' : 'pending';
+        row.classList.toggle('is-purchased', wasPurchased);
+        btn.classList.toggle('is-checked', wasPurchased);
+        btn.innerHTML = wasPurchased ? svgCheck : '';
         showToast('Chyba při aktualizaci položky.', 'error');
+        btn.disabled = false;
       } else {
-        // Reload to refresh progress bar + archive button visibility
         await loadShoppingLists();
       }
     });
   });
 
+  // ── Toggle FROM HOME (domeček, pravá strana) ──────────────────────────────
+  grid.querySelectorAll<HTMLButtonElement>('.btn-home').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      const row = btn.closest<HTMLElement>('.shopping-item-row');
+      if (!row) { btn.disabled = false; return; }
+      const itemId = row.dataset.itemId!;
+      const wasFromHome = row.dataset.status === 'bring_from_home';
+      const newStatus: ItemStatus = wasFromHome ? 'pending' : 'bring_from_home';
+
+      // Optimistic update
+      row.dataset.status = newStatus;
+      row.classList.toggle('is-from-home', !wasFromHome);
+      row.classList.remove('is-purchased');
+      btn.classList.toggle('is-active', !wasFromHome);
+      btn.title = !wasFromHome ? 'Zrušit „Z domova"' : 'Přivezu z domova';
+      const cbBtn = row.querySelector<HTMLButtonElement>('.item-checkbox');
+      if (cbBtn) { cbBtn.classList.remove('is-checked'); cbBtn.innerHTML = ''; }
+
+      const res = await authFetch(`/api/shopping-list/${itemId}/purchase`, {
+        method: 'PUT',
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!res) {
+        row.dataset.status = wasFromHome ? 'bring_from_home' : 'pending';
+        row.classList.toggle('is-from-home', wasFromHome);
+        btn.classList.toggle('is-active', wasFromHome);
+        btn.title = wasFromHome ? 'Zrušit „Z domova"' : 'Přivezu z domova';
+        showToast('Chyba při aktualizaci položky.', 'error');
+        btn.disabled = false;
+      } else {
+        await loadShoppingLists();
+      }
+    });
+  });
 
   // ── Smazat položku ────────────────────────────────────────────────────────
   grid.querySelectorAll<HTMLButtonElement>('.btn-delete-item').forEach((btn) => {
@@ -1048,22 +1241,24 @@ function bindCardEvents(grid: HTMLElement): void {
   });
 
   // ── Toggle essential ──────────────────────────────────────────────────────
-  grid.querySelectorAll<HTMLButtonElement>('.btn-toggle-essential').forEach((btn) => {
+  grid.querySelectorAll<HTMLButtonElement>('.btn-essential').forEach((btn) => {
     btn.addEventListener('click', async () => {
       const itemId = btn.dataset.itemId!;
       btn.disabled = true;
-      // Optimistic toggle
       const wasActive = btn.classList.contains('is-active');
+      // Optimistic toggle
       btn.classList.toggle('is-active');
-      btn.title = wasActive ? 'Označit jako kritické' : 'Zrušit jako kritické';
+      btn.title = wasActive ? 'Označit jako důležité' : 'Zrušit jako důležité';
+      const badge = btn.querySelector<HTMLElement>('.critical-badge');
+      if (badge) badge.classList.toggle('is-active', !wasActive);
 
       const res = await authFetch(`/api/shopping-list/${itemId}/toggle-essential`, { method: 'PATCH' });
       if (res) {
         await loadShoppingLists();
       } else {
-        // Revert on failure
         btn.classList.toggle('is-active');
-        btn.title = wasActive ? 'Zrušit jako kritické' : 'Označit jako kritické';
+        btn.title = wasActive ? 'Zrušit jako důležité' : 'Označit jako důležité';
+        if (badge) badge.classList.toggle('is-active', wasActive);
         btn.disabled = false;
       }
     });
@@ -1083,6 +1278,7 @@ const shoppingPage: PageModule = {
 
     el.innerHTML = getTemplate();
     bindEvents();
+    setupCharCounters(container); // Added as per instruction
 
     // Ensure the new-list button is always visible on shopping tab
     show($('btn-new-list'));
@@ -1090,6 +1286,7 @@ const shoppingPage: PageModule = {
     await loadShoppingLists();
   },
   unmount() {
+    destroyCustomSelects(container);
     pageAC?.abort();
     pageAC = null;
     inventoryEventsReady = false;
