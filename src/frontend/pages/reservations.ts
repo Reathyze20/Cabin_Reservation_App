@@ -166,7 +166,7 @@ function getTemplate(): string {
           </button>
         </div>
         <div class="panel-actions-buttons">
-          <button id="btn-new-reservation" class="button-primary">Nová rezervace</button>
+          <button id="btn-new-reservation" class="button-primary">Vytvořit rezervaci</button>
           <button id="btn-new-availability" class="button-secondary btn-availability" title="Nahlásit osobní volno / dovolenou">Termíny dovolených</button>
         </div>
       </div>
@@ -620,39 +620,59 @@ function updateQuickStats() {
   const daysInMonth = new Date(currentCalYear, currentCalMonth + 1, 0).getDate();
   const occupiedDays = new Set<number>();
 
+  // Today at midnight for past-day filtering
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
   currentReservations.forEach((r) => {
     if (r.status === "backup") return;
-    
-    const start = new Date(r.from);
-    const end = new Date(r.to);
-    
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-      if (d.getFullYear() === currentCalYear && d.getMonth() === currentCalMonth) {
-        occupiedDays.add(d.getDate());
+
+    const start = new Date(r.from + "T00:00:00");
+    const end = new Date(r.to + "T00:00:00");
+
+    const current = new Date(start);
+    while (current <= end) {
+      if (current.getFullYear() === currentCalYear && current.getMonth() === currentCalMonth) {
+        occupiedDays.add(current.getDate());
       }
+      current.setDate(current.getDate() + 1);
     }
   });
 
-  const obsazeno = occupiedDays.size;
-  const volno = daysInMonth - occupiedDays.size;
+  // Count only future (or today) days
+  let futureOccupied = 0;
+  let futureFree = 0;
 
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dayDate = new Date(currentCalYear, currentCalMonth, d);
+    dayDate.setHours(0, 0, 0, 0);
+    if (dayDate < today) continue;
+
+    if (occupiedDays.has(d)) {
+      futureOccupied++;
+    } else {
+      futureFree++;
+    }
+  }
+
+  // Free weekends — only future
   let freeWeekends = 0;
   for (let d = 1; d <= daysInMonth; d++) {
     const date = new Date(currentCalYear, currentCalMonth, d);
-    if (date.getDay() === 6) { // Saturday
-      const satFree = !occupiedDays.has(d);
-      const nextDay = new Date(currentCalYear, currentCalMonth, d + 1);
-      const sunFree = nextDay.getMonth() === currentCalMonth ? !occupiedDays.has(d + 1) : true;
-      
-      if (satFree && sunFree) {
-        freeWeekends++;
-      }
+    date.setHours(0, 0, 0, 0);
+    if (date.getDay() !== 6) continue;
+    if (date < today) continue;
+
+    const satFree = !occupiedDays.has(d);
+    if (d + 1 <= daysInMonth) {
+      const sunFree = !occupiedDays.has(d + 1);
+      if (satFree && sunFree) freeWeekends++;
     }
   }
 
   statsContainer.innerHTML = `
-    <span class="stat-badge occupied">Obsazeno: <strong>${obsazeno}</strong></span>
-    <span class="stat-badge free">Volno: <strong>${volno}</strong></span>
+    <span class="stat-badge occupied">Obsazeno: <strong>${futureOccupied}</strong></span>
+    <span class="stat-badge free">Volno: <strong>${futureFree}</strong></span>
     <span class="stat-badge weekend">Volné víkendy: <strong>${freeWeekends}</strong></span>
   `;
 }
@@ -812,16 +832,16 @@ function renderReservationsOverview(month: number, year: number): void {
   if (activePeriodFilter === "month") {
     title.textContent = `Přehled: ${monthNames[month]} ${year}`;
   } else if (activePeriodFilter === "3months") {
-    title.textContent = `Výhled na 3 měsíce od: ${monthNames[month]}`;
+    title.textContent = `Výhled na 3 měsíce`;
     mEnd = new Date(year, month + 3, 0);
   } else if (activePeriodFilter === "year") {
-    title.textContent = `Výhled na 1 rok od: ${monthNames[month]}`;
+    title.textContent = `Výhled na 1 rok`;
     mEnd = new Date(year, month + 12, 0);
   }
 
   const filtered = currentReservations.filter((r) => {
     try {
-      return new Date(r.from) <= mEnd && new Date(r.to) >= mStart;
+      return new Date(r.from + "T00:00:00") <= mEnd && new Date(r.to + "T00:00:00") >= mStart;
     } catch {
       return false;
     }
@@ -837,7 +857,7 @@ function renderReservationsForSelection(sel: Date[]): void {
   title.textContent = "Konflikty pro Váš výběr";
   const overlapping = currentReservations.filter((r) => {
     try {
-      return new Date(r.from) <= sel[1] && new Date(r.to) >= sel[0];
+      return new Date(r.from + "T00:00:00") <= sel[1] && new Date(r.to + "T00:00:00") >= sel[0];
     } catch {
       return false;
     }
@@ -866,9 +886,20 @@ function renderReservationList(reservations: typeof currentReservations, emptyMs
         <span class="res-empty-icon">${emptyIcon}</span>
         <p class="res-empty-title">Žádné rezervace</p>
         <span class="res-empty-sub">${isMyTab ? "V tomto období nemáš žádnou rezervaci." : "V tomto období je chata zcela volná."}</span>
+        <button class="button-primary" id="empty-state-new-reservation" style="margin-top:12px">Vytvořit rezervaci</button>
       </div>`;
+    document.getElementById("empty-state-new-reservation")?.addEventListener("click", () => {
+      openBookingModal();
+    });
+    // Hide bottom button — CTA is in the empty state
+    const bottomBtn = $("btn-new-reservation");
+    if (bottomBtn) (bottomBtn as HTMLElement).style.display = "none";
     return;
   }
+
+  // Show bottom button when list has reservations
+  const bottomBtn = $("btn-new-reservation");
+  if (bottomBtn) (bottomBtn as HTMLElement).style.display = "";
 
   filtered.sort((a, b) => new Date(a.from).getTime() - new Date(b.from).getTime());
   const myUserId = getUserId();
@@ -882,8 +913,8 @@ function renderReservationList(reservations: typeof currentReservations, emptyMs
     const uColor = r.userColor || "#808080";
     const init = r.username.charAt(0).toUpperCase();
 
-    const d1 = new Date(r.from);
-    const d2 = new Date(r.to);
+    const d1 = new Date(r.from + "T00:00:00");
+    const d2 = new Date(r.to + "T00:00:00");
 
     const notesHTML = r.notes ? `<p class="res-notes" style="margin-top: 5px;">${r.notes.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>` : "";
 
@@ -1001,7 +1032,7 @@ function openBookingModal(fromDateStr?: string, toDateStr?: string, isEdit = fal
       const to = new Date(toDateStr);
       const overlapping = currentReservations.some((r) => {
         if (r.status === "backup") return false;
-        return new Date(r.from) <= to && new Date(r.to) >= from;
+        return new Date(r.from + "T00:00:00") <= to && new Date(r.to + "T00:00:00") >= from;
       });
       if (overlapping) show(backupWarn);
     }
@@ -1095,7 +1126,7 @@ function buildWatchButton(reservationId: string, watching: boolean): string {
        </button>`
     : `<button class="detail-btn detail-btn-watch watch-toggle-btn" data-res-id="${reservationId}" data-watching="false"
          title="Dostaneš zprávu na nástěnce, pokud bude termín uvolněn">
-         🔔 Hlídat termín
+         Hlídat termín
        </button>`;
 }
 
