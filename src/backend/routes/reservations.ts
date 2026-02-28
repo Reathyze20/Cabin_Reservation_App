@@ -166,6 +166,28 @@ router.put("/:id", protect, async (req: Request, res: Response) => {
       return res.status(403).json({ message: "Bez oprávnění." });
     }
 
+    // Determine effective dates and status after update
+    const effectiveFrom = from ? new Date(from) : reservation.dateFrom;
+    const effectiveTo = to ? new Date(to) : reservation.dateTo;
+    const effectiveStatus = status ?? reservation.status;
+
+    // If the result would be a primary reservation, check for collisions with OTHER primary reservations
+    if (effectiveStatus === "primary") {
+      const collision = await prisma.reservation.findFirst({
+        where: {
+          id: { not: id }, // exclude self
+          status: "primary",
+          dateFrom: { lte: effectiveTo },
+          dateTo: { gte: effectiveFrom },
+        },
+      });
+      if (collision) {
+        return res.status(409).json({
+          message: "V tomto termínu již existuje potvrzená rezervace. Nastav stav jako záložní.",
+        });
+      }
+    }
+
     const updated = await prisma.reservation.update({
       where: { id },
       data: {

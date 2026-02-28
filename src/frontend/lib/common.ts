@@ -113,6 +113,7 @@ interface AuthFetchOptions extends RequestInit {
 export async function authFetch<T = unknown>(
   url: string,
   options: AuthFetchOptions = {},
+  _retryCount = 0,
 ): Promise<T | null> {
   const token = getToken();
   const headers: Record<string, string> = {
@@ -139,13 +140,22 @@ export async function authFetch<T = unknown>(
     if (response.status === 204) return true as unknown as T;
     return (await response.json()) as T;
   } catch (error: unknown) {
+    const isNetworkError = error instanceof TypeError &&
+      (error.message === 'Failed to fetch' || error.message.includes('Network'));
+
+    // Auto-retry once on network error when online (handles PM2 restart gap)
+    if (isNetworkError && navigator.onLine && _retryCount < 1) {
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      return authFetch<T>(url, options, _retryCount + 1);
+    }
+
     let msg = error instanceof Error ? error.message : 'Neznámá chyba';
     console.error('API Error:', error);
 
     const method = (options.method || '').toUpperCase();
     const isMutation = ['DELETE', 'POST', 'PATCH', 'PUT'].includes(method);
 
-    if (error instanceof TypeError && (error.message === 'Failed to fetch' || error.message.includes('Network'))) {
+    if (isNetworkError) {
       if (!navigator.onLine) {
         msg = isMutation
           ? 'Akci nelze provést: Jste offline.'

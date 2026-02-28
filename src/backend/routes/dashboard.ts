@@ -5,53 +5,50 @@ import logger from "../../utils/logger";
 
 const router = Router();
 
-// ─── Helper: Find next free weekend (Fri–Sun) ─────────────────────────
+// ─── Helper: Find next free weekend (Sat–Sun) ─────────────────────────
 async function findNextFreeWeekend(): Promise<{ start: string; end: string } | null> {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-  // Find next Friday (or today if already Friday)
-  let friday = new Date(today);
-  const dayOfWeek = friday.getDay(); // 0=Sun, 5=Fri
-  const daysUntilFri = (5 - dayOfWeek + 7) % 7 || 7; // always move forward
-  // If today is Friday and it's still morning, allow this weekend
-  if (dayOfWeek === 5) {
-    // Use this Friday
-  } else {
-    friday.setDate(friday.getDate() + daysUntilFri);
+  // Pull all future primary reservations
+  const futureReservations = await prisma.reservation.findMany({
+    where: {
+      status: "primary",
+      dateTo: { gte: today },
+    },
+    select: { dateFrom: true, dateTo: true },
+  });
+
+  // Build Set of occupied YYYY-MM-DD strings
+  const occupiedDates = new Set<string>();
+  for (const r of futureReservations) {
+    const cur = new Date(r.dateFrom);
+    cur.setHours(0, 0, 0, 0);
+    const end = new Date(r.dateTo);
+    end.setHours(0, 0, 0, 0);
+    while (cur <= end) {
+      occupiedDates.add(cur.toISOString().split("T")[0]);
+      cur.setDate(cur.getDate() + 1);
+    }
   }
 
-  // Search up to 26 weeks (~6 months)
-  const MAX_WEEKS = 26;
+  // Advance to next Saturday (if today is Saturday, start here)
+  const candidate = new Date(today);
+  while (candidate.getDay() !== 6) {
+    candidate.setDate(candidate.getDate() + 1);
+  }
 
-  for (let i = 0; i < MAX_WEEKS; i++) {
-    const weekendStart = new Date(friday);
-    const weekendEnd = new Date(friday);
-    weekendEnd.setDate(weekendEnd.getDate() + 2); // Sunday
+  // Check up to 26 weekends (~6 months)
+  for (let i = 0; i < 26; i++) {
+    const satStr = candidate.toISOString().split("T")[0];
+    const sunday = new Date(candidate);
+    sunday.setDate(sunday.getDate() + 1);
+    const sunStr = sunday.toISOString().split("T")[0];
 
-    const startStr = weekendStart.toISOString().split("T")[0];
-    const endStr = weekendEnd.toISOString().split("T")[0];
-
-    // Check for overlapping reservations:
-    // A reservation overlaps this weekend if:
-    //   reservation.dateFrom < weekendEnd+1day AND reservation.dateTo > weekendStart
-    // Since dates are date-only, "dateTo = Friday" means they leave Friday,
-    // so the cabin is free from Friday. We check dateTo > Friday (strictly).
-    const conflict = await prisma.reservation.findFirst({
-      where: {
-        status: "primary",
-        dateFrom: { lte: new Date(endStr) },
-        dateTo: { gt: new Date(startStr) },
-      },
-      select: { id: true },
-    });
-
-    if (!conflict) {
-      return { start: startStr, end: endStr };
+    if (!occupiedDates.has(satStr) && !occupiedDates.has(sunStr)) {
+      return { start: satStr, end: sunStr };
     }
-
-    // Move to next Friday
-    friday.setDate(friday.getDate() + 7);
+    candidate.setDate(candidate.getDate() + 7);
   }
 
   return null; // No free weekend in next 6 months
@@ -73,6 +70,7 @@ router.get("/", protect, async (req: Request, res: Response) => {
     const upcomingReservations = await prisma.reservation.findMany({
       where: {
         dateFrom: { gte: new Date(todayStr) },
+        status: "primary",
       },
       include: {
         user: {
@@ -184,17 +182,19 @@ router.get("/", protect, async (req: Request, res: Response) => {
           handoverNote: activeReservation.handoverNote ?? null,
         }
         : null,
-      upcomingReservations: upcomingReservations.map((r) => ({
-        id: r.id,
-        userId: r.userId,
-        username: r.user.username,
-        userColor: r.user.color,
-        userAnimalIcon: r.user.animalIcon,
-        from: r.dateFrom.toISOString().split("T")[0],
-        to: r.dateTo.toISOString().split("T")[0],
-        purpose: r.purpose,
-        status: r.status,
-      })),
+      upcomingReservations: upcomingReservations
+        .filter((r) => r.dateTo >= r.dateFrom)
+        .map((r) => ({
+          id: r.id,
+          userId: r.userId,
+          username: r.user.username,
+          userColor: r.user.color,
+          userAnimalIcon: r.user.animalIcon,
+          from: r.dateFrom.toISOString().split("T")[0],
+          to: r.dateTo.toISOString().split("T")[0],
+          purpose: r.purpose,
+          status: r.status,
+        })),
       myNextReservation: myNextReservation
         ? {
           from: myNextReservation.dateFrom.toISOString().split("T")[0],

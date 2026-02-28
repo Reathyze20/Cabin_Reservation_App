@@ -458,7 +458,12 @@ function renderCustomCalendar(): void {
         const barsContainer = document.createElement("div");
         barsContainer.className = "cal-bars";
 
-        forDay.forEach((r) => {
+        // Teams-like collapse: show 1 bar, rest as "+N" badge
+        const maxVisible = 1;
+        const visible = forDay.slice(0, maxVisible);
+        const hiddenCount = forDay.length - visible.length;
+
+        visible.forEach((r) => {
           const bar = document.createElement("div");
           bar.className = "cal-bar";
           if (r.status === "backup") bar.classList.add("backup");
@@ -491,6 +496,20 @@ function renderCustomCalendar(): void {
 
           barsContainer.appendChild(bar);
         });
+
+        // "+N dalších" overflow badge
+        if (hiddenCount > 0) {
+          const more = document.createElement("div");
+          more.className = "cal-bar-more";
+          more.textContent = `+${hiddenCount}`;
+          more.title = forDay.slice(maxVisible).map(r => `${r.username} (${r.purpose})`).join(", ");
+          more.addEventListener("click", (ev) => {
+            ev.stopPropagation();
+            // Show the list panel filtered to this month so user can see all
+            renderReservationsOverview(currentCalMonth, currentCalYear);
+          });
+          barsContainer.appendChild(more);
+        }
 
         dayCell.appendChild(barsContainer);
       }
@@ -934,7 +953,7 @@ function renderReservationList(reservations: typeof currentReservations, emptyMs
 
     let badge = "";
     if (r.status === "backup") {
-      badge = '<span class="status-badge backup">Na čekací listině</span>';
+      badge = '<span class="status-badge backup">Má zájem</span>';
     } else if (r.status === "soft") {
       badge = '<span class="status-badge soft">Předběžný zájem</span>';
     } else {

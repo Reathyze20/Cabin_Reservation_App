@@ -99,6 +99,37 @@ function formatDateShort(dateStr: string): string {
   return `${d.getDate()}.${d.getMonth() + 1}.`;
 }
 
+/** Format a date range elegantly: same day → "28. února", same month → "28.–31. února", diff → "28. února – 3. března" */
+function formatDateRange(from: string, to: string): string {
+  const d1 = new Date(from + "T00:00:00");
+  const d2 = new Date(to + "T00:00:00");
+  if (d2 < d1) return "";
+  if (from === to) return `${d1.getDate()}. ${MONTH_NAMES_CZ[d1.getMonth()]}`;
+  if (d1.getMonth() === d2.getMonth() && d1.getFullYear() === d2.getFullYear()) {
+    return `${d1.getDate()}.–${d2.getDate()}. ${MONTH_NAMES_CZ[d1.getMonth()]}`;
+  }
+  return `${d1.getDate()}. ${MONTH_NAMES_CZ[d1.getMonth()]} – ${d2.getDate()}. ${MONTH_NAMES_CZ[d2.getMonth()]}`;
+}
+
+/** Check if a reservation has valid date range */
+function isValidReservation(r: { from: string; to: string }): boolean {
+  return r.to >= r.from;
+}
+
+/** Count nights between two ISO date strings */
+function nightsBetween(from: string, to: string): number {
+  const d1 = new Date(from + "T00:00:00");
+  const d2 = new Date(to + "T00:00:00");
+  return Math.max(0, Math.round((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24)));
+}
+
+/** Czech plural for "noc" */
+function nightsLabel(n: number): string {
+  if (n === 1) return "noc";
+  if (n >= 2 && n <= 4) return "noci";
+  return "nocí";
+}
+
 function daysUntil(dateStr: string): number {
   const now = new Date();
   now.setHours(0, 0, 0, 0);
@@ -115,16 +146,6 @@ function formatWeekendRange(start: string, end: string): string {
     return `${s.getDate()}.\u2013${e.getDate()}. ${MONTH_NAMES_CZ[s.getMonth()]}`;
   }
   return `${s.getDate()}. ${MONTH_NAMES_CZ[s.getMonth()]} \u2013 ${e.getDate()}. ${MONTH_NAMES_CZ[e.getMonth()]}`;
-}
-
-function nightsLabel(from: string, to: string): string {
-  const d1 = new Date(from + "T00:00:00");
-  const d2 = new Date(to + "T00:00:00");
-  const nights = Math.round((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24));
-  if (nights <= 0) return "1 noc";
-  if (nights === 1) return "1 noc";
-  if (nights < 5) return `${nights} noci`;
-  return `${nights} nocí`;
 }
 
 function renderMarkdown(text: string): string {
@@ -471,16 +492,16 @@ function renderWeather(weather: WeatherData | null): void {
             ${(weather.sunriseTime || weather.sunsetTime) ? `
             <div class="weather-sun-below">
               ${weather.sunriseTime ? `<span class="weather-sun-chip">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--status-warning, #f59e0b)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--status-warning, #f59e0b)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M12 2v8"/><path d="m8 6 4-4 4 4"/><path d="M16 18a4 4 0 0 0-8 0"/><path d="M2 18h20"/>
                 </svg>
-                ${weather.sunriseTime}
+                <span class="weather-sun-time">${weather.sunriseTime}</span>
               </span>` : ''}
               ${weather.sunsetTime ? `<span class="weather-sun-chip">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary, #3f7b63)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary, #3f7b63)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M12 10V2"/><path d="m16 6-4 4-4-4"/><path d="M16 18a4 4 0 0 0-8 0"/><path d="M2 18h20"/>
                 </svg>
-                ${weather.sunsetTime}
+                <span class="weather-sun-time">${weather.sunsetTime}</span>
               </span>` : ''}
             </div>` : ''}
           </div>
@@ -497,8 +518,11 @@ function renderWeather(weather: WeatherData | null): void {
 
 function getTodayFormatted(): string {
   const today = new Date();
-  const dateString = today.toLocaleDateString('cs-CZ', { weekday: 'long', day: 'numeric', month: 'long' });
-  return dateString.charAt(0).toUpperCase() + dateString.slice(1);
+  const dayNames = ["Neděle", "Pondělí", "Úterý", "Středa", "Čtvrtek", "Pátek", "Sobota"];
+  const dayName = dayNames[today.getDay()];
+  const dayNum = today.getDate();
+  const monthName = MONTH_NAMES_CZ[today.getMonth()];
+  return `${dayName} ${dayNum}. ${monthName}`;
 }
 
 function renderActiveReservation(data: DashboardData): void {
@@ -506,42 +530,101 @@ function renderActiveReservation(data: DashboardData): void {
   if (!el) return;
 
   const todayStr = new Date().toISOString().split("T")[0];
+  const currentHour = new Date().getHours();
   const formattedDate = getTodayFormatted();
   const dateHtml = `<div class="dashboard-date">${formattedDate}</div>`;
   const active = data.activeReservation;
 
-  // Odvoz nextReservation z upcomingReservations (první, která není aktivní)
-  const nextRes = active ? (data.upcomingReservations.find((r) => r.id !== active.id) ?? null) : (data.upcomingReservations[0] ?? null);
+  // Filter out invalid reservations and non-primary (backup/soft) from upcoming
+  const validUpcoming = data.upcomingReservations.filter(r => isValidReservation(r) && r.status === "primary");
+
+  // Derive nextReservation from upcomingReservations (first valid primary, not active)
+  const nextRes = active ? (validUpcoming.find((r) => r.id !== active.id) ?? null) : (validUpcoming[0] ?? null);
 
   // Free weekend hint (shown in all states)
   const freeWeekendHtml = data.nextFreeWeekend
     ? `<div class="next-free-weekend"><span class="free-weekend-dot"></span> Nejbližší volný víkend: <strong>${formatWeekendRange(data.nextFreeWeekend.start, data.nextFreeWeekend.end)}</strong></div>`
     : "";
 
-  if (active) {
+  // ── Helper: build "Dále" next-reservation mini-card ──────────────
+  function buildNextBlock(res: typeof nextRes): string {
+    if (!res) return "";
+    const days = daysUntil(res.from);
+    const daysChip = days === 0 ? "dnes" : days === 1 ? "zítra" : `za ${days} d.`;
+    const avatarContent = res.userAnimalIcon ?? res.username.charAt(0).toUpperCase();
+    const avatarBg = res.userAnimalIcon ? "background:rgba(0,0,0,0.06)" : `background:${res.userColor || "#808080"}`;
+    return `
+      <div class="status-next-block">
+        <div class="status-next-avatar" style="${avatarBg}">${avatarContent}</div>
+        <div class="status-next-info">
+          <div class="status-next-label">Další pobyt</div>
+          <div class="status-next-name">${res.username}</div>
+          <div class="status-next-date">${formatDateRange(res.from, res.to)}</div>
+        </div>
+        <span class="status-next-chip">${daysChip}</span>
+      </div>`;
+  }
+
+  if (active && isValidReservation(active)) {
     // ── Stav C: Chata obsazena ────────────────────────────────────────
     const departingToday = active.to === todayStr;
+    const userColor = active.userColor || "#ea580c";
     const avatarContent = active.userAnimalIcon ?? active.username.charAt(0).toUpperCase();
-    const avatarStyle = active.userAnimalIcon ? "background:rgba(255,255,255,0.35)" : `background:${active.userColor || "#ea580c"}`;
+    const avatarBg = active.userAnimalIcon ? "background:rgba(255,255,255,0.35)" : `background:${userColor}`;
 
-    const title = departingToday ? `Dnes odjíždí ${active.username}` : `Obsazeno — ${active.username}`;
-    const subtitle = departingToday ? `Rezervace do ${formatDate(active.to)} · ${active.purpose}` : `Do ${formatDate(active.to)} · ${active.purpose}`;
+    // Time-aware departure logic
+    let title: string;
+    let subtitle: string;
+    let cardClass: string;
+    let avatarHtml: string;
+    let badgePill: string;
+    let remainingChip = "";
 
-    const nextHint = nextRes ? `<div class="status-next-hint">Dále: ${nextRes.username} · ${formatDateShort(nextRes.from)} — ${formatDateShort(nextRes.to)}</div>` : "";
+    if (departingToday && currentHour >= 14) {
+      // After 14:00 — already departed
+      title = "Volná!";
+      subtitle = `Dnes odjel${active.username.endsWith("a") ? "a" : ""} ${active.username} · ${active.purpose}`;
+      cardClass = "glass-card status-card is-free";
+      avatarHtml = `<div class="status-avatar-block" style="background:var(--color-primary)">${icons.house(24)}</div>`;
+      badgePill = `<div class="status-badge-pill"><span class="status-dot"></span> Volná</div>`;
+    } else if (departingToday) {
+      // Before 14:00 — still departing
+      title = `Dnes odjíždí ${active.username}`;
+      subtitle = `${formatDateRange(active.from, active.to)} · ${active.purpose}`;
+      cardClass = "glass-card status-card is-occupied";
+      avatarHtml = `<div class="status-avatar-block" style="${avatarBg}">${avatarContent}</div>`;
+      badgePill = `<div class="status-badge-pill"><span class="status-dot"></span> Odjezd dnes</div>`;
+    } else {
+      const nights = nightsBetween(todayStr, active.to);
+      title = active.username;
+      subtitle = `${formatDateRange(active.from, active.to)} · ${active.purpose}`;
+      cardClass = "glass-card status-card is-occupied";
+      avatarHtml = `<div class="status-avatar-block" style="${avatarBg}">${avatarContent}</div>`;
+      badgePill = `<div class="status-badge-pill"><span class="status-dot"></span> Obsazeno</div>`;
+      if (nights > 0) {
+        remainingChip = `<span class="status-remaining-chip">Zbývá ${nights} ${nightsLabel(nights)}</span>`;
+      }
+    }
 
-    el.className = "glass-card status-card is-occupied";
+    el.className = cardClass;
+    el.style.setProperty("--status-user-color", userColor);
     el.innerHTML = `
       <div class="card-body-full status-content">
         ${dateHtml}
-        <div class="status-split-row">
-          <div class="status-avatar-block" style="${avatarStyle}">${avatarContent}</div>
-          <div class="status-text-block">
-            <div class="status-label">Stav chaty</div>
-            <div class="status-name">${title}</div>
-            <div class="status-dates">${subtitle}</div>
+        <div class="status-hero-row">
+          ${avatarHtml}
+          <div class="status-hero-text">
+            <div class="status-name-row">
+              <div class="status-name">${title}</div>
+              ${badgePill}
+            </div>
+            <div class="status-meta">
+              <span class="status-dates">${subtitle}</span>
+              ${remainingChip}
+            </div>
           </div>
         </div>
-        ${nextHint}
+        ${buildNextBlock(nextRes)}
         <div class="status-cta-row">
           ${freeWeekendHtml}
           <a href="#/reservations" class="status-cta status-cta-neutral">Kalendář rezervací</a>
@@ -549,30 +632,25 @@ function renderActiveReservation(data: DashboardData): void {
       </div>`;
   } else if (nextRes) {
     // ── Stav B: Volná, ale existuje příští rezervace ──────────────────
-    const days = daysUntil(nextRes.from);
-    const daysChip = days === 0 ? "dnes" : days === 1 ? "zítra" : `za ${days} d.`;
-    const statusBadge =
-      nextRes.status === "soft"
-        ? ' <span class="res-status-badge res-badge-soft">Předběžná</span>'
-        : nextRes.status === "backup"
-          ? ' <span class="res-status-badge res-badge-backup">Záložní</span>'
-          : "";
-
     el.className = "glass-card status-card is-free";
     el.innerHTML = `
       <div class="card-body-full status-content">
         ${dateHtml}
-        <div class="status-split-row">
+        <div class="status-hero-row">
           <div class="status-avatar-block" style="background:var(--color-primary)">
             ${icons.house(24)}
           </div>
-          <div class="status-text-block">
-            <div class="status-label">Stav chaty</div>
-            <div class="status-name">Volná!</div>
-            <div class="status-dates">Další pobyt: ${nextRes.username}${statusBadge} · ${formatDateShort(nextRes.from)} — ${formatDateShort(nextRes.to)}</div>
+          <div class="status-hero-text">
+            <div class="status-name-row">
+              <div class="status-name">Volná!</div>
+              <div class="status-badge-pill"><span class="status-dot"></span> Volná</div>
+            </div>
+            <div class="status-meta">
+              <span class="status-dates">Žádný aktuální pobyt</span>
+            </div>
           </div>
-          <span class="upcoming-days-chip">${daysChip}</span>
         </div>
+        ${buildNextBlock(nextRes)}
         <div class="status-cta-row">
           ${freeWeekendHtml}
           <a href="#/reservations" class="status-cta status-cta-neutral">Kalendář rezervací</a>
@@ -584,14 +662,18 @@ function renderActiveReservation(data: DashboardData): void {
     el.innerHTML = `
       <div class="card-body-full status-content">
         ${dateHtml}
-        <div class="status-split-row">
+        <div class="status-hero-row">
           <div class="status-avatar-block" style="background:var(--color-primary)">
             ${icons.house(24)}
           </div>
-          <div class="status-text-block">
-            <div class="status-label">Stav chaty</div>
-            <div class="status-name">Volná!</div>
-            <div class="status-dates">Žádný plánovaný pobyt. Ideální čas vyrazit.</div>
+          <div class="status-hero-text">
+            <div class="status-name-row">
+              <div class="status-name">Volná!</div>
+              <div class="status-badge-pill"><span class="status-dot"></span> Volná</div>
+            </div>
+            <div class="status-meta">
+              <span class="status-dates">Žádný plánovaný pobyt. Ideální čas vyrazit.</span>
+            </div>
           </div>
         </div>
         <div class="status-cta-row">

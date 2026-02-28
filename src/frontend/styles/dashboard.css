@@ -161,20 +161,21 @@
 
 .dashboard-grid > .glass-card {
   height: auto;
-  overflow: hidden;
+  overflow: visible;
   box-sizing: border-box;
 }
 
 @media (min-width: 768px) {
   .dashboard-grid {
     grid-template-columns: 1fr 1fr;
-    grid-auto-rows: 260px;
+    grid-auto-rows: minmax(260px, auto);
     gap: 16px;
     align-items: stretch;
   }
 
   .dashboard-grid > .glass-card {
     height: 100%;
+    overflow: visible;
   }
 }
 
@@ -213,12 +214,16 @@
 
 .status-card {
   position: relative;
+  overflow: visible;
 }
 
 .status-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.11);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
 }
+
+/* Accent bar — disabled */
+.status-accent { display: none; }
 
 .status-content {
   display: flex;
@@ -227,17 +232,86 @@
   flex: 1;
 }
 
-.status-split-row {
+/* ── Date header ───────────────────────────────────────────────────── */
+
+.dashboard-date {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted, #6b7280);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 16px;
+}
+
+/* ── Status badge (pill) ───────────────────────────────────────────── */
+
+/* ── Status badge pill — inline se jménem ──────────────────────────── */
+
+.status-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  width: fit-content;
+  margin: 0;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.status-badge-pill .status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.is-occupied .status-badge-pill {
+  background: var(--status-error-light, #fee2e2);
+  color: var(--status-error, #dc2626);
+}
+
+.is-occupied .status-badge-pill .status-dot {
+  background: var(--status-error, #dc2626);
+  box-shadow: none;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+.is-free .status-badge-pill {
+  background: var(--status-success-light, #dcfce7);
+  color: var(--color-primary, #3f7b63);
+}
+
+.is-free .status-badge-pill .status-dot {
+  background: var(--color-primary, #16a34a);
+  box-shadow: none;
+}
+
+/* ── Name + badge row ──────────────────────────────────────────────── */
+
+.status-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ── Main info row ─────────────────────────────────────────────────── */
+
+.status-hero-row {
   display: flex;
   align-items: center;
   gap: 16px;
-  flex: 1;
 }
 
 .status-avatar-block {
   flex-shrink: 0;
-  width: 52px;
-  height: 52px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -245,30 +319,13 @@
   font-size: 22px;
   font-weight: 800;
   color: #fff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--border-light, rgba(0,0,0,0.06));
+  /* No box-shadow, no colored ring — clean minimalism */
 }
 
-.status-text-block {
+.status-hero-text {
   flex: 1;
   min-width: 0;
-}
-
-.status-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-text-light);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-bottom: 2px;
-}
-
-.dashboard-date {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--brand-primary, #3f7b63);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin-bottom: 10px;
 }
 
 .status-name {
@@ -279,35 +336,103 @@
   word-break: break-word;
 }
 
+.status-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
 .status-dates {
   font-size: 13px;
   color: var(--text-muted, #6b7280);
-  margin-top: 4px;
   font-weight: 500;
 }
 
-.status-remaining {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-warning-hover);
-  margin-top: 4px;
-}
-
-.status-purpose-icon {
-  font-size: 16px;
-  vertical-align: middle;
-  margin-left: 2px;
-}
-
-.status-purpose {
-  font-size: 12px;
-  color: var(--text-muted, #9ca3af);
-  margin-top: 2px;
-  font-weight: 500;
-  display: flex;
+.status-remaining-chip {
+  display: inline-flex;
   align-items: center;
   gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: rgba(234, 88, 12, 0.08);
+  color: #c2410c;
+  white-space: nowrap;
 }
+
+.is-free .status-remaining-chip {
+  background: rgba(22, 163, 74, 0.08);
+  color: #15803d;
+}
+
+/* ── "Dále" next reservation block ─────────────────────────────────── */
+
+.status-next-block {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: auto;
+  padding: 12px 0 0;
+  border-top: 1px solid var(--border-light, rgba(0,0,0,0.06));
+  background: none;
+  border-radius: 0;
+}
+
+.status-next-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.status-next-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.status-next-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted, #9ca3af);
+  line-height: 1;
+}
+
+.status-next-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main, #1a2721);
+  margin-top: 2px;
+}
+
+.status-next-date {
+  font-size: 12px;
+  color: var(--text-muted, #6b7280);
+  margin-top: 1px;
+}
+
+.status-next-chip {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 99px;
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-muted, #6b7280);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Legacy compatibility ──────────────────────────────────────────── */
 
 .status-handover {
   font-size: 12px;
@@ -325,15 +450,6 @@
   color: var(--color-warning-hover);
   flex-shrink: 0;
   margin-top: 2px;
-}
-
-.status-next-hint {
-  font-size: 12px;
-  color: var(--color-text-light);
-  margin-top: 8px;
-  padding: 6px 12px;
-  background: rgba(0, 0, 0, 0.04);
-  border-radius: var(--radius-md);
 }
 
 .purpose-chip {
@@ -364,13 +480,15 @@
   color: var(--color-text-light);
 }
 
+/* ── CTA row ───────────────────────────────────────────────────────── */
+
 .status-cta-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-top: auto;
   padding-top: 16px;
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
   width: 100%;
   flex-shrink: 0;
   flex-wrap: wrap;
@@ -395,7 +513,7 @@
 .status-cta-neutral {
   background: transparent;
   color: var(--text-main, #374151);
-  border: 1px solid rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(0, 0, 0, 0.13);
   font-weight: 500;
 }
 
@@ -478,17 +596,23 @@
 /* Sun rise/set chips below temperature */
 .weather-sun-below {
   display: flex;
-  gap: 14px;
-  margin-top: 8px;
+  gap: 18px;
+  margin-top: 10px;
 }
 
 .weather-sun-chip {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  font-size: 0.9rem;
+  gap: 6px;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--text-muted, #6b7280);
+}
+
+.weather-sun-chip .weather-sun-time {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-main, #1a2721);
 }
 
 .weather-sun-chip svg {
@@ -1473,15 +1597,14 @@
     flex: unset;
   }
 
-  .status-split-row {
+  .status-hero-row {
     gap: 12px;
   }
 
   .status-avatar-block {
-    width: 48px;
-    height: 48px;
-    font-size: 22px;
-    border-radius: 14px;
+    width: 42px;
+    height: 42px;
+    font-size: 20px;
   }
 
   .status-name {
