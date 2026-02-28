@@ -32,6 +32,14 @@ body {
 ::placeholder {
   color: var(--text-placeholder, #9ca3af);
   opacity: 1; /* Firefox snižuje na 0.54 — resetovat */
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+/* Skrytí placeholderu při focusu — plynný fade out */
+input:focus::placeholder,
+textarea:focus::placeholder {
+  opacity: 0;
+  color: transparent;
 }
 
 body {

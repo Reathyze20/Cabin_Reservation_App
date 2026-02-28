@@ -66,6 +66,8 @@ interface WeatherData {
   windSpeed: number;
   feelsLike: number;
   city: string;
+  sunriseTime: string | null;
+  sunsetTime: string | null;
   forecast: {
     date: string;
     dayName: string;
@@ -186,7 +188,7 @@ function getWeatherIcon(iconCode: string): string {
 async function fetchWeather(): Promise<WeatherData | null> {
   try {
     // Using open-meteo (no API key needed)
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${CABIN_LAT}&longitude=${CABIN_LON}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Europe/Prague&forecast_days=4`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${CABIN_LAT}&longitude=${CABIN_LON}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset&timezone=auto&forecast_days=4`;
     const res = await fetch(url);
     if (!res.ok) return null;
     const data = await res.json();
@@ -216,6 +218,18 @@ async function fetchWeather(): Promise<WeatherData | null> {
       }
     }
 
+    // Parse sunrise / sunset times
+    let sunriseTime: string | null = null;
+    let sunsetTime: string | null = null;
+    try {
+      if (daily.sunrise?.[0]) {
+        sunriseTime = new Date(daily.sunrise[0]).toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
+      }
+      if (daily.sunset?.[0]) {
+        sunsetTime = new Date(daily.sunset[0]).toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
+      }
+    } catch { /* ignore */ }
+
     return {
       temp: Math.round(current.temperature_2m),
       description: weatherInfo.description,
@@ -225,6 +239,8 @@ async function fetchWeather(): Promise<WeatherData | null> {
       windSpeed: Math.round(current.wind_speed_10m),
       feelsLike: Math.round(current.apparent_temperature),
       city: "Třebenice",
+      sunriseTime,
+      sunsetTime,
       forecast,
     };
   } catch {
@@ -452,6 +468,21 @@ function renderWeather(weather: WeatherData | null): void {
           <div class="weather-temp-box">
             <span class="weather-temp">${weather.temp}°C</span>
             <span class="weather-desc">${weather.description}</span>
+            ${(weather.sunriseTime || weather.sunsetTime) ? `
+            <div class="weather-sun-below">
+              ${weather.sunriseTime ? `<span class="weather-sun-chip">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--status-warning, #f59e0b)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2v8"/><path d="m8 6 4-4 4 4"/><path d="M16 18a4 4 0 0 0-8 0"/><path d="M2 18h20"/>
+                </svg>
+                ${weather.sunriseTime}
+              </span>` : ''}
+              ${weather.sunsetTime ? `<span class="weather-sun-chip">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary, #3f7b63)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 10V2"/><path d="m16 6-4 4-4-4"/><path d="M16 18a4 4 0 0 0-8 0"/><path d="M2 18h20"/>
+                </svg>
+                ${weather.sunsetTime}
+              </span>` : ''}
+            </div>` : ''}
           </div>
         </div>
         <div class="weather-details">
@@ -464,11 +495,19 @@ function renderWeather(weather: WeatherData | null): void {
     </div>`;
 }
 
+function getTodayFormatted(): string {
+  const today = new Date();
+  const dateString = today.toLocaleDateString('cs-CZ', { weekday: 'long', day: 'numeric', month: 'long' });
+  return dateString.charAt(0).toUpperCase() + dateString.slice(1);
+}
+
 function renderActiveReservation(data: DashboardData): void {
   const el = document.getElementById("dashboard-active-reservation");
   if (!el) return;
 
   const todayStr = new Date().toISOString().split("T")[0];
+  const formattedDate = getTodayFormatted();
+  const dateHtml = `<div class="dashboard-date">${formattedDate}</div>`;
   const active = data.activeReservation;
 
   // Odvoz nextReservation z upcomingReservations (první, která není aktivní)
@@ -493,6 +532,7 @@ function renderActiveReservation(data: DashboardData): void {
     el.className = "glass-card status-card is-occupied";
     el.innerHTML = `
       <div class="card-body-full status-content">
+        ${dateHtml}
         <div class="status-split-row">
           <div class="status-avatar-block" style="${avatarStyle}">${avatarContent}</div>
           <div class="status-text-block">
@@ -521,6 +561,7 @@ function renderActiveReservation(data: DashboardData): void {
     el.className = "glass-card status-card is-free";
     el.innerHTML = `
       <div class="card-body-full status-content">
+        ${dateHtml}
         <div class="status-split-row">
           <div class="status-avatar-block" style="background:var(--color-primary)">
             ${icons.house(24)}
@@ -542,6 +583,7 @@ function renderActiveReservation(data: DashboardData): void {
     el.className = "glass-card status-card is-free is-available";
     el.innerHTML = `
       <div class="card-body-full status-content">
+        ${dateHtml}
         <div class="status-split-row">
           <div class="status-avatar-block" style="background:var(--color-primary)">
             ${icons.house(24)}
@@ -555,7 +597,7 @@ function renderActiveReservation(data: DashboardData): void {
         <div class="status-cta-row">
           ${freeWeekendHtml}
           <button class="status-cta status-cta-primary" id="btn-go-reserve">
-            + Zarezervovat termín
+            Zarezervovat termín
           </button>
         </div>
       </div>`;
@@ -808,6 +850,7 @@ async function loadDashboard(): Promise<void> {
     if (statusCard) {
       statusCard.innerHTML = `
         <div class="card-body-full status-content">
+          <div class="dashboard-date">${getTodayFormatted()}</div>
           <div class="status-split-row">
             <div class="status-avatar-block" style="background:#9ca3af">
               <span style="color:#fff;display:flex;align-items:center;justify-content:center">${icons.alertCircle(24)}</span>
