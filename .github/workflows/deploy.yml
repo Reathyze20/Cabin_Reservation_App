@@ -20,6 +20,9 @@ jobs:
         script: |
           set -e
 
+          # Failsafe: if any step fails, ensure app gets restarted with old build
+          trap 'echo "=== DEPLOY FAILED — restarting app with previous build ==="; pm2 restart chata-app 2>/dev/null || pm2 start npm --name "chata-app" -- run start; pm2 save' ERR
+
           # Explicitly source nvm to make node/npm available
           export NVM_DIR="$HOME/.nvm"
           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
@@ -122,23 +125,28 @@ jobs:
           pm2 stop chata-app 2>/dev/null || true
           
           echo "=== Generating Prisma client ==="
-          # Move old Prisma directory out of the way (avoids permission issues)
+          # Fix permissions first (files may have been created by root in a previous deploy)
           if [ -d "src/generated/prisma" ]; then
-            echo "Moving old Prisma directory..."
-            mv src/generated/prisma src/generated/prisma.old 2>/dev/null || rm -rf src/generated/prisma 2>/dev/null || true
+            echo "Fixing permissions and moving old Prisma directory..."
+            chmod -R u+rw src/generated/prisma 2>/dev/null || true
+            mv src/generated/prisma src/generated/prisma.old.$(date +%s) 2>/dev/null || rm -rf src/generated/prisma 2>/dev/null || true
           fi
+          # Clean up any accumulated .old directories
+          rm -rf src/generated/prisma.old.* 2>/dev/null || true
           npx prisma generate
 
           echo "=== Running database migrations ==="
           npx prisma migrate deploy
 
           echo "=== Cleaning dist directory ==="
-          # Move old build artifacts out of the way (avoids permission issues)
+          # Fix permissions first, then move old build artifacts
           if [ -d "dist" ]; then
             echo "Moving old dist directory..."
-            ls -la dist/ | head -3
+            chmod -R u+rw dist 2>/dev/null || true
             mv dist dist.old.$(date +%s) 2>/dev/null || rm -rf dist 2>/dev/null || true
           fi
+          # Clean up any accumulated .old directories
+          rm -rf dist.old.* 2>/dev/null || true
 
           echo "=== Building frontend ==="
           npm run build
