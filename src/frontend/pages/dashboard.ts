@@ -4,6 +4,7 @@
 import type { PageModule } from "../lib/router";
 import { authFetch, getRole, showToast } from "../lib/common";
 import { navigate } from "../lib/router";
+import { icons } from "../lib/icons";
 
 // ─── Types ────────────────────────────────────────────────────────────
 
@@ -275,33 +276,86 @@ function getTemplate(): string {
     <div class="dashboard-grid">
       <!-- Karta 1: Právě na chatě -->
       <div class="glass-card status-card" id="dashboard-active-reservation">
-        <div class="card-body-full">
-          <div class="spinner-container"><div class="spinner"></div></div>
+        <div class="card-body-full status-content">
+          <div class="status-split-row">
+            <div class="skeleton skeleton-avatar-lg"></div>
+            <div style="display:flex;flex-direction:column;gap:8px;flex:1;justify-content:center;">
+              <div class="skeleton skeleton-text short" style="width:50px;height:11px;"></div>
+              <div class="skeleton skeleton-text" style="width:52%;height:18px;"></div>
+              <div class="skeleton skeleton-text" style="width:72%;height:13px;"></div>
+            </div>
+          </div>
+          <div class="status-cta-row" style="margin-top:14px;gap:8px;">
+            <div class="skeleton skeleton-btn" style="width:160px;"></div>
+            <div class="skeleton skeleton-btn" style="width:130px;"></div>
+          </div>
         </div>
       </div>
 
       <!-- Karta 2: Počasí na chatě -->
       <div class="glass-card weather-card" id="dashboard-weather">
         <div class="card-body-full">
-          <div class="spinner-container"><div class="spinner"></div></div>
+          <div class="weather-main">
+            <div class="weather-current" style="gap:16px;">
+              <div class="skeleton skeleton-weather-icon"></div>
+              <div class="weather-temp-box" style="gap:8px;">
+                <div class="skeleton skeleton-temp"></div>
+                <div class="skeleton skeleton-text" style="width:90px;height:13px;"></div>
+              </div>
+            </div>
+            <div class="weather-details" style="gap:8px;">
+              <div class="skeleton skeleton-text" style="width:80px;height:12px;"></div>
+              <div class="skeleton skeleton-text" style="width:72px;height:12px;"></div>
+              <div class="skeleton skeleton-text" style="width:88px;height:12px;"></div>
+            </div>
+          </div>
+          <div class="weather-divider" style="opacity:0.4;"></div>
+          <div class="weather-forecast">
+            ${[0, 1, 2].map(() => `
+              <div class="skeleton-forecast-col">
+                <div class="skeleton skeleton-text" style="width:28px;height:11px;"></div>
+                <div class="skeleton" style="width:22px;height:22px;border-radius:50%;"></div>
+                <div class="skeleton skeleton-text" style="width:36px;height:13px;"></div>
+              </div>`).join('')}
+          </div>
         </div>
       </div>
 
       <!-- Karta 3: K dokoupení -->
       <div class="glass-card">
         <div class="card-body-full" id="dashboard-shopping">
-          <div class="spinner-container"><div class="spinner"></div></div>
+          <div class="dashboard-card-header">
+            <div class="skeleton skeleton-text" style="width:100px;height:14px;"></div>
+            <div class="skeleton skeleton-text" style="width:70px;height:13px;"></div>
+          </div>
+          <div class="list-content" style="display:flex;flex-direction:column;gap:10px;margin-top:6px;">
+            ${[0, 1, 2, 3].map(() => `
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div class="skeleton skeleton-avatar-sm"></div>
+                <div class="skeleton skeleton-text" style="height:13px;flex:1;"></div>
+                <div class="skeleton skeleton-badge"></div>
+              </div>`).join('')}
+          </div>
         </div>
       </div>
 
       <!-- Karta 5: Vzkaz -->
       <div class="glass-card dashboard-handover-card" id="dashboard-handover-note">
-        <div class="card-body-full">
-          <div class="spinner-container"><div class="spinner"></div></div>
+        <div class="card-body-full handover-card-content">
+          <div class="dashboard-card-header">
+            <div class="skeleton skeleton-text" style="width:60px;height:14px;"></div>
+            <div class="skeleton" style="width:28px;height:28px;border-radius:50%;"></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
+            <div class="skeleton skeleton-text long" style="height:13px;"></div>
+            <div class="skeleton skeleton-text" style="width:78%;height:13px;"></div>
+            <div class="skeleton skeleton-text medium" style="height:13px;"></div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
+
+</div>
 
   <!-- Modal: Vzkaz -->
   <div id="handover-modal" class="modal-overlay hidden">
@@ -362,7 +416,7 @@ function renderWeather(weather: WeatherData | null): void {
   if (!weather) {
     el.innerHTML = `
       <div class="card-body-full empty-state-card">
-        <i class="fas fa-cloud-slash empty-icon-duotone"></i>
+        <span class="empty-state-icon">${icons.cloudOff()}</span>
         <p class="empty-text">Nepodařilo se načíst počasí</p>
       </div>`;
     return;
@@ -374,7 +428,6 @@ function renderWeather(weather: WeatherData | null): void {
   const forecastHtml =
     weather.forecast && weather.forecast.length > 0
       ? `
-    <div class="weather-divider"></div>
     <div class="weather-forecast">
       ${weather.forecast
         .map(
@@ -470,7 +523,7 @@ function renderActiveReservation(data: DashboardData): void {
       <div class="card-body-full status-content">
         <div class="status-split-row">
           <div class="status-avatar-block" style="background:var(--color-primary)">
-            <i class="fas fa-house-chimney" style="font-size:24px;color:#fff"></i>
+            ${icons.house(24)}
           </div>
           <div class="status-text-block">
             <div class="status-label">Stav chaty</div>
@@ -491,7 +544,7 @@ function renderActiveReservation(data: DashboardData): void {
       <div class="card-body-full status-content">
         <div class="status-split-row">
           <div class="status-avatar-block" style="background:var(--color-primary)">
-            <i class="fas fa-house-chimney" style="font-size:24px;color:#fff"></i>
+            ${icons.house(24)}
           </div>
           <div class="status-text-block">
             <div class="status-label">Stav chaty</div>
@@ -524,11 +577,10 @@ function renderShopping(items: PendingShoppingItem[], totalCount: number): void 
     el.innerHTML = `
       ${header}
       <div class="empty-state-card">
-        <i class="fas fa-check-circle empty-icon-duotone" style="color:var(--color-primary);opacity:0.4"></i>
+        <span class="empty-state-icon" style="color:var(--color-primary);opacity:0.7">${icons.checkCircle()}</span>
         <p class="empty-text">Na chatě nic nechybí!</p>
         <a href="#/shopping" class="empty-cta">Nový seznam</a>
       </div>`;
-    return;
   }
 
   const shownItems = items.slice(0, 5);
@@ -582,7 +634,7 @@ function renderShopping(items: PendingShoppingItem[], totalCount: number): void 
                   <a href="#/shopping" class="dashboard-card-header-link">Seznamy →</a>
                 </div>
                 <div class="empty-state-card">
-                  <i class="fas fa-check-circle empty-icon-duotone" style="color:var(--color-primary);opacity:0.4"></i>
+                  <span class="empty-state-icon" style="color:var(--color-primary);opacity:0.7">${icons.checkCircle()}</span>
                   <p class="empty-text">Na chatě nic nechybí!</p>
                   <a href="#/shopping" class="empty-cta">Nový seznam</a>
                 </div>`;
@@ -661,13 +713,20 @@ function renderHandoverNote(note: string | null): void {
   // ── Render karta (read-only) ──────────────────────────────────
   const noteText = note?.trim() || "";
   const displayHtml = noteText
-    ? `<p class="handover-note-text">${noteText.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>")}</p>`
+    ? `<div class="handover-note-text">${noteText.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\n/g, "<br>")}</div>`
     : `<p class="handover-note-empty">${isGuest ? "Zatím žádný vzkaz." : "Žádný vzkaz — klikněte na tužku a napište."}</p>`;
 
   const editBtnHtml = isGuest
     ? ""
     : `
-    <button class="handover-edit-btn" id="btn-edit-handover" title="Upravit vzkaz">✎</button>`;
+    <button class="handover-edit-btn" id="btn-edit-handover" title="Upravit vzkaz">${icons.edit(16)}</button>`;
+
+  const footerHtml = noteText
+    ? `<div class="card-footer">
+        <span class="card-footer-meta">Vzkaz pro návštěvníky</span>
+        <a href="#/notes" class="dashboard-card-header-link">Přejít do chatu →</a>
+      </div>`
+    : "";
 
   el.innerHTML = `
     <div class="card-body-full handover-card-content">
@@ -676,6 +735,7 @@ function renderHandoverNote(note: string | null): void {
         ${editBtnHtml}
       </div>
       ${displayHtml}
+      ${footerHtml}
     </div>`;
 
   if (isGuest) return;
@@ -750,7 +810,7 @@ async function loadDashboard(): Promise<void> {
         <div class="card-body-full status-content">
           <div class="status-split-row">
             <div class="status-avatar-block" style="background:#9ca3af">
-              <i class="fas fa-exclamation" style="font-size:24px;color:#fff"></i>
+              <span style="color:#fff;display:flex;align-items:center;justify-content:center">${icons.alertCircle(24)}</span>
             </div>
             <div class="status-text-block">
               <div class="status-label">Stav chaty</div>

@@ -2,9 +2,10 @@
    pages/reservations.ts — Reservations calendar + booking (from script.js)
    ============================================================================ */
 import type { PageModule } from "../lib/router";
-import { $, show, hide, showToast, authFetch, getToken, getUserId, getRole, getUsername } from "../lib/common";
-import { setupFormValidation, setFieldError } from "../lib/validation";
+import { $, show, hide, showToast, authFetch, getToken, getUserId, getRole, getUsername, setupCharCounters, validateForm } from "../lib/common";
+import { setFieldError } from "../lib/validation";
 import type { Reservation, UserAvailability } from "@shared/types";
+import { icons } from "../lib/icons";
 import "../styles/reservations.css";
 
 // ─── Inventory notify ─────────────────────────────────────────────────────────
@@ -100,6 +101,17 @@ function hexToRgba(hex: string | undefined, alpha = 1): string | null {
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
 }
 
+/** Vrátí tmavou barvu pro světlá pozadí a světlou pro tmavá (WCAG kontrast) */
+function getContrastColor(hex: string | undefined): string {
+  if (!hex) return "#ffffff";
+  const clean = hex.replace("#", "");
+  const r = parseInt(clean.substring(0, 2), 16);
+  const g = parseInt(clean.substring(2, 4), 16);
+  const b = parseInt(clean.substring(4, 6), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.55 ? "#1a2721" : "#ffffff";
+}
+
 function formatDateForDisplay(date: string | Date): string {
   if (!date) return "";
   const dateObj = typeof date === "string" ? new Date(date) : date;
@@ -124,9 +136,9 @@ function getTemplate(): string {
     <div class="card calendar-card full-calendar-card">
       <div class="calendar-header-bar">
         <div class="calendar-nav">
-          <button id="cal-prev-month" class="icon-button">←</button>
+          <button id="cal-prev-month" class="icon-button">❮</button>
           <h2 id="cal-month-year-display">Březen 2026</h2>
-          <button id="cal-next-month" class="icon-button">→</button>
+          <button id="cal-next-month" class="icon-button">❯</button>
         </div>
         <div class="calendar-stats" id="calendar-quick-stats">
           <!-- Quick stats will be injected here -->
@@ -142,20 +154,21 @@ function getTemplate(): string {
         </div>
       </div>
 
-      <div id="range-selection-hint" class="range-hint hidden">
-        <div class="range-hint-icon">✓</div>
-        <div class="range-hint-body">
-          <strong id="range-hint-text">Vyberte datum odjezdu</strong>
-          <span>Klikněte na den v kalendáři</span>
-        </div>
-        <button type="button" id="range-cancel-btn" class="range-hint-cancel" title="Zrušit výběr">
-          ×
-        </button>
-      </div>
-
       <div class="panel-actions">
-        <button id="btn-new-reservation" class="button-primary">Nová rezervace</button>
-        <button id="btn-new-availability" class="button-secondary btn-availability" title="Nahlásit osobní volno / dovolenou">Termíny dovolených</button>
+        <div id="range-selection-hint" class="range-hint hidden">
+          <div class="range-hint-icon">${icons.check(16)}</div>
+          <div class="range-hint-body">
+            <strong id="range-hint-text">Vyberte datum odjezdu</strong>
+            <span>Klikněte na den v kalendáři</span>
+          </div>
+          <button type="button" id="range-cancel-btn" class="range-hint-cancel" title="Zrušit výběr">
+            ${icons.close(16)}
+          </button>
+        </div>
+        <div class="panel-actions-buttons">
+          <button id="btn-new-reservation" class="button-primary">Nová rezervace</button>
+          <button id="btn-new-availability" class="button-secondary btn-availability" title="Nahlásit osobní volno / dovolenou">Termíny dovolených</button>
+        </div>
       </div>
     </div>
 
@@ -187,7 +200,7 @@ function getTemplate(): string {
     <div class="modal-content booking-modal-content">
       <span class="modal-close-button" data-close="booking-modal">&times;</span>
       <h2 id="modal-title">Nová rezervace</h2>
-      <form id="booking-form" class="booking-form-grid">
+      <form id="booking-form" class="booking-form-grid" novalidate>
         <input type="hidden" id="reservation-id" />
         
         <div id="backup-warning-message" class="backup-warning hidden">
@@ -209,23 +222,25 @@ function getTemplate(): string {
         <div class="form-row purpose-row">
           <div class="form-group">
             <label for="purpose-input">Účel návštěvy</label>
-            <input type="text" id="purpose-input" class="booking-input" required maxlength="20" placeholder="např. Relax, Údržba..." data-error-message="Zadejte účel návštěvy (max 20 znaků)." />
+            <input type="text" id="purpose-input" class="booking-input" required maxlength="100" placeholder="např. Relax, Údržba..." data-error-message="Zadejte účel návštěvy (max 100 znaků)." />
           </div>
         </div>
 
         <div class="form-group soft-res-group">
           <input type="checkbox" id="soft-reservation-checkbox" />
-          <label for="soft-reservation-checkbox" title="Ostatní uvidí, že plánujete jet, ale ještě to není 100% jisté.">Předběžný zájem <span class="soft-res-sublabel">(Měkká rezervace)</span></label>
+          <label for="soft-reservation-checkbox" title="Ostatní uvidí, že plánujete jet, ale ještě to není 100% jisté.">Předběžný zájem <span class="soft-res-sublabel"></span></label>
         </div>
 
         <div class="form-row notes-row">
           <div class="form-group">
             <label for="notes-textarea">Poznámky <span class="label-optional">(volitelně)</span></label>
-            <textarea id="notes-textarea" class="booking-input" rows="3" placeholder="např. Ostříhat stromy..."></textarea>
+            <textarea id="notes-textarea" class="booking-input" rows="3" maxlength="1000" placeholder="např. Ostříhat stromy..."></textarea>
+            <div class="char-counter" style="font-size: 0.7rem; color: #6b7280; text-align: right; margin-top: 4px;">0 / 1000</div>
           </div>
           <div class="form-group">
             <label for="handover-notes-textarea">Předávací vzkaz <span class="label-optional">(volitelně)</span></label>
-            <textarea id="handover-notes-textarea" class="booking-input" rows="3" placeholder="např. Nechal jsem v lednici pivo..."></textarea>
+            <textarea id="handover-notes-textarea" class="booking-input" rows="3" maxlength="1000" placeholder="např. Nechal jsem v lednici pivo..."></textarea>
+            <div class="char-counter" style="font-size: 0.7rem; color: #6b7280; text-align: right; margin-top: 4px;">0 / 1000</div>
           </div>
         </div>
 
@@ -283,7 +298,7 @@ function getTemplate(): string {
       <span class="modal-close-button" data-close="availability-modal">&times;</span>
       <h2 id="avail-modal-title">Nahlásit osobní volno</h2>
       <p class="avail-modal-desc">Zaznač dny, kdy máš dovolenou nebo volno. Ostatní uvidí v kalendáři malé tečky — snáz se najde termín, kdy můžete jet všichni.</p>
-      <form id="availability-form">
+      <form id="availability-form" novalidate>
         <input type="hidden" id="avail-edit-id" value="" />
         <div class="form-row date-inputs-row">
           <div class="form-group">
@@ -458,8 +473,7 @@ function renderCustomCalendar(): void {
             bar.style.borderColor = c;
             bar.style.color = "#333";
           } else {
-            bar.style.backgroundColor = hexToRgba(c, 0.8) || "";
-            bar.style.color = "#fff";
+            bar.style.backgroundColor = hexToRgba(c, 0.3) || "";
           }
 
           const s = new Date(r.from + "T00:00:00Z").getTime();
@@ -603,57 +617,46 @@ function updateQuickStats() {
   const statsContainer = $("calendar-quick-stats");
   if (!statsContainer) return;
 
-  const mStart = new Date(currentCalYear, currentCalMonth, 1).getTime();
-  const mEnd = new Date(currentCalYear, currentCalMonth + 1, 0).getTime();
-
-  let bookedDays = new Set<number>();
+  const daysInMonth = new Date(currentCalYear, currentCalMonth + 1, 0).getDate();
+  const occupiedDays = new Set<number>();
 
   currentReservations.forEach((r) => {
     if (r.status === "backup") return;
-    const s = new Date(r.from + "T00:00:00Z").getTime();
-    const e = new Date(r.to + "T00:00:00Z").getTime();
-
-    for (let d = s; d <= e; d += 86400000) {
-      if (d >= mStart && d <= mEnd) {
-        bookedDays.add(d);
+    
+    const start = new Date(r.from);
+    const end = new Date(r.to);
+    
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      if (d.getFullYear() === currentCalYear && d.getMonth() === currentCalMonth) {
+        occupiedDays.add(d.getDate());
       }
     }
   });
 
-  const totalDays = new Date(currentCalYear, currentCalMonth + 1, 0).getDate();
-  const freeDays = totalDays - bookedDays.size;
+  const obsazeno = occupiedDays.size;
+  const volno = daysInMonth - occupiedDays.size;
 
   let freeWeekends = 0;
-  for (let day = 1; day <= totalDays; day++) {
-    const date = new Date(currentCalYear, currentCalMonth, day);
-    if (date.getDay() === 6) {
-      // Sobota
-      const satTime = Date.UTC(currentCalYear, currentCalMonth, day);
-      const sunTime = Date.UTC(currentCalYear, currentCalMonth, day + 1);
-
-      let satBooked = false;
-      let sunBooked = false;
-
-      currentReservations.forEach((r) => {
-        if (r.status === "backup") return;
-        const s = new Date(r.from + "T00:00:00Z").getTime();
-        const e = new Date(r.to + "T00:00:00Z").getTime();
-        if (satTime >= s && satTime <= e) satBooked = true;
-        if (sunTime >= s && sunTime <= e) sunBooked = true;
-      });
-
-      if (!satBooked && !sunBooked) {
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = new Date(currentCalYear, currentCalMonth, d);
+    if (date.getDay() === 6) { // Saturday
+      const satFree = !occupiedDays.has(d);
+      const nextDay = new Date(currentCalYear, currentCalMonth, d + 1);
+      const sunFree = nextDay.getMonth() === currentCalMonth ? !occupiedDays.has(d + 1) : true;
+      
+      if (satFree && sunFree) {
         freeWeekends++;
       }
     }
   }
 
   statsContainer.innerHTML = `
-    <span class="stat-badge">Obsazeno: <strong>${bookedDays.size}</strong> dní</span>
-    <span class="stat-badge free">Volno: <strong>${freeDays}</strong> dní</span>
+    <span class="stat-badge occupied">Obsazeno: <strong>${obsazeno}</strong></span>
+    <span class="stat-badge free">Volno: <strong>${volno}</strong></span>
     <span class="stat-badge weekend">Volné víkendy: <strong>${freeWeekends}</strong></span>
   `;
 }
+
 
 function showReservationDetail(r: Reservation & { userColor?: string; userAnimalIcon?: string | null }) {
   const detailDiv = $("reservation-detail");
@@ -685,13 +688,13 @@ function showReservationDetail(r: Reservation & { userColor?: string; userAnimal
     <div class="res-detail-card" style="--user-color: ${c};">
 
       <button class="detail-back-btn">
-        ← Zpět na seznam
+        ${icons.arrowLeft(14)} Zpět na seznam
       </button>
 
       <div class="detail-header">
         <div class="detail-avatar" style="${avatarBg}">${avatarContent}</div>
         <div class="detail-header-text">
-          <div class="detail-username">${r.username}</div>
+          <div class="detail-username"><span class="res-user-dot" style="background-color: ${c};"></span> ${r.username}</div>
           <span class="detail-badge ${badge.cls}">${badge.label}</span>
         </div>
       </div>
@@ -709,57 +712,52 @@ function showReservationDetail(r: Reservation & { userColor?: string; userAnimal
           <span class="detail-meta-label">Účel</span>
           <span class="detail-meta-value">${r.purpose || "—"}</span>
         </div>
-        ${
-          r.notes
-            ? `
+        ${r.notes
+      ? `
         <div class="detail-meta-row detail-meta-row--notes">
           <span class="detail-meta-label">Poznámka</span>
           <span class="detail-meta-value detail-notes-text">${r.notes.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</span>
         </div>`
-            : ""
-        }
-        ${
-          r.handoverNote
-            ? `
+      : ""
+    }
+        ${r.handoverNote
+      ? `
         <div class="detail-meta-row detail-meta-row--notes">
           <span class="detail-meta-label">Vzkaz</span>
           <span class="detail-meta-value detail-notes-text">${r.handoverNote.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</span>
         </div>`
-            : ""
-        }
+      : ""
+    }
       </div>
 
-      ${
-        canEdit
-          ? `
+      ${canEdit
+      ? `
       <div class="detail-actions">
         <button class="detail-btn detail-btn-primary edit-btn" data-id="${r.id}">
           Upravit
         </button>
-        ${
-          admin
-            ? `<button class="detail-btn detail-btn-secondary assign-btn" data-id="${r.id}">
+        ${admin
+        ? `<button class="detail-btn detail-btn-secondary assign-btn" data-id="${r.id}">
           Přiřadit jinému
         </button>`
-            : ""
-        }
+        : ""
+      }
         <button class="detail-btn detail-btn-ghost-danger delete-btn" data-id="${r.id}">
           Smazat rezervaci
         </button>
       </div>`
-          : ""
-      }
+      : ""
+    }
 
-      ${
-        !isMine
-          ? `
+      ${!isMine
+      ? `
       <div class="detail-actions" id="watcher-slot-${r.id}">
         <button class="detail-btn" disabled>
           Načítám…
         </button>
       </div>`
-          : ""
-      }
+      : ""
+    }
 
     </div>
   `;
@@ -890,9 +888,9 @@ function renderReservationList(reservations: typeof currentReservations, emptyMs
     if (isMine || admin) {
       actions = `
         <div class="res-card-actions">
-          <button class="edit-btn" data-id="${r.id}" title="Upravit">✎</button>
+          <button class="edit-btn" data-id="${r.id}" title="Upravit">${icons.edit(14)}</button>
           ${admin ? `<button class="assign-btn" data-id="${r.id}" title="Přiřadit">➤</button>` : ""}
-          <button class="delete-btn" data-id="${r.id}" title="Smazat">×</button>
+          <button class="delete-btn" data-id="${r.id}" title="Smazat">${icons.close(14)}</button>
         </div>`;
     }
 
@@ -906,18 +904,17 @@ function renderReservationList(reservations: typeof currentReservations, emptyMs
     }
 
     card.innerHTML = `
-      <div class="res-indicator" style="background-color: ${uColor}"></div>
       <div class="res-content-left">
         <div class="res-user">
           <div class="res-avatar" style="${r.userAnimalIcon ? "background-color: transparent; font-size: 24px;" : `background-color: ${uColor}`}">${r.userAnimalIcon || init}</div>
+          <span class="res-user-dot" style="background-color: ${uColor}"></span>
           <strong title="${r.username}">${r.username}</strong>
         </div>
         <div class="res-date-block-new">
-          <span class="res-date-main">${
-            d1.getMonth() === d2.getMonth()
-              ? `${d1.getDate()}. - ${d2.getDate()}. ${monthNames[d1.getMonth()]}`
-              : `${d1.getDate()}. ${monthNames[d1.getMonth()]} - ${d2.getDate()}. ${monthNames[d2.getMonth()]}`
-          }</span>
+          <span class="res-date-main">${d1.getMonth() === d2.getMonth()
+        ? `${d1.getDate()}. - ${d2.getDate()}. ${monthNames[d1.getMonth()]}`
+        : `${d1.getDate()}. ${monthNames[d1.getMonth()]} - ${d2.getDate()}. ${monthNames[d2.getMonth()]}`
+      }</span>
         </div>
         <div class="res-purpose"><strong>Účel:</strong> ${r.purpose || "<em>Nespecifikováno</em>"}</div>
         ${notesHTML}
@@ -981,13 +978,16 @@ function openBookingModal(fromDateStr?: string, toDateStr?: string, isEdit = fal
 
     if (resIdInput) resIdInput.value = reservation.id;
 
-    if (purposeInput) purposeInput.value = reservation.purpose || "";
-    if (notesTa) notesTa.value = reservation.notes || "";
-    if (handoverTa) handoverTa.value = reservation.handoverNote || "";
+    if (purposeInput) { purposeInput.value = reservation.purpose || ""; purposeInput.dispatchEvent(new Event('input')) }
+    if (notesTa) { notesTa.value = reservation.notes || ""; notesTa.dispatchEvent(new Event('input')) }
+    if (handoverTa) { handoverTa.value = reservation.handoverNote || ""; handoverTa.dispatchEvent(new Event('input')) }
     if (softCheck) softCheck.checked = reservation.status === "soft";
   } else {
     if (title) title.textContent = "Nová rezervace";
     if (submitBtn) submitBtn.textContent = "Potvrdit rezervaci";
+    if (purposeInput) { purposeInput.value = ""; purposeInput.dispatchEvent(new Event('input')) }
+    if (notesTa) { notesTa.value = ""; notesTa.dispatchEvent(new Event('input')) }
+    if (handoverTa) { handoverTa.value = ""; handoverTa.dispatchEvent(new Event('input')) }
 
     if (fromDateStr && toDateStr) {
       const from = new Date(fromDateStr);
@@ -1172,8 +1172,8 @@ function renderMyAvailabilities(): void {
       <div class="my-avail-item">
         <span>${formatDateForDisplay(a.startDate)} — ${formatDateForDisplay(a.endDate)}</span>
         <div style="display:flex;gap:4px;">
-          <button class="avail-edit-btn" data-avail-id="${a.id}" data-start="${a.startDate}" data-end="${a.endDate}" title="Upravit" style="background:none;border:none;color:#6b7280;cursor:pointer;padding:4px 8px;border-radius:4px;font-size:0.9rem;transition:all 0.15s;">✎</button>
-          <button class="btn-ghost-danger avail-delete-btn" data-avail-id="${a.id}" title="Smazat">×</button>
+          <button class="avail-edit-btn" data-avail-id="${a.id}" data-start="${a.startDate}" data-end="${a.endDate}" title="Upravit" style="background:none;border:none;color:#6b7280;cursor:pointer;padding:4px 8px;border-radius:4px;font-size:0.9rem;transition:all 0.15s;">${icons.edit(14)}</button>
+          <button class="btn-ghost-danger avail-delete-btn" data-avail-id="${a.id}" title="Smazat">${icons.close(14)}</button>
         </div>
       </div>
     `,
@@ -1221,6 +1221,8 @@ function renderMyAvailabilities(): void {
 // ─── Event Binding ────────────────────────────────────────────────────
 
 function bindEvents(): void {
+  setupCharCounters(container);
+
   // Close buttons (data-close attribute)
   container.querySelectorAll<HTMLElement>("[data-close]").forEach((btn) => {
     btn.addEventListener("click", () => closeModal(btn.dataset.close!));
@@ -1282,48 +1284,46 @@ function bindEvents(): void {
   // Availability form submit
   const _availForm = $<HTMLFormElement>("availability-form");
   if (_availForm) {
-    validationCleanups.push(
-      setupFormValidation(
-        _availForm,
-        async () => {
-          const fromInput = $<HTMLInputElement>("avail-date-from");
-          const toInput = $<HTMLInputElement>("avail-date-to");
-          const submitBtn = $<HTMLButtonElement>("avail-submit-btn");
-          const editIdInput = $<HTMLInputElement>("avail-edit-id");
+    _availForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.currentTarget as HTMLFormElement;
+      if (!validateForm(form)) return;
 
-          if (toInput?.value && fromInput?.value && toInput.value < fromInput.value) {
-            setFieldError(toInput, 'Datum "Do" nemůže být před "Od".');
-            return;
-          }
+      const fromInput = $<HTMLInputElement>("avail-date-from");
+      const toInput = $<HTMLInputElement>("avail-date-to");
+      const submitBtn = $<HTMLButtonElement>("avail-submit-btn");
+      const editIdInput = $<HTMLInputElement>("avail-edit-id");
 
-          if (submitBtn) submitBtn.disabled = true;
+      if (toInput?.value && fromInput?.value && toInput.value < fromInput.value) {
+        setFieldError(toInput, 'Datum "Do" nemůže být před "Od".');
+        return;
+      }
 
-          const isEdit = editIdInput?.value;
-          const url = isEdit ? `/api/reservations/availabilities/${editIdInput!.value}` : "/api/reservations/availabilities";
-          const method = isEdit ? "PATCH" : "POST";
+      if (submitBtn) submitBtn.disabled = true;
 
-          const result = await authFetch(url, {
-            method,
-            body: JSON.stringify({ startDate: fromInput!.value, endDate: toInput!.value }),
-          });
+      const isEdit = editIdInput?.value;
+      const url = isEdit ? `/api/reservations/availabilities/${editIdInput!.value}` : "/api/reservations/availabilities";
+      const method = isEdit ? "PATCH" : "POST";
 
-          if (submitBtn) submitBtn.disabled = false;
+      const result = await authFetch(url, {
+        method,
+        body: JSON.stringify({ startDate: fromInput!.value, endDate: toInput!.value }),
+      });
 
-          if (result) {
-            showToast(isEdit ? "Volno upraveno!" : "Volno nahlášeno!", "success");
-            if (fromInput) fromInput.value = "";
-            if (toInput) toInput.value = "";
-            if (editIdInput) editIdInput.value = "";
-            const titleEl = $("avail-modal-title");
-            if (titleEl) titleEl.textContent = "Nahlásit osobní volno";
-            if (submitBtn) submitBtn.textContent = "Uložit volno";
-            await loadReservations();
-            renderMyAvailabilities();
-          }
-        },
-        { scrollToError: false },
-      ),
-    );
+      if (submitBtn) submitBtn.disabled = false;
+
+      if (result) {
+        showToast(isEdit ? "Volno upraveno!" : "Volno nahlášeno!", "success");
+        if (fromInput) fromInput.value = "";
+        if (toInput) toInput.value = "";
+        if (editIdInput) editIdInput.value = "";
+        const titleEl = $("avail-modal-title");
+        if (titleEl) titleEl.textContent = "Nahlásit osobní volno";
+        if (submitBtn) submitBtn.textContent = "Uložit volno";
+        await loadReservations();
+        renderMyAvailabilities();
+      }
+    });
   }
 
   // Switch from booking modal to availability modal
@@ -1362,59 +1362,61 @@ function bindEvents(): void {
   // Booking form submit
   const _bookingForm = $<HTMLFormElement>("booking-form");
   if (_bookingForm) {
-    validationCleanups.push(
-      setupFormValidation(_bookingForm, async () => {
-        const purposeInput = $<HTMLInputElement>("purpose-input");
-        const notesTa = $<HTMLTextAreaElement>("notes-textarea");
-        const handoverTa = $<HTMLTextAreaElement>("handover-notes-textarea");
-        const softCheck = $<HTMLInputElement>("soft-reservation-checkbox");
-        const resIdInput = $<HTMLInputElement>("reservation-id");
-        const dateFromInput = $<HTMLInputElement>("modal-date-from");
-        const dateToInput = $<HTMLInputElement>("modal-date-to");
+    _bookingForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.currentTarget as HTMLFormElement;
+      if (!validateForm(form)) return;
 
-        const purpose = purposeInput?.value.trim() || "";
-        const notes = notesTa?.value.trim() || "";
-        const handoverNote = handoverTa?.value.trim() || "";
-        const status = softCheck?.checked ? "soft" : "primary";
+      const purposeInput = $<HTMLInputElement>("purpose-input");
+      const notesTa = $<HTMLTextAreaElement>("notes-textarea");
+      const handoverTa = $<HTMLTextAreaElement>("handover-notes-textarea");
+      const softCheck = $<HTMLInputElement>("soft-reservation-checkbox");
+      const resIdInput = $<HTMLInputElement>("reservation-id");
+      const dateFromInput = $<HTMLInputElement>("modal-date-from");
+      const dateToInput = $<HTMLInputElement>("modal-date-to");
 
-        if (dateFromInput && dateToInput && dateToInput.value < dateFromInput.value) {
-          setFieldError(dateToInput, 'Datum "Do" nemůže být před "Od".');
-          return;
-        }
+      const purpose = purposeInput?.value.trim() || "";
+      const notes = notesTa?.value.trim() || "";
+      const handoverNote = handoverTa?.value.trim() || "";
+      const status = softCheck?.checked ? "soft" : "primary";
 
-        const isEdit = !!resIdInput?.value;
-        const url = isEdit ? `/api/reservations/${resIdInput!.value}` : "/api/reservations";
-        const method = isEdit ? "PUT" : "POST";
+      if (dateFromInput && dateToInput && dateToInput.value < dateFromInput.value) {
+        setFieldError(dateToInput, 'Datum "Do" nemůže být před "Od".');
+        return;
+      }
 
-        const body: Record<string, string> = { purpose, notes, handoverNote, status };
-        if (dateFromInput && dateToInput) {
-          body.from = dateFromInput.value;
-          body.to = dateToInput.value;
-        } else {
-          return;
-        }
+      const isEdit = !!resIdInput?.value;
+      const url = isEdit ? `/api/reservations/${resIdInput!.value}` : "/api/reservations";
+      const method = isEdit ? "PUT" : "POST";
 
-        const result = await authFetch(url, { method, body: JSON.stringify(body) });
-        if (!result) return;
+      const body: Record<string, string> = { purpose, notes, handoverNote, status };
+      if (dateFromInput && dateToInput) {
+        body.from = dateFromInput.value;
+        body.to = dateToInput.value;
+      } else {
+        return;
+      }
 
-        closeModal("booking-modal");
-        await loadReservations();
+      const result = await authFetch(url, { method, body: JSON.stringify(body) });
+      if (!result) return;
 
-        if (isEdit) {
-          showToast("Rezervace upravena.", "success");
-          return;
-        }
+      closeModal("booking-modal");
+      await loadReservations();
 
-        showToast("Rezervace uložena! Kontroluji zásoby…", "info");
-        const summary = await authFetch<MissingSummary>("/api/inventory/missing-summary");
-        if (!summary || (summary.count === 0 && !summary.hasShoppingItems)) {
-          showToast("Rezervace uložena! Zásoby jsou v pořádku.", "success");
-          return;
-        }
-        const goShopping = await showInventoryNotifyDialog(summary);
-        if (goShopping) window.location.hash = "#/shopping";
-      }),
-    );
+      if (isEdit) {
+        showToast("Rezervace upravena.", "success");
+        return;
+      }
+
+      showToast("Rezervace uložena! Kontroluji zásoby…", "info");
+      const summary = await authFetch<MissingSummary>("/api/inventory/missing-summary");
+      if (!summary || (summary.count === 0 && !summary.hasShoppingItems)) {
+        showToast("Rezervace uložena! Zásoby jsou v pořádku.", "success");
+        return;
+      }
+      const goShopping = await showInventoryNotifyDialog(summary);
+      if (goShopping) window.location.hash = "#/shopping";
+    });
   }
 
   // Reservation list delegation (edit, delete, assign)
@@ -1450,28 +1452,30 @@ function bindEvents(): void {
   // Assign form submit
   const _assignForm = $<HTMLFormElement>("assign-reservation-form");
   if (_assignForm) {
-    validationCleanups.push(
-      setupFormValidation(_assignForm, async () => {
-        const id = $<HTMLInputElement>("assign-reservation-id-input")?.value;
-        const select = $<HTMLSelectElement>("assign-user-select");
-        const newOwnerId = select?.value;
+    _assignForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.currentTarget as HTMLFormElement;
+      if (!validateForm(form)) return;
 
-        if (!newOwnerId) {
-          setFieldError(select!, "Vyberte prosím nového vlastníka ze seznamu.");
-          return;
-        }
+      const id = $<HTMLInputElement>("assign-reservation-id-input")?.value;
+      const select = $<HTMLSelectElement>("assign-user-select");
+      const newOwnerId = select?.value;
 
-        const result = await authFetch(`/api/reservations/${id}/assign`, {
-          method: "POST",
-          body: JSON.stringify({ newOwnerId }),
-        });
-        if (result) {
-          closeAssignModal();
-          showToast("Rezervace přiřazena.", "success");
-          await loadReservations();
-        }
-      }),
-    );
+      if (!newOwnerId) {
+        setFieldError(select!, "Vyberte prosím nového vlastníka ze seznamu.");
+        return;
+      }
+
+      const result = await authFetch(`/api/reservations/${id}/assign`, {
+        method: "POST",
+        body: JSON.stringify({ newOwnerId }),
+      });
+      if (result) {
+        closeAssignModal();
+        showToast("Rezervace přiřazena.", "success");
+        await loadReservations();
+      }
+    });
   }
 
   // Clear assign error on change (handled by setupFormValidation clearOnInput)

@@ -58,6 +58,26 @@ button:focus-visible {
   box-shadow: none !important;
 }
 
+/* ── Universální :active micro-interakce — fyzická odezva kliknutí ────── */
+/* Platí pro všechna tlačítka kromě disabled */
+button:not(:disabled):active,
+.btn:not(:disabled):active,
+.button-primary:not(:disabled):active,
+.button-secondary:not(:disabled):active,
+.button-danger:not(:disabled):active,
+.gallery-btn:not(:disabled):active {
+  transform: scale(0.96) translateY(1px) !important;
+  transition: transform 0.06s ease !important;
+}
+
+/* Výjimky — prvky které mají vlastní hover transform nesmí dostat dvojí efekt */
+.btn-primary:not(:disabled):active {
+  transform: scale(0.97) translateY(0) !important;
+}
+.btn-danger:not(:disabled):active {
+  transform: scale(0.97) translateY(0) !important;
+}
+
 /* Sizes */
 .btn-sm {
   padding: 6px 14px;
@@ -213,6 +233,9 @@ button:focus-visible {
   background-color: var(--color-primary-hover);
   transform: translateY(-1px);
 }
+.button-primary:active {
+  transform: scale(0.97) translateY(0);
+}
 .button-primary:disabled {
   background-color: var(--color-border);
   color: var(--color-text-muted);
@@ -230,6 +253,10 @@ button:focus-visible {
   background-color: var(--color-bg-hover);
   border-color: var(--color-border-dark);
 }
+.button-secondary:active {
+  background-color: var(--color-border);
+  transform: scale(0.97) translateY(1px);
+}
 
 .button-danger {
   background-color: var(--color-danger);
@@ -240,6 +267,9 @@ button:focus-visible {
 .button-danger:hover {
   background-color: var(--color-danger-hover);
   transform: translateY(-1px);
+}
+.button-danger:active {
+  transform: scale(0.97) translateY(0);
 }
 
 /* Gallery-style buttons (pill shape) */
@@ -309,6 +339,30 @@ button:focus-visible {
 .delete-btn:hover {
   background-color: var(--color-danger-bg);
   color: var(--color-danger-text);
+}
+
+/* ── .btn-ghost-danger — nenapádný textový delete link ──────────── */
+/* Používej pro inline smazat v řádkových akcích (ne v modalu) */
+.btn-ghost-danger {
+  background: transparent;
+  color: var(--color-text-muted);
+  border: none;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.btn-ghost-danger:hover {
+  color: var(--color-danger);
+  background: var(--color-danger-bg);
+}
+
+.btn-ghost-danger:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 /* When delete-btn is used as a full danger button, keep white text */

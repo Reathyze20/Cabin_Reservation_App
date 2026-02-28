@@ -7,6 +7,7 @@ import {
   getUsername, getRole,
 } from '../lib/common';
 import { showConfirm, showPrompt } from '../lib/dialogs';
+import { icons } from '../lib/icons';
 
 // ─── State ────────────────────────────────────────────────────────────
 let container: HTMLElement;
@@ -49,7 +50,7 @@ function getTemplate(): string {
           </select>
           <button id="rename-folder-btn" class="gallery-btn" style="display:none">Přejmenovat</button>
           <button id="delete-folder-list-btn" class="gallery-btn gallery-btn-danger" style="display:none">Smazat</button>
-          <button id="create-folder-btn" class="gallery-btn gallery-btn-primary">+ Nové album</button>
+          <button id="create-folder-btn" class="gallery-btn gallery-btn-primary">Nové album</button>
         </div>
       </div>
       <div id="folders-grid" class="folders-grid"></div>
@@ -71,9 +72,9 @@ function getTemplate(): string {
       </div>
       <div id="photos-grid" class="photos-grid"></div>
       <div id="pagination-controls" class="pagination-controls" style="display:none">
-        <button id="prev-page-btn" class="nav-arrow">←</button>
+        <button id="prev-page-btn" class="nav-arrow">${icons.arrowLeft(16)}</button>
         <span id="page-info">1 / 1</span>
-        <button id="next-page-btn" class="nav-arrow">→</button>
+        <button id="next-page-btn" class="nav-arrow">${icons.arrowRight(16)}</button>
       </div>
     </div>
   </div>
@@ -128,7 +129,7 @@ function getTemplate(): string {
       <h2>Nahrát fotky</h2>
       <form id="upload-photo-form">
         <div class="file-upload-container">
-          <i class="fas fa-cloud-upload-alt upload-icon" style="opacity: 0.4; color: #9ca3af;"></i>
+          <span class="empty-state-icon" style="color:#9ca3af;opacity:0.5">${icons.cloudUpload()}</span>
           <p class="file-msg">Přetáhněte soubory sem nebo klikněte na tlačítko níže.</p>
           <label class="custom-file-label">
             <input type="file" id="photo-file-input" accept="image/*" multiple />
@@ -148,7 +149,7 @@ function getTemplate(): string {
       <img id="lightbox-img" src="" alt="" />
       <div class="lightbox-caption">
         <span id="lightbox-description" class="lightbox-description"></span>
-        <button id="add-description-btn" class="add-description-btn" style="display:none">+ Přidat vzpomínku</button>
+        <button id="add-description-btn" class="add-description-btn" style="display:none">Přidat vzpomínku</button>
         <div id="description-form" class="description-form" style="display:none">
           <input type="text" id="description-input" class="description-input" placeholder="Vaše vzpomínka..." />
           <button id="save-description-btn" class="save-description-btn">Uložit</button>
@@ -159,9 +160,9 @@ function getTemplate(): string {
       <a id="lightbox-download" class="lightbox-btn" download="foto.jpg">Stáhnout</a>
       <button id="lightbox-delete" class="lightbox-btn lightbox-btn-danger" style="display:none">Smazat</button>
     </div>
-    <button id="lightbox-close" class="lightbox-close" title="Zavřít">×</button>
-    <button id="lightbox-prev" class="lightbox-arrow left">←</button>
-    <button id="lightbox-next" class="lightbox-arrow right">→</button>
+    <button id="lightbox-close" class="lightbox-close" title="Zavřít">${icons.close(18)}</button>
+    <button id="lightbox-prev" class="lightbox-arrow left">${icons.arrowLeft(22)}</button>
+    <button id="lightbox-next" class="lightbox-arrow right">${icons.arrowRight(22)}</button>
   </div>
   </div>`;
 }
@@ -188,7 +189,7 @@ function renderFolders(folders: any[]): void {
   placeholder.onclick = () => showModal('create-folder-modal');
   placeholder.innerHTML = `
     <div class="folder-cover">
-      <i class="fas fa-plus" style="opacity: 0.4; color: #9ca3af;"></i>
+      <span class="empty-state-icon" style="color:#9ca3af;opacity:0.5">${icons.plus(32)}</span>
     </div>
     <div class="folder-info">
       <h3>Nové album</h3>
@@ -241,7 +242,7 @@ function renderFolders(folders: any[]): void {
     // Use the first photo as cover if available, otherwise a placeholder icon
     const coverHtml = f.coverPhotoUrl 
       ? `<img src="${f.coverPhotoUrl}" alt="${f.name} cover" style="width: 100%; height: 100%; object-fit: cover;">`
-      : `<i class="fas fa-folder-open" style="font-size: 3rem; color: #9ca3af; opacity: 0.4;"></i>`;
+      : `<span class="empty-state-icon" style="color:#9ca3af;opacity:0.5">${icons.folderOpen()}</span>`;
 
     el.innerHTML = `
       <div class="folder-checkbox-wrapper" style="${selectedFolderId ? 'opacity: 1;' : ''}">
@@ -427,7 +428,7 @@ function updateSelectionUI(): void {
   const sc = $('selection-count');
   if (isSelectionMode) {
     tb?.classList.add('gallery-btn-primary');
-    if (tb) tb.innerHTML = '× Zrušit výběr';
+    if (tb) tb.innerHTML = `${icons.close(14)} Zrušit výběr`;
     if (db) db.style.display = 'inline-flex';
     if (sc) sc.textContent = String(selectedPhotos.size);
   } else {

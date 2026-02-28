@@ -2,9 +2,9 @@
    pages/diary.ts — Diary / Journal with folders, calendar, notebook modal
    ============================================================================ */
 import type { PageModule } from "../lib/router";
-import { $, show, hide, showToast, authFetch, getUsername, getRole, getUserId } from "../lib/common";
+import { $, show, hide, showToast, authFetch, getUsername, getRole, getUserId, setupCharCounters, validateForm } from "../lib/common";
 import { showConfirm } from "../lib/dialogs";
-import { setupFormValidation, setFieldError } from "../lib/validation";
+import { setFieldError } from "../lib/validation";
 
 // ─── State ────────────────────────────────────────────────────────────
 let container: HTMLElement;
@@ -41,7 +41,7 @@ function getTemplate(): string {
               <option value="last_year">Minulý rok</option>
               <option value="older">Starší</option>
             </select>
-            <button id="create-diary-folder-btn" class="button-primary">+ Nový pobyt</button>
+            <button id="create-diary-folder-btn" class="button-primary">Nový pobyt</button>
           </div>
         </div>
         <div class="diary-content-wrapper">
@@ -78,7 +78,7 @@ function getTemplate(): string {
         </select>
         <small class="text-muted">Předvyplní název a data podle tvé rezervace.</small>
       </div>
-      <form id="create-diary-folder-form">
+      <form id="create-diary-folder-form" novalidate>
         <div class="form-group"><label>Název</label><input type="text" id="diary-folder-name-input" class="form-input" required minlength="1" maxlength="100" placeholder="Letní prázdniny 2025" data-error-message="Zadejte název pobytu." /></div>
         <div class="form-group"><label>Od</label><input type="date" id="diary-start-date" class="form-input" required data-error-message="Vyberte datum začátku pobytu." /></div>
         <div class="form-group"><label>Do</label><input type="date" id="diary-end-date" class="form-input" required data-error-message="Vyberte datum konce pobytu." /></div>
@@ -105,7 +105,7 @@ function getTemplate(): string {
       <span class="modal-close-button" data-close="rename-diary-folder-modal">&times;</span>
       <h2>Přejmenovat</h2>
       <p>Původní: <strong id="old-diary-folder-name"></strong></p>
-      <form id="rename-diary-folder-form">
+      <form id="rename-diary-folder-form" novalidate>
         <div class="form-group"><input type="text" id="new-diary-folder-name-input" class="form-input" required minlength="1" maxlength="100" placeholder="Nový název" data-error-message="Zadejte nový název pobytu." /></div>
         <div class="modal-buttons"><button type="submit" class="button-primary">Přejmenovat</button></div>
       </form>
@@ -118,7 +118,7 @@ function getTemplate(): string {
       <span class="modal-close-button" data-close="delete-diary-folder-modal">&times;</span>
       <h2>Smazat pobyt</h2>
       <p>Pro potvrzení napište <strong>DELETE</strong>:</p>
-      <form id="delete-diary-folder-form">
+      <form id="delete-diary-folder-form" novalidate>
         <div class="form-group"><input type="text" id="delete-diary-confirm-input" class="form-input input-danger" required autocomplete="off" placeholder="DELETE" data-error-message="Napište DELETE pro potvrzení." /></div>
         <div class="modal-buttons"><button type="submit" class="button-danger">Smazat</button></div>
       </form>
@@ -135,8 +135,9 @@ function getTemplate(): string {
           <span id="notebook-date-display"></span>
           <span class="notebook-close-button">&times;</span>
         </div>
-        <div class="notebook-body">
-          <textarea id="notebook-textarea" placeholder="Co se dnes dělo..."></textarea>
+        <div class="notebook-body" style="display: flex; flex-direction: column;">
+          <textarea id="notebook-textarea" placeholder="Co se dnes dělo..." maxlength="20000"></textarea>
+          <div class="char-counter" style="text-align: right; font-size: 0.8rem; color: #6b7280; margin-top: 4px;">0 / 20000</div>
           <div id="notebook-attachments-area" class="notebook-attachments"></div>
         </div>
         <div class="notebook-footer">
@@ -378,6 +379,7 @@ async function openNotebook(dateObj: Date, entry: any): Promise<void> {
   const ta = $<HTMLTextAreaElement>("notebook-textarea");
   if (ta) {
     ta.value = entry?.content || "";
+    ta.dispatchEvent(new Event('input')); // Aktualizuje char-counter
   }
   const del = $("delete-notebook-entry-btn");
   if (del) del.style.display = entry ? "flex" : "none";
@@ -574,7 +576,7 @@ function bindEvents(): void {
         $<HTMLInputElement>("diary-folder-name-input")!.value = data.name;
         $<HTMLInputElement>("diary-start-date")!.value = data.from;
         $<HTMLInputElement>("diary-end-date")!.value = data.to;
-      } catch (e) {}
+      } catch (e) { }
     } else {
       $<HTMLInputElement>("diary-folder-name-input")!.value = "";
       $<HTMLInputElement>("diary-start-date")!.value = "";
@@ -583,58 +585,64 @@ function bindEvents(): void {
   });
   const _createFolderForm = $<HTMLFormElement>("create-diary-folder-form");
   if (_createFolderForm) {
-    validationCleanups.push(
-      setupFormValidation(_createFolderForm, async () => {
-        const r = await authFetch("/api/diary/folders", {
-          method: "POST",
-          body: JSON.stringify({
-            name: $<HTMLInputElement>("diary-folder-name-input")!.value,
-            startDate: $<HTMLInputElement>("diary-start-date")!.value,
-            endDate: $<HTMLInputElement>("diary-end-date")!.value,
-            activityTag: $<HTMLSelectElement>("diary-activity-tag")?.value || null,
-          }),
-        });
-        if (r) {
-          hideModal("create-diary-folder-modal");
-          showToast("Vytvořeno.", "success");
-          loadFolders();
-        }
-      }),
-    );
+    _createFolderForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.currentTarget as HTMLFormElement;
+      if (!validateForm(form)) return;
+
+      const r = await authFetch("/api/diary/folders", {
+        method: "POST",
+        body: JSON.stringify({
+          name: $<HTMLInputElement>("diary-folder-name-input")!.value,
+          startDate: $<HTMLInputElement>("diary-start-date")!.value,
+          endDate: $<HTMLInputElement>("diary-end-date")!.value,
+          activityTag: $<HTMLSelectElement>("diary-activity-tag")?.value || null,
+        }),
+      });
+      if (r) {
+        hideModal("create-diary-folder-modal");
+        showToast("Vytvořeno.", "success");
+        loadFolders();
+      }
+    });
   }
 
   const _renameFolderForm = $<HTMLFormElement>("rename-diary-folder-form");
   if (_renameFolderForm) {
-    validationCleanups.push(
-      setupFormValidation(_renameFolderForm, async () => {
-        const name = $<HTMLInputElement>("new-diary-folder-name-input")?.value;
-        const r = await authFetch(`/api/diary/folders/${selectedFolderId}`, { method: "PATCH", body: JSON.stringify({ name }) });
-        if (r) {
-          hideModal("rename-diary-folder-modal");
-          selectedFolderId = null;
-          showToast("Přejmenováno.", "success");
-          loadFolders();
-        }
-      }),
-    );
+    _renameFolderForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.currentTarget as HTMLFormElement;
+      if (!validateForm(form)) return;
+
+      const name = $<HTMLInputElement>("new-diary-folder-name-input")?.value;
+      const r = await authFetch(`/api/diary/folders/${selectedFolderId}`, { method: "PATCH", body: JSON.stringify({ name }) });
+      if (r) {
+        hideModal("rename-diary-folder-modal");
+        selectedFolderId = null;
+        showToast("Přejmenováno.", "success");
+        loadFolders();
+      }
+    });
   }
 
   const _deleteFolderForm = $<HTMLFormElement>("delete-diary-folder-form");
   if (_deleteFolderForm) {
-    validationCleanups.push(
-      setupFormValidation(_deleteFolderForm, async () => {
-        const confirmInput = $<HTMLInputElement>("delete-diary-confirm-input");
-        if (confirmInput?.value !== "DELETE") {
-          setFieldError(confirmInput!, 'Napište přesně "DELETE" pro potvrzení.');
-          return;
-        }
-        await authFetch(`/api/diary/folders/${selectedFolderId}`, { method: "DELETE" });
-        hideModal("delete-diary-folder-modal");
-        selectedFolderId = null;
-        showToast("Smazáno.", "success");
-        loadFolders();
-      }),
-    );
+    _deleteFolderForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.currentTarget as HTMLFormElement;
+      if (!validateForm(form)) return;
+
+      const confirmInput = $<HTMLInputElement>("delete-diary-confirm-input");
+      if (confirmInput?.value !== "DELETE") {
+        setFieldError(confirmInput!, 'Napište přesně "DELETE" pro potvrzení.');
+        return;
+      }
+      await authFetch(`/api/diary/folders/${selectedFolderId}`, { method: "DELETE" });
+      hideModal("delete-diary-folder-modal");
+      selectedFolderId = null;
+      showToast("Smazáno.", "success");
+      loadFolders();
+    });
   }
 
   $("back-to-diary-folders-btn")?.addEventListener("click", backToFolders);
@@ -755,6 +763,7 @@ const diaryPage: PageModule = {
   async mount(el) {
     container = el;
     el.innerHTML = getTemplate();
+    setupCharCounters(container);
     bindEvents();
     await loadFolders();
   },

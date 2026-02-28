@@ -71,7 +71,7 @@ router.put("/:id", protect, async (req: Request, res: Response) => {
 
     const existing = await prisma.inventoryItem.findUnique({ where: { id } });
     if (!existing) {
-      return res.status(404).json({ error: "Zásoba nenalezena." });
+      return res.status(404).json({ error: "Položka nenalezena." });
     }
 
     const validStatuses = ["OK", "LOW", "EMPTY"];
@@ -82,7 +82,7 @@ router.put("/:id", protect, async (req: Request, res: Response) => {
         ...(name !== undefined && { name: String(name).trim() }),
         ...(category !== undefined && { category: String(category).trim() }),
         ...(status !== undefined && validStatuses.includes(status) && { status }),
-        ...(location !== undefined && { location: String(location).trim() || null }),
+        ...(location !== undefined && { location: location == null ? null : String(location).trim() || null }),
         ...(isEssential !== undefined && { isEssential: Boolean(isEssential) }),
         updatedById: userId,
       },
@@ -111,7 +111,7 @@ router.patch("/:id/toggle-essential", protect, async (req: Request, res: Respons
 
     const item = await prisma.inventoryItem.findUnique({ where: { id } });
     if (!item) {
-      return res.status(404).json({ error: "Zásoba nenalezena." });
+      return res.status(404).json({ error: "Položka nenalezena." });
     }
 
     const updated = await prisma.inventoryItem.update({
@@ -136,11 +136,11 @@ router.delete("/:id", protect, async (req: Request, res: Response) => {
 
     const existing = await prisma.inventoryItem.findUnique({ where: { id } });
     if (!existing) {
-      return res.status(404).json({ error: "Zásoba nenalezena." });
+      return res.status(404).json({ error: "Položka nenalezena." });
     }
 
     await prisma.inventoryItem.delete({ where: { id } });
-    res.json({ message: "Zásoba smazána." });
+    res.json({ message: "Položka smazána." });
   } catch (error) {
     logger.error("INVENTORY", "Failed to delete inventory item", { error: String(error) });
     res.status(500).json({ error: "Nepodařilo se smazat zásobu." });
@@ -149,51 +149,65 @@ router.delete("/:id", protect, async (req: Request, res: Response) => {
 
 // ============================================================================
 //                    ADD INVENTORY ITEM TO SHOPPING CART
-// POST /:id/add-to-cart — Finds or creates an open shopping list named
-// "Doplnění zásob", adds a ShoppingListItem linked to this InventoryItem,
-// and marks the InventoryItem as inCart: true — all within a transaction.
+// POST /:id/add-to-cart
+// Body: { listId?: string } — přidat do existujícího seznamu
+//       { newListName?: string } — vytvořit nový seznam a přidat
 // ============================================================================
 router.post("/:id/add-to-cart", protect, async (req: Request, res: Response) => {
   const { id } = req.params;
+  const { listId, newListName } = req.body;
   // @ts-ignore
   const userId: string = req.user.userId;
 
   try {
+    if (!listId && !newListName) {
+      return res.status(400).json({ error: "Zadejte existující seznam nebo název nového." });
+    }
+    if (newListName && String(newListName).trim().length > 100) {
+      return res.status(400).json({ error: "Název seznamu je příliš dlouhý (max 100 znaků)." });
+    }
+
     const invItem = await prisma.inventoryItem.findUnique({ where: { id } });
     if (!invItem) {
-      return res.status(404).json({ error: "Zásoba nenalezena." });
+      return res.status(404).json({ error: "Položka nenalezena." });
     }
     if (invItem.inCart) {
       return res.status(409).json({ error: "Položka je již přidána do nákupu." });
     }
 
     await prisma.$transaction(async (tx) => {
-      // Find or create the "Doplnění zásob" list
-      let list = await tx.shoppingList.findFirst({
-        where: { isPantry: false, isResolved: false, name: "Doplnění zásob" },
-      });
+      let targetListId: string;
 
-      if (!list) {
-        list = await tx.shoppingList.create({
+      if (listId) {
+        // a) Ověř existenci a že seznam je aktivní
+        const existing = await tx.shoppingList.findUnique({ where: { id: listId } });
+        if (!existing || existing.isResolved) {
+          throw new Error("Seznam nenalezen nebo je archivovaný.");
+        }
+        targetListId = existing.id;
+      } else {
+        // b) Vytvoř nový seznam
+        const created = await tx.shoppingList.create({
           data: {
-            name: "Doplnění zásob",
+            name: String(newListName).trim(),
             createdById: userId,
           },
         });
+        targetListId = created.id;
       }
 
-      // Add the item linked to this inventory entry
+      // Vlož položku propojenou se zásobou
       await tx.shoppingListItem.create({
         data: {
           name: invItem.name,
-          listId: list.id,
+          listId: targetListId,
           addedById: userId,
           linkedInventoryId: invItem.id,
           isEssential: invItem.isEssential,
         },
       });
 
-      // Mark as in-cart
+      // Označ zásobu jako in-cart
       await tx.inventoryItem.update({
         where: { id },
         data: { inCart: true },

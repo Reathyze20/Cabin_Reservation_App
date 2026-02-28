@@ -15,11 +15,23 @@ select {
   font-family: var(--font-family);
 }
 
+input,
+textarea,
+select {
+  color: var(--text-main, #1a2721);
+}
+
 html,
 body {
   min-height: 100vh;
   margin: 0;
-  background-color: #fdf8f0;
+  background-color: var(--bg-app, #f4f7f5);
+}
+
+/* ── Globální placeholder kontrast ─────────────────────────────────── */
+::placeholder {
+  color: var(--text-placeholder, #9ca3af);
+  opacity: 1; /* Firefox snižuje na 0.54 — resetovat */
 }
 
 body {
@@ -102,7 +114,37 @@ img,
   outline: none;
   box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
 }
+/* ── Btn loading dots (submitGuard) ─────────────────────────── */
+.btn-loading-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
 
+.btn-loading-dots span {
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.7;
+  animation: btn-dot-pulse 1.2s ease-in-out infinite;
+}
+
+.btn-loading-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.btn-loading-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes btn-dot-pulse {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
 /* ── Shake animation (submit with errors) ────────────────────────── */
 .shake {
   animation: shake 0.4s cubic-bezier(.36, .07, .19, .97) both;
@@ -135,23 +177,66 @@ img,
   grid-column: 1 / -1;
 }
 
-/* Scrollbar styling */
+/* SVG icon in empty states (replaces FA <i> elements) */
+.empty-state-icon {
+  display: block;
+  margin-bottom: var(--space-md);
+  color: var(--color-text-disabled, #9ca3af);
+  opacity: 0.5;
+  line-height: 1;
+}
+
+.empty-state-icon svg {
+  display: block;
+  pointer-events: none;
+}
+
+/* Scrollbar styling — tenko, SaaS styl (macOS-like) */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: var(--radius-sm);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-border-dark);
-  border-radius: var(--radius-sm);
+  background: var(--color-border, #d1d5db);
+  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-muted);
+  background: var(--color-text-muted, #9ca3af);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border, #d1d5db) transparent;
+}
+
+/* Vnitřní scrollovatelné kontejnery — ještě tenčí */
+.modal-content::-webkit-scrollbar,
+.column-content::-webkit-scrollbar,
+.shopping-items-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.modal-content::-webkit-scrollbar-thumb,
+.column-content::-webkit-scrollbar-thumb,
+.shopping-items-list::-webkit-scrollbar-thumb {
+  background: var(--color-border-light, #e5e7eb);
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover,
+.column-content::-webkit-scrollbar-thumb:hover,
+.shopping-items-list::-webkit-scrollbar-thumb:hover {
+  background: var(--color-border, #d1d5db);
 }
 
 /* Spinner / Loading */

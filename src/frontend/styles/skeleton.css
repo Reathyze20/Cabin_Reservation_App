@@ -98,6 +98,62 @@
   gap: 6px;
 }
 
+/* ── Dashboard card-specific utilities ────────────────────────────── */
+
+/* Large square avatar (status card) */
+.skeleton-avatar-lg {
+  width: 50px;
+  height: 50px;
+  border-radius: var(--radius-md, 10px);
+  flex-shrink: 0;
+}
+
+/* Small circle (shopping items, author) */
+.skeleton-avatar-sm {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Pill badge (shopping list name) */
+.skeleton-badge {
+  height: 20px;
+  width: 70px;
+  border-radius: var(--radius-full, 9999px);
+  flex-shrink: 0;
+}
+
+/* CTA / form button */
+.skeleton-btn {
+  height: 34px;
+  border-radius: var(--radius-full, 9999px);
+}
+
+/* Weather icon circle */
+.skeleton-weather-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Big temperature number */
+.skeleton-temp {
+  height: 36px;
+  width: 72px;
+  border-radius: var(--radius-sm);
+}
+
+/* Forecast day column */
+.skeleton-forecast-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
 /* ── Inline skeleton for buttons ──────────────────────────────────── */
 .skeleton-button {
   height: 36px;

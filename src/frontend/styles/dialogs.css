@@ -8,8 +8,10 @@
   left: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
+  /* Glassmorphismus — konzistentní s .modal-overlay */
+  background-color: rgba(17, 24, 39, 0.28);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   z-index: 9999;
   display: flex;
   align-items: center;
@@ -131,4 +133,13 @@
 
 .dialog-confirm-btn.destructive:hover {
   background-color: var(--color-danger-hover);
+}
+
+/* ── Mobile: solid card feel ─────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .dialog-box {
+    background-color: #ffffff !important;
+    border: 1px solid var(--border-strong, #e5e7eb) !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04) !important;
+  }
 }

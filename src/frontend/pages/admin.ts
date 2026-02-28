@@ -20,8 +20,8 @@ function getTemplate(): string {
         <div class="add-user-section">
           <h3>Přidat uživatele</h3>
           <form id="add-user-form" class="add-user-form">
-            <div class="form-group"><label>Uživatelské jméno</label><input type="text" id="new-username" required /></div>
-            <div class="form-group"><label>Heslo</label><input type="password" id="new-password" required /></div>
+            <div class="form-group"><label>Uživatelské jméno</label><input type="text" id="new-username" maxlength="50" required /></div>
+            <div class="form-group"><label>Heslo</label><input type="password" id="new-password" maxlength="100" required /></div>
             <div class="form-group">
               <label>Role</label>
               <select id="new-role" style="width: 100%; padding: var(--space-sm) 12px; border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: var(--font-size-sm);"><option value="member">Člen</option><option value="admin">Admin</option></select>
@@ -71,7 +71,7 @@ function getTemplate(): string {
       </div>
       <div class="form-group">
         <label>Nové heslo (vyplnit pro reset)</label>
-        <input type="password" id="edit-password" placeholder="ponechte prázdné" />
+        <input type="password" id="edit-password" maxlength="100" placeholder="ponechte prázdné" />
       </div>
       <div class="modal-buttons" style="gap:.5rem;flex-wrap:wrap">
         <button class="button-primary" id="btn-save-user">Uložit</button>
@@ -94,7 +94,7 @@ function renderUsers(list: any[]): void {
     const init = u.animalIcon || u.username.charAt(0).toUpperCase();
     const roleClass = u.role === 'admin' ? 'badge-admin' : 'badge-member';
     const roleText = u.role === 'admin' ? 'Admin' : 'Člen';
-    
+
     return `
     <div class="user-row" data-uid="${u.id}">
       <div class="user-row-left">
@@ -197,7 +197,7 @@ async function loadLogFiles(): Promise<void> {
   const data = await authFetch<{ files: string[] }>('/api/logs/files', { silent: true });
   const select = $<HTMLSelectElement>('log-date-select');
   if (!select) return;
-  
+
   if (data && data.files && data.files.length > 0) {
     select.innerHTML = data.files.map(f => `<option value="${f}">${f}</option>`).join('');
   } else {
@@ -207,7 +207,7 @@ async function loadLogFiles(): Promise<void> {
 }
 
 async function loadLogs(): Promise<void> {
-  const date  = $<HTMLSelectElement>('log-date-select')?.value  || new Date().toISOString().split('T')[0];
+  const date = $<HTMLSelectElement>('log-date-select')?.value || new Date().toISOString().split('T')[0];
   const level = $<HTMLSelectElement>('log-level-select')?.value || '';
 
   const el = $('logs-content');
@@ -238,21 +238,21 @@ async function loadLogs(): Promise<void> {
       // Starý textový formát (legacy soubory)
       line = entry;
       if (line.includes('[ERROR]')) lvl = 'error';
-      else if (line.includes('[WARN]'))  lvl = 'warn';
+      else if (line.includes('[WARN]')) lvl = 'warn';
       else if (line.includes('[DEBUG]')) lvl = 'debug';
     } else {
       // Nový JSON formát
       lvl = String(entry['level'] ?? 'info').toLowerCase();
-      const time    = String(entry['time']   ?? '').replace('T', ' ').replace(/\.\d+Z$/, '');
-      const msg     = String(entry['msg']    ?? '');
-      const module  = entry['module']  ? `[${String(entry['module']).toUpperCase()}] ` : '';
-      const userId  = entry['userId']  ? ` | user:${entry['userId']}`   : '';
-      const source  = entry['source'] === 'frontend' ? ' [FE]' : '';
-      const reqId   = entry['requestId'] ? ` | req:${entry['requestId']}` : '';
+      const time = String(entry['time'] ?? '').replace('T', ' ').replace(/\.\d+Z$/, '');
+      const msg = String(entry['msg'] ?? '');
+      const module = entry['module'] ? `[${String(entry['module']).toUpperCase()}] ` : '';
+      const userId = entry['userId'] ? ` | user:${entry['userId']}` : '';
+      const source = entry['source'] === 'frontend' ? ' [FE]' : '';
+      const reqId = entry['requestId'] ? ` | req:${entry['requestId']}` : '';
       // Extra pole – vynech standardní, zobraz zbytek
-      const SKIP    = new Set(['level', 'time', 'msg', 'module', 'userId', 'username', 'role',
-                               'source', 'requestId', 'actorId', 'app', 'env', 'pid']);
-      const extra   = Object.entries(entry)
+      const SKIP = new Set(['level', 'time', 'msg', 'module', 'userId', 'username', 'role',
+        'source', 'requestId', 'actorId', 'app', 'env', 'pid']);
+      const extra = Object.entries(entry)
         .filter(([k]) => !SKIP.has(k))
         .map(([k, v]) => `${k}:${typeof v === 'object' ? JSON.stringify(v) : v}`)
         .join(' | ');
@@ -262,9 +262,9 @@ async function loadLogs(): Promise<void> {
 
     // Barevné kódování podle levelu
     const color = lvl === 'error' ? '#f87171'
-                : lvl === 'warn'  ? '#fbbf24'
-                : lvl === 'debug' ? '#9ca3af'
-                : '#60a5fa'; // info
+      : lvl === 'warn' ? '#fbbf24'
+        : lvl === 'debug' ? '#9ca3af'
+          : '#60a5fa'; // info
 
     const escapedLine = line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     return `<span style="color: ${color}">${escapedLine}</span>`;
@@ -283,9 +283,9 @@ function downloadLogs(): void {
   const text = (el.textContent || '').trim();
 
   const blob = new Blob([text], { type: 'text/plain' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href     = url;
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
   a.download = `chata-logs-${date}.txt`;
   document.body.appendChild(a);
   a.click();
@@ -301,7 +301,7 @@ function bindEvents(): void {
   // Open edit user (event delegation)
   container.addEventListener('click', async (e) => {
     const target = e.target as HTMLElement;
-    
+
     const editBtn = target.closest<HTMLElement>('.btn-edit-user');
     if (editBtn) {
       openEditModal(editBtn.dataset.uid!);

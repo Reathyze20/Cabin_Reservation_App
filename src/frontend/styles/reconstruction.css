@@ -9,6 +9,7 @@
   flex-direction: column;
   overflow: hidden;
 }
+
 .reconstruction-card {
   background-color: var(--color-bg-card);
   border: 1px solid var(--color-border);
@@ -20,6 +21,7 @@
   flex-direction: column;
   overflow: hidden;
 }
+
 .reconstruction-header {
   padding: 15px var(--space-xl);
   border-bottom: 1px solid var(--color-border-light);
@@ -28,6 +30,7 @@
   align-items: center;
   flex-shrink: 0;
 }
+
 .reconstruction-header h2 {
   font-size: var(--font-size-2xl);
   color: var(--color-text-main);
@@ -36,6 +39,7 @@
   align-items: center;
   gap: 10px;
 }
+
 .reconstruction-header h2 i {
   color: var(--color-primary);
 }
@@ -47,31 +51,37 @@
   gap: 5px;
   min-width: 250px;
 }
+
 .budget-labels {
   display: flex;
   justify-content: space-between;
   align-items: center;
   font-size: 0.95rem;
 }
+
 .budget-title {
   color: var(--color-text-muted);
   font-weight: 600;
 }
+
 .budget-amount {
   color: var(--color-text-dark);
   font-size: 1.1rem;
 }
+
 .budget-progress-bar {
   height: 8px;
   background-color: var(--color-border-light);
   border-radius: 4px;
   overflow: hidden;
 }
+
 .budget-progress-fill {
   height: 100%;
   background-color: var(--color-primary);
   transition: width 0.5s ease;
 }
+
 .budget-details {
   display: flex;
   justify-content: space-between;
@@ -91,6 +101,7 @@
   min-height: 0;
   scroll-snap-type: x proximity;
 }
+
 .kanban-column {
   flex: 1 1 0;
   min-width: 320px;
@@ -104,6 +115,7 @@
   min-height: 0;
   scroll-snap-align: start;
 }
+
 .kanban-column-header {
   padding: 15px;
   font-weight: 700;
@@ -114,6 +126,7 @@
   flex-shrink: 0;
   border-bottom: 3px solid transparent;
 }
+
 .kanban-column-header i {
   font-size: 1.1em;
 }
@@ -123,10 +136,12 @@
   border-bottom-color: #60a5fa;
   color: #2563eb;
 }
+
 .kanban-column.col-schvaleno .kanban-column-header {
   border-bottom-color: #8bb88b;
   color: #6b9e6b;
 }
+
 .kanban-column.col-probehlo .kanban-column-header {
   border-bottom-color: #34d399;
   color: #059669;
@@ -140,6 +155,8 @@
   display: flex;
   flex-direction: column;
   gap: 15px;
+  max-height: 60vh;
+  padding-right: 8px;
 }
 
 /* Kanban Item Card Base */
@@ -155,6 +172,7 @@
   flex-direction: column;
   overflow: hidden;
 }
+
 .kanban-item:hover {
   box-shadow: var(--shadow-md);
   transform: translateY(-1px);
@@ -182,8 +200,15 @@
 .card-actions {
   display: flex;
   gap: 4px;
-  flex-shrink: 0;
+  flex-shrink: 0;  /* Schovat akce do hovered stavu (clutter reduction) */
+  opacity: 0;
+  transition: opacity 0.15s;
 }
+
+/* Zobrazit akce při najetí na kartu */
+.kanban-item:hover .card-actions,
+.kanban-item:focus-within .card-actions {
+  opacity: 1;}
 
 .card-action-edit,
 .card-action-del {
@@ -267,17 +292,20 @@
 .idea-card {
   /* specific styles if needed */
 }
+
 .idea-thumbnail {
   width: 100%;
   height: 140px;
   overflow: hidden;
   border-bottom: 1px solid var(--color-border-light);
 }
+
 .idea-thumbnail img {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
+
 .idea-content {
   padding: 14px;
   display: flex;
@@ -288,6 +316,7 @@
 .idea-header {
   display: none;
 }
+
 .idea-actions {
   display: none;
 }
@@ -296,6 +325,7 @@
   color: var(--color-text-muted);
   transition: color var(--transition-fast);
 }
+
 .idea-link:hover {
   color: var(--color-primary);
 }
@@ -322,14 +352,17 @@
   background: #fef3c7;
   color: #92400e;
 }
+
 .company-status-badge.status-contacted {
   background: #dbeafe;
   color: #1e40af;
 }
+
 .company-status-badge.status-approved {
   background: #d1fae5;
   color: #065f46;
 }
+
 .company-status-badge.status-rejected {
   background: #fee2e2;
   color: #991b1b;
@@ -344,19 +377,23 @@
   padding-top: 10px;
   border-top: 1px solid #e5e7eb;
 }
+
 /* Legacy status classes — ponech pro selektor .status-X na badge */
 .status-pending {
   background: #fef3c7;
   color: #92400e;
 }
+
 .status-contacted {
   background: #dbeafe;
   color: #1e40af;
 }
+
 .status-approved {
   background: #d1fae5;
   color: #065f46;
 }
+
 .status-rejected {
   background: #fee2e2;
   color: #991b1b;
@@ -368,6 +405,7 @@
   margin-top: 15px;
   flex-wrap: wrap;
 }
+
 .company-action-btn {
   display: inline-flex;
   align-items: center;
@@ -382,6 +420,7 @@
   transition: all var(--transition-fast);
   font-weight: 500;
 }
+
 .company-action-btn:hover {
   background-color: var(--color-primary-bg);
   border-color: var(--color-primary-light);
@@ -407,6 +446,7 @@
   align-items: flex-start;
   gap: 8px;
 }
+
 .task-checkbox-wrapper {
   position: relative;
   display: inline-block;
@@ -415,11 +455,13 @@
   flex-shrink: 0;
   margin-top: 2px;
 }
+
 .task-checkbox {
   opacity: 0;
   width: 0;
   height: 0;
 }
+
 .checkmark {
   position: absolute;
   top: 0;
@@ -432,10 +474,12 @@
   cursor: pointer;
   transition: all var(--transition-fast);
 }
-.task-checkbox:checked ~ .checkmark {
+
+.task-checkbox:checked~.checkmark {
   background-color: var(--color-primary);
   border-color: var(--color-primary);
 }
+
 .checkmark:after {
   content: "";
   position: absolute;
@@ -448,12 +492,24 @@
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
 }
-.task-checkbox:checked ~ .checkmark:after {
+
+.task-checkbox:checked~.checkmark:after {
   display: block;
 }
+
 .task-done .kanban-item-title {
   text-decoration: line-through;
   color: var(--color-text-muted);
+}
+
+/* Hotová karta — celá ztmažená, akce stále přístupné na hover */
+.kanban-item.task-done {
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.kanban-item.task-done:hover {
+  opacity: 1;
 }
 
 /* task-footer alias — používáme .card-footer, ale zachováme pro starý HTML */
@@ -471,6 +527,7 @@
   font-weight: 500;
   color: var(--color-text-light);
 }
+
 .task-deadline {
   font-size: 0.8rem;
   color: var(--color-text-muted);
@@ -478,6 +535,7 @@
   align-items: center;
   gap: 5px;
 }
+
 .deadline-near {
   color: var(--color-danger);
   font-weight: 600;
@@ -497,11 +555,13 @@
   border-radius: var(--radius-md);
   gap: 10px;
 }
+
 .kanban-empty-state i {
   font-size: 2rem;
   color: var(--color-border-dark);
   opacity: 0.5;
 }
+
 .kanban-empty-state p {
   font-size: 0.9rem;
   margin: 0;
@@ -516,9 +576,11 @@
   transition: color var(--transition-fast);
   padding: 0;
 }
+
 .delete-card-btn:hover {
   color: var(--color-danger);
 }
+
 .vote-btn {
   background: none;
   border: none;
@@ -532,9 +594,11 @@
   gap: 4px;
   color: var(--color-text-muted);
 }
+
 .vote-btn:hover {
   background-color: var(--color-border-light);
 }
+
 .vote-btn.voted-up {
   color: var(--color-danger);
   font-weight: 700;
@@ -549,30 +613,37 @@
     overflow-x: hidden;
     scroll-snap-type: none;
   }
+
   .kanban-column {
     max-width: 100%;
     min-width: 0;
     max-height: none;
   }
+
   .kanban-column-body {
     max-height: 400px;
   }
+
   .reconstruction-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 15px;
   }
+
   .budget-container {
     width: 100%;
   }
 }
+
 @media (max-width: 480px) {
   .reconstruction-header {
     padding: 15px;
   }
+
   .reconstruction-header h2 {
     font-size: var(--font-size-xl);
   }
+
   .kanban-board {
     padding: 15px;
     gap: 15px;
@@ -647,6 +718,7 @@
 #add-reconstruction-form::-webkit-scrollbar {
   width: 4px;
 }
+
 #add-reconstruction-form::-webkit-scrollbar-thumb {
   background: #e5e7eb;
   border-radius: 2px;
@@ -732,7 +804,7 @@ select.form-input {
   margin-bottom: 14px;
 }
 
-.form-row > .form-group {
+.form-row>.form-group {
   margin-bottom: 0;
 }
 
@@ -795,6 +867,7 @@ select.form-input {
     opacity: 0;
     transform: translateY(-4px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -808,7 +881,7 @@ select.form-input {
     gap: 0;
   }
 
-  .form-row > .form-group {
+  .form-row>.form-group {
     margin-bottom: 14px;
   }
 

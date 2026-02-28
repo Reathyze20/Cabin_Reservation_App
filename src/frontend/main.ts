@@ -3,8 +3,9 @@
    ============================================================================ */
 
 // CSS
-import '@fortawesome/fontawesome-free/css/all.min.css';
+import '@fortawesome/fontawesome-free/css/all.min.css'; // kept for weather icons in dashboard
 import './styles/index.css';
+import { icons } from './lib/icons';
 
 // PWA — auto-registers service worker via vite-plugin-pwa
 import { registerSW } from 'virtual:pwa-register';
@@ -13,11 +14,13 @@ import { registerSW } from 'virtual:pwa-register';
 import {
   $, show, hide, showToast,
   isLoggedIn, setAuth, logout, getUsername,
-  saveAnimalIcon, getAnimalIcon, getToken, handleSessionExpired
+  saveAnimalIcon, getAnimalIcon, getToken, handleSessionExpired,
+  validateForm
 } from './lib/common';
 import { initRouter, destroyRouter } from './lib/router';
 import { initGlobalErrorHandlers } from './lib/logger';
 import { isVerifyRoute, mountVerifyPage } from './pages/verify';
+import { helpDictionary } from './lib/helpContent';
 
 /* ---------- PWA service worker ---------- */
 
@@ -59,14 +62,16 @@ window.addEventListener('offline', updateOnlineStatus);
 /* ---------- helpers ---------- */
 
 function setupPasswordToggles(): void {
-  document.querySelectorAll<HTMLElement>('.toggle-password').forEach((icon) => {
-    icon.addEventListener('click', () => {
-      const input = icon.previousElementSibling as HTMLInputElement | null;
+  document.querySelectorAll<HTMLElement>('.toggle-password').forEach((btn) => {
+    // Initialize with eye icon if empty
+    if (!btn.innerHTML.includes('<svg')) btn.innerHTML = icons.eye();
+    btn.addEventListener('click', () => {
+      const input = btn.previousElementSibling as HTMLInputElement | null;
       if (!input) return;
       const isHidden = input.type === 'password';
       input.type = isHidden ? 'text' : 'password';
-      icon.classList.toggle('fa-eye', !isHidden);
-      icon.classList.toggle('fa-eye-slash', isHidden);
+      btn.innerHTML = isHidden ? icons.eyeOff() : icons.eye();
+      btn.title = isHidden ? 'Skrýt heslo' : 'Zobrazit heslo';
     });
   });
 }
@@ -95,11 +100,35 @@ function showApp(): void {
     greetingEl.innerHTML = `<span class="greeting">Ahoj, </span><span class="username">${username}!</span>`;
   }
 
+  // ── Mobile Header: menu button → open profile drawer ──
+  const mobileMenuBtn = $('mobile-menu-btn');
+  if (mobileMenuBtn) {
+    mobileMenuBtn.addEventListener('click', () => {
+      const drawer = document.getElementById('profile-drawer-overlay');
+      if (drawer) drawer.classList.remove('hidden');
+    });
+  }
+
+  // Update mobile header menu icon with user's animal icon
+  const mobileMenuIcon = $('mobile-menu-icon');
+  if (mobileMenuIcon) {
+    const icon = getAnimalIcon();
+    if (icon) {
+      mobileMenuIcon.textContent = icon;
+    } else {
+      mobileMenuIcon.textContent = '☰';
+    }
+  }
+
   const pageContainer = $('page-container');
   const appNav = $('app-nav');
   if (pageContainer && appNav) {
     initRouter(pageContainer, appNav);
   }
+
+  // Show help FAB when app is visible
+  const fabHelp = $('fab-help');
+  if (fabHelp) fabHelp.classList.remove('hidden');
 }
 
 function showLogin(): void {
@@ -107,6 +136,9 @@ function showLogin(): void {
   hide($('app-section'));
   hide($('register-section'));
   show($('login-section'));
+  // Hide help FAB on login screen
+  const fabHelp = $('fab-help');
+  if (fabHelp) fabHelp.classList.add('hidden');
 }
 
 /* ---------- forms ---------- */
@@ -114,6 +146,9 @@ function showLogin(): void {
 function bindLoginForm(): void {
   $<HTMLFormElement>('login-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
+    const form = e.currentTarget as HTMLFormElement;
+    if (!validateForm(form)) return;
+
     const username = $<HTMLInputElement>('username')!.value.trim();
     const password = $<HTMLInputElement>('login-password')!.value;
     const errEl = $('login-error');
@@ -171,6 +206,9 @@ function bindLoginForm(): void {
 function bindRegisterForm(): void {
   $<HTMLFormElement>('register-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
+    const form = e.currentTarget as HTMLFormElement;
+    if (!validateForm(form)) return;
+
     const username = $<HTMLInputElement>('register-username')!.value.trim();
     const email = $<HTMLInputElement>('register-email')!.value.trim();
     const password = $<HTMLInputElement>('register-password')!.value;
@@ -266,6 +304,9 @@ function bindRegisterForm(): void {
 function bindVerifyForm(): void {
   $<HTMLFormElement>('verify-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
+    const form = e.currentTarget as HTMLFormElement;
+    if (!validateForm(form)) return;
+
     const username = $<HTMLInputElement>('verify-username')!.value;
     const code = $<HTMLInputElement>('verify-code')!.value.trim();
     const msgEl = $('verify-message');
@@ -561,6 +602,9 @@ function initProfileDrawer(): void {
   // Security form submit
   $<HTMLFormElement>('profile-security-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
+    const form = e.currentTarget as HTMLFormElement;
+    if (!validateForm(form)) return;
+
     const oldPassword = $<HTMLInputElement>('profile-old-password')!.value;
     const newPassword = $<HTMLInputElement>('profile-new-password')!.value;
     const newPasswordConfirm = $<HTMLInputElement>('profile-new-password-confirm')!.value;
@@ -569,6 +613,11 @@ function initProfileDrawer(): void {
     if (newPassword !== newPasswordConfirm) {
       msg.textContent = 'Hesla se neshodují.';
       msg.style.color = 'var(--color-danger)';
+
+      const newPwdInput = $<HTMLInputElement>('profile-new-password-confirm');
+      if (newPwdInput) {
+        newPwdInput.classList.add('is-invalid');
+      }
       return;
     }
 
@@ -595,6 +644,38 @@ function initProfileDrawer(): void {
       msg.textContent = 'Síťová chyba.';
       msg.style.color = 'var(--color-danger)';
     }
+  });
+}
+
+/* ---------- help system ---------- */
+
+function initHelpSystem(): void {
+  const fab = $('fab-help');
+  const overlay = $('help-modal-overlay') as HTMLElement | null;
+  const content = $('help-modal-content');
+  const closeBtn = $('close-help-modal');
+  if (!fab || !overlay || !content || !closeBtn) return;
+
+  function openHelp() {
+    // Extract route key from hash, e.g. "#/shopping" -> "shopping"
+    const hash = window.location.hash.replace('#/', '').split('?')[0];
+    const key = hash || 'dashboard';
+    const helpHtml = helpDictionary[key] || helpDictionary['default'];
+    content!.innerHTML = helpHtml;
+    overlay!.style.display = 'flex';
+  }
+
+  function closeHelp() {
+    overlay!.style.display = 'none';
+  }
+
+  fab.addEventListener('click', openHelp);
+  closeBtn.addEventListener('click', closeHelp);
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeHelp();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && overlay!.style.display === 'flex') closeHelp();
   });
 }
 
@@ -631,6 +712,8 @@ function init(): void {
   } else {
     showLogin();
   }
+
+  initHelpSystem();
 }
 
 // Boot

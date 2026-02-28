@@ -17,12 +17,12 @@ input[type="date"] {
   padding: 9px 12px;
   min-height: 40px;
   line-height: normal;
-  border: 1px solid var(--color-border);
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1 !important;
+  color: var(--text-main, #1a2721);
   border-radius: var(--radius-md);
   font-family: var(--font-family);
   font-size: var(--font-size-sm);
-  background-color: var(--color-bg-card);
-  color: var(--color-text-main);
   box-shadow: var(--shadow-xs);
   transition:
     border-color var(--transition-fast),
@@ -51,8 +51,8 @@ input:focus,
 textarea:focus,
 select:focus {
   outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(93, 155, 98, 0.12);
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 3px rgba(93, 155, 98, 0.15);
 }
 
 .form-input:disabled,

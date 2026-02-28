@@ -55,17 +55,46 @@
   /* Allow the card to grow seamlessly with its elements */
   display: flex;
   flex-direction: column;
+  /* ── Hover lift efekt — plynulý cubic-bezier ─── */
+  transition:
+    transform 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.2s ease;
+}
+
+/* Jemné nadzdvižení karty na hover (PC only) */
+@media (hover: hover) {
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow:
+      0 10px 25px -5px rgba(0, 0, 0, 0.08),
+      0 8px 10px -6px rgba(0, 0, 0, 0.04);
+    border-color: var(--border-strong);
+  }
+
+  .card:active {
+    transform: translateY(-1px) scale(0.995);
+    box-shadow: var(--shadow-sm);
+  }
+  /* Karty které jsou scrollovatelné panely se nezvedají */
+  .card.no-lift:hover,
+  #reservations-list:hover,
+  #reservation-detail:hover {
+    transform: none;
+    box-shadow: var(--shadow-sm);
+    border-color: var(--color-border);
+  }
 }
 
 /* Mobile Layout Adjustments */
 @media (max-width: 768px) {
   body {
-    background-color: #f7f6f3;
+    background-color: var(--bg-app, #f4f7f5);
   }
 
   .app-container {
     padding: 0;
-    background-color: #f7f6f3;
+    background-color: var(--bg-app, #f4f7f5);
     /* ✅ Odstraň fixní výšku a skryté přetečení — obsah teď scrolluje přirozeně */
     height: auto;
     min-height: 100dvh;
@@ -73,8 +102,8 @@
   }
 
   #page-container {
-    padding-top: 0;
-    /* ✅ Povol přirozený tok obsahu na mobilu */
+    padding-top: 64px !important;  /* 56px mobile header + 8px breathing room */
+    padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)) !important;
     overflow: visible;
     flex-grow: 0;
   }
@@ -87,7 +116,24 @@
   .card {
     padding: var(--space-lg);
     border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-sm);
+    background-color: #ffffff !important;
+    border: 1px solid var(--border-strong, #e5e7eb) !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04) !important;
+  }
+}
+
+/* ── Small-height desktop screens (laptops >768px wide but <800px tall) ── */
+/* Replace fixed height: 100vh + overflow: hidden with natural scroll       */
+@media (max-height: 800px) and (min-width: 769px) {
+  .app-container {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+
+  #page-container {
+    overflow-y: auto;
+    overflow-x: hidden;
   }
 }
 
