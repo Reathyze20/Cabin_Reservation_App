@@ -196,7 +196,7 @@
 }
 
 .cal-day.other-month .day-num {
-  color: #9ca3af;
+  color: #b8bfc9;
   font-weight: 400;
 }
 
@@ -206,13 +206,17 @@
 
 /* ── Past dates — read-only ── */
 .cal-day.past-date {
-  opacity: 0.42;
+  opacity: 0.62;
   pointer-events: none;
   cursor: default;
 }
 
 .cal-day.past-date .day-num {
   color: #9ca3af;
+}
+
+.cal-day.past-date.other-month {
+  opacity: 0.38;
 }
 
 .cal-day.weekend {
@@ -951,6 +955,40 @@
   color: var(--color-text-muted);
   padding: var(--space-2xl) 0;
   font-style: italic;
+}
+
+/* Moderní prázdný stav v přehledu rezervací */
+.res-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  height: 100%;
+  text-align: center;
+  gap: 10px;
+  padding: 32px 16px;
+}
+
+.res-empty-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.45;
+  color: var(--color-primary, #5d9b62);
+}
+
+.res-empty-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text, #374151);
+}
+
+.res-empty-sub {
+  font-size: 0.85rem;
+  color: var(--color-text-muted, #9ca3af);
+  line-height: 1.4;
 }
 
 /* Cards List Container */

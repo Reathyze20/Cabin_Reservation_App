@@ -262,6 +262,15 @@
   margin-bottom: 2px;
 }
 
+.dashboard-date {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--brand-primary, #3f7b63);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 10px;
+}
+
 .status-name {
   font-size: 20px;
   font-weight: 800;
@@ -456,7 +465,7 @@
 }
 
 .weather-detail-item {
-  font-size: 14px;
+  font-size: 15px;
   color: var(--text-muted);
   font-weight: 500;
 }
@@ -464,6 +473,26 @@
 .weather-detail-item strong {
   color: var(--text-main);
   font-weight: 700;
+}
+
+/* Sun rise/set chips below temperature */
+.weather-sun-below {
+  display: flex;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.weather-sun-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-muted, #6b7280);
+}
+
+.weather-sun-chip svg {
+  flex-shrink: 0;
 }
 
 .weather-divider {
