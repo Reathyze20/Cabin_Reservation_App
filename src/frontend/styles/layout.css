@@ -43,10 +43,11 @@
 }
 
 .card {
-  background-color: var(--color-bg);
-  border-radius: var(--radius-xl);
-  padding: var(--space-2xl);
-  box-shadow: var(--shadow-lg);
+  background-color: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  box-shadow: var(--shadow-sm);
   /* Flexibilnější rozměry pro stabilitu rozhraní bez scrollbaru */
   min-height: 50vh;
   height: auto;
@@ -85,8 +86,8 @@
 
   .card {
     padding: var(--space-lg);
-    border-radius: 16px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-sm);
   }
 }
 

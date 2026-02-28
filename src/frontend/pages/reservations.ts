@@ -1,50 +1,48 @@
 /* ============================================================================
    pages/reservations.ts — Reservations calendar + booking (from script.js)
    ============================================================================ */
-import type { PageModule } from '../lib/router';
-import {
-  $, show, hide, showToast, authFetch,
-  getToken, getUserId, getRole, getUsername,
-} from '../lib/common';
-import type { Reservation, UserAvailability } from '@shared/types';
-import '../styles/reservations.css';
+import type { PageModule } from "../lib/router";
+import { $, show, hide, showToast, authFetch, getToken, getUserId, getRole, getUsername } from "../lib/common";
+import { setupFormValidation, setFieldError } from "../lib/validation";
+import type { Reservation, UserAvailability } from "@shared/types";
+import "../styles/reservations.css";
 
 // ─── Inventory notify ─────────────────────────────────────────────────────────
 
 interface MissingSummary {
   count: number;
-  items: { name: string; status: 'LOW' | 'EMPTY' }[];
+  items: { name: string; status: "LOW" | "EMPTY" }[];
   hasShoppingItems: boolean;
   pendingShoppingCount: number;
 }
 
 function showInventoryNotifyDialog(summary: MissingSummary): Promise<boolean> {
   return new Promise((resolve) => {
-    document.getElementById('inv-notify-modal')?.remove();
+    document.getElementById("inv-notify-modal")?.remove();
 
-    const countWord =
-      summary.count === 1 ? 'položka' :
-      summary.count < 5  ? 'položky' : 'položek';
+    const countWord = summary.count === 1 ? "položka" : summary.count < 5 ? "položky" : "položek";
 
-    const itemsList = summary.items.map((i) =>
-      `<li class="inv-notify-item">
+    const itemsList = summary.items
+      .map(
+        (i) =>
+          `<li class="inv-notify-item">
         <span class="inv-notify-item-name">${i.name}</span>
-        <span class="badge ${i.status === 'EMPTY' ? 'badge-empty' : 'badge-low'}">${i.status === 'EMPTY' ? 'Došlo' : 'Málo'}</span>
-      </li>`
-    ).join('');
+        <span class="badge ${i.status === "EMPTY" ? "badge-empty" : "badge-low"}">${i.status === "EMPTY" ? "Došlo" : "Málo"}</span>
+      </li>`,
+      )
+      .join("");
 
-    const invSection = summary.count > 0
-      ? `<p class="inv-notify-subtitle"><strong>${summary.count} ${countWord}</strong> na chatě chybí nebo dochází:</p>
+    const invSection =
+      summary.count > 0
+        ? `<p class="inv-notify-subtitle"><strong>${summary.count} ${countWord}</strong> na chatě chybí nebo dochází:</p>
          <ul class="inv-notify-list">${itemsList}</ul>`
-      : '';
+        : "";
 
-    const shopLine = summary.hasShoppingItems
-      ? `<p class="inv-notify-shop-line">V nákupním seznamu je také <strong>${summary.pendingShoppingCount} nekoupených položek</strong>.</p>`
-      : '';
+    const shopLine = summary.hasShoppingItems ? `<p class="inv-notify-shop-line">V nákupním seznamu je také <strong>${summary.pendingShoppingCount} nekoupených položek</strong>.</p>` : "";
 
-    const modal = document.createElement('div');
-    modal.id = 'inv-notify-modal';
-    modal.className = 'modal-overlay';
+    const modal = document.createElement("div");
+    modal.id = "inv-notify-modal";
+    modal.className = "modal-overlay";
     modal.innerHTML = `
       <div class="modal-content inv-notify-content">
         <div class="inv-notify-header">
@@ -61,17 +59,19 @@ function showInventoryNotifyDialog(summary: MissingSummary): Promise<boolean> {
         </div>
       </div>`;
     document.body.appendChild(modal);
-    requestAnimationFrame(() => modal.classList.add('modal-visible'));
+    requestAnimationFrame(() => modal.classList.add("modal-visible"));
 
     const cleanup = (result: boolean) => {
-      modal.classList.remove('modal-visible');
+      modal.classList.remove("modal-visible");
       setTimeout(() => modal.remove(), 200);
       resolve(result);
     };
 
-    document.getElementById('inv-notify-yes')?.addEventListener('click', () => cleanup(true));
-    document.getElementById('inv-notify-no')?.addEventListener('click', () => cleanup(false));
-    modal.addEventListener('click', (e) => { if (e.target === modal) cleanup(false); });
+    document.getElementById("inv-notify-yes")?.addEventListener("click", () => cleanup(true));
+    document.getElementById("inv-notify-no")?.addEventListener("click", () => cleanup(false));
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) cleanup(false);
+    });
   });
 }
 
@@ -81,28 +81,28 @@ let currentReservations: (Reservation & { userColor?: string; userAnimalIcon?: s
 let currentAvailabilities: UserAvailability[] = [];
 let allUsers: { id: string; username: string; color?: string; role?: string }[] = [];
 let reservationIdToDelete: string | null = null;
-let activeReservationTab: 'all' | 'mine' = 'all';
-let activePeriodFilter: 'month' | '3months' | 'year' = 'month';
-
+let activeReservationTab: "all" | "mine" = "all";
+let activePeriodFilter: "month" | "3months" | "year" = "month";
 
 let currentCalMonth = new Date().getMonth();
 let currentCalYear = new Date().getFullYear();
 let rangeSelectStart: string | null = null;
 let _keydownHandler: ((e: KeyboardEvent) => void) | null = null;
+const validationCleanups: Array<() => void> = [];
 
 // ─── Helpers ──────────────────────────────────────────────────────────
 
 function hexToRgba(hex: string | undefined, alpha = 1): string | null {
   if (!hex || !/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)) return null;
-  let c = hex.substring(1).split('');
+  let c = hex.substring(1).split("");
   if (c.length === 3) c = [c[0], c[0], c[1], c[1], c[2], c[2]];
-  const n = parseInt(c.join(''), 16);
+  const n = parseInt(c.join(""), 16);
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
 }
 
 function formatDateForDisplay(date: string | Date): string {
-  if (!date) return '';
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  if (!date) return "";
+  const dateObj = typeof date === "string" ? new Date(date) : date;
   const off = dateObj.getTimezoneOffset() * 60000;
   const corrected = new Date(dateObj.getTime() + off);
   return `${corrected.getDate()}.${corrected.getMonth() + 1}.${corrected.getFullYear()}`;
@@ -110,13 +110,10 @@ function formatDateForDisplay(date: string | Date): string {
 
 function getUserColor(userId: string): string {
   const user = allUsers.find((u) => u.id === userId);
-  return user?.color || '#808080';
+  return user?.color || "#808080";
 }
 
-const monthNames = [
-  'Leden', 'Únor', 'Březen', 'Duben', 'Květen', 'Červen',
-  'Červenec', 'Srpen', 'Září', 'Říjen', 'Listopad', 'Prosinec',
-];
+const monthNames = ["Leden", "Únor", "Březen", "Duben", "Květen", "Červen", "Červenec", "Srpen", "Září", "Říjen", "Listopad", "Prosinec"];
 
 // ─── Template ─────────────────────────────────────────────────────────
 
@@ -201,18 +198,18 @@ function getTemplate(): string {
         <div class="form-row date-inputs-row">
           <div class="form-group">
             <label for="modal-date-from">Od</label>
-            <input type="date" id="modal-date-from" class="booking-input" required />
+            <input type="date" id="modal-date-from" class="booking-input" required data-error-message="Vyberte datum příjezdu." />
           </div>
           <div class="form-group">
             <label for="modal-date-to">Do</label>
-            <input type="date" id="modal-date-to" class="booking-input" required />
+            <input type="date" id="modal-date-to" class="booking-input" required data-error-message="Vyberte datum odjezdu." />
           </div>
         </div>
 
         <div class="form-row purpose-row">
           <div class="form-group">
             <label for="purpose-input">Účel návštěvy</label>
-            <input type="text" id="purpose-input" class="booking-input" required maxlength="20" placeholder="např. Relax, Údržba..." />
+            <input type="text" id="purpose-input" class="booking-input" required maxlength="20" placeholder="např. Relax, Údržba..." data-error-message="Zadejte účel návštěvy (max 20 znaků)." />
           </div>
         </div>
 
@@ -291,11 +288,11 @@ function getTemplate(): string {
         <div class="form-row date-inputs-row">
           <div class="form-group">
             <label for="avail-date-from">Od</label>
-            <input type="date" id="avail-date-from" class="booking-input" required />
+            <input type="date" id="avail-date-from" class="booking-input" required data-error-message="Vyberte datum začátku volna." />
           </div>
           <div class="form-group">
             <label for="avail-date-to">Do</label>
-            <input type="date" id="avail-date-to" class="booking-input" required />
+            <input type="date" id="avail-date-to" class="booking-input" required data-error-message="Vyberte datum konce volna." />
           </div>
         </div>
         <div class="booking-footer">
@@ -315,15 +312,15 @@ function getTemplate(): string {
 // ─── Data loading ─────────────────────────────────────────────────────
 
 async function fetchUsers(): Promise<void> {
-  const data = await authFetch<typeof allUsers>('/api/users', { silent: true });
+  const data = await authFetch<typeof allUsers>("/api/users", { silent: true });
   allUsers = data || [];
 }
 
 async function loadReservations(): Promise<void> {
-  const list = $('reservations-list');
+  const list = $("reservations-list");
   if (list) list.innerHTML = '<div class="spinner-container"><div class="spinner"></div></div>';
 
-  const data = await authFetch<{ reservations: (Reservation & { userColor?: string })[]; availabilities: UserAvailability[] }>('/api/reservations', { silent: true });
+  const data = await authFetch<{ reservations: (Reservation & { userColor?: string })[]; availabilities: UserAvailability[] }>("/api/reservations", { silent: true });
   if (!data) return;
 
   currentReservations = data.reservations;
@@ -337,35 +334,35 @@ async function loadReservations(): Promise<void> {
 
 function clearRangeSelection(): void {
   rangeSelectStart = null;
-  const daysGrid = $('cal-days-grid');
+  const daysGrid = $("cal-days-grid");
   if (daysGrid) {
-    daysGrid.querySelectorAll('.is-range-start, .is-in-range, .is-range-end').forEach(el => {
-      el.classList.remove('is-range-start', 'is-in-range', 'is-range-end');
+    daysGrid.querySelectorAll(".is-range-start, .is-in-range, .is-range-end").forEach((el) => {
+      el.classList.remove("is-range-start", "is-in-range", "is-range-end");
     });
-    daysGrid.classList.remove('is-selecting');
+    daysGrid.classList.remove("is-selecting");
   }
-  const hint = $('range-selection-hint');
-  if (hint) hint.classList.add('hidden');
+  const hint = $("range-selection-hint");
+  if (hint) hint.classList.add("hidden");
 }
 
 function updateRangePreview(hoverDateStr: string): void {
   if (!rangeSelectStart) return;
-  const daysGrid = $('cal-days-grid');
+  const daysGrid = $("cal-days-grid");
   if (!daysGrid) return;
 
   // Clear previous preview (keep start highlight)
-  daysGrid.querySelectorAll('.is-in-range, .is-range-end').forEach(el => {
-    el.classList.remove('is-in-range', 'is-range-end');
+  daysGrid.querySelectorAll(".is-in-range, .is-range-end").forEach((el) => {
+    el.classList.remove("is-in-range", "is-range-end");
   });
 
   if (hoverDateStr <= rangeSelectStart) return;
 
-  daysGrid.querySelectorAll<HTMLElement>('.cal-day[data-date]').forEach(cell => {
+  daysGrid.querySelectorAll<HTMLElement>(".cal-day[data-date]").forEach((cell) => {
     const d = cell.dataset.date!;
     if (d > rangeSelectStart! && d < hoverDateStr) {
-      cell.classList.add('is-in-range');
+      cell.classList.add("is-in-range");
     } else if (d === hoverDateStr) {
-      cell.classList.add('is-range-end');
+      cell.classList.add("is-range-end");
     }
   });
 }
@@ -373,15 +370,15 @@ function updateRangePreview(hoverDateStr: string): void {
 // ─── Custom Calendar ──────────────────────────────────────────────────
 
 function renderCustomCalendar(): void {
-  const monthYearDisplay = $('cal-month-year-display');
-  const daysGrid = $('cal-days-grid');
+  const monthYearDisplay = $("cal-month-year-display");
+  const daysGrid = $("cal-days-grid");
   if (!monthYearDisplay || !daysGrid) return;
 
   monthYearDisplay.textContent = `${monthNames[currentCalMonth]} ${currentCalYear}`;
-  daysGrid.innerHTML = '';
+  daysGrid.innerHTML = "";
 
   const firstDay = new Date(currentCalYear, currentCalMonth, 1);
-  const lastDay  = new Date(currentCalYear, currentCalMonth + 1, 0);
+  const lastDay = new Date(currentCalYear, currentCalMonth + 1, 0);
 
   // Monday-first offset (0 = Mon … 6 = Sun)
   let startDayOfWeek = firstDay.getDay() - 1;
@@ -399,36 +396,33 @@ function renderCustomCalendar(): void {
   const prevMonthLastDay = new Date(currentCalYear, currentCalMonth, 0).getDate();
 
   // ── Helper: build one calendar cell ──────────────────────────────
-  function buildCell(
-    cellDate: Date,
-    isOtherMonth: boolean,
-  ): void {
-    const dayCell = document.createElement('div');
-    dayCell.className = 'cal-day';
+  function buildCell(cellDate: Date, isOtherMonth: boolean): void {
+    const dayCell = document.createElement("div");
+    dayCell.className = "cal-day";
 
-    const cellYear  = cellDate.getFullYear();
+    const cellYear = cellDate.getFullYear();
     const cellMonth = cellDate.getMonth();
-    const cellDay   = cellDate.getDate();
-    const dateStr   = `${cellYear}-${String(cellMonth + 1).padStart(2, '0')}-${String(cellDay).padStart(2, '0')}`;
+    const cellDay = cellDate.getDate();
+    const dateStr = `${cellYear}-${String(cellMonth + 1).padStart(2, "0")}-${String(cellDay).padStart(2, "0")}`;
     dayCell.dataset.date = dateStr;
 
     // Weekend
     const dow = cellDate.getDay();
-    if (dow === 0 || dow === 6) dayCell.classList.add('weekend');
+    if (dow === 0 || dow === 6) dayCell.classList.add("weekend");
 
     // Other month
-    if (isOtherMonth) dayCell.classList.add('other-month');
+    if (isOtherMonth) dayCell.classList.add("other-month");
 
     // Today
-    if (cellDate.getTime() === todayMidnight.getTime()) dayCell.classList.add('today');
+    if (cellDate.getTime() === todayMidnight.getTime()) dayCell.classList.add("today");
 
     // Past date (strict past — yesterday and earlier)
     const isPast = cellDate < todayMidnight;
-    if (isPast) dayCell.classList.add('past-date');
+    if (isPast) dayCell.classList.add("past-date");
 
     // Day number
-    const dayNum = document.createElement('div');
-    dayNum.className = 'day-num';
+    const dayNum = document.createElement("div");
+    dayNum.className = "day-num";
     dayNum.textContent = String(cellDay);
     dayCell.appendChild(dayNum);
 
@@ -437,44 +431,46 @@ function renderCustomCalendar(): void {
       const ts = Date.UTC(cellYear, cellMonth, cellDay);
       const forDay = currentReservations.filter((r) => {
         try {
-          const s = new Date(r.from + 'T00:00:00Z').getTime();
-          const e = new Date(r.to + 'T00:00:00Z').getTime();
+          const s = new Date(r.from + "T00:00:00Z").getTime();
+          const e = new Date(r.to + "T00:00:00Z").getTime();
           return ts >= s && ts <= e;
-        } catch { return false; }
+        } catch {
+          return false;
+        }
       });
 
       if (forDay.length > 0) {
-        const barsContainer = document.createElement('div');
-        barsContainer.className = 'cal-bars';
+        const barsContainer = document.createElement("div");
+        barsContainer.className = "cal-bars";
 
-        forDay.forEach(r => {
-          const bar = document.createElement('div');
-          bar.className = 'cal-bar';
-          if (r.status === 'backup') bar.classList.add('backup');
-          if (r.status === 'soft')   bar.classList.add('soft');
+        forDay.forEach((r) => {
+          const bar = document.createElement("div");
+          bar.className = "cal-bar";
+          if (r.status === "backup") bar.classList.add("backup");
+          if (r.status === "soft") bar.classList.add("soft");
 
           const isMine = r.userId === getUserId();
-          if (isMine) bar.classList.add('mine');
+          if (isMine) bar.classList.add("mine");
 
-          const c = r.userColor || '#808080';
-          if (r.status === 'soft') {
+          const c = r.userColor || "#808080";
+          if (r.status === "soft") {
             bar.style.background = `repeating-linear-gradient(45deg, ${hexToRgba(c, 0.15)}, ${hexToRgba(c, 0.15)} 5px, rgba(255,255,255,0.7) 5px, rgba(255,255,255,0.7) 10px)`;
             bar.style.borderColor = c;
-            bar.style.color = '#333';
+            bar.style.color = "#333";
           } else {
-            bar.style.backgroundColor = hexToRgba(c, 0.8) || '';
-            bar.style.color = '#fff';
+            bar.style.backgroundColor = hexToRgba(c, 0.8) || "";
+            bar.style.color = "#fff";
           }
 
-          const s = new Date(r.from + 'T00:00:00Z').getTime();
-          const e = new Date(r.to + 'T00:00:00Z').getTime();
-          if (ts === s) bar.classList.add('start');
-          if (ts === e) bar.classList.add('end');
+          const s = new Date(r.from + "T00:00:00Z").getTime();
+          const e = new Date(r.to + "T00:00:00Z").getTime();
+          if (ts === s) bar.classList.add("start");
+          if (ts === e) bar.classList.add("end");
 
           bar.textContent = r.username;
           bar.title = `${r.username} (${r.purpose})`;
 
-          bar.addEventListener('click', (ev) => {
+          bar.addEventListener("click", (ev) => {
             ev.stopPropagation();
             showReservationDetail(r);
           });
@@ -491,32 +487,34 @@ function renderCustomCalendar(): void {
       const ts = Date.UTC(cellYear, cellMonth, cellDay);
       const forDay = currentAvailabilities.filter((a) => {
         try {
-          const s = new Date(a.startDate + 'T00:00:00Z').getTime();
-          const e = new Date(a.endDate + 'T00:00:00Z').getTime();
+          const s = new Date(a.startDate + "T00:00:00Z").getTime();
+          const e = new Date(a.endDate + "T00:00:00Z").getTime();
           return ts >= s && ts <= e;
-        } catch { return false; }
+        } catch {
+          return false;
+        }
       });
 
       if (forDay.length > 0) {
-        const dotsContainer = document.createElement('div');
-        dotsContainer.className = 'cal-avail-dots';
+        const dotsContainer = document.createElement("div");
+        dotsContainer.className = "cal-avail-dots";
 
         // Tooltip: "Mají volno: Míša, Admin"
-        const names = forDay.map(a => a.username);
-        dotsContainer.title = `Mají dovolenou: ${names.join(', ')}`;
+        const names = forDay.map((a) => a.username);
+        dotsContainer.title = `Mají dovolenou: ${names.join(", ")}`;
 
         // Mobile: collapse to single grey dot if too many
         const isMobile = window.innerWidth <= 768;
         if (isMobile && forDay.length > 2) {
-          const dot = document.createElement('span');
-          dot.className = 'cal-avail-dot';
-          dot.style.backgroundColor = '#9ca3af';
+          const dot = document.createElement("span");
+          dot.className = "cal-avail-dot";
+          dot.style.backgroundColor = "#9ca3af";
           dotsContainer.appendChild(dot);
         } else {
-          forDay.forEach(a => {
-            const dot = document.createElement('span');
-            dot.className = 'cal-avail-dot';
-            dot.style.backgroundColor = a.userColor || '#808080';
+          forDay.forEach((a) => {
+            const dot = document.createElement("span");
+            dot.className = "cal-avail-dot";
+            dot.style.backgroundColor = a.userColor || "#808080";
             dotsContainer.appendChild(dot);
           });
         }
@@ -529,16 +527,16 @@ function renderCustomCalendar(): void {
     // — Starting a range: only on non-past, current-month cells
     // — Completing a range: on any non-past cell (including other-month trailing/leading cells)
     if (!isPast) {
-      dayCell.addEventListener('click', () => {
+      dayCell.addEventListener("click", () => {
         if (!rangeSelectStart) {
           // Starting: block other-month cells
           if (isOtherMonth) return;
           rangeSelectStart = dateStr;
-          dayCell.classList.add('is-range-start');
-          const dGrid = $('cal-days-grid');
-          if (dGrid) dGrid.classList.add('is-selecting');
-          const hint = $('range-selection-hint');
-          if (hint) hint.classList.remove('hidden');
+          dayCell.classList.add("is-range-start");
+          const dGrid = $("cal-days-grid");
+          if (dGrid) dGrid.classList.add("is-selecting");
+          const hint = $("range-selection-hint");
+          if (hint) hint.classList.remove("hidden");
         } else {
           const start = rangeSelectStart;
           if (dateStr < start) {
@@ -546,11 +544,11 @@ function renderCustomCalendar(): void {
             if (isOtherMonth) return;
             clearRangeSelection();
             rangeSelectStart = dateStr;
-            dayCell.classList.add('is-range-start');
-            const dGrid = $('cal-days-grid');
-            if (dGrid) dGrid.classList.add('is-selecting');
-            const hint = $('range-selection-hint');
-            if (hint) hint.classList.remove('hidden');
+            dayCell.classList.add("is-range-start");
+            const dGrid = $("cal-days-grid");
+            if (dGrid) dGrid.classList.add("is-selecting");
+            const hint = $("range-selection-hint");
+            if (hint) hint.classList.remove("hidden");
           } else if (dateStr === start) {
             clearRangeSelection();
           } else {
@@ -585,36 +583,36 @@ function renderCustomCalendar(): void {
 
   // ── Restore range-selection UI if user navigated months mid-selection ──
   if (rangeSelectStart) {
-    const dGrid = $('cal-days-grid');
-    if (dGrid) dGrid.classList.add('is-selecting');
-    const hint = $('range-selection-hint');
+    const dGrid = $("cal-days-grid");
+    if (dGrid) dGrid.classList.add("is-selecting");
+    const hint = $("range-selection-hint");
     if (hint) {
-      hint.classList.remove('hidden');
-      const hintText = $('range-hint-text');
+      hint.classList.remove("hidden");
+      const hintText = $("range-hint-text");
       if (hintText) hintText.textContent = `Příjezd: ${rangeSelectStart} — nyní vyberte datum odjezdu`;
     }
     // Highlight the start cell if it's visible in this month
     const startCell = dGrid?.querySelector<HTMLElement>(`.cal-day[data-date="${rangeSelectStart}"]`);
-    if (startCell) startCell.classList.add('is-range-start');
+    if (startCell) startCell.classList.add("is-range-start");
   }
 
   updateQuickStats();
 }
 
 function updateQuickStats() {
-  const statsContainer = $('calendar-quick-stats');
+  const statsContainer = $("calendar-quick-stats");
   if (!statsContainer) return;
 
   const mStart = new Date(currentCalYear, currentCalMonth, 1).getTime();
   const mEnd = new Date(currentCalYear, currentCalMonth + 1, 0).getTime();
 
   let bookedDays = new Set<number>();
-  
-  currentReservations.forEach(r => {
-    if (r.status === 'backup') return;
-    const s = new Date(r.from + 'T00:00:00Z').getTime();
-    const e = new Date(r.to + 'T00:00:00Z').getTime();
-    
+
+  currentReservations.forEach((r) => {
+    if (r.status === "backup") return;
+    const s = new Date(r.from + "T00:00:00Z").getTime();
+    const e = new Date(r.to + "T00:00:00Z").getTime();
+
     for (let d = s; d <= e; d += 86400000) {
       if (d >= mStart && d <= mEnd) {
         bookedDays.add(d);
@@ -628,17 +626,18 @@ function updateQuickStats() {
   let freeWeekends = 0;
   for (let day = 1; day <= totalDays; day++) {
     const date = new Date(currentCalYear, currentCalMonth, day);
-    if (date.getDay() === 6) { // Sobota
+    if (date.getDay() === 6) {
+      // Sobota
       const satTime = Date.UTC(currentCalYear, currentCalMonth, day);
       const sunTime = Date.UTC(currentCalYear, currentCalMonth, day + 1);
-      
+
       let satBooked = false;
       let sunBooked = false;
 
-      currentReservations.forEach(r => {
-        if (r.status === 'backup') return;
-        const s = new Date(r.from + 'T00:00:00Z').getTime();
-        const e = new Date(r.to + 'T00:00:00Z').getTime();
+      currentReservations.forEach((r) => {
+        if (r.status === "backup") return;
+        const s = new Date(r.from + "T00:00:00Z").getTime();
+        const e = new Date(r.to + "T00:00:00Z").getTime();
         if (satTime >= s && satTime <= e) satBooked = true;
         if (sunTime >= s && sunTime <= e) sunBooked = true;
       });
@@ -657,32 +656,28 @@ function updateQuickStats() {
 }
 
 function showReservationDetail(r: Reservation & { userColor?: string; userAnimalIcon?: string | null }) {
-  const detailDiv = $('reservation-detail');
-  const listDiv = $('reservations-list');
+  const detailDiv = $("reservation-detail");
+  const listDiv = $("reservations-list");
   if (!detailDiv || !listDiv) return;
 
-  listDiv.classList.add('hidden');
-  detailDiv.classList.remove('hidden');
+  listDiv.classList.add("hidden");
+  detailDiv.classList.remove("hidden");
 
   const isMine = r.userId === getUserId();
-  const admin = getRole() === 'admin';
-  const c = r.userColor || '#808080';
+  const admin = getRole() === "admin";
+  const c = r.userColor || "#808080";
 
   // Avatar
-  const avatarContent = r.userAnimalIcon
-    ? r.userAnimalIcon
-    : r.username.charAt(0).toUpperCase();
-  const avatarBg = r.userAnimalIcon
-    ? 'background: rgba(0,0,0,0.06);'
-    : `background: ${c};`;
+  const avatarContent = r.userAnimalIcon ? r.userAnimalIcon : r.username.charAt(0).toUpperCase();
+  const avatarBg = r.userAnimalIcon ? "background: rgba(0,0,0,0.06);" : `background: ${c};`;
 
   // Status badge
   const statusMap: Record<string, { label: string; cls: string }> = {
-    primary: { label: 'Potvrzeno',  cls: 'badge-success' },
-    backup:  { label: 'Záložní',    cls: 'badge-warning' },
-    soft:    { label: 'Předběžná', cls: 'badge-neutral'  },
+    primary: { label: "Potvrzeno", cls: "badge-success" },
+    backup: { label: "Záložní", cls: "badge-warning" },
+    soft: { label: "Předběžná", cls: "badge-neutral" },
   };
-  const badge = statusMap[r.status as string] ?? statusMap['primary'];
+  const badge = statusMap[r.status as string] ?? statusMap["primary"];
 
   const canEdit = isMine || admin;
 
@@ -712,65 +707,88 @@ function showReservationDetail(r: Reservation & { userColor?: string; userAnimal
         </div>
         <div class="detail-meta-row">
           <span class="detail-meta-label">Účel</span>
-          <span class="detail-meta-value">${r.purpose || '—'}</span>
+          <span class="detail-meta-value">${r.purpose || "—"}</span>
         </div>
-        ${r.notes ? `
+        ${
+          r.notes
+            ? `
         <div class="detail-meta-row detail-meta-row--notes">
           <span class="detail-meta-label">Poznámka</span>
-          <span class="detail-meta-value detail-notes-text">${r.notes.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>
-        </div>` : ''}
-        ${r.handoverNote ? `
+          <span class="detail-meta-value detail-notes-text">${r.notes.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</span>
+        </div>`
+            : ""
+        }
+        ${
+          r.handoverNote
+            ? `
         <div class="detail-meta-row detail-meta-row--notes">
           <span class="detail-meta-label">Vzkaz</span>
-          <span class="detail-meta-value detail-notes-text">${r.handoverNote.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>
-        </div>` : ''}
+          <span class="detail-meta-value detail-notes-text">${r.handoverNote.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</span>
+        </div>`
+            : ""
+        }
       </div>
 
-      ${canEdit ? `
+      ${
+        canEdit
+          ? `
       <div class="detail-actions">
         <button class="detail-btn detail-btn-primary edit-btn" data-id="${r.id}">
           Upravit
         </button>
-        ${admin ? `<button class="detail-btn detail-btn-secondary assign-btn" data-id="${r.id}">
+        ${
+          admin
+            ? `<button class="detail-btn detail-btn-secondary assign-btn" data-id="${r.id}">
           Přiřadit jinému
-        </button>` : ''}
+        </button>`
+            : ""
+        }
         <button class="detail-btn detail-btn-ghost-danger delete-btn" data-id="${r.id}">
           Smazat rezervaci
         </button>
-      </div>` : ''}
+      </div>`
+          : ""
+      }
 
-      ${!isMine ? `
+      ${
+        !isMine
+          ? `
       <div class="detail-actions" id="watcher-slot-${r.id}">
         <button class="detail-btn" disabled>
           Načítám…
         </button>
-      </div>` : ''}
+      </div>`
+          : ""
+      }
 
     </div>
   `;
 
-  detailDiv.querySelector('.detail-back-btn')?.addEventListener('click', () => {
-    detailDiv.classList.add('hidden');
-    listDiv.classList.remove('hidden');
+  detailDiv.querySelector(".detail-back-btn")?.addEventListener("click", () => {
+    detailDiv.classList.add("hidden");
+    listDiv.classList.remove("hidden");
   });
 
-  const editBtn = detailDiv.querySelector<HTMLElement>('.edit-btn');
-  if (editBtn) editBtn.addEventListener('click', () => {
-    const id = editBtn.dataset.id;
-    if (id) openEditModal(id);
-  });
+  const editBtn = detailDiv.querySelector<HTMLElement>(".edit-btn");
+  if (editBtn)
+    editBtn.addEventListener("click", () => {
+      const id = editBtn.dataset.id;
+      if (id) openEditModal(id);
+    });
 
-  const delBtn = detailDiv.querySelector<HTMLElement>('.delete-btn');
-  if (delBtn) delBtn.addEventListener('click', () => {
-    const id = delBtn.dataset.id;
-    if (id) openConfirmDelete(id);
-  });
+  const delBtn = detailDiv.querySelector<HTMLElement>(".delete-btn");
+  if (delBtn)
+    delBtn.addEventListener("click", () => {
+      const id = delBtn.dataset.id;
+      if (id) openConfirmDelete(id);
+    });
 
-  const assignBtn = detailDiv.querySelector<HTMLElement>('.assign-btn');
-  if (assignBtn) assignBtn.addEventListener('click', () => {
-    const id = assignBtn.dataset.id;
-    if (id) openAssignModal(id);
-  });
+  const assignBtn = detailDiv.querySelector<HTMLElement>(".assign-btn");
+  if (assignBtn)
+    assignBtn.addEventListener("click", () => {
+      const id = assignBtn.dataset.id;
+      if (id) openAssignModal(id);
+    });
 
   // ── Async watcher button ───────────────────────────────────────────────
   if (!isMine) {
@@ -778,7 +796,7 @@ function showReservationDetail(r: Reservation & { userColor?: string; userAnimal
       const slot = document.getElementById(`watcher-slot-${r.id}`);
       if (!slot) return;
       slot.innerHTML = buildWatchButton(r.id, watching);
-      bindWatchButton(slot.querySelector<HTMLButtonElement>('.watch-toggle-btn'));
+      bindWatchButton(slot.querySelector<HTMLButtonElement>(".watch-toggle-btn"));
     });
   }
 }
@@ -786,19 +804,19 @@ function showReservationDetail(r: Reservation & { userColor?: string; userAnimal
 // ─── Reservation rendering ────────────────────────────────────────────
 
 function renderReservationsOverview(month: number, year: number): void {
-  const listDiv = $('reservations-list');
-  const title = $('reservations-title');
+  const listDiv = $("reservations-list");
+  const title = $("reservations-title");
   if (!listDiv || !title) return;
 
   const mStart = new Date(year, month, 1);
   let mEnd = new Date(year, month + 1, 0);
 
-  if (activePeriodFilter === 'month') {
+  if (activePeriodFilter === "month") {
     title.textContent = `Přehled: ${monthNames[month]} ${year}`;
-  } else if (activePeriodFilter === '3months') {
+  } else if (activePeriodFilter === "3months") {
     title.textContent = `Výhled na 3 měsíce od: ${monthNames[month]}`;
     mEnd = new Date(year, month + 3, 0);
-  } else if (activePeriodFilter === 'year') {
+  } else if (activePeriodFilter === "year") {
     title.textContent = `Výhled na 1 rok od: ${monthNames[month]}`;
     mEnd = new Date(year, month + 12, 0);
   }
@@ -806,36 +824,40 @@ function renderReservationsOverview(month: number, year: number): void {
   const filtered = currentReservations.filter((r) => {
     try {
       return new Date(r.from) <= mEnd && new Date(r.to) >= mStart;
-    } catch { return false; }
+    } catch {
+      return false;
+    }
   });
-  renderReservationList(filtered, 'V tomto období nejsou zadané žádné rezervace.');
+  renderReservationList(filtered, "V tomto období nejsou zadané žádné rezervace.");
 }
 
 function renderReservationsForSelection(sel: Date[]): void {
-  const listDiv = $('reservations-list');
-  const title = $('reservations-title');
+  const listDiv = $("reservations-list");
+  const title = $("reservations-title");
   if (!listDiv || !title || sel.length !== 2) return;
 
-  title.textContent = 'Konflikty pro Váš výběr';
+  title.textContent = "Konflikty pro Váš výběr";
   const overlapping = currentReservations.filter((r) => {
     try {
       return new Date(r.from) <= sel[1] && new Date(r.to) >= sel[0];
-    } catch { return false; }
+    } catch {
+      return false;
+    }
   });
-  renderReservationList(overlapping, 'Ve vybraném termínu nejsou žádné jiné rezervace.');
+  renderReservationList(overlapping, "Ve vybraném termínu nejsou žádné jiné rezervace.");
 }
 
 function renderReservationList(reservations: typeof currentReservations, emptyMsg: string): void {
-  const listDiv = $('reservations-list');
+  const listDiv = $("reservations-list");
   if (!listDiv) return;
-  listDiv.innerHTML = '';
+  listDiv.innerHTML = "";
 
   const myId = getUserId();
-  const admin = getRole() === 'admin';
+  const admin = getRole() === "admin";
 
   let filtered = reservations;
-  if (activeReservationTab === 'mine') {
-    filtered = reservations.filter(r => r.userId === myId);
+  if (activeReservationTab === "mine") {
+    filtered = reservations.filter((r) => r.userId === myId);
   }
 
   if (filtered.length === 0) {
@@ -847,39 +869,37 @@ function renderReservationList(reservations: typeof currentReservations, emptyMs
   const myUserId = getUserId();
 
   for (const r of filtered) {
-    const card = document.createElement('div');
+    const card = document.createElement("div");
     const isMine = myUserId === r.userId;
-    card.className = `res-card ${r.status === 'backup' ? 'res-backup' : r.status === 'soft' ? 'res-soft' : 'res-approved'} ${isMine ? 'res-mine' : ''}`;
+    card.className = `res-card ${r.status === "backup" ? "res-backup" : r.status === "soft" ? "res-soft" : "res-approved"} ${isMine ? "res-mine" : ""}`;
 
     // Získání barev
-    const uColor = r.userColor || '#808080';
+    const uColor = r.userColor || "#808080";
     const init = r.username.charAt(0).toUpperCase();
 
     const d1 = new Date(r.from);
     const d2 = new Date(r.to);
 
-    const notesHTML = r.notes
-      ? `<p class="res-notes" style="margin-top: 5px;">${r.notes.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>`
-      : '';
+    const notesHTML = r.notes ? `<p class="res-notes" style="margin-top: 5px;">${r.notes.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>` : "";
 
     const handoverHTML = r.handoverNote
-      ? `<div class="res-handover-note" style="margin-top: 10px; background: #fffbeb; padding: 10px; border-radius: 8px; border-left: 4px solid #f59e0b;"><strong>Vzkaz pro další:</strong> ${r.handoverNote.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>`
-      : '';
+      ? `<div class="res-handover-note" style="margin-top: 10px; background: #fffbeb; padding: 10px; border-radius: 8px; border-left: 4px solid #f59e0b;"><strong>Vzkaz pro další:</strong> ${r.handoverNote.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>`
+      : "";
 
-    let actions = '';
+    let actions = "";
     if (isMine || admin) {
       actions = `
         <div class="res-card-actions">
           <button class="edit-btn" data-id="${r.id}" title="Upravit">✎</button>
-          ${admin ? `<button class="assign-btn" data-id="${r.id}" title="Přiřadit">➤</button>` : ''}
+          ${admin ? `<button class="assign-btn" data-id="${r.id}" title="Přiřadit">➤</button>` : ""}
           <button class="delete-btn" data-id="${r.id}" title="Smazat">×</button>
         </div>`;
     }
 
-    let badge = '';
-    if (r.status === 'backup') {
+    let badge = "";
+    if (r.status === "backup") {
       badge = '<span class="status-badge backup">Na čekací listině</span>';
-    } else if (r.status === 'soft') {
+    } else if (r.status === "soft") {
       badge = '<span class="status-badge soft">Předběžný zájem</span>';
     } else {
       badge = '<span class="status-badge approved">Potvrzeno</span>';
@@ -889,7 +909,7 @@ function renderReservationList(reservations: typeof currentReservations, emptyMs
       <div class="res-indicator" style="background-color: ${uColor}"></div>
       <div class="res-content-left">
         <div class="res-user">
-          <div class="res-avatar" style="${r.userAnimalIcon ? 'background-color: transparent; font-size: 24px;' : `background-color: ${uColor}`}">${r.userAnimalIcon || init}</div>
+          <div class="res-avatar" style="${r.userAnimalIcon ? "background-color: transparent; font-size: 24px;" : `background-color: ${uColor}`}">${r.userAnimalIcon || init}</div>
           <strong title="${r.username}">${r.username}</strong>
         </div>
         <div class="res-date-block-new">
@@ -899,7 +919,7 @@ function renderReservationList(reservations: typeof currentReservations, emptyMs
               : `${d1.getDate()}. ${monthNames[d1.getMonth()]} - ${d2.getDate()}. ${monthNames[d2.getMonth()]}`
           }</span>
         </div>
-        <div class="res-purpose"><strong>Účel:</strong> ${r.purpose || '<em>Nespecifikováno</em>'}</div>
+        <div class="res-purpose"><strong>Účel:</strong> ${r.purpose || "<em>Nespecifikováno</em>"}</div>
         ${notesHTML}
         ${handoverHTML}
       </div>
@@ -917,64 +937,63 @@ function renderReservationList(reservations: typeof currentReservations, emptyMs
 // ─── Booking modal ────────────────────────────────────────────────────
 
 function openBookingModal(fromDateStr?: string, toDateStr?: string, isEdit = false, reservation?: Reservation): void {
-  const form = $<HTMLFormElement>('booking-form');
-  const title = $('modal-title');
-  const submitBtn = $('modal-submit-button');
-  const deleteBtn = $('modal-delete-button');
-  const resIdInput = $<HTMLInputElement>('reservation-id');
-  const purposeInput = $<HTMLInputElement>('purpose-input');
-  const notesTa = $<HTMLTextAreaElement>('notes-textarea');
-  const handoverTa = $<HTMLTextAreaElement>('handover-notes-textarea');
-  const softCheck = $<HTMLInputElement>('soft-reservation-checkbox');
-  const backupWarn = $('backup-warning-message');
-  const modal = $('booking-modal');
-  
-  const dateFromInput = $<HTMLInputElement>('modal-date-from');
-  const dateToInput = $<HTMLInputElement>('modal-date-to');
+  const form = $<HTMLFormElement>("booking-form");
+  const title = $("modal-title");
+  const submitBtn = $("modal-submit-button");
+  const deleteBtn = $("modal-delete-button");
+  const resIdInput = $<HTMLInputElement>("reservation-id");
+  const purposeInput = $<HTMLInputElement>("purpose-input");
+  const notesTa = $<HTMLTextAreaElement>("notes-textarea");
+  const handoverTa = $<HTMLTextAreaElement>("handover-notes-textarea");
+  const softCheck = $<HTMLInputElement>("soft-reservation-checkbox");
+  const backupWarn = $("backup-warning-message");
+  const modal = $("booking-modal");
+
+  const dateFromInput = $<HTMLInputElement>("modal-date-from");
+  const dateToInput = $<HTMLInputElement>("modal-date-to");
 
   if (!form || !modal) return;
   form.reset();
-  if (resIdInput) resIdInput.value = '';
+  if (resIdInput) resIdInput.value = "";
   hide(deleteBtn);
   hide(backupWarn);
 
   if (softCheck) softCheck.checked = false;
-  if (handoverTa) handoverTa.value = '';
+  if (handoverTa) handoverTa.value = "";
 
   if (dateFromInput && fromDateStr) dateFromInput.value = fromDateStr;
   if (dateToInput && toDateStr) dateToInput.value = toDateStr;
 
   if (isEdit && reservation) {
-    if (title) title.textContent = 'Upravit rezervaci';
-    if (submitBtn) submitBtn.textContent = 'Uložit změny';
+    if (title) title.textContent = "Upravit rezervaci";
+    if (submitBtn) submitBtn.textContent = "Uložit změny";
     show(deleteBtn);
     if (deleteBtn) {
-      deleteBtn.classList.remove('hidden');
+      deleteBtn.classList.remove("hidden");
       deleteBtn.onclick = () => {
-        closeModal('booking-modal');
+        closeModal("booking-modal");
         openConfirmDelete(reservation.id);
       };
     }
-    
+
     if (dateFromInput) dateFromInput.value = reservation.from;
     if (dateToInput) dateToInput.value = reservation.to;
-    
+
     if (resIdInput) resIdInput.value = reservation.id;
 
-    if (purposeInput) purposeInput.value = reservation.purpose || '';
-    if (notesTa) notesTa.value = reservation.notes || '';
-    if (handoverTa) handoverTa.value = reservation.handoverNote || '';
-    if (softCheck) softCheck.checked = reservation.status === 'soft';
-
+    if (purposeInput) purposeInput.value = reservation.purpose || "";
+    if (notesTa) notesTa.value = reservation.notes || "";
+    if (handoverTa) handoverTa.value = reservation.handoverNote || "";
+    if (softCheck) softCheck.checked = reservation.status === "soft";
   } else {
-    if (title) title.textContent = 'Nová rezervace';
-    if (submitBtn) submitBtn.textContent = 'Potvrdit rezervaci';
-    
+    if (title) title.textContent = "Nová rezervace";
+    if (submitBtn) submitBtn.textContent = "Potvrdit rezervaci";
+
     if (fromDateStr && toDateStr) {
       const from = new Date(fromDateStr);
       const to = new Date(toDateStr);
       const overlapping = currentReservations.some((r) => {
-        if (r.status === 'backup') return false;
+        if (r.status === "backup") return false;
         return new Date(r.from) <= to && new Date(r.to) >= from;
       });
       if (overlapping) show(backupWarn);
@@ -985,16 +1004,18 @@ function openBookingModal(fromDateStr?: string, toDateStr?: string, isEdit = fal
 
 function closeModal(id: string): void {
   const el = $(id);
-  if (el) { hide(el); }
+  if (el) {
+    hide(el);
+  }
 }
 
 function openConfirmDelete(id: string): void {
   reservationIdToDelete = id;
-  show($('confirm-delete-modal'));
+  show($("confirm-delete-modal"));
 }
 
 function closeConfirmDelete(): void {
-  hide($('confirm-delete-modal'));
+  hide($("confirm-delete-modal"));
   reservationIdToDelete = null;
 }
 
@@ -1002,26 +1023,32 @@ function closeConfirmDelete(): void {
 
 function openAssignModal(reservationId: string): void {
   const reservation = currentReservations.find((r) => r.id === reservationId);
-  if (!reservation) { showToast('Rezervace nenalezena.', 'error'); return; }
+  if (!reservation) {
+    showToast("Rezervace nenalezena.", "error");
+    return;
+  }
 
-  const modal = $('assign-reservation-modal');
-  const idInput = $<HTMLInputElement>('assign-reservation-id-input');
-  const text = $('assign-modal-text');
-  const select = $<HTMLSelectElement>('assign-user-select');
+  const modal = $("assign-reservation-modal");
+  const idInput = $<HTMLInputElement>("assign-reservation-id-input");
+  const text = $("assign-modal-text");
+  const select = $<HTMLSelectElement>("assign-user-select");
 
   if (!modal || !idInput || !select) return;
   idInput.value = reservationId;
   if (text) text.textContent = `Přiřazujete rezervaci: ${formatDateForDisplay(reservation.from)} - ${formatDateForDisplay(reservation.to)}.`;
 
   // Clear any previous error state
-  select.classList.remove('input-error');
-  const errSpan = $('assign-owner-error');
-  if (errSpan) { errSpan.classList.remove('show'); errSpan.textContent = ''; }
+  select.classList.remove("input-error");
+  const errSpan = $("assign-owner-error");
+  if (errSpan) {
+    errSpan.classList.remove("show");
+    errSpan.textContent = "";
+  }
 
   select.innerHTML = '<option value="">-- Vyberte uživatele --</option>';
-  const eligible = allUsers.filter((u) => u.role !== 'admin' && u.id !== reservation.userId);
+  const eligible = allUsers.filter((u) => u.role !== "admin" && u.id !== reservation.userId);
   for (const u of eligible) {
-    const opt = document.createElement('option');
+    const opt = document.createElement("option");
     opt.value = u.id;
     opt.textContent = u.username;
     select.appendChild(opt);
@@ -1030,9 +1057,8 @@ function openAssignModal(reservationId: string): void {
 }
 
 function closeAssignModal(): void {
-  hide($('assign-reservation-modal'));
+  hide($("assign-reservation-modal"));
 }
-
 
 // ─── Watcher helpers — Hlídácí pes termínů ──────────────────────────────────
 
@@ -1047,14 +1073,11 @@ async function fetchWatchStatus(reservationId: string): Promise<boolean> {
 }
 
 async function toggleWatch(reservationId: string, currentlyWatching: boolean): Promise<boolean> {
-  const method = currentlyWatching ? 'DELETE' : 'POST';
-  const result = await authFetch<{ watching: boolean; message: string }>(
-    `/api/reservations/${reservationId}/watch`,
-    { method }
-  );
+  const method = currentlyWatching ? "DELETE" : "POST";
+  const result = await authFetch<{ watching: boolean; message: string }>(`/api/reservations/${reservationId}/watch`, { method });
   if (!result) return currentlyWatching;
   watchingCache.set(reservationId, result.watching);
-  showToast(result.message, 'success');
+  showToast(result.message, "success");
   return result.watching;
 }
 
@@ -1071,13 +1094,13 @@ function buildWatchButton(reservationId: string, watching: boolean): string {
 
 function bindWatchButton(btn: HTMLButtonElement | null): void {
   if (!btn) return;
-  btn.addEventListener('click', async () => {
-    const resId    = btn.dataset.resId!;
-    const watching = btn.dataset.watching === 'true';
-    btn.disabled   = true;
-    btn.innerHTML  = '⏳ Ukládám…';
+  btn.addEventListener("click", async () => {
+    const resId = btn.dataset.resId!;
+    const watching = btn.dataset.watching === "true";
+    btn.disabled = true;
+    btn.innerHTML = "⏳ Ukládám…";
     const newState = await toggleWatch(resId, watching);
-    const wrapper  = document.createElement('div');
+    const wrapper = document.createElement("div");
     wrapper.innerHTML = buildWatchButton(resId, newState);
     const newBtn = wrapper.firstElementChild as HTMLButtonElement;
     btn.replaceWith(newBtn);
@@ -1085,44 +1108,43 @@ function bindWatchButton(btn: HTMLButtonElement | null): void {
   });
 }
 
-
 // ─── Availability helpers (Osobní volno) ──────────────────────────────
 
 function openAvailabilityModal(fromDate?: string, toDate?: string): void {
-  const modal = $('availability-modal');
-  const fromInput = $<HTMLInputElement>('avail-date-from');
-  const toInput = $<HTMLInputElement>('avail-date-to');
+  const modal = $("availability-modal");
+  const fromInput = $<HTMLInputElement>("avail-date-from");
+  const toInput = $<HTMLInputElement>("avail-date-to");
   if (!modal) return;
 
   // Reset to create mode
-  const editIdInput = $<HTMLInputElement>('avail-edit-id');
-  if (editIdInput) editIdInput.value = '';
-  const titleEl = $('avail-modal-title');
-  if (titleEl) titleEl.textContent = 'Nahlásit osobní volno';
-  const submitBtn = $<HTMLButtonElement>('avail-submit-btn');
-  if (submitBtn) submitBtn.textContent = 'Uložit volno';
+  const editIdInput = $<HTMLInputElement>("avail-edit-id");
+  if (editIdInput) editIdInput.value = "";
+  const titleEl = $("avail-modal-title");
+  if (titleEl) titleEl.textContent = "Nahlásit osobní volno";
+  const submitBtn = $<HTMLButtonElement>("avail-submit-btn");
+  if (submitBtn) submitBtn.textContent = "Uložit volno";
 
-  if (fromInput) fromInput.value = fromDate || '';
-  if (toInput) toInput.value = toDate || '';
+  if (fromInput) fromInput.value = fromDate || "";
+  if (toInput) toInput.value = toDate || "";
 
   renderMyAvailabilities();
   show(modal);
 }
 
 function openAvailabilityModalForEdit(id: string, startDate: string, endDate: string): void {
-  const modal = $('availability-modal');
+  const modal = $("availability-modal");
   if (!modal) return;
 
   // Set edit mode
-  const editIdInput = $<HTMLInputElement>('avail-edit-id');
+  const editIdInput = $<HTMLInputElement>("avail-edit-id");
   if (editIdInput) editIdInput.value = id;
-  const titleEl = $('avail-modal-title');
-  if (titleEl) titleEl.textContent = 'Upravit osobní volno';
-  const submitBtn = $<HTMLButtonElement>('avail-submit-btn');
-  if (submitBtn) submitBtn.textContent = 'Uložit změny';
+  const titleEl = $("avail-modal-title");
+  if (titleEl) titleEl.textContent = "Upravit osobní volno";
+  const submitBtn = $<HTMLButtonElement>("avail-submit-btn");
+  if (submitBtn) submitBtn.textContent = "Uložit změny";
 
-  const fromInput = $<HTMLInputElement>('avail-date-from');
-  const toInput = $<HTMLInputElement>('avail-date-to');
+  const fromInput = $<HTMLInputElement>("avail-date-from");
+  const toInput = $<HTMLInputElement>("avail-date-to");
   if (fromInput) fromInput.value = startDate;
   if (toInput) toInput.value = endDate;
 
@@ -1131,11 +1153,11 @@ function openAvailabilityModalForEdit(id: string, startDate: string, endDate: st
 }
 
 function renderMyAvailabilities(): void {
-  const listEl = $('my-availabilities-list');
+  const listEl = $("my-availabilities-list");
   if (!listEl) return;
 
   const myId = getUserId();
-  const mine = currentAvailabilities.filter(a => a.userId === myId);
+  const mine = currentAvailabilities.filter((a) => a.userId === myId);
 
   if (mine.length === 0) {
     listEl.innerHTML = '<p class="empty-state" style="margin-top:12px;font-size:0.85rem;">Zatím nemáš nahlášené žádné volno.</p>';
@@ -1144,7 +1166,9 @@ function renderMyAvailabilities(): void {
 
   listEl.innerHTML = `
     <h4 style="margin:16px 0 8px;font-size:0.9rem;color:#374151;">Moje nahlášené dovolené</h4>
-    ${mine.map(a => `
+    ${mine
+      .map(
+        (a) => `
       <div class="my-avail-item">
         <span>${formatDateForDisplay(a.startDate)} — ${formatDateForDisplay(a.endDate)}</span>
         <div style="display:flex;gap:4px;">
@@ -1152,12 +1176,14 @@ function renderMyAvailabilities(): void {
           <button class="btn-ghost-danger avail-delete-btn" data-avail-id="${a.id}" title="Smazat">×</button>
         </div>
       </div>
-    `).join('')}
+    `,
+      )
+      .join("")}
   `;
 
   // Bind edit buttons
-  listEl.querySelectorAll<HTMLButtonElement>('.avail-edit-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
+  listEl.querySelectorAll<HTMLButtonElement>(".avail-edit-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
       const id = btn.dataset.availId;
       const start = btn.dataset.start;
       const end = btn.dataset.end;
@@ -1165,25 +1191,25 @@ function renderMyAvailabilities(): void {
       openAvailabilityModalForEdit(id, start, end);
     });
     // Hover effect
-    btn.addEventListener('mouseenter', () => {
-      btn.style.background = 'rgba(107, 114, 128, 0.1)';
-      btn.style.color = '#374151';
+    btn.addEventListener("mouseenter", () => {
+      btn.style.background = "rgba(107, 114, 128, 0.1)";
+      btn.style.color = "#374151";
     });
-    btn.addEventListener('mouseleave', () => {
-      btn.style.background = 'none';
-      btn.style.color = '#6b7280';
+    btn.addEventListener("mouseleave", () => {
+      btn.style.background = "none";
+      btn.style.color = "#6b7280";
     });
   });
 
   // Bind delete buttons
-  listEl.querySelectorAll<HTMLButtonElement>('.avail-delete-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
+  listEl.querySelectorAll<HTMLButtonElement>(".avail-delete-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
       const id = btn.dataset.availId;
       if (!id) return;
       btn.disabled = true;
-      const result = await authFetch(`/api/reservations/availabilities/${id}`, { method: 'DELETE' });
+      const result = await authFetch(`/api/reservations/availabilities/${id}`, { method: "DELETE" });
       if (result) {
-        showToast('Volno smazáno.', 'success');
+        showToast("Volno smazáno.", "success");
         await loadReservations();
         renderMyAvailabilities();
       }
@@ -1192,17 +1218,16 @@ function renderMyAvailabilities(): void {
   });
 }
 
-
 // ─── Event Binding ────────────────────────────────────────────────────
 
 function bindEvents(): void {
   // Close buttons (data-close attribute)
-  container.querySelectorAll<HTMLElement>('[data-close]').forEach((btn) => {
-    btn.addEventListener('click', () => closeModal(btn.dataset.close!));
+  container.querySelectorAll<HTMLElement>("[data-close]").forEach((btn) => {
+    btn.addEventListener("click", () => closeModal(btn.dataset.close!));
   });
 
   // Calendar navigation
-  $('cal-prev-month')?.addEventListener('click', () => {
+  $("cal-prev-month")?.addEventListener("click", () => {
     // Do NOT clear rangeSelectStart — user may be picking end date in prev month
     currentCalMonth--;
     if (currentCalMonth < 0) {
@@ -1213,7 +1238,7 @@ function bindEvents(): void {
     renderReservationsOverview(currentCalMonth, currentCalYear);
   });
 
-  $('cal-next-month')?.addEventListener('click', () => {
+  $("cal-next-month")?.addEventListener("click", () => {
     // Do NOT clear rangeSelectStart — user may be picking end date in next month
     currentCalMonth++;
     if (currentCalMonth > 11) {
@@ -1225,255 +1250,239 @@ function bindEvents(): void {
   });
 
   // Range selection cancel button
-  $('range-cancel-btn')?.addEventListener('click', () => clearRangeSelection());
+  $("range-cancel-btn")?.addEventListener("click", () => clearRangeSelection());
 
   // Range selection hover preview (event delegation on the grid)
-  const daysGrid = $('cal-days-grid');
+  const daysGrid = $("cal-days-grid");
   if (daysGrid) {
-    daysGrid.addEventListener('mouseover', (e) => {
+    daysGrid.addEventListener("mouseover", (e) => {
       if (!rangeSelectStart) return;
-      const cell = (e.target as HTMLElement).closest<HTMLElement>('.cal-day[data-date]');
+      const cell = (e.target as HTMLElement).closest<HTMLElement>(".cal-day[data-date]");
       if (cell?.dataset.date) updateRangePreview(cell.dataset.date);
     });
-    daysGrid.addEventListener('mouseleave', () => {
+    daysGrid.addEventListener("mouseleave", () => {
       if (!rangeSelectStart) return;
-      daysGrid.querySelectorAll('.is-in-range, .is-range-end').forEach(el => {
-        el.classList.remove('is-in-range', 'is-range-end');
+      daysGrid.querySelectorAll(".is-in-range, .is-range-end").forEach((el) => {
+        el.classList.remove("is-in-range", "is-range-end");
       });
     });
   }
 
-  $('btn-new-reservation')?.addEventListener('click', () => {
+  $("btn-new-reservation")?.addEventListener("click", () => {
     const today = new Date();
-    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
     openBookingModal(todayStr, todayStr);
   });
 
   // Availability button
-  $('btn-new-availability')?.addEventListener('click', () => {
+  $("btn-new-availability")?.addEventListener("click", () => {
     openAvailabilityModal();
   });
 
   // Availability form submit
-  $<HTMLFormElement>('availability-form')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const fromInput = $<HTMLInputElement>('avail-date-from');
-    const toInput = $<HTMLInputElement>('avail-date-to');
-    const submitBtn = $<HTMLButtonElement>('avail-submit-btn');
-    const editIdInput = $<HTMLInputElement>('avail-edit-id');
-    
-    if (!fromInput?.value || !toInput?.value) {
-      showToast('Vyplňte oba datumy.', 'error');
-      return;
-    }
-    if (toInput.value < fromInput.value) {
-      showToast('Datum "Do" nemůže být před "Od".', 'error');
-      return;
-    }
-    
-    if (submitBtn) submitBtn.disabled = true;
-    
-    const isEdit = editIdInput?.value;
-    const url = isEdit 
-      ? `/api/reservations/availabilities/${editIdInput.value}` 
-      : '/api/reservations/availabilities';
-    const method = isEdit ? 'PATCH' : 'POST';
-    
-    const result = await authFetch(url, {
-      method,
-      body: JSON.stringify({ startDate: fromInput.value, endDate: toInput.value }),
-    });
-    
-    if (submitBtn) submitBtn.disabled = false;
-    
-    if (result) {
-      showToast(isEdit ? 'Volno upraveno!' : 'Volno nahlášeno!', 'success');
-      if (fromInput) fromInput.value = '';
-      if (toInput) toInput.value = '';
-      if (editIdInput) editIdInput.value = '';
-      const titleEl = $('avail-modal-title');
-      if (titleEl) titleEl.textContent = 'Nahlásit osobní volno';
-      if (submitBtn) submitBtn.textContent = 'Uložit volno';
-      await loadReservations();
-      renderMyAvailabilities();
-    }
-  });
+  const _availForm = $<HTMLFormElement>("availability-form");
+  if (_availForm) {
+    validationCleanups.push(
+      setupFormValidation(
+        _availForm,
+        async () => {
+          const fromInput = $<HTMLInputElement>("avail-date-from");
+          const toInput = $<HTMLInputElement>("avail-date-to");
+          const submitBtn = $<HTMLButtonElement>("avail-submit-btn");
+          const editIdInput = $<HTMLInputElement>("avail-edit-id");
+
+          if (toInput?.value && fromInput?.value && toInput.value < fromInput.value) {
+            setFieldError(toInput, 'Datum "Do" nemůže být před "Od".');
+            return;
+          }
+
+          if (submitBtn) submitBtn.disabled = true;
+
+          const isEdit = editIdInput?.value;
+          const url = isEdit ? `/api/reservations/availabilities/${editIdInput!.value}` : "/api/reservations/availabilities";
+          const method = isEdit ? "PATCH" : "POST";
+
+          const result = await authFetch(url, {
+            method,
+            body: JSON.stringify({ startDate: fromInput!.value, endDate: toInput!.value }),
+          });
+
+          if (submitBtn) submitBtn.disabled = false;
+
+          if (result) {
+            showToast(isEdit ? "Volno upraveno!" : "Volno nahlášeno!", "success");
+            if (fromInput) fromInput.value = "";
+            if (toInput) toInput.value = "";
+            if (editIdInput) editIdInput.value = "";
+            const titleEl = $("avail-modal-title");
+            if (titleEl) titleEl.textContent = "Nahlásit osobní volno";
+            if (submitBtn) submitBtn.textContent = "Uložit volno";
+            await loadReservations();
+            renderMyAvailabilities();
+          }
+        },
+        { scrollToError: false },
+      ),
+    );
+  }
 
   // Switch from booking modal to availability modal
-  $('switch-to-availability')?.addEventListener('click', () => {
-    const fromInput = $<HTMLInputElement>('modal-date-from');
-    const toInput = $<HTMLInputElement>('modal-date-to');
-    const fromVal = fromInput?.value || '';
-    const toVal = toInput?.value || '';
-    closeModal('booking-modal');
+  $("switch-to-availability")?.addEventListener("click", () => {
+    const fromInput = $<HTMLInputElement>("modal-date-from");
+    const toInput = $<HTMLInputElement>("modal-date-to");
+    const fromVal = fromInput?.value || "";
+    const toVal = toInput?.value || "";
+    closeModal("booking-modal");
     openAvailabilityModal(fromVal, toVal);
   });
 
   // Tabs logic
-  $('tab-all')?.addEventListener('click', (e) => {
-    activeReservationTab = 'all';
-    $('tab-all')?.classList.add('active');
-    $('tab-mine')?.classList.remove('active');
+  $("tab-all")?.addEventListener("click", (e) => {
+    activeReservationTab = "all";
+    $("tab-all")?.classList.add("active");
+    $("tab-mine")?.classList.remove("active");
     renderCustomCalendar();
     renderReservationsOverview(currentCalMonth, currentCalYear);
   });
 
   // Period select
-  $<HTMLSelectElement>('period-filter-select')?.addEventListener('change', (e) => {
+  $<HTMLSelectElement>("period-filter-select")?.addEventListener("change", (e) => {
     activePeriodFilter = (e.target as HTMLSelectElement).value as any;
     renderReservationsOverview(currentCalMonth, currentCalYear);
   });
 
-  $('tab-mine')?.addEventListener('click', (e) => {
-    activeReservationTab = 'mine';
-    $('tab-mine')?.classList.add('active');
-    $('tab-all')?.classList.remove('active');
+  $("tab-mine")?.addEventListener("click", (e) => {
+    activeReservationTab = "mine";
+    $("tab-mine")?.classList.add("active");
+    $("tab-all")?.classList.remove("active");
     renderCustomCalendar();
     renderReservationsOverview(currentCalMonth, currentCalYear);
   });
 
   // Booking form submit
-  $<HTMLFormElement>('booking-form')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const purposeInput = $<HTMLInputElement>('purpose-input');
-    const notesTa = $<HTMLTextAreaElement>('notes-textarea');
-    const handoverTa = $<HTMLTextAreaElement>('handover-notes-textarea');
-    const softCheck = $<HTMLInputElement>('soft-reservation-checkbox');
-    const resIdInput = $<HTMLInputElement>('reservation-id');
-    const dateFromInput = $<HTMLInputElement>('modal-date-from');
-    const dateToInput = $<HTMLInputElement>('modal-date-to');
+  const _bookingForm = $<HTMLFormElement>("booking-form");
+  if (_bookingForm) {
+    validationCleanups.push(
+      setupFormValidation(_bookingForm, async () => {
+        const purposeInput = $<HTMLInputElement>("purpose-input");
+        const notesTa = $<HTMLTextAreaElement>("notes-textarea");
+        const handoverTa = $<HTMLTextAreaElement>("handover-notes-textarea");
+        const softCheck = $<HTMLInputElement>("soft-reservation-checkbox");
+        const resIdInput = $<HTMLInputElement>("reservation-id");
+        const dateFromInput = $<HTMLInputElement>("modal-date-from");
+        const dateToInput = $<HTMLInputElement>("modal-date-to");
 
-    const purpose = purposeInput?.value.trim() || '';
-    if (!purpose) { showToast('Vyplňte účel návštěvy.', 'error'); return; }
-    const notes = notesTa?.value.trim() || '';
-    const handoverNote = handoverTa?.value.trim() || '';
-    const status = softCheck?.checked ? 'soft' : 'primary';
+        const purpose = purposeInput?.value.trim() || "";
+        const notes = notesTa?.value.trim() || "";
+        const handoverNote = handoverTa?.value.trim() || "";
+        const status = softCheck?.checked ? "soft" : "primary";
 
-    const isEdit = !!resIdInput?.value;
-    const url = isEdit ? `/api/reservations/${resIdInput!.value}` : '/api/reservations';
-    const method = isEdit ? 'PUT' : 'POST';
+        if (dateFromInput && dateToInput && dateToInput.value < dateFromInput.value) {
+          setFieldError(dateToInput, 'Datum "Do" nemůže být před "Od".');
+          return;
+        }
 
-    const body: Record<string, string> = { purpose, notes, handoverNote, status };
-    
-    if (dateFromInput && dateToInput) {
-      body.from = dateFromInput.value;
-      body.to = dateToInput.value;
-    } else {
-      return; // Should not happen
-    }
+        const isEdit = !!resIdInput?.value;
+        const url = isEdit ? `/api/reservations/${resIdInput!.value}` : "/api/reservations";
+        const method = isEdit ? "PUT" : "POST";
 
-    const result = await authFetch(url, { method, body: JSON.stringify(body) });
-    if (!result) return;
+        const body: Record<string, string> = { purpose, notes, handoverNote, status };
+        if (dateFromInput && dateToInput) {
+          body.from = dateFromInput.value;
+          body.to = dateToInput.value;
+        } else {
+          return;
+        }
 
-    closeModal('booking-modal');
-    await loadReservations();
+        const result = await authFetch(url, { method, body: JSON.stringify(body) });
+        if (!result) return;
 
-    if (isEdit) {
-      showToast('Rezervace upravena.', 'success');
-      return;
-    }
+        closeModal("booking-modal");
+        await loadReservations();
 
-    // Nová rezervace — zkontroluj stav zásob na pozadí
-    showToast('Rezervace uložena! Kontroluji zásoby…', 'info');
+        if (isEdit) {
+          showToast("Rezervace upravena.", "success");
+          return;
+        }
 
-    const summary = await authFetch<MissingSummary>('/api/inventory/missing-summary');
-
-    if (!summary || (summary.count === 0 && !summary.hasShoppingItems)) {
-      showToast('Rezervace uložena! Zásoby jsou v pořádku.', 'success');
-      return;
-    }
-
-    const goShopping = await showInventoryNotifyDialog(summary);
-    if (goShopping) {
-      window.location.hash = '#/shopping';
-    }
-  });
+        showToast("Rezervace uložena! Kontroluji zásoby…", "info");
+        const summary = await authFetch<MissingSummary>("/api/inventory/missing-summary");
+        if (!summary || (summary.count === 0 && !summary.hasShoppingItems)) {
+          showToast("Rezervace uložena! Zásoby jsou v pořádku.", "success");
+          return;
+        }
+        const goShopping = await showInventoryNotifyDialog(summary);
+        if (goShopping) window.location.hash = "#/shopping";
+      }),
+    );
+  }
 
   // Reservation list delegation (edit, delete, assign)
-  $('reservations-list')?.addEventListener('click', (e) => {
-    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('button');
+  $("reservations-list")?.addEventListener("click", (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>("button");
     if (!btn) return;
     const id = btn.dataset.id!;
-    if (btn.classList.contains('edit-btn')) {
+    if (btn.classList.contains("edit-btn")) {
       const r = currentReservations.find((x) => x.id === id);
       if (r) openBookingModal(undefined, undefined, true, r);
-    } else if (btn.classList.contains('delete-btn')) {
+    } else if (btn.classList.contains("delete-btn")) {
       openConfirmDelete(id);
-    } else if (btn.classList.contains('assign-btn')) {
+    } else if (btn.classList.contains("assign-btn")) {
       openAssignModal(id);
     }
   });
 
   // Confirm delete
-  $('confirm-delete-btn')?.addEventListener('click', async () => {
+  $("confirm-delete-btn")?.addEventListener("click", async () => {
     if (!reservationIdToDelete) return;
-    const result = await authFetch('/api/reservations/delete', {
-      method: 'POST',
+    const result = await authFetch("/api/reservations/delete", {
+      method: "POST",
       body: JSON.stringify({ id: reservationIdToDelete }),
     });
     closeConfirmDelete();
     if (result) {
-      showToast('Rezervace smazána.', 'success');
+      showToast("Rezervace smazána.", "success");
       await loadReservations();
     }
   });
-  $('cancel-delete-btn')?.addEventListener('click', closeConfirmDelete);
+  $("cancel-delete-btn")?.addEventListener("click", closeConfirmDelete);
 
   // Assign form submit
-  $<HTMLFormElement>('assign-reservation-form')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const id = $<HTMLInputElement>('assign-reservation-id-input')?.value;
-    const select = $<HTMLSelectElement>('assign-user-select');
-    const newOwnerId = select?.value;
-    const errSpan = $('assign-owner-error');
-    const form = $<HTMLFormElement>('assign-reservation-form');
+  const _assignForm = $<HTMLFormElement>("assign-reservation-form");
+  if (_assignForm) {
+    validationCleanups.push(
+      setupFormValidation(_assignForm, async () => {
+        const id = $<HTMLInputElement>("assign-reservation-id-input")?.value;
+        const select = $<HTMLSelectElement>("assign-user-select");
+        const newOwnerId = select?.value;
 
-    if (!newOwnerId) {
-      // Show inline error
-      if (select) select.classList.add('input-error');
-      if (errSpan) {
-        errSpan.textContent = 'Vyberte prosím nového vlastníka ze seznamu.';
-        errSpan.classList.add('show');
-      }
-      // Shake
-      if (form) {
-        form.classList.add('shake');
-        setTimeout(() => form.classList.remove('shake'), 400);
-      }
-      return;
-    }
+        if (!newOwnerId) {
+          setFieldError(select!, "Vyberte prosím nového vlastníka ze seznamu.");
+          return;
+        }
 
-    const result = await authFetch(`/api/reservations/${id}/assign`, {
-      method: 'POST',
-      body: JSON.stringify({ newOwnerId }),
-    });
-    if (result) {
-      closeAssignModal();
-      showToast('Rezervace přiřazena.', 'success');
-      await loadReservations();
-    }
-  });
+        const result = await authFetch(`/api/reservations/${id}/assign`, {
+          method: "POST",
+          body: JSON.stringify({ newOwnerId }),
+        });
+        if (result) {
+          closeAssignModal();
+          showToast("Rezervace přiřazena.", "success");
+          await loadReservations();
+        }
+      }),
+    );
+  }
 
-  // Clear assign error on change
-  $<HTMLSelectElement>('assign-user-select')?.addEventListener('change', () => {
-    const select = $<HTMLSelectElement>('assign-user-select');
-    const errSpan = $('assign-owner-error');
-    if (select) select.classList.remove('input-error');
-    if (errSpan) {
-      errSpan.classList.remove('show');
-      errSpan.textContent = '';
-    }
-  });
+  // Clear assign error on change (handled by setupFormValidation clearOnInput)
 
-  $('cancel-assign-btn')?.addEventListener('click', closeAssignModal);
-
-
+  $("cancel-assign-btn")?.addEventListener("click", closeAssignModal);
 
   // Escape key cancels range selection
   _keydownHandler = (e: KeyboardEvent) => {
-    if (e.key === 'Escape' && rangeSelectStart) clearRangeSelection();
+    if (e.key === "Escape" && rangeSelectStart) clearRangeSelection();
   };
-  document.addEventListener('keydown', _keydownHandler);
+  document.addEventListener("keydown", _keydownHandler);
 }
 
 // ─── Page Module ──────────────────────────────────────────────────────
@@ -1488,8 +1497,10 @@ const reservationsPage: PageModule = {
     await Promise.all([fetchUsers(), loadReservations()]);
   },
   unmount() {
+    validationCleanups.forEach((fn) => fn());
+    validationCleanups.length = 0;
     if (_keydownHandler) {
-      document.removeEventListener('keydown', _keydownHandler);
+      document.removeEventListener("keydown", _keydownHandler);
       _keydownHandler = null;
     }
     rangeSelectStart = null;
@@ -1503,9 +1514,8 @@ export default reservationsPage;
 function openEditModal(id: string): void {
   const reservation = currentReservations.find((r) => r.id === id);
   if (!reservation) {
-    showToast('Rezervace nenalezena.', 'error');
+    showToast("Rezervace nenalezena.", "error");
     return;
   }
   openBookingModal(undefined, undefined, true, reservation);
 }
-

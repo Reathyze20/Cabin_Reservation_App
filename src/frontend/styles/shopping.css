@@ -7,10 +7,10 @@
   flex-direction: column;
   gap: var(--space-lg);
   padding: var(--space-xl);
-  background-color: #f8fafc;
+  background-color: var(--color-bg-main);
   /* Keep the clean background just for this tool */
   border-radius: var(--radius-xl);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-lg);
   width: 100%;
   flex-grow: 1;
   min-height: 0;
@@ -54,9 +54,9 @@
 /* ── Segmented Tabs (iOS-style) ─────────────────────────────────────────── */
 
 .tabs-container {
-  background: #f3f4f6;
+  background: var(--color-bg-hover);
   padding: 4px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   display: flex;
   gap: 4px;
   max-width: 400px;
@@ -68,12 +68,12 @@
   padding: 8px 16px;
   border: none;
   background: transparent;
-  color: #4b5563;
+  color: var(--color-text-light);
   font-weight: 500;
   font-size: 0.9rem;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--transition-fast);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -82,14 +82,14 @@
 }
 
 .tab-button.active {
-  background: #ffffff;
-  color: #111827;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: var(--color-bg-card);
+  color: var(--color-text-main);
+  box-shadow: var(--shadow-xs);
 }
 
 .tab-button:not(.active):hover {
   background: rgba(255, 255, 255, 0.5);
-  color: #374151;
+  color: var(--color-text-dark);
 }
 
 /* ── Inventory list (pantry view) ────────────────────────────────────────── */
@@ -104,10 +104,10 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
   padding: 10px 16px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   transition: box-shadow 0.2s;
   gap: 8px;
 }
@@ -153,23 +153,23 @@
 }
 
 .btn-add-to-cart {
-  background: #f3f4f6;
-  color: var(--color-primary, #5d9b62);
+  background: var(--color-bg-hover);
+  color: var(--color-primary);
   border: none;
   padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 0.85rem;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
   font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 4px;
-  transition: background 0.15s;
+  transition: background var(--transition-fast);
   font-family: var(--font-family);
 }
 
 .btn-add-to-cart:hover {
-  background: #e5e7eb;
+  background: var(--color-border);
 }
 
 /* ── Inventory Empty State ───────────────────────────────────────────────── */
@@ -182,7 +182,7 @@
   text-align: center;
   width: 100%;
   padding: 48px 24px;
-  color: #6b7280;
+  color: var(--color-text-light);
 }
 
 .inventory-empty-state .empty-icon {
@@ -196,7 +196,7 @@
 .inventory-empty-state h3 {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--color-text-main);
   margin: 0 0 8px;
 }
 
@@ -210,9 +210,9 @@
 
 #pantry-view {
   padding: var(--space-xl);
-  background-color: #f8fafc;
+  background-color: var(--color-bg-main);
   border-radius: var(--radius-xl);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-lg);
   width: 100%;
   flex-grow: 1;
   min-height: 0;
@@ -241,14 +241,16 @@
   min-width: 0;
   margin-top: 0 !important;
   padding: 10px 14px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
+  border: 1px solid var(--color-border-dark);
+  border-radius: var(--radius-sm);
   font-size: 0.9rem;
   font-family: var(--font-family);
-  color: var(--color-text, #111827);
-  background: #fff;
+  color: var(--color-text-main);
+  background: var(--color-bg-card);
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
 }
 
 .inventory-input:focus {
@@ -263,15 +265,15 @@
   min-width: 130px;
   margin-top: 0 !important;
   padding: 10px 10px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 0.85rem;
+  border: 1px solid var(--color-border-dark);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
   font-family: var(--font-family);
-  background: #fff;
-  color: var(--color-text, #374151);
+  background: var(--color-bg-card);
+  color: var(--color-text-main);
   cursor: pointer;
   outline: none;
-  transition: border-color 0.2s;
+  transition: border-color var(--transition-fast);
 }
 
 .inventory-select:focus {
@@ -319,13 +321,13 @@
   font-weight: 700;
   letter-spacing: 1px;
   text-transform: uppercase;
-  color: #9ca3af;
+  color: var(--color-text-muted);
   padding: 2px 4px;
 }
 
 .inventory-item-name {
   font-weight: 500;
-  color: #111827;
+  color: var(--color-text-main);
   padding: 0;
 }
 
@@ -343,7 +345,7 @@
   gap: 12px;
   margin-top: 3px;
   font-size: 0.75rem;
-  color: #9ca3af;
+  color: var(--color-text-muted);
   flex-wrap: wrap;
 }
 
@@ -370,15 +372,15 @@
 /* ── Extended badge ──────────────────────────────────────────────────────── */
 
 .badge-empty {
-  background: #fee2e2;
-  color: #991b1b;
+  background: var(--color-danger-light);
+  color: var(--color-danger-text);
 }
 
 /* ── In-cart state ───────────────────────────────────────────────────────── */
 
 .btn-in-cart {
-  background: #f3f4f6 !important;
-  color: #9ca3af !important;
+  background: var(--color-bg-hover) !important;
+  color: var(--color-text-muted) !important;
   cursor: not-allowed !important;
   opacity: 0.75;
 }
@@ -389,17 +391,19 @@
   background: transparent;
   border: none;
   padding: 6px 8px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  color: #9ca3af;
-  font-size: 0.85rem;
-  transition: background 0.15s, color 0.15s;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast);
   font-family: var(--font-family);
 }
 
 .ghost-btn:hover {
-  background: #f3f4f6;
-  color: #374151;
+  background: var(--color-bg-hover);
+  color: var(--color-text-main);
 }
 
 .btn-inv-delete:hover {
@@ -447,7 +451,9 @@ div.shopping-list-card.card {
   border-radius: var(--radius-xl);
   border: 1px solid var(--color-border-light);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
-  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease;
+  transition:
+    transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 0.3s ease;
   background: var(--color-bg);
 }
 
@@ -462,7 +468,9 @@ div.shopping-list-card.card {
   font-size: 13px;
   opacity: 0.45;
   color: var(--color-text-light);
-  transition: opacity 0.2s, background 0.2s;
+  transition:
+    opacity 0.2s,
+    background 0.2s;
   flex-shrink: 0;
 }
 
@@ -492,7 +500,9 @@ div.shopping-list-card.card {
 .shopping-collapsible {
   display: grid;
   grid-template-rows: 1fr;
-  transition: grid-template-rows 0.28s ease, opacity 0.28s ease;
+  transition:
+    grid-template-rows 0.28s ease,
+    opacity 0.28s ease;
   opacity: 1;
   overflow: hidden;
 }
@@ -539,17 +549,34 @@ div.shopping-list-card.card:hover {
   border-radius: var(--radius-sm);
   font-size: 15px;
   opacity: 0.45;
-  transition: opacity 0.2s, color 0.2s, background 0.2s;
+  transition:
+    opacity 0.2s,
+    color 0.2s,
+    background 0.2s;
 }
 
-.btn-icon-danger { color: var(--color-danger); }
-.btn-icon-success { color: var(--color-success, #22c55e); }
-.btn-icon-share { color: var(--color-primary); }
+.btn-icon-danger {
+  color: var(--color-danger);
+}
+.btn-icon-success {
+  color: var(--color-success, #22c55e);
+}
+.btn-icon-share {
+  color: var(--color-primary);
+}
 
-.btn-icon-action:hover { opacity: 1; }
-.btn-icon-danger:hover { background: #fee2e2; }
-.btn-icon-success:hover { background: #dcfce7; }
-.btn-icon-share:hover { background: var(--color-primary-bg, #eff6ff); }
+.btn-icon-action:hover {
+  opacity: 1;
+}
+.btn-icon-danger:hover {
+  background: #fee2e2;
+}
+.btn-icon-success:hover {
+  background: #dcfce7;
+}
+.btn-icon-share:hover {
+  background: var(--color-primary-bg, #eff6ff);
+}
 
 /* ── Share / Nástěnka dialog ─────────────────────────────────────────────── */
 
@@ -590,7 +617,10 @@ div.shopping-list-card.card:hover {
   border-radius: var(--radius-lg);
   cursor: pointer;
   text-align: left;
-  transition: border-color 0.2s, background 0.2s, transform 0.15s;
+  transition:
+    border-color 0.2s,
+    background 0.2s,
+    transform 0.15s;
   font-family: var(--font-family);
   width: 100%;
   position: relative;
@@ -693,7 +723,9 @@ div.shopping-list-card.card:hover {
   font-size: var(--font-size-sm);
   color: var(--color-text);
   text-align: left;
-  transition: border-color 0.15s, background 0.15s;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
   width: 100%;
 }
 
@@ -728,7 +760,9 @@ div.shopping-list-card.card:hover {
   gap: var(--space-sm);
   font-family: var(--font-family);
   width: 100%;
-  transition: border-color 0.15s, color 0.15s;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
 }
 
 .share-note-add-thread-btn:hover {
@@ -828,7 +862,10 @@ div.shopping-list-card.card:hover {
   border-radius: 24px;
   /* pill shape */
   padding: 4px 6px;
-  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s,
+    background 0.2s;
 }
 
 .shopping-input-wrapper:focus-within {
@@ -866,7 +903,9 @@ div.shopping-list-card.card:hover {
   padding: 0;
   flex-shrink: 0;
   cursor: pointer;
-  transition: transform 0.2s, background-color 0.2s;
+  transition:
+    transform 0.2s,
+    background-color 0.2s;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
@@ -932,7 +971,9 @@ div.shopping-list-card.card:hover {
   align-items: center;
   padding: 8px var(--space-md);
   gap: var(--space-sm);
-  transition: background-color 0.15s, opacity 0.25s;
+  transition:
+    background-color 0.15s,
+    opacity 0.25s;
   border-radius: var(--radius-md);
   margin: 0 var(--space-sm);
 }
@@ -962,7 +1003,9 @@ div.shopping-list-card.card:hover {
   justify-content: center;
   flex-shrink: 0;
   border-radius: var(--radius-sm);
-  transition: background 0.15s, transform 0.1s;
+  transition:
+    background 0.15s,
+    transform 0.1s;
 }
 
 .shopping-status-btn:hover {
@@ -975,9 +1018,16 @@ div.shopping-list-card.card:hover {
   transition: color 0.18s;
 }
 
-.si-pending   { color: var(--color-border); }
-.si-bring     { color: #f59e0b; font-size: 16px; }
-.si-purchased { color: var(--color-success, #22c55e); }
+.si-pending {
+  color: var(--color-border);
+}
+.si-bring {
+  color: #f59e0b;
+  font-size: 16px;
+}
+.si-purchased {
+  color: var(--color-success, #22c55e);
+}
 
 /* ── Item name ─────────────────────────────────────────────────────────────── */
 
@@ -987,7 +1037,9 @@ div.shopping-list-card.card:hover {
   color: var(--color-text);
   font-weight: 500;
   line-height: 1.4;
-  transition: color 0.2s, text-decoration 0.2s;
+  transition:
+    color 0.2s,
+    text-decoration 0.2s;
   word-break: break-word;
   min-width: 0;
 }
@@ -1021,11 +1073,13 @@ div.shopping-list-card.card:hover {
   border: none;
   cursor: pointer;
   padding: 4px 5px;
-  color: transparent;          /* hidden by default */
+  color: transparent; /* hidden by default */
   font-size: 12px;
   border-radius: var(--radius-sm);
   flex-shrink: 0;
-  transition: color 0.15s, background 0.15s;
+  transition:
+    color 0.15s,
+    background 0.15s;
   line-height: 1;
 }
 
@@ -1080,7 +1134,9 @@ div.shopping-list-card.card:hover {
   border-radius: 4px;
   cursor: pointer;
   font-size: 12px;
-  transition: color 0.15s, background-color 0.15s;
+  transition:
+    color 0.15s,
+    background-color 0.15s;
 }
 
 .shopping-item-row:hover .btn-icon-tiny {
@@ -1105,7 +1161,9 @@ div.shopping-list-card.card:hover {
   background: transparent;
   color: var(--color-text-light);
   border: 1px solid transparent;
-  transition: color 0.2s, background 0.2s;
+  transition:
+    color 0.2s,
+    background 0.2s;
   width: 100%;
   display: inline-flex;
   align-items: center;
@@ -1197,7 +1255,9 @@ div.shopping-list-card.card:hover {
   opacity: 0.3;
   padding: 2px 4px;
   border-radius: 4px;
-  transition: opacity 0.15s, transform 0.15s;
+  transition:
+    opacity 0.15s,
+    transform 0.15s;
   flex-shrink: 0;
 }
 
@@ -1231,7 +1291,9 @@ div.shopping-list-card.card:hover {
 .essential-toggle-icon {
   font-size: 1rem;
   opacity: 0.3;
-  transition: opacity 0.15s, transform 0.15s;
+  transition:
+    opacity 0.15s,
+    transform 0.15s;
 }
 
 .essential-toggle-label input[type="checkbox"]:checked + .essential-toggle-icon {
