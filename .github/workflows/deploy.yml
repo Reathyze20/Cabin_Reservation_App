@@ -12,11 +12,14 @@ jobs:
     steps:
     - name: Execute deployment commands on server
       uses: appleboy/ssh-action@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         host: ${{ secrets.SSH_HOST }}
         username: ${{ secrets.SSH_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: 22
+        envs: GITHUB_TOKEN
         script: |
           set -e
 
@@ -63,6 +66,8 @@ jobs:
           fi
 
           echo "=== Updating code ==="
+          # Set remote URL with token for HTTPS authentication
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/Reathyze20/Cabin_Reservation_App.git"
           # Force-reset to remote main (avoids merge conflicts from
           # package-lock.json or any server-side file modifications)
           git fetch origin main
