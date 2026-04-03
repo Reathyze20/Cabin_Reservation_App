@@ -141,27 +141,34 @@ jobs:
           npx prisma generate
 
           echo "=== Running database migrations ==="
-          # Fix migration state: 20260301133234 is marked "applied" but cabins table was never created
-          echo "Checking if cabins table exists..."
-          CABINS_EXISTS=$(PGPASSWORD=$(grep DATABASE_URL .env | sed 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/') psql -h localhost -U $(grep DATABASE_URL .env | sed 's/.*:\/\/\([^:]*\):.*/\1/') -d cabin_reservation -tAc "SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name='cabins')" 2>/dev/null || echo "unknown")
-          echo "Cabins table exists: $CABINS_EXISTS"
+          # Extract DATABASE_URL from .env for direct psql access
+          export DATABASE_URL=$(grep '^DATABASE_URL=' .env | cut -d'=' -f2-)
+
+          # Check if cabins table exists (created by migration 20260301133234)
+          echo "Checking cabins table..."
+          CABINS_EXISTS=$(psql "$DATABASE_URL" -tAc "SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name='cabins')" 2>&1) || true
+          echo "Cabins table check result: $CABINS_EXISTS"
 
           if [ "$CABINS_EXISTS" != "t" ]; then
-            echo "Executing cabin migration SQL directly..."
-            npx prisma db execute --file prisma/migrations/20260301133234_add_cabin_multi_tenant/migration.sql || echo "WARNING: direct SQL execution failed, continuing..."
+            echo "Creating cabins table and cabin_id columns via direct SQL..."
+            psql "$DATABASE_URL" -f prisma/migrations/20260301133234_add_cabin_multi_tenant/migration.sql || echo "WARNING: some SQL statements may have failed (expected for idempotent re-run)"
           fi
 
-          # Resolve any failed migrations so migrate deploy can proceed
-          echo "Resolving failed migrations..."
-          npx prisma migrate resolve --rolled-back 20260303120000_add_cabin_settings_fields 2>&1 || true
-          npx prisma migrate resolve --rolled-back 20260303162519_remove_precise_location 2>&1 || true
-          npx prisma migrate resolve --rolled-back 20260303165649_add_checkout_fields 2>&1 || true
-          npx prisma migrate resolve --rolled-back 20260307112043_add_wallpapers 2>&1 || true
-          npx prisma migrate resolve --rolled-back 20260322091452_add_monthly_notes 2>&1 || true
-          npx prisma migrate resolve --rolled-back 20260322145523_add_note_indexes 2>&1 || true
-          npx prisma migrate resolve --rolled-back 20260322151531_add_chat_features 2>&1 || true
-          npx prisma migrate resolve --rolled-back 20260323155930_add_thread_read_status 2>&1 || true
-          npx prisma migrate resolve --rolled-back 20260402145027_gallery_folder_compound_unique 2>&1 || true
+          # Resolve any failed/rolled-back migrations so migrate deploy can proceed
+          echo "Resolving migration states..."
+          for migration in \
+            20260301133234_add_cabin_multi_tenant \
+            20260303120000_add_cabin_settings_fields \
+            20260303162519_remove_precise_location \
+            20260303165649_add_checkout_fields \
+            20260307112043_add_wallpapers \
+            20260322091452_add_monthly_notes \
+            20260322145523_add_note_indexes \
+            20260322151531_add_chat_features \
+            20260323155930_add_thread_read_status \
+            20260402145027_gallery_folder_compound_unique; do
+            npx prisma migrate resolve --rolled-back "$migration" 2>&1 || true
+          done
 
           echo "Running prisma migrate deploy..."
           npx prisma migrate deploy
