@@ -1866,3 +1866,233 @@
     gap: 1px;
   }
 }
+
+/* ============================================================================
+   Checkout Section – Reservation Detail
+   ============================================================================ */
+
+.checkout-section-slot {
+  margin-top: var(--space-md, 16px);
+}
+
+/* ── Checkout Form ───────────────────────────────────────────────────── */
+
+.checkout-form {
+  background: linear-gradient(135deg, #f0fdf4, #ecfdf5);
+  border: 1px solid #bbf7d0;
+  border-radius: 14px;
+  padding: 20px;
+  margin-top: 4px;
+}
+
+.checkout-form-header {
+  margin-bottom: 16px;
+}
+
+.checkout-form-header h3 {
+  margin: 0 0 4px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #166534;
+}
+
+.checkout-form-header p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #4b5563;
+}
+
+.checkout-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 16px;
+}
+
+.checkout-task {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  min-height: 48px; /* big touch target */
+}
+
+.checkout-task:hover {
+  background: rgba(22, 101, 52, 0.06);
+}
+
+.checkout-task:active {
+  background: rgba(22, 101, 52, 0.10);
+}
+
+.checkout-task-cb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  border: 2px solid #9ca3af;
+  border-radius: 7px;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.checkout-task-cb:checked {
+  background: #16a34a;
+  border-color: #16a34a;
+}
+
+.checkout-task-cb:checked::after {
+  content: "✓";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.checkout-task-cb:focus-visible {
+  outline: 2px solid #16a34a;
+  outline-offset: 2px;
+}
+
+.checkout-task-text {
+  font-size: 0.92rem;
+  color: #1f2937;
+  line-height: 1.4;
+  user-select: none;
+}
+
+.checkout-task:has(.checkout-task-cb:checked) .checkout-task-text {
+  color: #6b7280;
+  text-decoration: line-through;
+  text-decoration-color: #9ca3af;
+}
+
+/* ── Confirm Button ─────────────────────────────────────────────────── */
+
+.checkout-confirm-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 14px 20px;
+  border: none;
+  border-radius: 12px;
+  background: #16a34a;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s, transform 0.1s;
+  min-height: 52px; /* big touch target */
+  -webkit-tap-highlight-color: transparent;
+}
+
+.checkout-confirm-btn:hover:not(:disabled) {
+  background: #15803d;
+}
+
+.checkout-confirm-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.checkout-confirm-btn:disabled {
+  background: #d1d5db;
+  color: #9ca3af;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* ── Completed State ────────────────────────────────────────────────── */
+
+.checkout-completed {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  border: 1px solid #bbf7d0;
+  border-radius: 14px;
+}
+
+.checkout-completed-icon {
+  font-size: 1.6rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.checkout-completed-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.88rem;
+  color: #374151;
+  line-height: 1.45;
+}
+
+.checkout-completed-text strong {
+  color: #166534;
+  font-size: 0.92rem;
+}
+
+/* ── Empty State (no tasks defined) ─────────────────────────────────── */
+
+.checkout-empty {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  background: #f9fafb;
+  border: 1px dashed #d1d5db;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  color: #6b7280;
+  line-height: 1.45;
+}
+
+.checkout-empty-icon {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+/* ── Mobile adjustments ─────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .checkout-form {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .checkout-task {
+    padding: 14px 12px;
+    gap: 10px;
+    min-height: 52px; /* even bigger on mobile */
+  }
+
+  .checkout-task-cb {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    border-radius: 8px;
+  }
+
+  .checkout-task-cb:checked::after {
+    font-size: 16px;
+  }
+
+  .checkout-confirm-btn {
+    padding: 16px 20px;
+    font-size: 1rem;
+    min-height: 56px;
+  }
+}

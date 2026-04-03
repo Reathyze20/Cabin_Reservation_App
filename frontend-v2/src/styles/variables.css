@@ -1,0 +1,275 @@
+/* ============================================================================
+   Design Tokens — Dvoupatrová architektura
+   
+   VRSTVA 1 — Raw Palette:  Sem vkládáme nové barvy při změně tématu
+   VRSTVA 2 — Semantic Tokens: Toto používáme ve všech komponentách
+   
+   Pro změnu celého tématu stačí přepsat pouze Vrstvu 1.
+   ============================================================================ */
+:root {
+  /* =========================================================================
+     VRSTVA 1 — RAW PALETTE  "Moderní Les" (zeleno-šedá)
+     ========================================================================= */
+
+  --raw-color-1: #1a2721;
+  /* Nejtmavší      — Velmi tmavá zeleno-šedá (Texty)       */
+  --raw-color-2: #3f7b63;
+  /* Výrazná/Akcent  — Svěží šalvějová zelená (Tlačítka)    */
+  --raw-color-3: #6b7280;
+  /* Střední tón     — Neutrální šedá (Sekundární texty)    */
+  --raw-color-4: #e5e7eb;
+  /* Světlejší tón   — Světle šedá (Rámečky, oddělovače)   */
+  --raw-color-5: #f4f7f5;
+  /* Nejsvětlejší    — Jemně mentolově-bílý nádech (Pozadí) */
+
+  /* Stálé barvy — nemění se mezi paletami */
+  --raw-white: #ffffff;
+  --raw-off-white: #f4f7f5;
+  /* Jemně mentolově-bílý nádech — pozadí */
+  --raw-danger: #dc2626;
+  --raw-danger-light: #fee2e2;
+  --raw-danger-dark: #991b1c;
+  --raw-success: #16a34a;
+  --raw-success-light: #dcfce7;
+  --raw-warning: #d97706;
+  --raw-warning-light: #fef3c7;
+  --raw-info: #2563eb;
+  --raw-info-light: #dbeafe;
+
+  /* =========================================================================
+     VRSTVA 2 — SEMANTIC TOKENS
+     Toto jsou jediné proměnné, které smíme používat v komponentách!
+     ========================================================================= */
+
+  /* ── Pozadí ────────────────────────────────────────────────────────── */
+  --bg-app: var(--raw-off-white);
+  --bg-card: var(--raw-white);
+  --bg-card-hover: #edf1ee;
+  /* Mírné ztmavení karet na hover        */
+  --bg-hover: #e8ece9;
+  /* Hover stav řádků, listů              */
+
+  /* ── Texty ─────────────────────────────────────────────────────────── */
+  --text-main: var(--raw-color-1);
+  /* Hlavní text — max. kontrast */
+  --text-muted: #4b5563;
+  /* Sekundární, labely — zaručený kontrast na bílém */
+  --text-placeholder: #6b7280;
+  /* Zvýšen kontrast: #9ca3af → #6b7280 pro WCAG AA */
+  /* Placeholder inputů — viditelný, odlišený */
+  --text-on-primary: var(--raw-white);
+  /* Text NA barevném pozadí     */
+
+  /* ── Brand ─────────────────────────────────────────────────────────── */
+  --brand-primary: var(--raw-color-2);
+  /* Okr — hlavní akce        */
+  --brand-primary-hover: var(--raw-color-1);
+  /* Tmavší na hover          */
+  --brand-primary-light: #e8f4ef;
+  /* Jemné pozadí pro outline */
+
+  /* ── Linky a rámečky ────────────────────────────────────────────────── */
+  --border-light: var(--raw-color-5);
+  /* Jemné oddělovače             */
+  --border-strong: var(--raw-color-4);
+  /* Výraznější rámečky           */
+
+  /* ── Stavy ─────────────────────────────────────────────────────────── */
+  --status-error: var(--raw-danger);
+  --status-error-light: var(--raw-danger-light);
+  --status-error-dark: var(--raw-danger-dark);
+  --status-success: var(--raw-success);
+  --status-success-light: var(--raw-success-light);
+  --status-warning: var(--raw-warning);
+  --status-warning-light: var(--raw-warning-light);
+  --status-info: var(--raw-info);
+  --status-info-light: var(--raw-info-light);
+
+  /* ── Sklo, overlay, bubliny ─────────────────────────────────────────── */
+  --bg-glass: rgba(255, 255, 255, 0.88);
+  --bg-glass-strong: rgba(255, 255, 255, 0.92);
+  --bg-overlay: rgba(15, 23, 42, 0.55);
+  --bg-bubble-mine: #dcf8c6;
+  --bg-bubble-other: #ffffff;
+  --bg-page-diary: #fdfbf7;
+
+  /* ── Speciální border & focus ──────────────────────────────────────── */
+  --border-input: #cbd5e1;
+  --border-glass: rgba(255, 255, 255, 0.6);
+  --focus-ring-color: rgba(63, 123, 99, 0.15);
+  --focus-ring: 0 0 0 3px var(--focus-ring-color);
+
+  /* ── Doplňkové texty ─────────────────────────────────────────────────── */
+  --text-disabled: #9ca3af;
+  --text-on-danger: #ffffff;
+  --text-on-success: #ffffff;
+
+  /* ── Log viewer (dark terminal) ─────────────────────────────────────────── */
+  --log-bg: #1a1a2e;
+  --log-text: #e2e8f0;
+  --log-error: #f87171;
+  --log-warn: #fbbf24;
+  --log-info: #60a5fa;
+  --log-muted: #9ca3af;
+
+  /* ── Tvary ──────────────────────────────────────────────────────────── */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 28px;
+  --radius-full: 9999px;
+
+  /* ── Stíny (tónované do tmavé barvy palety) ─────────────────────────── */
+  --shadow-xs: 0 1px 2px rgba(26, 39, 33, 0.04);
+  --shadow-sm: 0 2px 4px rgba(26, 39, 33, 0.05);
+  --shadow-md: 0 4px 12px rgba(26, 39, 33, 0.08);
+  --shadow-lg: 0 8px 24px rgba(26, 39, 33, 0.1);
+  --shadow-hover: 0 10px 20px rgba(26, 39, 33, 0.12);
+  --shadow-xl: 0 16px 40px rgba(26, 39, 33, 0.14);
+
+  /* ── Spacing ────────────────────────────────────────────────────────── */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+  --space-2xl: 32px;
+  --space-3xl: 48px;
+
+  /* ── Typografie ─────────────────────────────────────────────────────── */
+  --font-family: "Plus Jakarta Sans", sans-serif;
+  --font-diary: "Kalam", cursive;
+
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.85rem;
+  --font-size-base: 0.9375rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+  --font-size-4xl: 2.25rem;
+  --font-size-5xl: 3rem;
+
+  /* ── Transitions ────────────────────────────────────────────────────── */
+  --transition-fast: 0.15s ease;
+  --transition-base: 0.2s ease;
+  --transition-slow: 0.3s ease;
+  --transition-bounce: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ── Z-index vrstvy (kompletní škála) ───────────────────────────────── */
+  --z-base: 1;
+  --z-above: 2;
+  --z-sticky: 10;
+  --z-dropdown: 100;
+  --z-header: 200;
+  --z-drawer: 500;
+  --z-overlay: 900;
+  --z-modal: 1000;
+  --z-dialog: 1100;
+  --z-lightbox: 2000;
+  --z-toast: 3000;
+  --z-max: 9999;
+
+  /* ── Touch target ───────────────────────────────────────────────────── */
+  --touch-target-min: 44px;
+
+  /* ── Pozadí aplikace (fotka) ────────────────────────────────────────── */
+  --bg-image: url("/bg-hero.jpg");
+
+  /* =========================================================================
+     ZPĚTNÁ KOMPATIBILITA — aliasy --color-* → Semantic Tokens
+     Existující kód funguje beze změny. Nový kód píšeme přes Semantic Tokens!
+     ========================================================================= */
+
+  --color-primary: var(--brand-primary);
+  --color-primary-hover: var(--brand-primary-hover);
+  --color-primary-dark: var(--brand-primary-hover);
+  --color-primary-light: var(--raw-color-4);
+  --color-primary-lighter: var(--raw-color-5);
+  --color-primary-bg: var(--brand-primary-light);
+  --color-primary-gradient: linear-gradient(135deg, var(--raw-color-4) 0%, var(--raw-color-2) 100%);
+  --color-primary-gradient-hover: linear-gradient(135deg, var(--raw-color-3) 0%, var(--raw-color-1) 100%);
+
+  --color-accent: var(--raw-color-4);
+  --color-accent-light: var(--raw-color-5);
+  --color-accent-bg: var(--brand-primary-light);
+
+  --color-danger: var(--status-error);
+  --color-danger-hover: var(--status-error-dark);
+  --color-danger-dark: var(--status-error-dark);
+  --color-danger-light: var(--status-error-light);
+  --color-danger-bg: var(--status-error-light);
+  --color-danger-text: var(--status-error-dark);
+
+  --color-success: var(--status-success);
+  --color-success-hover: #15803d;
+  --color-success-dark: #15803d;
+  --color-success-bg: var(--status-success-light);
+  --color-success-text: #14532d;
+
+  --color-warning: var(--status-warning);
+  --color-warning-hover: #b45309;
+  --color-warning-bg: var(--status-warning-light);
+  --color-warning-text: #78350f;
+  --color-warning-border: #fcd34d;
+
+  --color-info: var(--status-info);
+  --color-info-hover: #1d4ed8;
+  --color-info-dark: #1d4ed8;
+  --color-info-bg: var(--status-info-light);
+  --color-info-text: #1e3a8a;
+
+  --color-text: var(--text-main);
+  --color-text-main: var(--text-main);
+  --color-text-dark: var(--raw-color-1);
+  --color-text-light: var(--text-muted);
+  --color-text-muted: var(--text-muted);
+  /* bylo var(--text-placeholder) = #9ca3af — příliš světlé! */
+
+  --color-bg: var(--bg-card);
+  --color-bg-main: var(--bg-app);
+  --color-bg-card: var(--bg-card);
+  --color-bg-alt: var(--raw-off-white);
+  --color-bg-hover: var(--bg-hover);
+  --color-bg-warm: var(--raw-off-white);
+
+  --color-border: var(--border-light);
+  --color-border-light: var(--border-light);
+  --color-border-dark: var(--border-strong);
+}
+
+
+/* =============================================================================
+   MULTI-TENANT THEMING — Swap raw palette per tenant via [data-theme]
+   All semantic tokens cascade automatically because they reference raw-* vars.
+   Usage: document.documentElement.setAttribute('data-theme', 'mountain');
+   ============================================================================= */
+
+/* ── Příklad: Tema "Horský dům" ──────────────────────────────────────── */
+[data-theme="mountain"] {
+  --raw-color-1: #2c1810;
+  --raw-color-2: #8b4513;
+  --raw-color-3: #6b7280;
+  --raw-color-4: #e8ddd3;
+  --raw-color-5: #faf6f1;
+  --raw-off-white: #faf6f1;
+  --brand-primary: #8b4513;
+  --brand-primary-hover: #6d350f;
+  --brand-primary-light: #f3e8dc;
+}
+
+/* ── Příklad: Tema "Modrá chalupa" ───────────────────────────────────── */
+[data-theme="lake"] {
+  --raw-color-1: #0c1b33;
+  --raw-color-2: #1a5276;
+  --raw-color-3: #5b7fa5;
+  --raw-color-4: #c6ddf0;
+  --raw-color-5: #eef4fa;
+  --raw-off-white: #eef4fa;
+  --brand-primary: #1a5276;
+  --brand-primary-hover: #154360;
+  --brand-primary-light: #d6eaf8;
+}

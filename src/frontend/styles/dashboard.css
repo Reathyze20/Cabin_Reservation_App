@@ -36,33 +36,55 @@
   flex-direction: column;
   padding: 24px;
   box-sizing: border-box;
-  background: rgba(255, 255, 255, 0.90);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: transparent;
   border-radius: 16px;
-  border: 1px solid var(--color-border-light, rgba(0, 0, 0, 0.06));
+  border: 1px solid rgba(255, 255, 255, 0.5);
   box-shadow:
-    0 4px 6px rgba(0, 0, 0, 0.04),
-    0 10px 20px rgba(0, 0, 0, 0.03);
+    0 4px 24px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
   gap: 0;
   transition:
-    transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
     box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
   position: relative;
 }
 
-.glass-card:hover {
-  transform: translateY(-2px);
-  box-shadow:
-    0 8px 16px rgba(0, 0, 0, 0.06),
-    0 16px 32px rgba(0, 0, 0, 0.04);
+/* Simulovaný backdrop-blur: zopakujeme bg image z body a rozmazáváme ji přímo */
+.glass-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: var(--bg-image) center / cover no-repeat fixed;
+  filter: blur(24px) saturate(1.8) brightness(1.05);
+  margin: -24px;
+  pointer-events: none;
+  border-radius: 0;
 }
 
+/* Bílý overlay přes rozmazané pozadí */
+.glass-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: rgba(255, 255, 255, 0.82);
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* Obsah karet musí být nad pseudo-elementy */
+.glass-card > * {
+  position: relative;
+  z-index: 2;
+}
+
+
+
 @media (max-width: 767px) {
-  .glass-card {
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+  .glass-card::before {
+    filter: blur(16px) saturate(1.6) brightness(1.05);
+    margin: -16px;
   }
 }
 
@@ -161,7 +183,7 @@
 
 .dashboard-grid > .glass-card {
   height: auto;
-  overflow: visible;
+  overflow: hidden;
   box-sizing: border-box;
 }
 
@@ -175,7 +197,7 @@
 
   .dashboard-grid > .glass-card {
     height: 100%;
-    overflow: visible;
+    overflow: hidden;
   }
 }
 
@@ -217,10 +239,7 @@
   overflow: visible;
 }
 
-.status-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-}
+
 
 /* Accent bar — disabled */
 .status-accent { display: none; }
@@ -1396,6 +1415,145 @@
   background: #dc2626;
 }
 
+/* ============================================================================
+   Winter Banner (Zazimovaná chata)
+   ============================================================================ */
+
+.winter-banner {
+  background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 50%, #f0f9ff 100%);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  border-radius: var(--radius-lg, 12px);
+  padding: 16px 24px;
+  margin-bottom: 0;
+  box-shadow: var(--shadow-sm);
+  grid-column: 1 / -1;
+}
+
+.winter-banner.hidden {
+  display: none;
+}
+
+.winter-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.winter-banner-icon {
+  font-size: 1.6rem;
+  flex-shrink: 0;
+}
+
+.winter-banner-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.winter-banner-text strong {
+  color: #1e40af;
+  font-size: 0.95rem;
+  line-height: 1.3;
+}
+
+.winter-banner-text span {
+  color: #3b82f6;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 768px) {
+  .winter-banner {
+    padding: 12px 16px;
+  }
+
+  .winter-banner-icon {
+    font-size: 1.3rem;
+  }
+
+  .winter-banner-text strong {
+    font-size: 0.88rem;
+  }
+
+  .winter-banner-text span {
+    font-size: 0.8rem;
+  }
+}
+
+/* ============================================================================
+   Departure Banner (Odjezd dnes)
+   ============================================================================ */
+
+.departure-banner {
+  background-color: var(--color-warning-light, #fef3c7);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius-lg, 12px);
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-sm);
+  gap: 16px;
+  grid-column: 1 / -1;
+}
+
+.departure-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.departure-banner-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(245, 158, 11, 0.2);
+  color: #b45309;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.departure-banner-text {
+  min-width: 0;
+}
+
+.departure-banner-text h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: #92400e;
+  line-height: 1.3;
+}
+
+.departure-banner-text p {
+  margin: 2px 0 0;
+  color: #a16207;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.departure-banner-action {
+  flex-shrink: 0;
+  width: auto;
+}
+
+@media (max-width: 768px) {
+  .departure-banner {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 14px 16px;
+  }
+
+  .departure-banner-action {
+    width: 100%;
+  }
+}
+
 @media (max-width: 600px) {
   .essential-warning-content {
     flex-direction: column;
@@ -1580,13 +1738,7 @@
     gap: 12px;
   }
 
-  .glass-card:hover,
-  .status-card:hover {
-    transform: none;
-    box-shadow:
-      0 4px 6px rgba(0, 0, 0, 0.04),
-      0 10px 20px rgba(0, 0, 0, 0.05);
-  }
+
 
   .dashboard-notes-feed {
     flex-direction: column;
@@ -1849,5 +2001,65 @@
     height: 18px;
     accent-color: var(--color-primary);
     flex-shrink: 0;
+  }
+}
+
+/* ============================================================================
+   Checkout Reminder — Status Card (Dashboard)
+   ============================================================================ */
+
+.checkout-reminder {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  margin-top: 8px;
+}
+
+.checkout-reminder a {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.checkout-reminder a:hover {
+  opacity: 0.85;
+}
+
+.checkout-reminder-icon {
+  font-size: 1.15rem;
+  flex-shrink: 0;
+}
+
+.checkout-reminder-warn {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+}
+
+.checkout-reminder-warn a {
+  color: #92400e;
+}
+
+.checkout-reminder-done {
+  background: rgba(220, 252, 231, 0.7);
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+
+.checkout-reminder-missed {
+  background: rgba(254, 226, 226, 0.6);
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+@media (max-width: 768px) {
+  .checkout-reminder {
+    font-size: 0.82rem;
+    padding: 10px 12px;
   }
 }

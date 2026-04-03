@@ -1,0 +1,2095 @@
+/* ============================================================================
+   Dashboard — Clean SaaS Layout (Radical Cleanup)
+   ============================================================================ */
+
+/* ── Base container ──────────────────────────────────────────────────── */
+
+.nordic-dashboard {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  min-height: 0;
+  padding: 16px;
+  flex-grow: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.nordic-dashboard::-webkit-scrollbar {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .nordic-dashboard {
+    padding: 24px;
+  }
+}
+
+/* ── Glassmorphism card base — JEDINÉ pravidlo pro vzhled ────────────── */
+
+.glass-card {
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  box-sizing: border-box;
+  background: transparent;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  gap: 0;
+  transition:
+    box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  position: relative;
+}
+
+/* Simulovaný backdrop-blur: zopakujeme bg image z body a rozmazáváme ji přímo */
+.glass-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-base);
+  background: var(--bg-image) center / cover no-repeat fixed;
+  filter: blur(24px) saturate(1.8) brightness(1.05);
+  margin: -24px;
+  pointer-events: none;
+  border-radius: 0;
+}
+
+/* Bílý overlay přes rozmazané pozadí */
+.glass-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-base);
+  background: rgba(255, 255, 255, 0.82);
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* Obsah karet musí být nad pseudo-elementy */
+.glass-card>* {
+  position: relative;
+  z-index: var(--z-above);
+}
+
+
+
+@media (max-width: 767px) {
+  .glass-card::before {
+    filter: blur(16px) saturate(1.6) brightness(1.05);
+    margin: -16px;
+  }
+}
+
+/* ── Card body — vnitřní prostor, sjednocený ────────────────────────── */
+
+.card-body-full {
+  padding: 0;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  box-sizing: border-box;
+  overflow: hidden;
+  gap: 16px;
+}
+
+.card-body-full::-webkit-scrollbar {
+  display: none;
+}
+
+/* Scrollovatelný seznam uvnitř fixní karty */
+.list-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.list-content::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Card footer — JEDNO definitivní pravidlo ────────────────────────── */
+
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  width: 100%;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  font-size: 0.85rem;
+  gap: 8px;
+}
+
+.card-footer-meta {
+  font-size: 0.8rem;
+  color: var(--text-muted, #9ca3af);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* ── Next free weekend indicator ───────────────────────────────────── */
+
+.next-free-weekend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.825rem;
+  color: var(--color-text-main);
+  white-space: nowrap;
+  line-height: 1.3;
+}
+
+.next-free-weekend strong {
+  color: var(--color-text-main);
+}
+
+.free-weekend-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background-color: var(--color-primary);
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+.next-free-weekend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.825rem;
+  color: var(--color-text-main);
+  white-space: nowrap;
+  line-height: 1.3;
+  padding-left: 2px; /* prevent subpixel clip at overflow boundary */
+}
+
+@keyframes pulse-dot {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
+}
+
+/* ── Cards Grid Layout ───────────────────────────────────────────────── */
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  align-items: stretch;
+}
+
+.dashboard-grid>.glass-card {
+  height: auto;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+@media (min-width: 768px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr 1fr;
+    grid-auto-rows: minmax(260px, auto);
+    gap: 16px;
+    align-items: stretch;
+  }
+
+  .dashboard-grid>.glass-card {
+    height: 100%;
+    overflow: hidden;
+  }
+}
+
+/* ── Standardizovaná hlavička karet ──────────────────────────────────── */
+
+.dashboard-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.dashboard-card-header-title {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--text-muted, #6b7280);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.dashboard-card-header-link {
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  color: var(--color-primary, #5d9b62);
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+
+.dashboard-card-header-link:hover {
+  opacity: 0.7;
+}
+
+/* ============================================================================
+   Karta 1: Status (Právě na chatě)
+   ============================================================================ */
+
+.status-card {
+  position: relative;
+  overflow: visible;
+}
+
+/* Status card doesn't need clipping — prevent dot/content cutoff at edges */
+.status-card .card-body-full {
+  overflow: visible;
+}
+
+
+
+/* Accent bar — disabled */
+.status-accent {
+  display: none;
+}
+
+.status-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  flex: 1;
+}
+
+/* ── Date header ───────────────────────────────────────────────────── */
+
+.dashboard-date {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted, #6b7280);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 16px;
+}
+
+/* ── Status badge (pill) ───────────────────────────────────────────── */
+
+/* ── Status badge pill — inline se jménem ──────────────────────────── */
+
+.status-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  width: fit-content;
+  margin: 0;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.status-badge-pill .status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.is-occupied .status-badge-pill {
+  background: var(--status-error-light, #fee2e2);
+  color: var(--status-error, #dc2626);
+}
+
+.is-occupied .status-badge-pill .status-dot {
+  background: var(--status-error, #dc2626);
+  box-shadow: none;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+.is-free .status-badge-pill {
+  background: var(--status-success-light, #dcfce7);
+  color: var(--color-primary, #3f7b63);
+}
+
+.is-free .status-badge-pill .status-dot {
+  background: var(--color-primary, #16a34a);
+  box-shadow: none;
+}
+
+/* ── Name + badge row ──────────────────────────────────────────────── */
+
+.status-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ── Main info row ─────────────────────────────────────────────────── */
+
+.status-hero-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.status-avatar-block {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-on-primary);
+  border: 1px solid var(--border-light, rgba(0, 0, 0, 0.06));
+  /* No box-shadow, no colored ring — clean minimalism */
+}
+
+.status-hero-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.status-name {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-main, #111827);
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.status-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.status-dates {
+  font-size: 13px;
+  color: var(--text-muted, #6b7280);
+  font-weight: 500;
+}
+
+.status-remaining-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: rgba(234, 88, 12, 0.08);
+  color: var(--status-warning);
+  white-space: nowrap;
+}
+
+.is-free .status-remaining-chip {
+  background: rgba(22, 163, 74, 0.08);
+  color: #15803d;
+}
+
+/* ── "Dále" next reservation block ─────────────────────────────────── */
+
+.status-next-block {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: auto;
+  padding: 12px 0 0;
+  border-top: 1px solid var(--border-light, rgba(0, 0, 0, 0.06));
+  background: none;
+  border-radius: 0;
+}
+
+.status-next-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-on-primary);
+  flex-shrink: 0;
+}
+
+.status-next-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.status-next-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted, #9ca3af);
+  line-height: 1;
+}
+
+.status-next-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main, #1a2721);
+  margin-top: 2px;
+}
+
+.status-next-date {
+  font-size: 12px;
+  color: var(--text-muted, #6b7280);
+  margin-top: 1px;
+}
+
+.status-next-chip {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 99px;
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-muted, #6b7280);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Legacy compatibility ──────────────────────────────────────────── */
+
+.status-handover {
+  font-size: 12px;
+  color: var(--color-text-light);
+  background: rgba(0, 0, 0, 0.03);
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-top: 8px;
+  border-left: 3px solid var(--color-primary);
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.status-handover i {
+  color: var(--color-warning-hover);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.purpose-chip {
+  font-size: 14px;
+  margin-left: 3px;
+  vertical-align: middle;
+}
+
+.res-status-badge,
+.res-badge-type {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 7px;
+  border-radius: 99px;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+
+.res-badge-soft {
+  background: rgba(251, 191, 36, 0.15);
+  color: var(--color-warning-text);
+}
+
+.res-badge-backup {
+  background: rgba(156, 163, 175, 0.2);
+  color: var(--color-text-light);
+}
+
+/* ── CTA row ───────────────────────────────────────────────────────── */
+
+.status-cta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  width: 100%;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Dashboard CTA buttons */
+.status-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 20px;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.status-cta-neutral {
+  background: transparent;
+  color: var(--text-main, #374151);
+  border: 1px solid rgba(0, 0, 0, 0.13);
+  font-weight: 500;
+}
+
+.status-cta-neutral:hover {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+.status-cta-primary {
+  background-color: var(--color-primary);
+  color: var(--text-on-primary);
+  border: none;
+  font-weight: 600;
+}
+
+.status-cta-primary:hover {
+  background-color: var(--color-primary-hover);
+  transform: translateY(-1px);
+}
+
+/* ============================================================================
+   Karta 2: Počasí
+   ============================================================================ */
+
+.weather-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.weather-current {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.weather-icon-large {
+  font-size: 40px;
+  color: var(--text-muted);
+  filter: none;
+}
+
+.weather-temp-box {
+  display: flex;
+  flex-direction: column;
+}
+
+.weather-temp {
+  font-size: 36px;
+  font-weight: 800;
+  color: var(--text-main);
+  line-height: 1;
+}
+
+.weather-desc {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: capitalize;
+}
+
+.weather-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: right;
+}
+
+.weather-detail-item {
+  font-size: 15px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.weather-detail-item strong {
+  color: var(--text-main);
+  font-weight: 700;
+}
+
+/* Sun rise/set chips below temperature */
+.weather-sun-below {
+  display: flex;
+  gap: 18px;
+  margin-top: 10px;
+}
+
+.weather-sun-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-muted, #6b7280);
+}
+
+.weather-sun-chip .weather-sun-time {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-main, #1a2721);
+}
+
+.weather-sun-chip svg {
+  flex-shrink: 0;
+}
+
+.weather-divider {
+  height: 1px;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.weather-forecast {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  flex-shrink: 0;
+}
+
+.forecast-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.forecast-day-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.forecast-icon {
+  font-size: 20px;
+  color: var(--text-muted);
+}
+
+.forecast-temps {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.forecast-temps span {
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-left: 4px;
+}
+
+/* ============================================================================
+   Karta 3: K nakoupení — čistý seznam
+   ============================================================================ */
+
+.dashboard-shopping-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  font-size: 0.88rem;
+  line-height: 1.4;
+  width: 100%;
+}
+
+.dashboard-shopping-item:last-child {
+  border-bottom: none;
+}
+
+.dashboard-shopping-item:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.dashboard-shopping-item input[type="checkbox"] {
+  accent-color: var(--color-primary, #5d9b62);
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.dashboard-shopping-item .shopping-item-name {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+  color: var(--text-main, #374151);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shopping-essential-mark {
+  font-size: 0.85rem;
+  margin-right: 4px;
+}
+
+.dashboard-shopping-item .shopping-item-list {
+  background: transparent;
+  border: 1px solid var(--color-border, #e5e7eb);
+  color: var(--text-muted, #9ca3af);
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Progress bar */
+.shopping-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.shopping-progress-bar {
+  flex: 1;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.shopping-progress-fill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: 99px;
+  transition: width 0.4s ease;
+}
+
+.shopping-progress-label {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.shopping-widget-more {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  padding: 6px 0;
+  text-align: center;
+}
+
+.shopping-done-msg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  color: var(--color-primary);
+  font-weight: 600;
+  font-size: 15px;
+}
+
+/* ============================================================================
+   Karta 4: Nástěnka (Notes feed)
+   ============================================================================ */
+
+.dashboard-notes-card {
+  flex-shrink: 1;
+  min-height: 0;
+  flex-basis: auto;
+}
+
+.dashboard-notes-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.dashboard-notes-feed::-webkit-scrollbar {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .dashboard-notes-feed {
+    flex-direction: row;
+    gap: 16px;
+  }
+}
+
+.dashboard-note-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  padding: 8px;
+  border-radius: 10px;
+  transition: background 0.15s;
+}
+
+.dashboard-note-item:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.note-avatar {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--color-primary);
+}
+
+.note-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.note-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 3px;
+}
+
+.note-author {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.note-time {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.note-preview {
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.45;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ============================================================================
+   Karta 5: Vzkaz na lednici — čistý design
+   ============================================================================ */
+
+.dashboard-handover-card .card-body-full {
+  gap: 8px;
+}
+
+.handover-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Samotná zpráva — italická s levým pruhem */
+.handover-note-text,
+.nordic-dashboard .message-content {
+  font-size: 0.92rem;
+  color: var(--text-main, #374151);
+  line-height: 1.65;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  border-left: 3px solid var(--color-primary, #5d9b62);
+  padding-left: 16px;
+  margin: 8px 0;
+  font-style: italic;
+}
+
+.handover-note-text::-webkit-scrollbar,
+.nordic-dashboard .message-content::-webkit-scrollbar {
+  display: none;
+}
+
+.handover-note-empty {
+  font-size: 0.88rem;
+  color: var(--text-muted, #9ca3af);
+  font-style: italic;
+  margin: 0;
+  padding: 8px 0;
+}
+
+.handover-note-author {
+  font-size: 0.78rem;
+  color: var(--text-muted, #9ca3af);
+  margin-top: 8px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.handover-edit-btn {
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: #9ca3af;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 4px 6px;
+  line-height: 1;
+  transition: color 0.15s, background 0.15s;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.handover-edit-btn:hover {
+  color: #6b7280;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* ============================================================================
+   Reservations list items (Karta nadcházející)
+   ============================================================================ */
+
+.list-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.12s;
+  border-radius: 6px;
+}
+
+.list-item:last-child {
+  border-bottom: none;
+}
+
+.list-item:hover {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.list-item-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.list-item-text,
+.list-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.list-item-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-main, #111827);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.list-item-subtitle {
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+.upcoming-days-chip {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+  white-space: nowrap;
+  background: rgba(0, 0, 0, 0.04);
+  padding: 2px 8px;
+  border-radius: 99px;
+}
+
+/* ============================================================================
+   Spodní statistické karty (4 v řadě)
+   ============================================================================ */
+
+.dashboard-stats-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-top: 0;
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .dashboard-stats-row {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+  border-color: rgba(255, 255, 255, 0.8);
+}
+
+.stat-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(93, 155, 98, 0.1);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: #111827;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+/* ============================================================================
+   Empty states
+   ============================================================================ */
+
+.empty-state-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  flex: 1;
+  min-height: 120px;
+  gap: 10px;
+  padding: 16px;
+}
+
+.empty-state-icon,
+.empty-icon-duotone {
+  font-size: 34px;
+  color: var(--text-placeholder);
+  opacity: 0.4;
+  margin-bottom: 2px;
+}
+
+.empty-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.empty-subtext {
+  font-size: 13px;
+  color: var(--text-placeholder);
+  margin: 0;
+}
+
+.empty-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 8px 20px;
+  background-color: var(--bg-card);
+  color: var(--text-main);
+  border: 1px solid var(--border-light);
+  border-radius: 9999px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.empty-cta:hover {
+  background-color: var(--bg-hover);
+  border-color: var(--border-strong);
+}
+
+/* ============================================================================
+   Loading Spinner
+   ============================================================================ */
+
+.spinner-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  min-height: 150px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(93, 155, 98, 0.2);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================================================================
+   Shopping widget quick-add
+   ============================================================================ */
+
+.shopping-quick-add {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  position: relative;
+}
+
+.shopping-quick-add input {
+  flex: 1;
+  padding: 10px 16px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  font-size: 14px;
+  background: rgba(255, 255, 255, 0.6);
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.shopping-quick-add input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  background: #fff;
+}
+
+.shopping-quick-add button {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.shopping-quick-add button:hover {
+  background: var(--color-primary-dark);
+  transform: translateY(-1px);
+}
+
+.shopping-quick-add button:active {
+  transform: translateY(1px);
+}
+
+/* Legacy shopping widget items (for backwards compat) */
+.shopping-widget-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.shopping-widget-list::-webkit-scrollbar {
+  display: none;
+}
+
+.shopping-widget-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.shopping-widget-item:hover {
+  background: rgba(255, 255, 255, 0.8);
+  transform: translateX(2px);
+}
+
+.shopping-widget-checkbox {
+  color: #cbd5e1;
+  font-size: 20px;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.shopping-widget-checkbox:hover {
+  color: var(--color-primary);
+}
+
+.shopping-widget-name {
+  flex: 1;
+  font-size: 14px;
+  color: var(--color-text-dark);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.shopping-widget-badge {
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  background: rgba(88, 129, 87, 0.1);
+  color: var(--color-primary-dark);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.shopping-widget-item.is-purchased .shopping-widget-checkbox {
+  color: var(--color-primary);
+}
+
+.shopping-widget-item.is-purchased .shopping-widget-name {
+  text-decoration: line-through;
+  color: #94a3b8;
+}
+
+.shopping-widget-item.is-purchased .shopping-widget-badge {
+  opacity: 0.5;
+}
+
+.shopping-empty {
+  margin-top: 16px;
+}
+
+.shopping-list-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ============================================================================
+   Essential Items Warning Banner
+   ============================================================================ */
+
+.essential-warning-banner {
+  border-radius: 16px;
+  overflow: hidden;
+  padding: 0;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: none;
+  box-shadow: none;
+}
+
+.essential-warning-banner.hidden {
+  display: none;
+}
+
+.essential-warning-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, rgba(254, 226, 226, 0.9), rgba(254, 202, 202, 0.85));
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  border-radius: 16px;
+  backdrop-filter: blur(8px);
+}
+
+.essential-warning-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.essential-warning-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.essential-warning-message-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.essential-warning-message {
+  color: var(--text-main);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.essential-warning-items {
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.btn-alert {
+  background: #ef4444;
+  color: white;
+  border-radius: 9999px;
+  padding: 6px 16px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.btn-alert:hover {
+  background: #dc2626;
+}
+
+/* ============================================================================
+   Winter Banner (Zazimovaná chata)
+   ============================================================================ */
+
+.winter-banner {
+  background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 50%, #f0f9ff 100%);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+  border-radius: var(--radius-lg, 12px);
+  padding: 16px 24px;
+  margin-bottom: 0;
+  box-shadow: var(--shadow-sm);
+  grid-column: 1 / -1;
+}
+
+.winter-banner.hidden {
+  display: none;
+}
+
+.winter-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.winter-banner-icon {
+  font-size: 1.6rem;
+  flex-shrink: 0;
+}
+
+.winter-banner-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.winter-banner-text strong {
+  color: #1e40af;
+  font-size: 0.95rem;
+  line-height: 1.3;
+}
+
+.winter-banner-text span {
+  color: #3b82f6;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 768px) {
+  .winter-banner {
+    padding: 12px 16px;
+  }
+
+  .winter-banner-icon {
+    font-size: 1.3rem;
+  }
+
+  .winter-banner-text strong {
+    font-size: 0.88rem;
+  }
+
+  .winter-banner-text span {
+    font-size: 0.8rem;
+  }
+}
+
+/* ============================================================================
+   Departure Banner (Odjezd dnes)
+   ============================================================================ */
+
+.departure-banner {
+  background-color: var(--color-warning-light, #fef3c7);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius-lg, 12px);
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-sm);
+  gap: 16px;
+  grid-column: 1 / -1;
+}
+
+.departure-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.departure-banner-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(245, 158, 11, 0.2);
+  color: #b45309;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.departure-banner-text {
+  min-width: 0;
+}
+
+.departure-banner-text h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: #92400e;
+  line-height: 1.3;
+}
+
+.departure-banner-text p {
+  margin: 2px 0 0;
+  color: #a16207;
+  font-size: 0.88rem;
+  line-height: 1.4;
+}
+
+.departure-banner-action {
+  flex-shrink: 0;
+  width: auto;
+}
+
+@media (max-width: 768px) {
+  .departure-banner {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 14px 16px;
+  }
+
+  .departure-banner-action {
+    width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .essential-warning-content {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .essential-warning-text {
+    align-items: flex-start;
+  }
+
+  .btn-alert {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* ============================================================================
+   Handover Modal
+   ============================================================================ */
+
+.handover-modal-content {
+  max-width: 500px;
+}
+
+.handover-textarea {
+  width: 100%;
+  min-height: 120px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md, 8px);
+  padding: 12px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.handover-textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(93, 155, 98, 0.1);
+}
+
+.handover-char-counter {
+  text-align: right;
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 4px;
+}
+
+.handover-modal-content .modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.handover-modal-content .modal-header h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.handover-modal-content .modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.handover-modal-content .modal-subtitle {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  margin: 0 0 10px 0;
+}
+
+.handover-modal-content .modal-buttons {
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+.handover-modal-content .modal-buttons .button-primary,
+.handover-modal-content .modal-buttons .button-secondary {
+  width: auto;
+}
+
+/* ============================================================================
+   Header & Greeting
+   ============================================================================ */
+
+.dashboard-mobile-header {
+  position: relative;
+  border-radius: 20px;
+  overflow: hidden;
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.header-bg {
+  height: 70px;
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark, #3a6b3e));
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .header-bg {
+    height: 80px;
+  }
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 24px 16px 24px;
+  margin-top: -30px;
+}
+
+.greeting-text {
+  font-size: 22px;
+  color: var(--color-text-dark);
+  margin-top: 20px;
+  text-shadow: 0 2px 4px rgba(255, 255, 255, 0.5);
+}
+
+.greeting-text strong {
+  font-weight: 800;
+}
+
+.dashboard-avatar-picker {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  font-size: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 3px solid white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: var(--color-primary);
+  color: white;
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative;
+  z-index: 1;
+}
+
+.dashboard-avatar-picker:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* ============================================================================
+   MOBILE RESPONSIVE
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .nordic-dashboard {
+    padding: 12px;
+    gap: 12px;
+    overflow-y: auto;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    grid-auto-rows: auto;
+    gap: 12px;
+    flex-grow: 0;
+  }
+
+  .dashboard-grid>.glass-card {
+    height: auto;
+    min-height: 0;
+  }
+
+  .glass-card {
+    padding: 16px;
+  }
+
+  .card-body-full {
+    gap: 12px;
+  }
+
+
+
+  .dashboard-notes-feed {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .dashboard-note-item {
+    flex: unset;
+  }
+
+  .status-hero-row {
+    gap: 12px;
+  }
+
+  .status-avatar-block {
+    width: 42px;
+    height: 42px;
+    font-size: 20px;
+  }
+
+  .status-name {
+    font-size: 17px;
+  }
+
+  .status-cta-row {
+    justify-content: stretch;
+    margin-top: 12px;
+  }
+
+  .status-cta-row .status-cta {
+    width: 100%;
+    justify-content: center;
+    padding: 10px 16px;
+    font-size: 14px;
+    border-radius: 12px;
+    min-height: 44px;
+  }
+
+  .status-handover {
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+
+  .empty-state-card {
+    min-height: 140px;
+    padding: 14px;
+    gap: 8px;
+  }
+
+  .empty-cta {
+    width: 100%;
+    justify-content: center;
+    padding: 10px 16px;
+    font-size: 14px;
+    min-height: 44px;
+  }
+
+  .dashboard-card-header-title {
+    font-size: 13px;
+  }
+
+  .dashboard-card-header-link {
+    font-size: 12px;
+  }
+
+  .weather-icon-large {
+    font-size: 36px;
+  }
+
+  .weather-temp {
+    font-size: 32px;
+  }
+
+  .weather-desc {
+    font-size: 14px;
+  }
+
+  .list-item-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+    border-radius: 9px;
+  }
+
+  .list-item-title {
+    font-size: 13px;
+  }
+
+  .list-item-subtitle {
+    font-size: 11px;
+  }
+
+  .header-bg {
+    height: 50px;
+  }
+
+  .header-content {
+    padding: 0 16px 12px 16px;
+    margin-top: -22px;
+    gap: 10px;
+  }
+
+  .greeting-text {
+    font-size: 16px;
+    margin-top: 10px;
+  }
+
+  .note-avatar {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+    border-radius: 8px;
+  }
+
+  .note-author {
+    font-size: 12px;
+  }
+
+  .note-time {
+    font-size: 10px;
+  }
+
+  .note-preview {
+    font-size: 12px;
+  }
+
+  .stat-card {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .stat-value {
+    font-size: 20px;
+  }
+
+  .card-footer {
+    padding-top: 12px;
+  }
+
+  .handover-note-text,
+  .nordic-dashboard .message-content {
+    padding-left: 12px;
+    font-size: 0.85rem;
+  }
+}
+
+/* Short viewports (small laptops) */
+@media (min-width: 1024px) and (max-height: 850px) {
+  .nordic-dashboard {
+    gap: 12px;
+    padding: 16px 24px;
+  }
+
+  .header-bg {
+    height: 60px;
+  }
+
+  .header-content {
+    padding-bottom: 8px;
+    margin-top: -25px;
+  }
+
+  .dashboard-avatar-picker {
+    width: 50px;
+    height: 50px;
+    font-size: 24px;
+    border-width: 3px;
+  }
+
+  .greeting-text {
+    font-size: 18px;
+    margin-top: 15px;
+  }
+
+  .dashboard-grid {
+    gap: 12px;
+  }
+
+  .status-cta {
+    padding: 6px 14px;
+    font-size: 12px;
+  }
+
+  .weather-icon-large {
+    font-size: 32px;
+  }
+
+  .weather-temp {
+    font-size: 28px;
+  }
+
+  .weather-desc {
+    font-size: 14px;
+  }
+
+  .stat-card {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .stat-value {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 380px) {
+  .nordic-dashboard {
+    padding: 8px;
+    gap: 10px;
+  }
+
+  .glass-card {
+    padding: 12px;
+  }
+
+  .card-body-full {
+    gap: 10px;
+  }
+
+  .status-avatar-block {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+    border-radius: 12px;
+  }
+
+  .status-name {
+    font-size: 15px;
+  }
+
+  .greeting-text {
+    font-size: 15px;
+  }
+
+  .weather-temp {
+    font-size: 28px;
+  }
+
+  .weather-forecast {
+    display: none;
+  }
+
+  .departure-checklist {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .checklist-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.88rem;
+    padding: 0;
+  }
+
+  .checklist-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--color-primary);
+    flex-shrink: 0;
+  }
+}
+
+/* ============================================================================
+   Checkout Reminder — Status Card (Dashboard)
+   ============================================================================ */
+
+.checkout-reminder {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  margin-top: 8px;
+}
+
+.checkout-reminder a {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.checkout-reminder a:hover {
+  opacity: 0.85;
+}
+
+.checkout-reminder-icon {
+  font-size: 1.15rem;
+  flex-shrink: 0;
+}
+
+.checkout-reminder-warn {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #92400e;
+}
+
+.checkout-reminder-warn a {
+  color: #92400e;
+}
+
+.checkout-reminder-done {
+  background: rgba(220, 252, 231, 0.7);
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+
+.checkout-reminder-missed {
+  background: rgba(254, 226, 226, 0.6);
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+@media (max-width: 768px) {
+  .checkout-reminder {
+    font-size: 0.82rem;
+    padding: 10px 12px;
+  }
+}

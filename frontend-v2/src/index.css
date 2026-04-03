@@ -1,0 +1,44 @@
+/**
+ * index.css — Import hub
+ * Importuje původní CSS soubory 1:1 (žádné přepisy).
+ * Tailwind se používá pouze jako doplněk pro nové wrappery.
+ */
+@import 'tailwindcss';
+
+/* ─── Původní design tokeny a global styly ─── */
+@import './styles/variables.css';
+@import './styles/base.css';
+@import './styles/layout.css';
+@import './styles/nav.css';
+@import './styles/forms.css';
+@import './styles/buttons.css';
+@import './styles/modal.css';
+@import './styles/dialogs.css';
+@import './styles/skeleton.css';
+@import './styles/toast.css';
+@import './styles/help.css';
+@import './styles/custom-select.css';
+@import './styles/view-transitions.css';
+
+/* ─── Stránkové styly ─── */
+@import './styles/dashboard.css';
+@import './styles/reservations.css';
+@import './styles/calendar.css';
+@import './styles/notes.css';
+@import './styles/shopping.css';
+@import './styles/gallery.css';
+@import './styles/lightbox.css';
+@import './styles/diary.css';
+@import './styles/reconstruction.css';
+@import './styles/admin.css';
+@import './styles/cabin-settings.css';
+@import './styles/superadmin.css';
+@import './styles/invite.css';
+@import './styles/landing.css';
+
+/* ─── React #root wrapper — body je display:flex, #root musí zabrat 100% šířky ─── */
+#root {
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+}

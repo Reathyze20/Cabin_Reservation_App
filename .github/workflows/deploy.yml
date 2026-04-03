@@ -148,6 +148,9 @@ jobs:
           # Clean up any accumulated .old directories
           rm -rf dist.old.* 2>/dev/null || true
 
+          echo "=== Installing frontend dependencies ==="
+          cd frontend-v2 && npm ci && cd ..
+
           echo "=== Building frontend ==="
           npm run build
 

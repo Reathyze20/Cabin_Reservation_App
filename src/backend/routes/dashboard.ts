@@ -1,18 +1,20 @@
 import { Router, Request, Response } from "express";
 import { protect } from "../../middleware/authMiddleware";
+import { requireCabin } from "../../middleware/cabinMiddleware";
 import prisma from "../../utils/prisma";
 import logger from "../../utils/logger";
 
 const router = Router();
 
 // ─── Helper: Find next free weekend (Sat–Sun) ─────────────────────────
-async function findNextFreeWeekend(): Promise<{ start: string; end: string } | null> {
+async function findNextFreeWeekend(cabinId: string): Promise<{ start: string; end: string } | null> {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
   // Pull all future primary reservations
   const futureReservations = await prisma.reservation.findMany({
     where: {
+      cabinId,
       status: "primary",
       dateTo: { gte: today },
     },
@@ -55,9 +57,11 @@ async function findNextFreeWeekend(): Promise<{ start: string; end: string } | n
 }
 
 // ============================================================================
-//                        GET DASHBOARD DATA
+//                        GET DASHBOARD DATA (GRANULAR)
 // ============================================================================
-router.get("/", protect, async (req: Request, res: Response) => {
+
+// 1. Reservations Route
+router.get("/reservations", protect, requireCabin, async (req: Request, res: Response) => {
   if (!req.user) {
     return res.status(401).json({ message: "Neautorizováno" });
   }
@@ -65,123 +69,42 @@ router.get("/", protect, async (req: Request, res: Response) => {
   try {
     const now = new Date();
     const todayStr = now.toISOString().split("T")[0];
+    const cabinId = req.user!.cabinId!;
 
-    // 1) Nearest upcoming reservations (next 3)
-    const upcomingReservations = await prisma.reservation.findMany({
-      where: {
-        dateFrom: { gte: new Date(todayStr) },
-        status: "primary",
-      },
-      include: {
-        user: {
-          select: { username: true, color: true, animalIcon: true },
-        },
-      },
-      orderBy: { dateFrom: "asc" },
-      take: 5,
-    });
-
-    // 2) Currently active reservation (someone is at the cabin right now)
-    const activeReservation = await prisma.reservation.findFirst({
-      where: {
-        dateFrom: { lte: new Date(todayStr) },
-        dateTo: { gte: new Date(todayStr) },
-        status: "primary",
-      },
-      include: {
-        user: {
-          select: { username: true, color: true, animalIcon: true },
-        },
-      },
-    });
-
-    // 2.5) Reservation ending today FOR THE CURRENT USER (Departure Mode)
-    const departingTodayReservation = await prisma.reservation.findFirst({
-      where: {
-        userId: req.user.userId,
-        dateTo: new Date(todayStr),
-        status: "primary",
-      },
-      select: {
-        handoverNote: true,
-      }
-    });
-
-    // 3) Shopping widget — top 5 pending items across all non-resolved lists, essential first
-    const pendingShoppingItems = await prisma.shoppingListItem.findMany({
-      where: {
-        purchased: false,
-        status: { not: "purchased" },
-        list: { isResolved: false, isPantry: false },
-      },
-      include: {
-        list: { select: { id: true, name: true } },
-      },
-      orderBy: [
-        { isEssential: "desc" },
-        { createdAt: "asc" },
-      ],
-      take: 5,
-    });
-
-    // 3b) Total pending count (for "+X dalších" label)
-    const totalPendingCount = await prisma.shoppingListItem.count({
-      where: {
-        purchased: false,
-        status: { not: "purchased" },
-        list: { isResolved: false, isPantry: false },
-      },
-    });
-
-    // 4) Latest notes (last 3)
-    const latestNotes = await prisma.note.findMany({
-      include: {
-        user: { select: { username: true } },
-      },
-      orderBy: { createdAt: "desc" },
-      take: 3,
-    });
-
-    // 5) User's own next reservation
-    const myNextReservation = await prisma.reservation.findFirst({
-      where: {
-        userId: req.user.userId,
-        dateFrom: { gte: new Date(todayStr) },
-      },
-      orderBy: { dateFrom: "asc" },
-    });
-
-    // 6) Essential items warning — pending essential shopping items in unresolved lists
-    const essentialPendingItems = await prisma.shoppingListItem.findMany({
-      where: {
-        isEssential: true,
-        purchased: false,
-        status: { not: "purchased" },
-        list: { isResolved: false, isPantry: false },
-      },
-      select: { id: true, name: true },
-      take: 10,
-    });
-
-    // 7) App settings (pinned handover note)
-    const appSettings = await prisma.appSettings.findFirst();
-
-    // 8) Next free weekend
-    const nextFreeWeekend = await findNextFreeWeekend();
+    const [upcomingReservations, activeReservation, departingTodayReservation, myNextReservation, nextFreeWeekend] = await Promise.all([
+      prisma.reservation.findMany({
+        where: { cabinId, dateFrom: { gte: new Date(todayStr) }, status: "primary" },
+        include: { user: { select: { username: true, color: true, animalIcon: true } } },
+        orderBy: { dateFrom: "asc" },
+        take: 5,
+      }),
+      prisma.reservation.findFirst({
+        where: { cabinId, dateFrom: { lte: new Date(todayStr) }, dateTo: { gte: new Date(todayStr) }, status: "primary" },
+        include: { user: { select: { username: true, color: true, animalIcon: true } } },
+      }),
+      prisma.reservation.findFirst({
+        where: { cabinId, userId: req.user.userId, dateTo: new Date(todayStr), status: "primary" },
+        select: { handoverNote: true }
+      }),
+      prisma.reservation.findFirst({
+        where: { cabinId, userId: req.user.userId, dateFrom: { gte: new Date(todayStr) } },
+        orderBy: { dateFrom: "asc" },
+      }),
+      findNextFreeWeekend(cabinId)
+    ]);
 
     res.json({
-      activeReservation: activeReservation
-        ? {
-          id: activeReservation.id,
-          username: activeReservation.user.username,
-          userColor: activeReservation.user.color,
-          userAnimalIcon: activeReservation.user.animalIcon,
-          from: activeReservation.dateFrom.toISOString().split("T")[0],
-          to: activeReservation.dateTo.toISOString().split("T")[0],
-          purpose: activeReservation.purpose,
-          handoverNote: activeReservation.handoverNote ?? null,
-        }
-        : null,
+      activeReservation: activeReservation ? {
+        id: activeReservation.id,
+        username: activeReservation.user.username,
+        userColor: activeReservation.user.color,
+        userAnimalIcon: activeReservation.user.animalIcon,
+        from: activeReservation.dateFrom.toISOString().split("T")[0],
+        to: activeReservation.dateTo.toISOString().split("T")[0],
+        purpose: activeReservation.purpose,
+        handoverNote: activeReservation.handoverNote ?? null,
+        isCheckoutCompleted: activeReservation.isCheckoutCompleted,
+      } : null,
       upcomingReservations: upcomingReservations
         .filter((r) => r.dateTo >= r.dateFrom)
         .map((r) => ({
@@ -195,14 +118,47 @@ router.get("/", protect, async (req: Request, res: Response) => {
           purpose: r.purpose,
           status: r.status,
         })),
-      myNextReservation: myNextReservation
-        ? {
-          from: myNextReservation.dateFrom.toISOString().split("T")[0],
-          to: myNextReservation.dateTo.toISOString().split("T")[0],
-          purpose: myNextReservation.purpose,
-        }
-        : null,
+      myNextReservation: myNextReservation ? {
+        from: myNextReservation.dateFrom.toISOString().split("T")[0],
+        to: myNextReservation.dateTo.toISOString().split("T")[0],
+        purpose: myNextReservation.purpose,
+      } : null,
       departingToday: departingTodayReservation !== null && !departingTodayReservation.handoverNote,
+      nextFreeWeekend,
+    });
+  } catch (error) {
+    logger.error("DASHBOARD", "Get reservations error", { error: String(error) });
+    res.status(500).json({ message: "Chyba při načítání rezervací." });
+  }
+});
+
+// 2. Shopping Route
+router.get("/shopping", protect, requireCabin, async (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({ message: "Neautorizováno" });
+  }
+
+  try {
+    const cabinId = req.user!.cabinId!;
+
+    const [pendingShoppingItems, totalPendingCount, essentialPendingItems] = await Promise.all([
+      prisma.shoppingListItem.findMany({
+        where: { purchased: false, status: { not: "purchased" }, list: { isResolved: false, isPantry: false, cabinId } },
+        include: { list: { select: { id: true, name: true } } },
+        orderBy: [{ isEssential: "desc" }, { createdAt: "asc" }],
+        take: 5,
+      }),
+      prisma.shoppingListItem.count({
+        where: { purchased: false, status: { not: "purchased" }, list: { isResolved: false, isPantry: false, cabinId } },
+      }),
+      prisma.shoppingListItem.findMany({
+        where: { isEssential: true, purchased: false, status: { not: "purchased" }, list: { isResolved: false, isPantry: false, cabinId } },
+        select: { id: true, name: true },
+        take: 10,
+      })
+    ]);
+
+    res.json({
       pendingShoppingItems: pendingShoppingItems.map((i) => ({
         id: i.id,
         name: i.name,
@@ -215,6 +171,35 @@ router.get("/", protect, async (req: Request, res: Response) => {
         count: essentialPendingItems.length,
         items: essentialPendingItems.map((i) => ({ id: i.id, name: i.name })),
       } : null,
+    });
+  } catch (error) {
+    logger.error("DASHBOARD", "Get shopping error", { error: String(error) });
+    res.status(500).json({ message: "Chyba při načítání nákupů." });
+  }
+});
+
+// 3. Notes / Handover Route
+router.get("/notes", protect, requireCabin, async (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({ message: "Neautorizováno" });
+  }
+
+  try {
+    const cabinId = req.user!.cabinId!;
+
+    const [latestNotes, appSettings] = await Promise.all([
+      prisma.note.findMany({
+        where: { cabinId },
+        include: { user: { select: { username: true } } },
+        orderBy: { createdAt: "desc" },
+        take: 3,
+      }),
+      prisma.appSettings.findUnique({
+        where: { id: `cabin_${cabinId}` },
+      })
+    ]);
+
+    res.json({
       latestNotes: latestNotes.map((n) => ({
         id: n.id,
         username: n.user.username,
@@ -222,13 +207,10 @@ router.get("/", protect, async (req: Request, res: Response) => {
         createdAt: n.createdAt.toISOString(),
       })),
       pinnedHandoverNote: appSettings?.pinnedHandoverNote ?? null,
-      nextFreeWeekend,
     });
   } catch (error) {
-    logger.error("DASHBOARD", "Get dashboard data error", {
-      error: String(error),
-    });
-    res.status(500).json({ message: "Chyba při načítání přehledu." });
+    logger.error("DASHBOARD", "Get notes error", { error: String(error) });
+    res.status(500).json({ message: "Chyba při načítání nástěnky." });
   }
 });
 

@@ -1,0 +1,349 @@
+/* ============================================================================
+   UNIFIED Modal — single source of truth for ALL modals in the app
+   ============================================================================ */
+
+/* ── Backdrop ─────────────────────────────────────────────────────────────── */
+.modal-unified-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal, 1000);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-lg, 16px);
+  background: var(--bg-overlay);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+/* ── Card ─────────────────────────────────────────────────────────────────── */
+.modal-unified-card {
+  background: var(--bg-card);
+  border-radius: 16px;
+  box-shadow:
+    0 24px 64px -12px rgba(0, 0, 0, 0.2),
+    0 8px 20px -4px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(148, 163, 184, 0.08);
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: 90vh;
+  max-height: 90dvh;
+  overflow: hidden;
+}
+
+/* ── Header ───────────────────────────────────────────────────────────────── */
+.modal-unified-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--color-border-light, #f1f5f9);
+  flex-shrink: 0;
+}
+
+.modal-unified-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-text, #1e293b);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.modal-unified-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  color: var(--color-text-muted, #94a3b8);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+
+.modal-unified-close:hover {
+  background: var(--color-bg-alt, #f1f5f9);
+  color: var(--color-text, #1e293b);
+}
+
+/* ── Body ─────────────────────────────────────────────────────────────────── */
+.modal-unified-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* ── Footer ───────────────────────────────────────────────────────────────── */
+.modal-unified-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--color-border-light, #f1f5f9);
+  background: var(--color-bg-secondary, #f8fafc);
+  border-radius: 0 0 16px 16px;
+  flex-shrink: 0;
+}
+/* ── Unified button sizes inside modals ───────────────────────────────── */
+.modal-unified-footer button,
+.modal-unified-body .modal-actions button {
+  padding: 9px 20px;
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: 600;
+  border-radius: var(--radius-md, 8px);
+  line-height: 1.4;
+  min-height: 38px;
+}
+/* ── Responsive ───────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .modal-unified-overlay {
+    padding: 12px;
+    align-items: flex-end;
+  }
+
+  .modal-unified-card {
+    border-radius: 16px 16px 0 0;
+    max-height: 92vh;
+    max-height: 92dvh;
+  }
+
+  .modal-unified-header {
+    padding: 14px 18px;
+  }
+
+  .modal-unified-body {
+    padding: 18px;
+  }
+
+  .modal-unified-footer {
+    padding: 14px 18px;
+  }
+}
+
+/* ============================================================================
+   Profile Drawer Restyle
+   ============================================================================ */
+.drawer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: flex-end;
+  /* right slide default */
+  align-items: stretch;
+  z-index: var(--z-modal);
+}
+
+.drawer-content {
+  background: var(--color-bg);
+  width: 450px;
+  max-width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -5px 0 25px rgba(0, 0, 0, 0.3);
+  animation: slide-in-right 0.3s ease-out;
+  overflow: hidden;
+}
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+.drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-xl);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--bg-card);
+}
+
+.drawer-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--color-text-dark);
+}
+
+.close-drawer {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  cursor: pointer;
+  color: var(--color-text-light);
+  line-height: 1;
+}
+
+.close-drawer:hover {
+  color: var(--color-text-dark);
+}
+
+.drawer-body {
+  flex: 1;
+  padding: var(--space-xl);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+}
+
+/* Segmented Control */
+.segmented-control {
+  display: flex;
+  background: var(--color-bg-alt);
+  padding: 4px;
+  border-radius: var(--radius-lg);
+}
+
+.segmented-btn {
+  flex: 1;
+  border: none;
+  background: none;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  color: var(--color-text-light);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.segmented-btn.active {
+  background: var(--bg-card);
+  color: var(--color-text-dark);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Tab contents */
+.drawer-tab-content {
+  display: none;
+  flex-direction: column;
+  gap: var(--space-xl);
+}
+
+.drawer-tab-content.active-tab {
+  display: flex;
+}
+
+.drawer-section h3 {
+  margin-top: 0;
+  margin-bottom: var(--space-md);
+  font-size: 1.1rem;
+  color: var(--color-text-dark);
+}
+
+/* Avatar and Color grids */
+.swatch-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.color-swatch {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 3px solid transparent;
+  transition: transform 0.2s, border-color 0.2s;
+  outline: none;
+}
+
+.color-swatch:focus-visible,
+.avatar-icon:focus-visible {
+  outline: 2px dashed var(--color-primary);
+  outline-offset: 4px;
+}
+
+.color-swatch.active {
+  border-color: var(--color-text-dark);
+  transform: scale(1.1);
+}
+
+.avatar-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.avatar-icon {
+  font-size: 1.7rem;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+  outline: none;
+  border: 2px solid transparent;
+  user-select: none;
+}
+
+.avatar-icon.active {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary);
+  transform: scale(1.1);
+}
+
+/* Drawer email row */
+.drawer-email-row input {
+  flex: 1;
+}
+
+/* Mobile Bottom Sheet Layout */
+@media (max-width: 768px) {
+  .drawer-overlay {
+    align-items: flex-end;
+    /* snap bottom */
+  }
+
+  .drawer-content {
+    width: 100%;
+    height: 85vh;
+    /* not full height on mobile */
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -5px 25px rgba(0, 0, 0, 0.3);
+    animation: slide-in-up 0.3s ease-out;
+  }
+
+  @keyframes slide-in-up {
+    from {
+      transform: translateY(100%);
+    }
+
+    to {
+      transform: translateY(0);
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .modal-content {
+    background-color: var(--bg-card) !important;
+    border: 1px solid var(--border-strong, #e5e7eb) !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04) !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .modal-content {
+    padding: var(--space-xl);
+  }
+}

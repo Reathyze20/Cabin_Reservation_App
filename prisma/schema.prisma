@@ -21,41 +21,129 @@ model AppSettings {
 }
 
 // ============================================================================
+// CABIN (Multi-tenant unit — každá chata = 1 tenant)
+// ============================================================================
+model Cabin {
+  id        String   @id @default(uuid())
+  name      String // Název chaty (např. "Chalupa pod Kletí")
+  subdomain String   @unique // Pro URL, např. "chalupa-klet"
+  features  Json? // Konfigurace zapnutých modulů a vlastností
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // ── Cabin profile / branding ──────────────────────────────────────────
+  description        String? @db.Text // Popis chaty ("Útulná chaloupka v podhůří...")
+  welcomeMessage     String? @map("welcome_message") @db.VarChar(300) // Motto / uvítací zpráva
+  address            String? @db.VarChar(300) // Adresa pro navigaci
+  rules              String? @db.Text // Domácí řád (markdown)
+  departureChecklist Json?   @map("departure_checklist") // JSON string[] — custom odjezdový checklist
+  coverPhotoUrl      String? @map("cover_photo_url") // URL cover fotky
+
+  // ── Weather / Frost alert fields ──────────────────────────────────────
+  weatherLocation  String?   @map("weather_location") @db.VarChar(100)
+  isWinterized     Boolean   @default(false) @map("is_winterized")
+  lastFrostAlertAt DateTime? @map("last_frost_alert_at")
+
+  // Relations — one cabin has many…
+  users           User[]
+  reservations    Reservation[]
+  shoppingLists   ShoppingList[]
+  inventory       InventoryItem[]
+  notes           Note[]
+  noteThreads     NoteThread[]
+  diaryFolders    DiaryFolder[]
+  reconstructions ReconstructionItem[]
+  galleryFolders  GalleryFolder[]
+  availabilities  UserAvailability[]
+  inviteLinks     InviteLink[]
+  wallpapers         Wallpaper[]
+  monthlyNotes       MonthlyNote[]
+  threadReadStatuses ThreadReadStatus[]
+
+  @@map("cabins")
+}
+
+// ============================================================================
+// WALLPAPER (Zen Mode)
+// ============================================================================
+model Wallpaper {
+  id        String   @id @default(uuid())
+  url       String
+  cabinId   String   @map("cabin_id")
+  cabin     Cabin    @relation(fields: [cabinId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("wallpapers")
+}
+
+// ============================================================================
 // USERS
 // ============================================================================
 model User {
-  id           String   @id @default(uuid())
-  username     String   @unique
-  passwordHash String   @map("password_hash")
-  color            String
-  animalIcon       String?  @map("animal_icon")
-  email            String?  @unique
-  isEmailVerified  Boolean  @default(false) @map("is_email_verified")
-  verificationCode String?  @map("verification_code")
+  id                String   @id @default(uuid())
+  username          String   @unique
+  passwordHash      String   @map("password_hash")
+  color             String
+  animalIcon        String?  @map("animal_icon")
+  email             String?  @unique
+  isEmailVerified   Boolean  @default(false) @map("is_email_verified")
+  verificationCode  String?  @map("verification_code")
   isVerified        Boolean  @default(false) @map("is_verified")
+  isSuperAdmin      Boolean  @default(false) @map("is_super_admin")
+  isBanned          Boolean  @default(false) @map("is_banned")
   verificationToken String?  @map("verification_token")
-  role             String   @default("user") // "admin" | "user" | "guest"
-  createdAt        DateTime @default(now()) @map("created_at")
+  role              String   @default("user") // "admin" | "user" | "guest"
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  // ── Cabin relation ────────────────────────────────────────────────────
+  cabinId String? @map("cabin_id")
+  cabin   Cabin?  @relation(fields: [cabinId], references: [id], onDelete: SetNull)
 
   // Relations
-  reservations              Reservation[]
-  shoppingListItemsAdded    ShoppingListItem[]           @relation("AddedBy")
-  shoppingListItemsPurchased ShoppingListItem[]          @relation("PurchasedBy")
-  shoppingItemSplits        ShoppingItemSplit[]
-  shoppingListsCreated      ShoppingList[]
-  noteThreads               NoteThread[]
-  notes                     Note[]
-  galleryFolders            GalleryFolder[]
-  galleryPhotos             GalleryPhoto[]
-  diaryFolders              DiaryFolder[]
-  diaryEntries              DiaryEntry[]
-  reconstructionItems       ReconstructionItem[]
-  reconstructionVotes       ReconstructionVote[]
-  reservationWatches        ReservationWatcher[]
-  inventoryUpdates          InventoryItem[]      @relation("UpdatedBy")
-  availabilities            UserAvailability[]
+  reservations               Reservation[]
+  shoppingListItemsAdded     ShoppingListItem[]   @relation("AddedBy")
+  shoppingListItemsPurchased ShoppingListItem[]   @relation("PurchasedBy")
+  shoppingItemSplits         ShoppingItemSplit[]
+  shoppingListsCreated       ShoppingList[]
+  noteThreads                NoteThread[]
+  notes                      Note[]
+  galleryFolders             GalleryFolder[]
+  galleryPhotos              GalleryPhoto[]
+  diaryFolders               DiaryFolder[]
+  diaryEntries               DiaryEntry[]
+  reconstructionItems        ReconstructionItem[]
+  reconstructionVotes        ReconstructionVote[]
+  reservationWatches         ReservationWatcher[]
+  inventoryUpdates           InventoryItem[]      @relation("UpdatedBy")
+  availabilities             UserAvailability[]
+  inviteLinksCreated         InviteLink[]
+  monthlyNotes               MonthlyNote[]
+  noteReactions              NoteReaction[]
+  threadReadStatuses         ThreadReadStatus[]
 
   @@map("users")
+}
+
+// ============================================================================
+// INVITE LINKS (magic links to join a cabin)
+// ============================================================================
+model InviteLink {
+  id        String   @id @default(uuid())
+  token     String   @unique @default(uuid())
+  role      String   @default("user") // "admin" | "user" | "guest"
+  maxUses   Int?     @map("max_uses")
+  usedCount Int      @default(0) @map("used_count")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // ── Cabin relation ────────────────────────────────────────────────────
+  cabinId String @map("cabin_id")
+  cabin   Cabin  @relation(fields: [cabinId], references: [id], onDelete: Cascade)
+
+  // ── Creator relation ──────────────────────────────────────────────────
+  createdById String @map("created_by_id")
+  createdBy   User   @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@map("invite_links")
 }
 
 // ============================================================================
@@ -72,8 +160,17 @@ model Reservation {
   status       String   @default("primary") // "primary" | "backup" | "soft"
   createdAt    DateTime @default(now()) @map("created_at")
 
+  // ── Checkout (odjezdový checklist) ────────────────────────────────────
+  isCheckoutCompleted Boolean   @default(false) @map("is_checkout_completed")
+  checkoutCompletedBy String?   @map("checkout_completed_by")
+  checkoutCompletedAt DateTime? @map("checkout_completed_at")
+
+  // ── Cabin relation ────────────────────────────────────────────────────
+  cabinId String? @map("cabin_id")
+  cabin   Cabin?  @relation(fields: [cabinId], references: [id], onDelete: Cascade)
+
   // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   watchers ReservationWatcher[]
 
   @@map("reservations")
@@ -90,34 +187,38 @@ enum ItemStatus {
 }
 
 model ShoppingList {
-  id          String             @id @default(uuid())
+  id          String   @id @default(uuid())
   name        String
-  createdById String             @map("created_by_id")
-  createdAt   DateTime           @default(now()) @map("created_at")
-  isResolved  Boolean            @default(false) @map("is_resolved")
-  isPantry    Boolean            @default(false) @map("is_pantry")
+  createdById String   @map("created_by_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  isResolved  Boolean  @default(false) @map("is_resolved")
+  isPantry    Boolean  @default(false) @map("is_pantry")
+
+  // ── Cabin relation ────────────────────────────────────────────────────
+  cabinId String? @map("cabin_id")
+  cabin   Cabin?  @relation(fields: [cabinId], references: [id], onDelete: Cascade)
 
   // Relations
-  createdBy   User               @relation(fields: [createdById], references: [id], onDelete: Cascade)
-  items       ShoppingListItem[]
+  createdBy User               @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  items     ShoppingListItem[]
 
   @@map("shopping_lists")
 }
 
 model ShoppingListItem {
-  id            String     @id @default(uuid())
-  listId        String?    @map("list_id") // Nullable initially for backward compatibility
-  name          String
-  addedById     String     @map("added_by_id")
-  createdAt     DateTime   @default(now()) @map("created_at")
-  status        ItemStatus @default(pending)
-  purchased     Boolean    @default(false) // kept for backward-compat; mirrors status === purchased
-  purchasedById String?    @map("purchased_by_id")
-  purchasedAt   DateTime?  @map("purchased_at")
-  price               Decimal?   @db.Decimal(10, 2)
-  linkedInventoryId   String?    @map("linked_inventory_id")
-  isEssential         Boolean    @default(false) @map("is_essential")
-  sourceMessageId     String?    @map("source_message_id")
+  id                String     @id @default(uuid())
+  listId            String?    @map("list_id") // Nullable initially for backward compatibility
+  name              String
+  addedById         String     @map("added_by_id")
+  createdAt         DateTime   @default(now()) @map("created_at")
+  status            ItemStatus @default(pending)
+  purchased         Boolean    @default(false) // kept for backward-compat; mirrors status === purchased
+  purchasedById     String?    @map("purchased_by_id")
+  purchasedAt       DateTime?  @map("purchased_at")
+  price             Decimal?   @db.Decimal(10, 2)
+  linkedInventoryId String?    @map("linked_inventory_id")
+  isEssential       Boolean    @default(false) @map("is_essential")
+  sourceMessageId   String?    @map("source_message_id")
 
   // Relations
   list        ShoppingList?       @relation(fields: [listId], references: [id], onDelete: Cascade)
@@ -149,26 +250,61 @@ model NoteThread {
   createdById String   @map("created_by_id")
   createdAt   DateTime @default(now()) @map("created_at")
 
+  // ── Cabin relation ────────────────────────────────────────────────────
+  cabinId String? @map("cabin_id")
+  cabin   Cabin?  @relation(fields: [cabinId], references: [id], onDelete: Cascade)
+
   // Relations
   createdBy User   @relation(fields: [createdById], references: [id], onDelete: Cascade)
   notes     Note[]
+  readStatuses ThreadReadStatus[]
 
+  @@index([cabinId])
   @@map("note_threads")
 }
 
 model Note {
-  id               String   @id @default(uuid())
-  userId           String   @map("user_id")
-  threadId         String?  @map("thread_id") // Null = General / Hlavní nástěnka
-  message          String   @db.Text
-  createdAt        DateTime @default(now()) @map("created_at")
-  isResolvedAsTask Boolean  @default(false) @map("is_resolved_as_task")
+  id               String    @id @default(uuid())
+  userId           String    @map("user_id")
+  threadId         String?   @map("thread_id") // Null = General / Hlavní nástěnka
+  message          String    @db.Text
+  createdAt        DateTime  @default(now()) @map("created_at")
+  isResolvedAsTask Boolean   @default(false) @map("is_resolved_as_task")
+  editedAt         DateTime? @map("edited_at")
+  isPinned         Boolean   @default(false) @map("is_pinned")
+  replyToId        String?   @map("reply_to_id")
+
+  // ── Cabin relation ────────────────────────────────────────────────────
+  cabinId String? @map("cabin_id")
+  cabin   Cabin?  @relation(fields: [cabinId], references: [id], onDelete: Cascade)
 
   // Relations
-  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  thread NoteThread? @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  thread    NoteThread?    @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  replyTo   Note?          @relation("NoteReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies   Note[]         @relation("NoteReplies")
+  reactions NoteReaction[]
 
+  @@index([cabinId, threadId])
+  @@index([cabinId, threadId, createdAt])
+  @@index([cabinId, threadId, isPinned])
   @@map("notes")
+}
+
+model NoteReaction {
+  id        String   @id @default(uuid())
+  noteId    String   @map("note_id")
+  userId    String   @map("user_id")
+  emoji     String   @db.VarChar(8)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  note Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([noteId, userId, emoji])
+  @@index([noteId])
+  @@map("note_reactions")
 }
 
 // ============================================================================
@@ -176,29 +312,34 @@ model Note {
 // ============================================================================
 model GalleryFolder {
   id          String   @id @default(uuid())
-  name        String   @unique
+  name        String
   createdById String?  @map("created_by_id")
   createdAt   DateTime @default(now()) @map("created_at")
+
+  // ── Cabin relation ────────────────────────────────────────────────────
+  cabinId String? @map("cabin_id")
+  cabin   Cabin?  @relation(fields: [cabinId], references: [id], onDelete: Cascade)
 
   // Relations
   createdBy User?          @relation(fields: [createdById], references: [id], onDelete: SetNull)
   photos    GalleryPhoto[]
 
+  @@unique([name, cabinId])
   @@map("gallery_folders")
 }
 
 model GalleryPhoto {
-  id            String   @id @default(uuid())
-  folderId      String   @map("folder_id")
-  src           String
-  uploadedById  String?  @map("uploaded_by_id")
-  description   String?  @db.Text
-  createdAt     DateTime @default(now()) @map("created_at")
+  id           String   @id @default(uuid())
+  folderId     String   @map("folder_id")
+  src          String
+  uploadedById String?  @map("uploaded_by_id")
+  description  String?  @db.Text
+  createdAt    DateTime @default(now()) @map("created_at")
 
   // Relations
-  folder         GalleryFolder       @relation(fields: [folderId], references: [id], onDelete: Cascade)
-  uploadedBy     User?               @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
-  diaryEntries   DiaryEntryPhoto[]
+  folder       GalleryFolder     @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  uploadedBy   User?             @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  diaryEntries DiaryEntryPhoto[]
 
   @@map("gallery_photos")
 }
@@ -214,6 +355,10 @@ model DiaryFolder {
   endDate     DateTime? @map("end_date") @db.Date
   activityTag String?   @map("activity_tag")
   createdAt   DateTime  @default(now()) @map("created_at")
+
+  // ── Cabin relation ────────────────────────────────────────────────────
+  cabinId String? @map("cabin_id")
+  cabin   Cabin?  @relation(fields: [cabinId], references: [id], onDelete: Cascade)
 
   // Relations
   createdBy User         @relation(fields: [createdById], references: [id], onDelete: Cascade)
@@ -231,9 +376,9 @@ model DiaryEntry {
   createdAt DateTime @default(now()) @map("created_at")
 
   // Relations
-  folder  DiaryFolder       @relation(fields: [folderId], references: [id], onDelete: Cascade)
-  author  User              @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  photos  DiaryEntryPhoto[]
+  folder DiaryFolder       @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  author User              @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  photos DiaryEntryPhoto[]
 
   @@map("diary_entries")
 }
@@ -254,22 +399,26 @@ model DiaryEntryPhoto {
 // RECONSTRUCTION
 // ============================================================================
 model ReconstructionItem {
-  id             String   @id @default(uuid())
-  category       String   // "idea" | "company" | "task"
-  title          String
-  description    String   @db.Text
-  link           String?
-  cost           Decimal? @db.Decimal(10, 2)
-  status         String   @default("pending") // "pending" | "approved" | "done"
-  thumbnail      String?
-  tag            String?
-  specialization String?
-  email          String?
-  phone          String?
-  deadline       DateTime? @db.Date
-  createdById    String   @map("created_by_id")
-  createdAt      DateTime @default(now()) @map("created_at")
-  sourceMessageId String? @map("source_message_id")
+  id              String    @id @default(uuid())
+  category        String // "idea" | "company" | "task"
+  title           String
+  description     String    @db.Text
+  link            String?
+  cost            Decimal?  @db.Decimal(10, 2)
+  status          String    @default("pending") // "pending" | "approved" | "done"
+  thumbnail       String?
+  tag             String?
+  specialization  String?
+  email           String?
+  phone           String?
+  deadline        DateTime? @db.Date
+  createdById     String    @map("created_by_id")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  sourceMessageId String?   @map("source_message_id")
+
+  // ── Cabin relation ────────────────────────────────────────────────────
+  cabinId String? @map("cabin_id")
+  cabin   Cabin?  @relation(fields: [cabinId], references: [id], onDelete: Cascade)
 
   // Relations
   createdBy User                 @relation(fields: [createdById], references: [id], onDelete: Cascade)
@@ -314,23 +463,26 @@ model InventoryItem {
   id          String   @id @default(uuid())
   name        String
   category    String   @default("OSTATNÍ")
-  status      String   @default("OK")   // OK | LOW | EMPTY
-  location    String?                   // Kde to leží, např. "Kůlna"
+  status      String   @default("OK") // OK | LOW | EMPTY
+  location    String? // Kde to leží, např. "Kůlna"
   inCart      Boolean  @default(false) @map("in_cart")
   isEssential Boolean  @default(false) @map("is_essential")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
   updatedById String?  @map("updated_by_id")
 
+  // ── Cabin relation ────────────────────────────────────────────────────
+  cabinId String? @map("cabin_id")
+  cabin   Cabin?  @relation(fields: [cabinId], references: [id], onDelete: Cascade)
+
   // Relations
-  updatedBy   User?    @relation("UpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  updatedBy User? @relation("UpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
 
   @@map("inventory_items")
 }
 
 // ============================================================================
 // USER AVAILABILITY (Osobní volno / Dovolené)
-// Multi-tenant: workspaceId bude přidán po zavedení Workspace modelu
 // ============================================================================
 model UserAvailability {
   id        String   @id @default(uuid())
@@ -339,8 +491,54 @@ model UserAvailability {
   endDate   DateTime @map("end_date") @db.Date
   createdAt DateTime @default(now()) @map("created_at")
 
+  // ── Cabin relation ────────────────────────────────────────────────────
+  cabinId String? @map("cabin_id")
+  cabin   Cabin?  @relation(fields: [cabinId], references: [id], onDelete: Cascade)
+
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_availabilities")
+}
+
+// ============================================================================
+// MONTHLY NOTE (Poznámka k měsíci na kalendáři)
+// ============================================================================
+model MonthlyNote {
+  id        String   @id @default(uuid())
+  year      Int
+  month     Int // 1–12
+  text      String   @db.Text
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // ── User who last edited ──────────────────────────────────────────────
+  updatedById String @map("updated_by_id")
+  updatedBy   User   @relation(fields: [updatedById], references: [id], onDelete: Cascade)
+
+  // ── Cabin relation ────────────────────────────────────────────────────
+  cabinId String? @map("cabin_id")
+  cabin   Cabin?  @relation(fields: [cabinId], references: [id], onDelete: Cascade)
+
+  @@unique([cabinId, year, month])
+  @@map("monthly_notes")
+}
+
+// ============================================================================
+// THREAD READ STATUS (Nepřečtené zprávy — per user × thread)
+// ============================================================================
+model ThreadReadStatus {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  threadId   String?  @map("thread_id") // null = "Hlavní"
+  cabinId    String   @map("cabin_id")
+  lastReadAt DateTime @default(now()) @map("last_read_at")
+
+  // Relations
+  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  thread NoteThread? @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  cabin  Cabin       @relation(fields: [cabinId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, threadId, cabinId])
+  @@index([cabinId, userId])
+  @@map("thread_read_statuses")
 }

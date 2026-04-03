@@ -6,6 +6,8 @@
 import express, { Request, Response } from "express";
 import { protect } from "../../middleware/authMiddleware";
 import { requireSuperAdmin } from "../../middleware/superAdminMiddleware";
+import { validate } from "../../validators/validate";
+import { superadminCreateUserSchema } from "../../validators/schemas";
 import prisma from "../../utils/prisma";
 import logger from "../../utils/logger";
 import bcrypt from "bcrypt";
@@ -41,14 +43,9 @@ router.get("/users", protect, requireSuperAdmin, async (req: Request, res: Respo
 
 // ─── POST /api/superadmin/users ──────────────────────────────────────────────
 // Ruční vytvoření uživatele (admin přidává uživatele)
-router.post("/users", protect, requireSuperAdmin, async (req: Request, res: Response) => {
+router.post("/users", protect, requireSuperAdmin, validate(superadminCreateUserSchema), async (req: Request, res: Response) => {
   try {
     const { username, email, role } = req.body;
-
-    if (!username || !email) {
-      res.status(400).json({ message: "Username a e-mail jsou povinné" });
-      return;
-    }
 
     // Kontrola zda uživatel již existuje
     const existingUser = await prisma.user.findFirst({
@@ -77,7 +74,7 @@ router.post("/users", protect, requireSuperAdmin, async (req: Request, res: Resp
         passwordHash,
         role: role || "user",
         color: "#" + Math.floor(Math.random() * 16777215).toString(16), // náhodná barva
-        animalIcon: "🐻", // default ikona
+        animalIcon: "lev", // default ikona
         isVerified: false,
         verificationToken,
       },
@@ -161,25 +158,10 @@ router.patch("/users/:id/ban", protect, requireSuperAdmin, async (req: Request, 
 // ─── GET /api/superadmin/logs ────────────────────────────────────────────────
 // Vrátí posledních 100 systémových logů
 router.get("/logs", protect, requireSuperAdmin, async (req: Request, res: Response) => {
-  try {
-    const logs = await prisma.systemLog.findMany({
-      take: 100,
-      orderBy: { createdAt: "desc" },
-      include: {
-        user: {
-          select: {
-            username: true,
-            email: true,
-          },
-        },
-      },
-    });
+  // The systemLog model has been removed from Prisma schema.
+  const logs: any[] = [];
 
-    res.json(logs);
-  } catch (error) {
-    logger.error("SUPERADMIN", "Failed to fetch system logs", { error: String(error) });
-    res.status(500).json({ message: "Chyba při načítání logů" });
-  }
+  res.json(logs);
 });
 
 export default router;

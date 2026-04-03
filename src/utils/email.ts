@@ -182,6 +182,101 @@ export const sendVerificationEmailWithToken = async (email: string, token: strin
   }
 };
 
+// ─── Frost alert email ──────────────────────────────────────────────────────
+
+export const sendFrostAlertEmail = async (
+  email: string,
+  username: string,
+  cabinName: string,
+  lowestTemp: number,
+  frostDatesFormatted: string
+): Promise<void> => {
+  if (!transporter) {
+    logger.warn("EMAIL", `[SIMULATION] Frost alert for ${email} — cabin "${cabinName}", lowest ${lowestTemp} °C`);
+    return;
+  }
+
+  const subject = `🥶 Varování před mrazem — ${cabinName}`;
+
+  const htmlContent = `<!DOCTYPE html>
+<html lang="cs">
+<head><meta charset="UTF-8" /></head>
+<body style="margin: 0; padding: 20px; background-color: #f4f7f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', Arial, sans-serif;">
+  <div style="max-width: 500px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);">
+
+    <div style="background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8e 100%); padding: 32px; text-align: center;">
+      <div style="font-size: 48px; margin-bottom: 12px;">🥶</div>
+      <h1 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: 700;">Pozor, hrozí mrazy!</h1>
+    </div>
+
+    <div style="padding: 32px;">
+      <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 16px 0;">
+        Ahoj <strong>${username}</strong>,
+      </p>
+      <p style="color: #374151; font-size: 15px; line-height: 1.6; margin: 0 0 16px 0;">
+        Předpověď pro chatu <strong>${cabinName}</strong> ukazuje, že v příštích dnech klesne teplota pod bod mrazu:
+      </p>
+
+      <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; margin: 16px 0;">
+        <p style="margin: 0 0 8px 0; font-weight: 700; color: #991b1b; font-size: 14px;">
+          ❄️ Nejnižší očekávaná teplota: <span style="font-size: 18px;">${lowestTemp} °C</span>
+        </p>
+        <p style="margin: 0; color: #991b1b; font-size: 13px;">
+          Dny s mrazem: ${frostDatesFormatted}
+        </p>
+      </div>
+
+      <p style="color: #374151; font-size: 15px; line-height: 1.6; margin: 16px 0;">
+        Pokud nemáte <strong>vypuštěnou vodu</strong> a zajištěné trubky, zvažte co nejdříve opatření, aby nedošlo k prasknutí potrubí.
+      </p>
+
+      <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; margin: 16px 0;">
+        <p style="margin: 0 0 8px 0; font-weight: 700; color: #166534; font-size: 14px;">✅ Co můžete udělat:</p>
+        <ul style="margin: 0; padding-left: 20px; color: #166534; font-size: 13px; line-height: 1.8;">
+          <li>Vypustit vodu z potrubí a bojleru</li>
+          <li>Zavřít hlavní uzávěr vody</li>
+          <li>Otevřít kohoutky pro odvzdušnění</li>
+          <li>Označit chatu jako „zazimovanou" v aplikaci</li>
+        </ul>
+      </div>
+
+      <p style="color: #9ca3af; font-size: 13px; line-height: 1.4; margin: 20px 0 0 0;">
+        Toto varování posíláme maximálně jednou za 7 dní. Pokud jste vodu již vypustili,
+        označte chatu jako „zazimovanou" v nastavení — upozornění se přestanou odesílat.
+      </p>
+    </div>
+  </div>
+
+  <div style="text-align: center; font-size: 12px; color: #9ca3af; margin-top: 16px; padding: 0 20px;">
+    <p style="margin: 0;">KdyNaChatu.cz — Správa rekreačních objektů pro rodiny a party</p>
+  </div>
+</body>
+</html>`;
+
+  const textContent =
+    `Ahoj ${username},\n\n` +
+    `Varování: Pro chatu „${cabinName}" předpověď ukazuje mrazy v příštích dnech.\n` +
+    `Nejnižší teplota: ${lowestTemp} °C\n` +
+    `Dny s mrazem: ${frostDatesFormatted}\n\n` +
+    `Pokud nemáte vypuštěnou vodu, zvažte opatření proti prasknutí trubek.\n\n` +
+    `— KdyNaChatu.cz`;
+
+  try {
+    const info = await transporter.sendMail({
+      from: EMAIL_FROM,
+      to: email,
+      subject,
+      text: textContent,
+      html: htmlContent,
+    });
+
+    logger.info("EMAIL", `Frost alert sent to ${email} for cabin "${cabinName}"`, { messageId: info.messageId });
+  } catch (error) {
+    logger.error("EMAIL", `Failed to send frost alert to ${email}`, { error: String(error) });
+    throw error;
+  }
+};
+
 // ─── Backward compatibility aliases ──────────────────────────────────────────
 
 /**
