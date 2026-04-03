@@ -141,10 +141,10 @@ jobs:
           npx prisma generate
 
           echo "=== Running database migrations ==="
-          # Fix: 20260301133234 was marked as applied but never ran (cabins table missing)
-          # Roll back both so they can be re-applied cleanly
+          # Fix: 20260301133234 is marked as "applied" but cabins table was never created.
+          # Execute its idempotent SQL directly, then resolve failed 20260303120000.
+          npx prisma db execute --file prisma/migrations/20260301133234_add_cabin_multi_tenant/migration.sql 2>/dev/null || true
           npx prisma migrate resolve --rolled-back 20260303120000_add_cabin_settings_fields 2>/dev/null || true
-          npx prisma migrate resolve --rolled-back 20260301133234_add_cabin_multi_tenant 2>/dev/null || true
           npx prisma migrate deploy
 
           echo "=== Cleaning dist directory ==="
