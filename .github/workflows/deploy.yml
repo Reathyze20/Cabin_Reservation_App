@@ -141,10 +141,29 @@ jobs:
           npx prisma generate
 
           echo "=== Running database migrations ==="
-          # Fix: 20260301133234 is marked as "applied" but cabins table was never created.
-          # Execute its idempotent SQL directly, then resolve failed 20260303120000.
-          npx prisma db execute --file prisma/migrations/20260301133234_add_cabin_multi_tenant/migration.sql 2>/dev/null || true
-          npx prisma migrate resolve --rolled-back 20260303120000_add_cabin_settings_fields 2>/dev/null || true
+          # Fix migration state: 20260301133234 is marked "applied" but cabins table was never created
+          echo "Checking if cabins table exists..."
+          CABINS_EXISTS=$(PGPASSWORD=$(grep DATABASE_URL .env | sed 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/') psql -h localhost -U $(grep DATABASE_URL .env | sed 's/.*:\/\/\([^:]*\):.*/\1/') -d cabin_reservation -tAc "SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name='cabins')" 2>/dev/null || echo "unknown")
+          echo "Cabins table exists: $CABINS_EXISTS"
+
+          if [ "$CABINS_EXISTS" != "t" ]; then
+            echo "Executing cabin migration SQL directly..."
+            npx prisma db execute --file prisma/migrations/20260301133234_add_cabin_multi_tenant/migration.sql || echo "WARNING: direct SQL execution failed, continuing..."
+          fi
+
+          # Resolve any failed migrations so migrate deploy can proceed
+          echo "Resolving failed migrations..."
+          npx prisma migrate resolve --rolled-back 20260303120000_add_cabin_settings_fields 2>&1 || true
+          npx prisma migrate resolve --rolled-back 20260303162519_remove_precise_location 2>&1 || true
+          npx prisma migrate resolve --rolled-back 20260303165649_add_checkout_fields 2>&1 || true
+          npx prisma migrate resolve --rolled-back 20260307112043_add_wallpapers 2>&1 || true
+          npx prisma migrate resolve --rolled-back 20260322091452_add_monthly_notes 2>&1 || true
+          npx prisma migrate resolve --rolled-back 20260322145523_add_note_indexes 2>&1 || true
+          npx prisma migrate resolve --rolled-back 20260322151531_add_chat_features 2>&1 || true
+          npx prisma migrate resolve --rolled-back 20260323155930_add_thread_read_status 2>&1 || true
+          npx prisma migrate resolve --rolled-back 20260402145027_gallery_folder_compound_unique 2>&1 || true
+
+          echo "Running prisma migrate deploy..."
           npx prisma migrate deploy
 
           echo "=== Cleaning dist directory ==="
