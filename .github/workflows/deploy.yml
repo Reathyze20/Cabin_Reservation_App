@@ -141,8 +141,10 @@ jobs:
           npx prisma generate
 
           echo "=== Running database migrations ==="
-          # Resolve any previously failed migrations before deploying
-          npx prisma migrate resolve --applied 20260301133234_add_cabin_multi_tenant 2>/dev/null || true
+          # Fix: 20260301133234 was marked as applied but never ran (cabins table missing)
+          # Roll back both so they can be re-applied cleanly
+          npx prisma migrate resolve --rolled-back 20260303120000_add_cabin_settings_fields 2>/dev/null || true
+          npx prisma migrate resolve --rolled-back 20260301133234_add_cabin_multi_tenant 2>/dev/null || true
           npx prisma migrate deploy
 
           echo "=== Cleaning dist directory ==="
