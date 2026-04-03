@@ -26,9 +26,8 @@ ALTER TABLE "shopping_lists" ADD COLUMN     "cabin_id" TEXT;
 ALTER TABLE "user_availabilities" ADD COLUMN     "cabin_id" TEXT;
 
 -- AlterTable
-ALTER TABLE "users" ADD COLUMN     "cabin_id" TEXT,
-ADD COLUMN     "is_banned" BOOLEAN NOT NULL DEFAULT false,
-ADD COLUMN     "is_super_admin" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "users" ADD COLUMN     "cabin_id" TEXT;
+-- is_banned and is_super_admin already added in 20260227081211_add_super_admin_and_system_logs
 
 -- CreateTable
 CREATE TABLE "cabins" (

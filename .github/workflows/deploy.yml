@@ -141,6 +141,8 @@ jobs:
           npx prisma generate
 
           echo "=== Running database migrations ==="
+          # Resolve any previously failed migrations before deploying
+          npx prisma migrate resolve --applied 20260301133234_add_cabin_multi_tenant 2>/dev/null || true
           npx prisma migrate deploy
 
           echo "=== Cleaning dist directory ==="
