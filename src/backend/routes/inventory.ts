@@ -1,5 +1,8 @@
 import { Router, Request, Response } from "express";
 import { protect } from "../../middleware/authMiddleware";
+import { requireCabin } from "../../middleware/cabinMiddleware";
+import { validate } from "../../validators/validate";
+import { createInventoryItemSchema, updateInventoryItemSchema, addToCartSchema } from "../../validators/schemas";
 import prisma from "../../utils/prisma";
 import logger from "../../utils/logger";
 
@@ -8,9 +11,10 @@ const router = Router();
 // ============================================================================
 //                           GET ALL INVENTORY ITEMS
 // ============================================================================
-router.get("/", protect, async (_req: Request, res: Response) => {
+router.get("/", protect, requireCabin, async (_req: Request, res: Response) => {
   try {
     const items = await prisma.inventoryItem.findMany({
+      where: { cabinId: _req.user!.cabinId },
       orderBy: [{ isEssential: "desc" }, { category: "asc" }, { name: "asc" }],
       include: { updatedBy: { select: { id: true, username: true } } },
     });
@@ -24,18 +28,11 @@ router.get("/", protect, async (_req: Request, res: Response) => {
 // ============================================================================
 //                           CREATE INVENTORY ITEM
 // ============================================================================
-router.post("/", protect, async (req: Request, res: Response) => {
+router.post("/", protect, requireCabin, validate(createInventoryItemSchema), async (req: Request, res: Response) => {
   try {
     const { name, category, status, location, isEssential } = req.body;
     // @ts-ignore
     const userId: string = req.user.userId;
-
-    if (!name || String(name).trim() === "") {
-      return res.status(400).json({ error: "Název zásoby je povinný." });
-    }
-    if (String(name).trim().length > 100) {
-      return res.status(400).json({ error: "Název je příliš dlouhý (max 100 znaků)." });
-    }
 
     const validStatuses = ["OK", "LOW", "EMPTY"];
     const safeStatus = validStatuses.includes(status) ? status : "OK";
@@ -48,6 +45,7 @@ router.post("/", protect, async (req: Request, res: Response) => {
         location: location ? String(location).trim() || null : null,
         isEssential: Boolean(isEssential),
         updatedById: userId,
+        cabinId: req.user!.cabinId!,
       },
       include: { updatedBy: { select: { id: true, username: true } } },
     });
@@ -62,14 +60,14 @@ router.post("/", protect, async (req: Request, res: Response) => {
 // ============================================================================
 //                           UPDATE INVENTORY ITEM
 // ============================================================================
-router.put("/:id", protect, async (req: Request, res: Response) => {
+router.put("/:id", protect, requireCabin, validate(updateInventoryItemSchema), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { name, category, status, location, isEssential } = req.body;
     // @ts-ignore
     const userId: string = req.user.userId;
 
-    const existing = await prisma.inventoryItem.findUnique({ where: { id } });
+    const existing = await prisma.inventoryItem.findFirst({ where: { id, cabinId: req.user!.cabinId } });
     if (!existing) {
       return res.status(404).json({ error: "Položka nenalezena." });
     }
@@ -100,7 +98,7 @@ router.put("/:id", protect, async (req: Request, res: Response) => {
 //                    TOGGLE isEssential ON INVENTORY ITEM
 // PATCH /:id/toggle-essential
 // ============================================================================
-router.patch("/:id/toggle-essential", protect, async (req: Request, res: Response) => {
+router.patch("/:id/toggle-essential", protect, requireCabin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     // @ts-ignore
@@ -109,7 +107,7 @@ router.patch("/:id/toggle-essential", protect, async (req: Request, res: Respons
       return res.status(403).json({ error: "Hosté nemohou měnit kritické položky." });
     }
 
-    const item = await prisma.inventoryItem.findUnique({ where: { id } });
+    const item = await prisma.inventoryItem.findFirst({ where: { id, cabinId: req.user!.cabinId } });
     if (!item) {
       return res.status(404).json({ error: "Položka nenalezena." });
     }
@@ -130,11 +128,11 @@ router.patch("/:id/toggle-essential", protect, async (req: Request, res: Respons
 // ============================================================================
 //                           DELETE INVENTORY ITEM
 // ============================================================================
-router.delete("/:id", protect, async (req: Request, res: Response) => {
+router.delete("/:id", protect, requireCabin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    const existing = await prisma.inventoryItem.findUnique({ where: { id } });
+    const existing = await prisma.inventoryItem.findFirst({ where: { id, cabinId: req.user!.cabinId } });
     if (!existing) {
       return res.status(404).json({ error: "Položka nenalezena." });
     }
@@ -153,7 +151,7 @@ router.delete("/:id", protect, async (req: Request, res: Response) => {
 // Body: { listId?: string } — přidat do existujícího seznamu
 //       { newListName?: string } — vytvořit nový seznam a přidat
 // ============================================================================
-router.post("/:id/add-to-cart", protect, async (req: Request, res: Response) => {
+router.post("/:id/add-to-cart", protect, requireCabin, validate(addToCartSchema), async (req: Request, res: Response) => {
   const { id } = req.params;
   const { listId, newListName } = req.body;
   // @ts-ignore
@@ -167,7 +165,7 @@ router.post("/:id/add-to-cart", protect, async (req: Request, res: Response) => 
       return res.status(400).json({ error: "Název seznamu je příliš dlouhý (max 100 znaků)." });
     }
 
-    const invItem = await prisma.inventoryItem.findUnique({ where: { id } });
+    const invItem = await prisma.inventoryItem.findFirst({ where: { id, cabinId: req.user!.cabinId } });
     if (!invItem) {
       return res.status(404).json({ error: "Položka nenalezena." });
     }
@@ -180,7 +178,7 @@ router.post("/:id/add-to-cart", protect, async (req: Request, res: Response) => 
 
       if (listId) {
         // a) Ověř existenci a že seznam je aktivní
-        const existing = await tx.shoppingList.findUnique({ where: { id: listId } });
+        const existing = await tx.shoppingList.findFirst({ where: { id: listId, cabinId: req.user!.cabinId } });
         if (!existing || existing.isResolved) {
           throw new Error("Seznam nenalezen nebo je archivovaný.");
         }
@@ -191,6 +189,7 @@ router.post("/:id/add-to-cart", protect, async (req: Request, res: Response) => 
           data: {
             name: String(newListName).trim(),
             createdById: userId,
+            cabinId: req.user!.cabinId!,
           },
         });
         targetListId = created.id;
@@ -224,18 +223,19 @@ router.post("/:id/add-to-cart", protect, async (req: Request, res: Response) => 
 // ============================================================================
 //  GET /missing-summary — počet LOW/EMPTY zásob pro post-rezervační notifikaci
 // ============================================================================
-router.get("/missing-summary", protect, async (_req: Request, res: Response) => {
+router.get("/missing-summary", protect, requireCabin, async (_req: Request, res: Response) => {
   try {
+    const cabinId = _req.user!.cabinId!;
     const [missingInventory, pendingShoppingCount] = await Promise.all([
       prisma.inventoryItem.findMany({
-        where: { status: { in: ["LOW", "EMPTY"] } },
+        where: { cabinId, status: { in: ["LOW", "EMPTY"] } },
         select: { id: true, name: true, status: true },
         orderBy: { status: "asc" }, // EMPTY první
       }),
       prisma.shoppingListItem.count({
         where: {
           purchased: false,
-          list: { isResolved: false, isPantry: false },
+          list: { isResolved: false, isPantry: false, cabinId },
         },
       }),
     ]);

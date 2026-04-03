@@ -1,5 +1,8 @@
 import { Router, Request, Response } from "express";
 import { protect } from "../../middleware/authMiddleware";
+import { requireCabin } from "../../middleware/cabinMiddleware";
+import { validate } from "../../validators/validate";
+import { createDiaryFolderSchema, renameDiaryFolderSchema, createDiaryEntrySchema, updateDiaryEntrySchema } from "../../validators/schemas";
 import prisma from "../../utils/prisma";
 import logger from "../../utils/logger";
 import { PrismaClient } from "../../generated/prisma/client.js";
@@ -9,9 +12,10 @@ const router = Router();
 // ============================================================================
 //                         GET ALL FOLDERS
 // ============================================================================
-router.get("/folders", protect, async (req: Request, res: Response) => {
+router.get("/folders", protect, requireCabin, async (req: Request, res: Response) => {
   try {
     const folders = await prisma.diaryFolder.findMany({
+      where: { cabinId: req.user!.cabinId },
       include: {
         createdBy: {
           select: {
@@ -64,16 +68,12 @@ router.get("/folders", protect, async (req: Request, res: Response) => {
 // ============================================================================
 //                          CREATE FOLDER
 // ============================================================================
-router.post("/folders", protect, async (req: Request, res: Response) => {
+router.post("/folders", protect, requireCabin, validate(createDiaryFolderSchema), async (req: Request, res: Response) => {
   if (!req.user) {
     return res.status(401).json({ message: "Neautorizováno" });
   }
 
   const { name, startDate, endDate, activityTag } = req.body;
-
-  if (!name || !startDate || !endDate) {
-    return res.status(400).json({ message: "Chybí název nebo datumy." });
-  }
 
   try {
     const newFolder = await prisma.diaryFolder.create({
@@ -81,6 +81,7 @@ router.post("/folders", protect, async (req: Request, res: Response) => {
         name,
         activityTag: activityTag || null,
         createdById: req.user.userId,
+        cabinId: req.user.cabinId!,
         startDate: new Date(startDate),
         endDate: new Date(endDate),
       },
@@ -112,7 +113,7 @@ router.post("/folders", protect, async (req: Request, res: Response) => {
 // ============================================================================
 //                          RENAME FOLDER
 // ============================================================================
-router.patch("/folders/:id", protect, async (req: Request, res: Response) => {
+router.patch("/folders/:id", protect, requireCabin, validate(renameDiaryFolderSchema), async (req: Request, res: Response) => {
   if (!req.user) {
     return res.status(401).json({ message: "Neautorizováno" });
   }
@@ -120,13 +121,9 @@ router.patch("/folders/:id", protect, async (req: Request, res: Response) => {
   const { id } = req.params;
   const { name: newName, activityTag } = req.body;
 
-  if (!newName || newName.trim().length === 0) {
-    return res.status(400).json({ message: "Název složky nesmí být prázdný." });
-  }
-
   try {
-    const folder = await prisma.diaryFolder.findUnique({
-      where: { id },
+    const folder = await prisma.diaryFolder.findFirst({
+      where: { id, cabinId: req.user!.cabinId },
       include: {
         createdBy: {
           select: {
@@ -140,7 +137,7 @@ router.patch("/folders/:id", protect, async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Deník nenalezen." });
     }
 
-    if (req.user.role !== "admin" && folder.createdBy.id !== req.user.userId) {
+    if (req.user!.role !== "admin" && folder.createdBy.id !== req.user!.userId) {
       return res.status(403).json({ message: "Nemáte oprávnění přejmenovat tento deník." });
     }
 
@@ -180,7 +177,7 @@ router.patch("/folders/:id", protect, async (req: Request, res: Response) => {
 // ============================================================================
 //                          DELETE FOLDER
 // ============================================================================
-router.delete("/folders/:id", protect, async (req: Request, res: Response) => {
+router.delete("/folders/:id", protect, requireCabin, async (req: Request, res: Response) => {
   if (!req.user) {
     return res.status(401).json({ message: "Neautorizováno" });
   }
@@ -188,8 +185,8 @@ router.delete("/folders/:id", protect, async (req: Request, res: Response) => {
   const { id } = req.params;
 
   try {
-    const folder = await prisma.diaryFolder.findUnique({
-      where: { id },
+    const folder = await prisma.diaryFolder.findFirst({
+      where: { id, cabinId: req.user.cabinId },
       include: {
         createdBy: {
           select: {
@@ -222,12 +219,28 @@ router.delete("/folders/:id", protect, async (req: Request, res: Response) => {
 // ============================================================================
 //                           GET ENTRIES
 // ============================================================================
-router.get("/entries", protect, async (req: Request, res: Response) => {
+router.get("/entries", protect, requireCabin, async (req: Request, res: Response) => {
   const { folderId } = req.query;
 
   try {
+    // Always scope entries to user's cabin
+    let where: any;
+    if (folderId) {
+      // Verify folder belongs to user's cabin
+      const folder = await prisma.diaryFolder.findFirst({
+        where: { id: folderId as string, cabinId: req.user!.cabinId },
+      });
+      if (!folder) {
+        return res.status(404).json({ message: "Složka nenalezena." });
+      }
+      where = { folderId: folderId as string };
+    } else {
+      // No folderId — scope to all entries in user's cabin
+      where = { folder: { cabinId: req.user!.cabinId } };
+    }
+
     const entries = await prisma.diaryEntry.findMany({
-      where: folderId ? { folderId: folderId as string } : undefined,
+      where,
       include: {
         author: {
           select: {
@@ -266,18 +279,22 @@ router.get("/entries", protect, async (req: Request, res: Response) => {
 // ============================================================================
 //                          CREATE ENTRY
 // ============================================================================
-router.post("/entries", protect, async (req: Request, res: Response) => {
+router.post("/entries", protect, requireCabin, validate(createDiaryEntrySchema), async (req: Request, res: Response) => {
   if (!req.user) {
     return res.status(401).json({ message: "Neautorizováno" });
   }
 
   const { folderId, date, content, galleryPhotoIds } = req.body;
 
-  if (!folderId || !date || !content) {
-    return res.status(400).json({ message: "Chybí data." });
-  }
-
   try {
+    // Verify folder belongs to user's cabin
+    const folder = await prisma.diaryFolder.findFirst({
+      where: { id: folderId, cabinId: req.user!.cabinId },
+    });
+    if (!folder) {
+      return res.status(404).json({ message: "Složka nenalezena." });
+    }
+
     const newEntry = await prisma.diaryEntry.create({
       data: {
         folderId,
@@ -324,7 +341,7 @@ router.post("/entries", protect, async (req: Request, res: Response) => {
 // ============================================================================
 //                          UPDATE ENTRY (PUT)
 // ============================================================================
-router.put("/entries/:id", protect, async (req: Request, res: Response) => {
+router.put("/entries/:id", protect, requireCabin, validate(updateDiaryEntrySchema), async (req: Request, res: Response) => {
   if (!req.user) {
     return res.status(401).json({ message: "Neautorizováno" });
   }
@@ -333,8 +350,11 @@ router.put("/entries/:id", protect, async (req: Request, res: Response) => {
   const { content, galleryPhotoIds } = req.body;
 
   try {
-    const existing = await prisma.diaryEntry.findUnique({ where: { id } });
-    if (!existing) {
+    const existing = await prisma.diaryEntry.findUnique({
+      where: { id },
+      include: { folder: { select: { cabinId: true } } },
+    });
+    if (!existing || existing.folder.cabinId !== req.user!.cabinId) {
       return res.status(404).json({ message: "Záznam nenalezen." });
     }
     if (req.user.role !== "admin" && existing.authorId !== req.user.userId) {
@@ -384,7 +404,7 @@ router.put("/entries/:id", protect, async (req: Request, res: Response) => {
 // ============================================================================
 //                          DELETE ENTRY
 // ============================================================================
-router.delete("/entries/:id", protect, async (req: Request, res: Response) => {
+router.delete("/entries/:id", protect, requireCabin, async (req: Request, res: Response) => {
   if (!req.user) {
     return res.status(401).json({ message: "Neautorizováno" });
   }
@@ -394,9 +414,10 @@ router.delete("/entries/:id", protect, async (req: Request, res: Response) => {
   try {
     const entry = await prisma.diaryEntry.findUnique({
       where: { id },
+      include: { folder: { select: { cabinId: true } } },
     });
 
-    if (!entry) {
+    if (!entry || entry.folder.cabinId !== req.user!.cabinId) {
       return res.status(404).json({ message: "Záznam nenalezen." });
     }
 

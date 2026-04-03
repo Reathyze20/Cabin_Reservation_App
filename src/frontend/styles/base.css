@@ -28,6 +28,25 @@ body {
   background-color: var(--bg-app, #f4f7f5);
 }
 
+/* ── Prevence blikajícího textového kurzoru (caret) ─────────────────── */
+/* Caret se smí zobrazovat POUZE v input/textarea/contenteditable.       */
+/* Na div, span, p, h*, kartách atd. caret nechceme vůbec.              */
+body {
+  caret-color: transparent;
+}
+
+input,
+textarea,
+[contenteditable="true"] {
+  caret-color: auto;
+}
+
+/* Odstraní focus outline při kliknutí myší na neklikatelné elementy.   */
+/* :focus-visible zůstane funkční pro keyboard navigaci (accessibility). */
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
 /* ── Globální placeholder kontrast ─────────────────────────────────── */
 ::placeholder {
   color: var(--text-placeholder, #9ca3af);

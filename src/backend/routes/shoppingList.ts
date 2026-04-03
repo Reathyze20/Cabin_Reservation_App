@@ -1,5 +1,8 @@
 import { Router, Request, Response } from "express";
 import { protect } from "../../middleware/authMiddleware";
+import { requireCabin } from "../../middleware/cabinMiddleware";
+import { validate } from "../../validators/validate";
+import { createShoppingItemSchema, updateItemStatusSchema } from "../../validators/schemas";
 import prisma from "../../utils/prisma";
 import logger from "../../utils/logger";
 
@@ -8,9 +11,12 @@ const router = Router();
 // ============================================================================
 //                      GET SHOPPING LISTS
 // ============================================================================
-router.get("/", protect, async (req: Request, res: Response) => {
+router.get("/", protect, requireCabin, async (req: Request, res: Response) => {
   try {
     const items = await prisma.shoppingListItem.findMany({
+      where: {
+        list: { cabinId: req.user!.cabinId },
+      },
       include: {
         addedBy: { select: { username: true } },
         purchasedBy: { select: { username: true } },
@@ -48,26 +54,24 @@ router.get("/", protect, async (req: Request, res: Response) => {
 // ============================================================================
 //                      CREATE SHOPPING LIST
 // ============================================================================
-router.post("/", protect, async (req: Request, res: Response) => {
+router.post("/", protect, requireCabin, async (req: Request, res: Response) => {
   res.status(200).json({ id: "default", name: "Hlavní seznam", items: [] });
 });
 
 // ============================================================================
 //                        ADD ITEM TO LIST
 // ============================================================================
-router.post("/:listId/items", protect, async (req: Request, res: Response) => {
+router.post("/:listId/items", protect, requireCabin, validate(createShoppingItemSchema), async (req: Request, res: Response) => {
   const { name, isEssential, sourceMessageId } = req.body;
   const { listId } = req.params;
 
-  if (!name) {
-    return res.status(400).json({ message: "Chybí název." });
-  }
-
-  if (name.length > 100) {
-    return res.status(400).json({ message: "Název položky je příliš dlouhý (max 100 znaků)." });
-  }
-
   try {
+    // Verify list belongs to user's cabin
+    if (listId !== "default") {
+      const list = await prisma.shoppingList.findFirst({ where: { id: listId, cabinId: req.user!.cabinId } });
+      if (!list) return res.status(404).json({ message: "Seznam nenalezen." });
+    }
+
     const newItem = await prisma.shoppingListItem.create({
       data: {
         name,
@@ -101,7 +105,7 @@ router.post("/:listId/items", protect, async (req: Request, res: Response) => {
 // ============================================================================
 //                    MARK ITEM AS PURCHASED / UPDATE STATUS
 // ============================================================================
-router.put("/:itemId/purchase", protect, async (req: Request, res: Response) => {
+router.put("/:itemId/purchase", protect, requireCabin, validate(updateItemStatusSchema), async (req: Request, res: Response) => {
   const { itemId } = req.params;
   // Accept either new `status` enum or legacy boolean `purchased`
   let { status, purchased, price, splitWith } = req.body;
@@ -119,44 +123,63 @@ router.put("/:itemId/purchase", protect, async (req: Request, res: Response) => 
   const isPurchased = status === "purchased";
 
   try {
-    // Update main item
-    const updated = await prisma.shoppingListItem.update({
+    // Verify item's list belongs to user's cabin
+    const item = await prisma.shoppingListItem.findUnique({
       where: { id: itemId },
-      data: {
-        status,
-        purchased: isPurchased,
-        ...(isPurchased
-          ? {
-            purchasedById: req.user!.userId,
-            purchasedAt: new Date(),
-            price: price ? parseFloat(price) : null,
-          }
-          : {
-            purchasedById: null,
-            purchasedAt: null,
-            price: null,
-          }),
-      },
-      include: {
-        addedBy: { select: { username: true } },
-        purchasedBy: { select: { username: true } },
-      },
+      include: { list: { select: { cabinId: true } } },
     });
-
-    // Handle splits
-    if (isPurchased && splitWith && Array.isArray(splitWith)) {
-      await prisma.shoppingItemSplit.deleteMany({ where: { itemId } });
-      if (splitWith.length > 0) {
-        await prisma.shoppingItemSplit.createMany({
-          data: splitWith.map((userId: string) => ({ itemId, userId })),
-        });
-      }
-    } else if (!isPurchased) {
-      await prisma.shoppingItemSplit.deleteMany({ where: { itemId } });
+    if (!item || (item.list && item.list.cabinId !== req.user!.cabinId)) {
+      return res.status(404).json({ message: "Položka nenalezena." });
     }
 
-    // Fetch splits for response
-    const splits = await prisma.shoppingItemSplit.findMany({ where: { itemId } });
+    // Use transaction — update item + restock linked inventory + handle splits
+    const { updated, splits } = await prisma.$transaction(async (tx) => {
+      const updatedItem = await tx.shoppingListItem.update({
+        where: { id: itemId },
+        data: {
+          status,
+          purchased: isPurchased,
+          ...(isPurchased
+            ? {
+              purchasedById: req.user!.userId,
+              purchasedAt: new Date(),
+              price: price ? parseFloat(price) : null,
+            }
+            : {
+              purchasedById: null,
+              purchasedAt: null,
+              price: null,
+            }),
+        },
+        include: {
+          addedBy: { select: { username: true } },
+          purchasedBy: { select: { username: true } },
+        },
+      });
+
+      // Auto-restock: if purchased and linked to inventory → set OK + remove from cart
+      if (isPurchased && updatedItem.linkedInventoryId) {
+        await tx.inventoryItem.update({
+          where: { id: updatedItem.linkedInventoryId },
+          data: { status: "OK", inCart: false },
+        });
+      }
+
+      // Handle splits
+      if (isPurchased && splitWith && Array.isArray(splitWith)) {
+        await tx.shoppingItemSplit.deleteMany({ where: { itemId } });
+        if (splitWith.length > 0) {
+          await tx.shoppingItemSplit.createMany({
+            data: splitWith.map((userId: string) => ({ itemId, userId })),
+          });
+        }
+      } else if (!isPurchased) {
+        await tx.shoppingItemSplit.deleteMany({ where: { itemId } });
+      }
+
+      const itemSplits = await tx.shoppingItemSplit.findMany({ where: { itemId } });
+      return { updated: updatedItem, splits: itemSplits };
+    });
 
     res.json({
       id: updated.id,
@@ -183,6 +206,7 @@ router.put("/:itemId/purchase", protect, async (req: Request, res: Response) => 
 router.put(
   "/:listId/items/:itemId/purchase",
   protect,
+  requireCabin,
   async (req: Request, res: Response) => {
     // Rewrite params so the main handler sees itemId
     req.params = { ...req.params, itemId: req.params.itemId };
@@ -200,16 +224,21 @@ router.put(
 // ============================================================================
 //                 MOVE ITEM FROM PANTRY TO LATEST SHOPPING LIST
 // ============================================================================
-router.post("/:itemId/move-from-pantry", protect, async (req: Request, res: Response) => {
+router.post("/:itemId/move-from-pantry", protect, requireCabin, async (req: Request, res: Response) => {
   const { itemId } = req.params;
 
   try {
-    const item = await prisma.shoppingListItem.findUnique({ where: { id: itemId } });
-    if (!item) return res.status(404).json({ message: "Položka nenalezena." });
+    const item = await prisma.shoppingListItem.findUnique({
+      where: { id: itemId },
+      include: { list: { select: { cabinId: true } } },
+    });
+    if (!item || (item.list && item.list.cabinId !== req.user!.cabinId)) {
+      return res.status(404).json({ message: "Položka nenalezena." });
+    }
 
-    // Najdi nejnovější normální (ne-pantry) nákupní seznam
+    // Najdi nejnovější normální (ne-pantry) nákupní seznam v rámci cabin
     let targetList = await prisma.shoppingList.findFirst({
-      where: { isResolved: false, isPantry: false },
+      where: { isResolved: false, isPantry: false, cabinId: req.user!.cabinId },
       orderBy: { createdAt: "desc" }
     });
 
@@ -218,9 +247,9 @@ router.post("/:itemId/move-from-pantry", protect, async (req: Request, res: Resp
       targetList = await prisma.shoppingList.create({
         data: {
           name: "Aktuální nákup",
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
           createdById: req.user.userId,
+          cabinId: req.user!.cabinId!,
         }
       });
     }
@@ -250,7 +279,7 @@ router.post("/:itemId/move-from-pantry", protect, async (req: Request, res: Resp
 // ============================================================================
 //                 TOGGLE isEssential ON SHOPPING ITEM
 // ============================================================================
-router.patch("/:itemId/toggle-essential", protect, async (req: Request, res: Response) => {
+router.patch("/:itemId/toggle-essential", protect, requireCabin, async (req: Request, res: Response) => {
   const { itemId } = req.params;
   try {
     // @ts-ignore
@@ -259,8 +288,11 @@ router.patch("/:itemId/toggle-essential", protect, async (req: Request, res: Res
       return res.status(403).json({ message: "Hosté nemohou měnit kritické položky." });
     }
 
-    const item = await prisma.shoppingListItem.findUnique({ where: { id: itemId } });
-    if (!item) {
+    const item = await prisma.shoppingListItem.findUnique({
+      where: { id: itemId },
+      include: { list: { select: { cabinId: true } } },
+    });
+    if (!item || (item.list && item.list.cabinId !== req.user!.cabinId)) {
       return res.status(404).json({ message: "Položka nenalezena." });
     }
 
@@ -282,13 +314,13 @@ router.patch("/:itemId/toggle-essential", protect, async (req: Request, res: Res
 async function deleteItem(req: Request, res: Response) {
   const { itemId } = req.params;
   try {
-    // First, fetch the item to check for linked inventory
+    // Fetch the item and verify it belongs to user's cabin
     const item = await prisma.shoppingListItem.findUnique({
       where: { id: itemId },
-      select: { linkedInventoryId: true },
+      select: { linkedInventoryId: true, list: { select: { cabinId: true } } },
     });
 
-    if (!item) {
+    if (!item || (item.list && item.list.cabinId !== req.user!.cabinId)) {
       return res.status(404).json({ message: "Položka nenalezena" });
     }
 
@@ -312,9 +344,9 @@ async function deleteItem(req: Request, res: Response) {
   }
 }
 
-router.delete("/:itemId", protect, deleteItem);
+router.delete("/:itemId", protect, requireCabin, deleteItem);
 
 // Legacy endpoint — same handler, just different path pattern
-router.delete("/:listId/items/:itemId", protect, deleteItem);
+router.delete("/:listId/items/:itemId", protect, requireCabin, deleteItem);
 
 export default router;

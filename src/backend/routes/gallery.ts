@@ -1,5 +1,8 @@
 import { Router, Request, Response } from "express";
 import { protect } from "../../middleware/authMiddleware";
+import { requireCabin } from "../../middleware/cabinMiddleware";
+import { validate } from "../../validators/validate";
+import { createFolderSchema, renameFolderSchema, updatePhotoDescriptionSchema, bulkDeletePhotosSchema } from "../../validators/schemas";
 import prisma from "../../utils/prisma";
 import logger from "../../utils/logger";
 import { UPLOADS_PATH, THUMBS_PATH } from "../../config/config";
@@ -36,14 +39,23 @@ const upload = multer({
 // ============================================================================
 //                         GET ALL FOLDERS
 // ============================================================================
-router.get("/folders", protect, async (req: Request, res: Response) => {
+router.get("/folders", protect, requireCabin, async (req: Request, res: Response) => {
   try {
     const folders = await prisma.galleryFolder.findMany({
+      where: { cabinId: req.user!.cabinId },
       include: {
         createdBy: {
           select: {
             username: true,
           },
+        },
+        photos: {
+          select: { src: true },
+          orderBy: { createdAt: "desc" },
+          take: 1,
+        },
+        _count: {
+          select: { photos: true },
         },
       },
       orderBy: {
@@ -51,12 +63,18 @@ router.get("/folders", protect, async (req: Request, res: Response) => {
       },
     });
 
-    const formatted = folders.map((folder) => ({
-      id: folder.id,
-      name: folder.name,
-      createdAt: folder.createdAt.toISOString(),
-      createdBy: folder.createdBy?.username,
-    }));
+    const formatted = folders.map((folder) => {
+      const latestPhoto = folder.photos[0];
+      const thumbFileName = latestPhoto?.src.split("/uploads/")[1];
+      return {
+        id: folder.id,
+        name: folder.name,
+        photoCount: folder._count.photos,
+        coverPhotoUrl: thumbFileName ? `/uploads/thumbs/${thumbFileName}` : null,
+        createdAt: folder.createdAt.toISOString(),
+        createdBy: folder.createdBy?.username,
+      };
+    });
 
     res.json(formatted);
   } catch (error) {
@@ -68,20 +86,16 @@ router.get("/folders", protect, async (req: Request, res: Response) => {
 // ============================================================================
 //                          CREATE FOLDER
 // ============================================================================
-router.post("/folders", protect, async (req: Request, res: Response) => {
+router.post("/folders", protect, requireCabin, validate(createFolderSchema), async (req: Request, res: Response) => {
   if (!req.user) {
     return res.status(401).json({ message: "Neautorizováno" });
   }
 
   const { name } = req.body;
 
-  if (!name || name.trim().length === 0) {
-    return res.status(400).json({ message: "Chybí název složky." });
-  }
-
   try {
-    const existing = await prisma.galleryFolder.findUnique({
-      where: { name: name.trim() },
+    const existing = await prisma.galleryFolder.findFirst({
+      where: { name: name.trim(), cabinId: req.user!.cabinId },
     });
 
     if (existing) {
@@ -92,6 +106,7 @@ router.post("/folders", protect, async (req: Request, res: Response) => {
       data: {
         name: name.trim(),
         createdById: req.user.userId,
+        cabinId: req.user.cabinId!,
       },
       include: {
         createdBy: {
@@ -117,7 +132,7 @@ router.post("/folders", protect, async (req: Request, res: Response) => {
 // ============================================================================
 //                          RENAME FOLDER
 // ============================================================================
-router.patch("/folders/:id", protect, async (req: Request, res: Response) => {
+router.patch("/folders/:id", protect, requireCabin, validate(renameFolderSchema), async (req: Request, res: Response) => {
   if (!req.user) {
     return res.status(401).json({ message: "Neautorizováno" });
   }
@@ -125,14 +140,19 @@ router.patch("/folders/:id", protect, async (req: Request, res: Response) => {
   const { id } = req.params;
   const { name: newName } = req.body;
 
-  if (!newName || newName.trim().length === 0) {
-    return res.status(400).json({ message: "Název složky nesmí být prázdný." });
-  }
-
   try {
+    // Verify the folder being renamed belongs to user's cabin
+    const folderToRename = await prisma.galleryFolder.findFirst({
+      where: { id, cabinId: req.user!.cabinId },
+    });
+    if (!folderToRename) {
+      return res.status(404).json({ message: "Složka nenalezena." });
+    }
+
     const existing = await prisma.galleryFolder.findFirst({
       where: {
         name: newName.trim(),
+        cabinId: req.user!.cabinId,
         NOT: { id },
       },
     });
@@ -171,7 +191,7 @@ router.patch("/folders/:id", protect, async (req: Request, res: Response) => {
 // ============================================================================
 //                          DELETE FOLDER
 // ============================================================================
-router.delete("/folders/:id", protect, async (req: Request, res: Response) => {
+router.delete("/folders/:id", protect, requireCabin, async (req: Request, res: Response) => {
   if (!req.user) {
     return res.status(401).json({ message: "Neautorizováno" });
   }
@@ -183,10 +203,18 @@ router.delete("/folders/:id", protect, async (req: Request, res: Response) => {
       where: { folderId: id },
     });
 
-    if (photosInFolder.length > 0 && req.user.role !== "admin") {
+    // Verify folder belongs to user's cabin
+    const folder = await prisma.galleryFolder.findFirst({
+      where: { id, cabinId: req.user!.cabinId },
+    });
+    if (!folder) {
+      return res.status(404).json({ message: "Složka nenalezena." });
+    }
+
+    if (photosInFolder.length > 0 && req.user.role !== "admin" && folder.createdById !== req.user.userId) {
       return res
         .status(403)
-        .json({ message: "Složka není prázdná. Pouze administrátor ji může smazat." });
+        .json({ message: "Složku s fotkami může smazat pouze její autor nebo administrátor." });
     }
 
     // Delete physical files in parallel
@@ -217,14 +245,24 @@ router.delete("/folders/:id", protect, async (req: Request, res: Response) => {
 // ============================================================================
 //                           GET PHOTOS
 // ============================================================================
-router.get("/photos", protect, async (req: Request, res: Response) => {
+router.get("/photos", protect, requireCabin, async (req: Request, res: Response) => {
   try {
     const { folderId, ids } = req.query;
 
-    // Build where clause
+    // Build where clause — always scoped to cabin via folder
     const where: any = {};
     if (folderId) {
+      // Verify folder belongs to user's cabin
+      const folder = await prisma.galleryFolder.findFirst({
+        where: { id: folderId as string, cabinId: req.user!.cabinId },
+      });
+      if (!folder) {
+        return res.status(404).json({ message: "Složka nenalezena." });
+      }
       where.folderId = folderId as string;
+    } else {
+      // If no folderId, scope to folders belonging to this cabin
+      where.folder = { cabinId: req.user!.cabinId };
     }
     if (ids) {
       // Support ?ids=id1,id2,id3
@@ -269,7 +307,7 @@ router.get("/photos", protect, async (req: Request, res: Response) => {
 // ============================================================================
 //                          UPLOAD PHOTO(S)
 // ============================================================================
-router.post("/photos", protect, upload.array("photos", 20), async (req: Request, res: Response) => {
+router.post("/photos", protect, requireCabin, upload.array("photos", 20), async (req: Request, res: Response) => {
   if (!req.user) {
     return res.status(401).json({ message: "Neautorizováno" });
   }
@@ -280,59 +318,68 @@ router.post("/photos", protect, upload.array("photos", 20), async (req: Request,
     return res.status(400).json({ message: "Chybí ID složky." });
   }
 
+  // Verify folder belongs to user's cabin
+  const folder = await prisma.galleryFolder.findFirst({
+    where: { id: folderId, cabinId: req.user.cabinId },
+  });
+  if (!folder) {
+    return res.status(404).json({ message: "Složka nenalezena." });
+  }
+
   const files = req.files as Express.Multer.File[];
   if (!files || files.length === 0) {
     return res.status(400).json({ message: "Žádné soubory k nahrání." });
   }
 
   try {
-    const results = [];
+    // Process all images in parallel (sharp + DB insert)
+    const results = await Promise.all(
+      files.map(async (file) => {
+        const fileName = `${uuidv4()}.webp`;
+        const filePath = path.join(uploadsPath, fileName);
+        const thumbFilePath = path.join(thumbsPath, fileName);
 
-    for (const file of files) {
-      const fileName = `${uuidv4()}.webp`;
-      const filePath = path.join(uploadsPath, fileName);
-      const thumbFilePath = path.join(thumbsPath, fileName);
+        // Optimize original + generate thumbnail in parallel
+        await Promise.all([
+          sharp(file.buffer)
+            .resize(1920, 1920, { fit: "inside", withoutEnlargement: true })
+            .webp({ quality: 82 })
+            .toFile(filePath),
+          sharp(file.buffer)
+            .resize(400, 400, { fit: "inside", withoutEnlargement: true })
+            .webp({ quality: 70 })
+            .toFile(thumbFilePath),
+        ]);
 
-      // Optimize original — convert to WebP, max 1920px wide
-      await sharp(file.buffer)
-        .resize(1920, 1920, { fit: "inside", withoutEnlargement: true })
-        .webp({ quality: 82 })
-        .toFile(filePath);
-
-      // Generate thumbnail — 400px wide
-      await sharp(file.buffer)
-        .resize(400, 400, { fit: "inside", withoutEnlargement: true })
-        .webp({ quality: 70 })
-        .toFile(thumbFilePath);
-
-      const newPhoto = await prisma.galleryPhoto.create({
-        data: {
-          folderId,
-          src: `/uploads/${fileName}`,
-          uploadedById: req.user.userId,
-          description: "",
-        },
-        include: {
-          uploadedBy: {
-            select: {
-              username: true,
+        const newPhoto = await prisma.galleryPhoto.create({
+          data: {
+            folderId,
+            src: `/uploads/${fileName}`,
+            uploadedById: req.user!.userId,
+            description: "",
+          },
+          include: {
+            uploadedBy: {
+              select: {
+                username: true,
+              },
             },
           },
-        },
-      });
+        });
 
-      results.push({
-        id: newPhoto.id,
-        folderId: newPhoto.folderId,
-        src: newPhoto.src,
-        thumb: `/uploads/thumbs/${fileName}`,
-        uploadedBy: newPhoto.uploadedBy?.username,
-        createdAt: newPhoto.createdAt.toISOString(),
-        description: newPhoto.description,
-      });
-    }
+        return {
+          id: newPhoto.id,
+          folderId: newPhoto.folderId,
+          src: newPhoto.src,
+          thumb: `/uploads/thumbs/${fileName}`,
+          uploadedBy: newPhoto.uploadedBy?.username,
+          createdAt: newPhoto.createdAt.toISOString(),
+          description: newPhoto.description,
+        };
+      })
+    );
 
-    res.status(201).json(results.length === 1 ? results[0] : results);
+    res.status(201).json(results);
   } catch (error) {
     logger.error("GALLERY", "Upload photo error", { error: String(error) });
     res.status(500).json({ message: "Chyba při nahrávání fotky." });
@@ -342,7 +389,7 @@ router.post("/photos", protect, upload.array("photos", 20), async (req: Request,
 // ============================================================================
 //                        UPDATE PHOTO DESCRIPTION
 // ============================================================================
-router.patch("/photos/:id", protect, async (req: Request, res: Response) => {
+router.patch("/photos/:id", protect, requireCabin, validate(updatePhotoDescriptionSchema), async (req: Request, res: Response) => {
   if (!req.user) {
     return res.status(401).json({ message: "Neautorizováno" });
   }
@@ -351,6 +398,15 @@ router.patch("/photos/:id", protect, async (req: Request, res: Response) => {
   const { description } = req.body;
 
   try {
+    // Verify photo's folder belongs to user's cabin
+    const existing = await prisma.galleryPhoto.findUnique({
+      where: { id },
+      include: { folder: { select: { cabinId: true } } },
+    });
+    if (!existing || existing.folder.cabinId !== req.user!.cabinId) {
+      return res.status(404).json({ message: "Fotka nenalezena." });
+    }
+
     const updated = await prisma.galleryPhoto.update({
       where: { id },
       data: { description },
@@ -380,11 +436,7 @@ router.patch("/photos/:id", protect, async (req: Request, res: Response) => {
 // ============================================================================
 //                          DELETE PHOTO
 // ============================================================================
-router.delete("/photos/:id", protect, async (req: Request, res: Response) => {
-  if (!req.user) {
-    return res.status(401).json({ message: "Neautorizováno" });
-  }
-
+router.delete("/photos/:id", protect, requireCabin, async (req: Request, res: Response) => {
   const { id } = req.params;
 
   try {
@@ -396,14 +448,15 @@ router.delete("/photos/:id", protect, async (req: Request, res: Response) => {
             id: true,
           },
         },
+        folder: { select: { cabinId: true } },
       },
     });
 
-    if (!photo) {
+    if (!photo || photo.folder.cabinId !== req.user!.cabinId) {
       return res.status(404).json({ message: "Fotka nenalezena." });
     }
 
-    if (photo.uploadedBy?.id !== req.user.userId && req.user.role !== "admin") {
+    if (photo.uploadedBy?.id !== req.user!.userId && req.user!.role !== "admin") {
       return res.status(403).json({ message: "Nemáte oprávnění smazat tuto fotku." });
     }
 
@@ -430,20 +483,19 @@ router.delete("/photos/:id", protect, async (req: Request, res: Response) => {
 // ============================================================================
 //                      BULK DELETE PHOTOS
 // ============================================================================
-router.delete("/photos", protect, async (req: Request, res: Response) => {
+router.delete("/photos", protect, requireCabin, validate(bulkDeletePhotosSchema), async (req: Request, res: Response) => {
   if (!req.user) {
     return res.status(401).json({ message: "Neautorizováno" });
   }
 
   const { photoIds } = req.body;
 
-  if (!Array.isArray(photoIds) || photoIds.length === 0) {
-    return res.status(400).json({ message: "Žádné fotky k vymazání." });
-  }
-
   try {
     const photos = await prisma.galleryPhoto.findMany({
-      where: { id: { in: photoIds } },
+      where: {
+        id: { in: photoIds },
+        folder: { cabinId: req.user!.cabinId },
+      },
       include: {
         uploadedBy: {
           select: {

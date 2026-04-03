@@ -6,13 +6,55 @@ import { JWT_SECRET } from "../../config/config";
 import prisma from "../../utils/prisma";
 import logger from "../../utils/logger";
 import { sendVerificationEmailWithPIN, sendVerificationEmailWithToken } from "../../utils/email";
+import { validate } from "../../validators/validate";
+import { loginSchema, registerSchema, verifyEmailSchema } from "../../validators/schemas";
 
 const router = Router();
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * Generate a URL-safe slug from a Czech/Slovak cabin name.
+ * "Chalupa pod Kletí"  → "chalupa-pod-kleti"
+ * "Třebenice – U rybníka" → "trebenice-u-rybnika"
+ */
+function generateSubdomain(name: string): string {
+  const czechMap: Record<string, string> = {
+    á: "a", č: "c", ď: "d", é: "e", ě: "e", í: "i", ň: "n",
+    ó: "o", ř: "r", š: "s", ť: "t", ú: "u", ů: "u", ý: "y", ž: "z",
+  };
+
+  return name
+    .toLowerCase()
+    .replace(/[áčďéěíňóřšťúůýž]/g, (ch) => czechMap[ch] || ch)
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 50);
+}
+
+/**
+ * Ensure subdomain is unique — append random suffix if collision.
+ */
+async function ensureUniqueSubdomain(base: string): Promise<string> {
+  let candidate = base;
+  let attempt = 0;
+
+  while (attempt < 10) {
+    const existing = await prisma.cabin.findUnique({ where: { subdomain: candidate } });
+    if (!existing) return candidate;
+
+    const suffix = crypto.randomBytes(3).toString("hex");
+    candidate = `${base}-${suffix}`.slice(0, 50);
+    attempt++;
+  }
+
+  return `cabin-${crypto.randomBytes(6).toString("hex")}`;
+}
 
 // ============================================================================
 //                                LOGIN
 // ============================================================================
-router.post("/login", async (req: Request, res: Response) => {
+router.post("/login", validate(loginSchema), async (req: Request, res: Response) => {
   const { username, password } = req.body;
   try {
     const user = await prisma.user.findFirst({
@@ -60,7 +102,7 @@ router.post("/login", async (req: Request, res: Response) => {
     }
 
     const token = jwt.sign(
-      { userId: user.id, username: user.username, role: user.role, isSuperAdmin: user.isSuperAdmin },
+      { userId: user.id, username: user.username, role: user.role, cabinId: user.cabinId },
       JWT_SECRET,
       { expiresIn: "30d" }
     );
@@ -72,7 +114,7 @@ router.post("/login", async (req: Request, res: Response) => {
       role: user.role,
       color: user.color,
       animalIcon: user.animalIcon,
-      isSuperAdmin: user.isSuperAdmin,
+      cabinId: user.cabinId,
     });
   } catch (error) {
     logger.error("AUTH", "Login error", { error: String(error), stack: (error as Error).stack });
@@ -81,21 +123,27 @@ router.post("/login", async (req: Request, res: Response) => {
 });
 
 // ============================================================================
-//                             REGISTER
+//                      REGISTER (Workspace Onboarding)
+//   Creates Cabin + Admin User in a single transaction
 // ============================================================================
 router.post("/register", async (req: Request, res: Response) => {
-  const { username, password, color, email } = req.body;
-  if (!username || !password || !color || !email) {
-    return res.status(400).json({ message: "Chybí povinné údaje." });
+  // ── Zod validation ───────────────────────────────────────────────────
+  const parsed = registerSchema.safeParse(req.body);
+  if (!parsed.success) {
+    const firstError = parsed.error.issues[0];
+    return res.status(400).json({ message: firstError.message });
   }
 
+  const { cabinName, subdomain: requestedSubdomain, weatherLocation, username, email, password, color } = parsed.data;
+
   try {
+    // ── Pre-flight: check for existing user / email ────────────────────
     const existingUser = await prisma.user.findFirst({
       where: {
         OR: [
           { username: { equals: username, mode: "insensitive" } },
-          { email: { equals: email, mode: "insensitive" } }
-        ]
+          { email: { equals: email, mode: "insensitive" } },
+        ],
       },
     });
 
@@ -107,44 +155,74 @@ router.post("/register", async (req: Request, res: Response) => {
       }
     }
 
-    // První uživatel je automaticky admin
-    const userCount = await prisma.user.count();
-    const role = userCount === 0 ? "admin" : "user";
-    // Admin automaticky overen (pro jistotu u prvotni instalace)
-    const isAdmin = role === "admin";
-    const isEmailVerified = isAdmin;
+    // ── Generate unique subdomain ──────────────────────────────────────
+    const baseSubdomain = requestedSubdomain
+      ? generateSubdomain(requestedSubdomain)
+      : generateSubdomain(cabinName);
+    const uniqueSubdomain = await ensureUniqueSubdomain(baseSubdomain);
 
-    // Generate token-based verification token (new SaaS flow)
-    const verificationToken = isAdmin
+    // ── Prepare auth data ──────────────────────────────────────────────
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    // First user in the entire system gets auto-verified admin
+    const globalUserCount = await prisma.user.count();
+    const isFirstUser = globalUserCount === 0;
+    const role = "admin"; // Creator of a cabin is always admin of that cabin
+
+    const verificationToken = isFirstUser
       ? null
       : crypto.randomBytes(32).toString("hex");
 
-    // Also generate legacy PIN code for backward compat
-    const verificationCode = isAdmin
+    const verificationCode = isFirstUser
       ? null
       : Math.floor(100000 + Math.random() * 900000).toString();
 
-    const newUser = await prisma.user.create({
-      data: {
-        username,
-        email,
-        passwordHash: await bcrypt.hash(password, 10),
-        color,
-        role,
-        isEmailVerified,
-        verificationCode,
-        isVerified: isAdmin,
-        verificationToken,
-      },
+    // ── Atomic transaction: Cabin + User ───────────────────────────────
+    const { newCabin, newUser } = await prisma.$transaction(async (tx) => {
+      // 1. Create cabin
+      const cabin = await tx.cabin.create({
+        data: {
+          name: cabinName.trim(),
+          subdomain: uniqueSubdomain,
+          weatherLocation: weatherLocation.trim(),
+        },
+      });
+
+      // 2. Create user as admin of this cabin
+      const user = await tx.user.create({
+        data: {
+          username,
+          email,
+          passwordHash,
+          color: color || "#FFB300",
+          role,
+          cabinId: cabin.id,
+          isVerified: isFirstUser,
+          isEmailVerified: isFirstUser,
+          verificationToken,
+          verificationCode,
+        },
+      });
+
+      return { newCabin: cabin, newUser: user };
     });
 
-    if (isAdmin) {
+    logger.info("AUTH", "New workspace registered", {
+      cabinId: newCabin.id,
+      cabinName: newCabin.name,
+      subdomain: newCabin.subdomain,
+      userId: newUser.id,
+      username: newUser.username,
+    });
+
+    // ── First user: auto-verified, done ────────────────────────────────
+    if (isFirstUser) {
       return res.status(201).json({
-        message: "Registrace úspěšná (jste admin, účet je automaticky aktivní).",
+        message: "Registrace úspěšná (první uživatel — účet je automaticky aktivní).",
       });
     }
 
-    // Send token-based verification email via Amazon SES
+    // ── Send verification email ────────────────────────────────────────
     try {
       await sendVerificationEmailWithToken(email, verificationToken!);
 
@@ -166,7 +244,7 @@ router.post("/register", async (req: Request, res: Response) => {
       res.status(201).json({
         message: "Registrace proběhla, ale e-mail s aktivačním odkazem se nepodařilo odeslat. Kontaktujte administrátora.",
         requiresVerification: true,
-        testToken: verificationToken, // only shown when email fails
+        testToken: verificationToken,
       });
     }
   } catch (error) {
@@ -229,9 +307,8 @@ router.get("/verify-token", async (req: Request, res: Response) => {
 // ============================================================================
 //                       VERIFY EMAIL (legacy PIN-based)
 // ============================================================================
-router.post("/verify-email", async (req: Request, res: Response) => {
+router.post("/verify-email", validate(verifyEmailSchema), async (req: Request, res: Response) => {
   const { username, code } = req.body;
-  if (!username || !code) return res.status(400).json({ message: "Chybí jméno nebo PIN." });
 
   try {
     const user = await prisma.user.findFirst({

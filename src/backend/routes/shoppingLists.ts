@@ -1,5 +1,8 @@
 import { Router, Request, Response } from "express";
 import { protect } from "../../middleware/authMiddleware";
+import { requireCabin } from "../../middleware/cabinMiddleware";
+import { validate } from "../../validators/validate";
+import { createShoppingListSchema, renameShoppingListSchema } from "../../validators/schemas";
 import prisma from "../../utils/prisma";
 import logger from "../../utils/logger";
 
@@ -8,12 +11,14 @@ const router = Router();
 // ============================================================================
 //                           GET ALL ACTIVE LISTS
 // ============================================================================
-router.get("/", protect, async (req: Request, res: Response) => {
+router.get("/", protect, requireCabin, async (req: Request, res: Response) => {
     try {
         const { isPantry } = req.query;
+        const cabinId = req.user!.cabinId!;
 
         const whereClause: any = {
-            isResolved: false
+            isResolved: false,
+            cabinId,
         };
 
         if (isPantry === 'true') {
@@ -55,17 +60,9 @@ router.get("/", protect, async (req: Request, res: Response) => {
 // ============================================================================
 //                           CREATE NEW LIST
 // ============================================================================
-router.post("/", protect, async (req: Request, res: Response) => {
+router.post("/", protect, requireCabin, validate(createShoppingListSchema), async (req: Request, res: Response) => {
     try {
         const { name } = req.body;
-
-        if (!name || name.trim() === "") {
-            return res.status(400).json({ error: "Missing required list name" });
-        }
-
-        if (name.trim().length > 100) {
-            return res.status(400).json({ error: "List name is too long (max 100 characters)" });
-        }
 
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore - req.user is set by authMiddleware
@@ -75,6 +72,7 @@ router.post("/", protect, async (req: Request, res: Response) => {
             data: {
                 name: name.trim(),
                 createdById: userId,
+                cabinId: req.user!.cabinId!,
             },
             include: {
                 createdBy: {
@@ -94,10 +92,11 @@ router.post("/", protect, async (req: Request, res: Response) => {
 // ============================================================================
 //                           GET OR CREATE PANTRY LIST
 // ============================================================================
-router.get("/pantry", protect, async (req: Request, res: Response) => {
+router.get("/pantry", protect, requireCabin, async (req: Request, res: Response) => {
     try {
+        const cabinId = req.user!.cabinId!;
         let pantry = await prisma.shoppingList.findFirst({
-            where: { isPantry: true },
+            where: { isPantry: true, cabinId },
             include: {
                 items: {
                     include: {
@@ -122,6 +121,7 @@ router.get("/pantry", protect, async (req: Request, res: Response) => {
                     name: "Zásoby (Spižírna)",
                     createdById: userId,
                     isPantry: true,
+                    cabinId,
                 },
                 include: {
                     items: {
@@ -147,26 +147,73 @@ router.get("/pantry", protect, async (req: Request, res: Response) => {
 });
 
 // ============================================================================
+//                           RENAME LIST
+// ============================================================================
+router.patch("/:id/rename", protect, requireCabin, validate(renameShoppingListSchema), async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { name } = req.body;
+
+        const list = await prisma.shoppingList.findFirst({
+            where: { id, cabinId: req.user!.cabinId },
+        });
+
+        if (!list) {
+            return res.status(404).json({ error: "Seznam nenalezen" });
+        }
+
+        if (list.isPantry) {
+            return res.status(400).json({ error: "Spíž nelze přejmenovat" });
+        }
+
+        if (list.createdById !== req.user!.userId && req.user!.role !== "admin") {
+            return res.status(403).json({ error: "Nemáte oprávnění přejmenovat tento seznam" });
+        }
+
+        const updated = await prisma.shoppingList.update({
+            where: { id },
+            data: { name: name.trim() },
+            include: {
+                createdBy: {
+                    select: { id: true, username: true, color: true, animalIcon: true },
+                },
+                items: {
+                    include: {
+                        addedBy: {
+                            select: { id: true, username: true, color: true, animalIcon: true },
+                        },
+                        purchasedBy: {
+                            select: { id: true, username: true, color: true, animalIcon: true },
+                        },
+                        splits: true,
+                    }
+                }
+            },
+        });
+
+        res.json(updated);
+    } catch (error) {
+        logger.error("SHOPPING_LISTS", "Failed to rename shopping list", error);
+        res.status(500).json({ error: "Nepodařilo se přejmenovat seznam" });
+    }
+});
+
+// ============================================================================
 //                           DELETE LIST
 // ============================================================================
-router.delete("/:id", protect, async (req: Request, res: Response) => {
+router.delete("/:id", protect, requireCabin, async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
 
-        const user = req.user;
-        if (!user) {
-            return res.status(401).json({ error: "Not authorized" });
-        }
-
-        const list = await prisma.shoppingList.findUnique({
-            where: { id },
+        const list = await prisma.shoppingList.findFirst({
+            where: { id, cabinId: req.user!.cabinId },
         });
 
         if (!list) {
             return res.status(404).json({ error: "List not found" });
         }
 
-        if (list.createdById !== user.userId && user.role !== "admin") {
+        if (list.createdById !== req.user!.userId && req.user!.role !== "admin") {
             return res.status(403).json({ error: "Not authorized to delete this list" });
         }
 
@@ -202,7 +249,7 @@ router.delete("/:id", protect, async (req: Request, res: Response) => {
 // ============================================================================
 //                           RESOLVE/ARCHIVE LIST
 // ============================================================================
-router.patch("/:id/resolve", protect, async (req: Request, res: Response) => {
+router.patch("/:id/resolve", protect, requireCabin, async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const { isResolved } = req.body;
@@ -211,8 +258,8 @@ router.patch("/:id/resolve", protect, async (req: Request, res: Response) => {
         // @ts-ignore
         const user = req.user;
 
-        const list = await prisma.shoppingList.findUnique({
-            where: { id },
+        const list = await prisma.shoppingList.findFirst({
+            where: { id, cabinId: req.user!.cabinId },
         });
 
         if (!list) {
@@ -241,7 +288,7 @@ router.patch("/:id/resolve", protect, async (req: Request, res: Response) => {
 // When purchased=true and the item has a linkedInventoryId,
 // auto-update the InventoryItem to { status: "OK", inCart: false }
 // ============================================================================
-router.put("/:listId/items/:itemId", protect, async (req: Request, res: Response) => {
+router.put("/:listId/items/:itemId", protect, requireCabin, async (req: Request, res: Response) => {
     try {
         const { listId, itemId } = req.params;
         const { purchased } = req.body;

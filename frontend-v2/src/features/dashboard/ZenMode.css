@@ -1,0 +1,202 @@
+/** 
+ * features/dashboard/ZenMode.css 
+ */
+body.zen-mode-active .app-container {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: scale(0.95);
+    transition: all 0.5s ease;
+}
+
+body .app-container {
+    transition: all 0.5s ease;
+}
+
+.zen-mode-toggle {
+    position: fixed;
+    bottom: var(--space-xl, 24px);
+    left: var(--space-xl, 24px);
+    z-index: 100;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    color: var(--brand-primary);
+    border: none;
+    box-shadow: var(--shadow-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0.9;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.zen-mode-toggle:hover {
+    opacity: 1;
+    transform: scale(1.1) rotate(-5deg);
+    box-shadow: var(--shadow-lg);
+}
+
+.zen-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+/* Hide other high z-index elements when zen mode is active */
+body.zen-mode-active .fab-help,
+body.zen-mode-active .mobile-header,
+body.zen-mode-active .mobile-nav,
+body.zen-mode-active .zen-mode-toggle {
+    display: none !important;
+}
+
+.slider-viewport {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 1200px;
+    overflow: visible;
+}
+
+.slider-track {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xl, 24px);
+    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.slide {
+    flex-shrink: 0;
+    /* KRITICKÉ: Obrázky se nesmí smrsknout */
+    width: 60vw;
+    max-width: 800px;
+    height: 60vh;
+    object-fit: cover;
+    /* KRITICKÉ: Zabrání deformaci poměru stran */
+    border-radius: var(--radius-lg);
+    opacity: 0.4;
+    transform: scale(0.85);
+    transition: all 0.4s ease;
+    cursor: pointer;
+    pointer-events: none;
+}
+
+.slide.active {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: var(--shadow-lg);
+    pointer-events: auto;
+}
+
+.zen-overlay .nav-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: var(--bg-card);
+    color: var(--text-main);
+    border: none;
+    box-shadow: var(--shadow-md);
+    cursor: pointer;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s, background 0.2s;
+}
+
+.zen-overlay .nav-arrow:hover {
+    transform: translateY(-50%) scale(1.1);
+    background-color: var(--bg-hover);
+}
+
+.zen-overlay .nav-arrow:disabled {
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+.zen-overlay .nav-arrow.left {
+    left: var(--space-xl, 24px);
+}
+
+.zen-overlay .nav-arrow.right {
+    right: var(--space-xl, 24px);
+}
+
+.zen-overlay .nav-arrow svg {
+    width: 24px;
+    height: 24px;
+    pointer-events: none;
+}
+
+.action-pill {
+    position: absolute;
+    bottom: var(--space-xl, 24px);
+    left: var(--space-xl, 24px);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm, 8px);
+    padding: var(--space-sm, 8px) var(--space-lg, 16px);
+    background: var(--bg-card);
+    border-radius: var(--radius-full);
+    box-shadow: var(--shadow-md);
+    margin-bottom: env(safe-area-inset-bottom);
+}
+
+.action-pill .divider {
+    width: 1px;
+    height: 24px;
+    background-color: var(--border-light, #e5e7eb);
+    margin: 0 4px;
+}
+
+.btn-action {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-main);
+    transition: var(--transition-base, 0.2s ease);
+}
+
+.btn-action:hover {
+    background-color: var(--bg-hover);
+    transform: scale(1.05);
+}
+
+.btn-action.success {
+    color: var(--status-success);
+}
+
+.btn-action.danger {
+    color: var(--status-error);
+}
+
+.btn-action:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.btn-action svg {
+    width: 24px;
+    height: 24px;
+    pointer-events: none;
+}

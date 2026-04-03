@@ -1,0 +1,259 @@
+import { useState, useEffect } from "react";
+import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { useQuery } from "@tanstack/react-query";
+import { ErrorBoundary } from "react-error-boundary";
+import apiClient from "@/api/client";
+import { fetchWeather } from "@/api/dashboard";
+import type { CabinSettings, DashboardReservationsData, DashboardShoppingData, DashboardNotesData } from "@/api/dashboard";
+import { DashboardReservationsSchema, DashboardShoppingSchema, DashboardNotesSchema } from "@/api/schemas";
+import { WeatherCard } from "./WeatherCard";
+import { ActiveReservation } from "./ActiveReservation";
+import { ShoppingWidget } from "./ShoppingWidget";
+import { HandoverNote } from "./HandoverNote";
+import { EssentialWarning } from "./EssentialWarning";
+import { DepartureBanner } from "./DepartureBanner";
+import { FeatureErrorFallback } from "@/components/shared/FeatureErrorFallback";
+import { ZenMode } from "./ZenMode";
+
+// ─── Skeletons ────────────────────────────────────────────────────────
+
+export function StatusCardSkeleton() {
+  return (
+    <div className="glass-card status-card" id="dashboard-active-reservation">
+      <div className="card-body-full status-content">
+        <div className="status-split-row">
+          <div className="skeleton skeleton-avatar-lg" />
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, flex: 1, justifyContent: "center" }}>
+            <div className="skeleton skeleton-text short" style={{ width: 50, height: 11 }} />
+            <div className="skeleton skeleton-text" style={{ width: "52%", height: 18 }} />
+            <div className="skeleton skeleton-text" style={{ width: "72%", height: 13 }} />
+          </div>
+        </div>
+        <div className="status-cta-row" style={{ marginTop: 14, gap: 8 }}>
+          <div className="skeleton skeleton-btn" style={{ width: 160 }} />
+          <div className="skeleton skeleton-btn" style={{ width: 130 }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function WeatherSkeleton() {
+  return (
+    <div className="glass-card weather-card" id="dashboard-weather">
+      <div className="card-body-full">
+        <div className="weather-main">
+          <div className="weather-current" style={{ gap: 16 }}>
+            <div className="skeleton skeleton-weather-icon" />
+            <div className="weather-temp-box" style={{ gap: 8 }}>
+              <div className="skeleton skeleton-temp" />
+              <div className="skeleton skeleton-text" style={{ width: 90, height: 13 }} />
+            </div>
+          </div>
+          <div className="weather-details" style={{ gap: 8 }}>
+            <div className="skeleton skeleton-text" style={{ width: 80, height: 12 }} />
+            <div className="skeleton skeleton-text" style={{ width: 72, height: 12 }} />
+            <div className="skeleton skeleton-text" style={{ width: 88, height: 12 }} />
+          </div>
+        </div>
+        <div className="weather-divider" style={{ opacity: 0.4 }} />
+        <div className="weather-forecast">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="skeleton-forecast-col">
+              <div className="skeleton skeleton-text" style={{ width: 28, height: 11 }} />
+              <div className="skeleton" style={{ width: 22, height: 22, borderRadius: "50%" }} />
+              <div className="skeleton skeleton-text" style={{ width: 36, height: 13 }} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function ShoppingSkeleton() {
+  return (
+    <div className="glass-card">
+      <div className="card-body-full" id="dashboard-shopping">
+        <div className="dashboard-card-header">
+          <div className="skeleton skeleton-text" style={{ width: 100, height: 14 }} />
+          <div className="skeleton skeleton-text" style={{ width: 70, height: 13 }} />
+        </div>
+        <div className="list-content" style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 6 }}>
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div className="skeleton skeleton-avatar-sm" />
+              <div className="skeleton skeleton-text" style={{ height: 13, flex: 1 }} />
+              <div className="skeleton skeleton-badge" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function HandoverNoteSkeleton() {
+  return (
+    <div className="glass-card dashboard-handover-card" id="dashboard-handover-note">
+      <div className="card-body-full handover-card-content">
+        <div className="dashboard-card-header">
+          <div className="skeleton skeleton-text" style={{ width: 60, height: 14 }} />
+          <div className="skeleton" style={{ width: 28, height: 28, borderRadius: "50%" }} />
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 10 }}>
+          <div className="skeleton skeleton-text long" style={{ height: 13 }} />
+          <div className="skeleton skeleton-text" style={{ width: "78%", height: 13 }} />
+          <div className="skeleton skeleton-text medium" style={{ height: 13 }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── DashboardPage ────────────────────────────────────────────────────
+
+export function DashboardPage() {
+  useDocumentTitle('Přehled');
+  const [handoverNote, setHandoverNote] = useState<string | null>(null);
+
+  // Cabin info
+  const cabinQuery = useQuery<CabinSettings>({
+    queryKey: ["cabin"],
+    queryFn: () => apiClient.get<CabinSettings>("/cabin").then((r) => r.data),
+    staleTime: 60_000,
+  });
+
+  // Independent queries for each domain
+  const reservationsQuery = useQuery<DashboardReservationsData>({
+    queryKey: ["dashboard", "reservations"],
+    queryFn: async () => {
+      const { data } = await apiClient.get<DashboardReservationsData>("/dashboard/reservations");
+      return DashboardReservationsSchema.parse(data) as DashboardReservationsData;
+    },
+    refetchInterval: 5 * 60 * 1000,
+    staleTime: 30_000,
+  });
+
+  const shoppingQuery = useQuery<DashboardShoppingData>({
+    queryKey: ["dashboard", "shopping"],
+    queryFn: async () => {
+      const { data } = await apiClient.get<DashboardShoppingData>("/dashboard/shopping");
+      return DashboardShoppingSchema.parse(data) as DashboardShoppingData;
+    },
+    refetchInterval: 5 * 60 * 1000,
+    staleTime: 30_000,
+  });
+
+  const notesQuery = useQuery<DashboardNotesData>({
+    queryKey: ["dashboard", "notes"],
+    queryFn: async () => {
+      const { data } = await apiClient.get<DashboardNotesData>("/dashboard/notes");
+      return DashboardNotesSchema.parse(data) as DashboardNotesData;
+    },
+    refetchInterval: 5 * 60 * 1000,
+    staleTime: 30_000,
+  });
+
+  // Sync handover note initially
+  useEffect(() => {
+    if (notesQuery.data) {
+      setHandoverNote(prev => prev === null ? notesQuery.data.pinnedHandoverNote : prev);
+    }
+  }, [notesQuery.data]);
+
+  // Weather is fetched client-side using cabin's weatherLocation
+  const weatherQuery = useQuery({
+    queryKey: ["weather", cabinQuery.data?.weatherLocation ?? null],
+    queryFn: () => fetchWeather(cabinQuery.data?.weatherLocation),
+    enabled: cabinQuery.isSuccess,
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const isWinterized = !!cabinQuery.data?.isWinterized;
+  const departureChecklist = cabinQuery.data?.departureChecklist ?? [];
+
+  return (
+    <div className="dashboard nordic-dashboard">
+      {/* Winter banner */}
+      {isWinterized && (
+        <div id="dashboard-winter-banner" className="winter-banner">
+          <div className="winter-banner-content">
+            <span className="winter-banner-icon">❄️</span>
+            <div className="winter-banner-text">
+              <strong>Chata je zazimovaná</strong>
+              <span>Mrazové výstrahy a speciální režim jsou aktivní</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Warnings & Banners */}
+      {shoppingQuery.isSuccess && shoppingQuery.data?.essentialWarning && (
+        <EssentialWarning warning={shoppingQuery.data.essentialWarning} />
+      )}
+
+      {reservationsQuery.isSuccess && reservationsQuery.data?.departingToday && (
+        <DepartureBanner
+          departureChecklist={departureChecklist}
+          onRefresh={() => reservationsQuery.refetch()}
+        />
+      )}
+
+      {/* Main grid */}
+      <div className="dashboard-grid">
+        {/* Reservation Card */}
+        {reservationsQuery.isLoading ? (
+          <StatusCardSkeleton />
+        ) : reservationsQuery.isError ? (
+          <ErrorBoundary FallbackComponent={(props) => <FeatureErrorFallback {...props} title="Rezervace se nepodařilo načíst" />}>
+            <FeatureErrorFallback error={reservationsQuery.error as Error} resetErrorBoundary={() => reservationsQuery.refetch()} />
+          </ErrorBoundary>
+        ) : reservationsQuery.data ? (
+          <ActiveReservation data={reservationsQuery.data} cabinDepartureChecklist={departureChecklist} />
+        ) : null}
+
+        {/* Weather Card */}
+        {weatherQuery.isLoading && cabinQuery.isLoading ? (
+          <WeatherSkeleton />
+        ) : weatherQuery.isError ? (
+          <ErrorBoundary FallbackComponent={(props) => <FeatureErrorFallback {...props} title="Počasí se nepodařilo načíst" />}>
+            <FeatureErrorFallback error={weatherQuery.error as Error} resetErrorBoundary={() => weatherQuery.refetch()} />
+          </ErrorBoundary>
+        ) : (
+          <WeatherCard weather={weatherQuery.data ?? null} />
+        )}
+
+        {/* Shopping Widget */}
+        {shoppingQuery.isLoading ? (
+          <ShoppingSkeleton />
+        ) : shoppingQuery.isError ? (
+          <ErrorBoundary FallbackComponent={(props) => <FeatureErrorFallback {...props} title="Nákupy se nepodařilo načíst" />}>
+            <FeatureErrorFallback error={shoppingQuery.error as Error} resetErrorBoundary={() => shoppingQuery.refetch()} />
+          </ErrorBoundary>
+        ) : shoppingQuery.data ? (
+          <ShoppingWidget
+            items={shoppingQuery.data.pendingShoppingItems}
+            totalCount={shoppingQuery.data.totalPendingShoppingCount}
+          />
+        ) : null}
+
+        {/* Handover Note */}
+        {notesQuery.isLoading ? (
+          <HandoverNoteSkeleton />
+        ) : notesQuery.isError ? (
+          <ErrorBoundary FallbackComponent={(props) => <FeatureErrorFallback {...props} title="Nástěnku se nepodařilo načíst" />}>
+            <FeatureErrorFallback error={notesQuery.error as Error} resetErrorBoundary={() => notesQuery.refetch()} />
+          </ErrorBoundary>
+        ) : notesQuery.data ? (
+          <HandoverNote
+            note={handoverNote}
+            onNoteUpdate={(newNote) => setHandoverNote(newNote)}
+          />
+        ) : null}
+      </div>
+
+      <ZenMode />
+    </div>
+  );
+}

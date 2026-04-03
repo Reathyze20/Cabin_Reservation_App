@@ -1,5 +1,8 @@
 import { Router, Request, Response } from "express";
 import { protect } from "../../middleware/authMiddleware";
+import { requireCabin } from "../../middleware/cabinMiddleware";
+import { validate } from "../../validators/validate";
+import { createReconstructionItemSchema, updateReconstructionItemSchema } from "../../validators/schemas";
 import prisma from "../../utils/prisma";
 import logger from "../../utils/logger";
 
@@ -8,9 +11,10 @@ const router = Router();
 // ============================================================================
 //                      GET ALL RECONSTRUCTION ITEMS
 // ============================================================================
-router.get("/", protect, async (req: Request, res: Response) => {
+router.get("/", protect, requireCabin, async (req: Request, res: Response) => {
   try {
     const items = await prisma.reconstructionItem.findMany({
+      where: { cabinId: req.user!.cabinId },
       include: {
         createdBy: {
           select: {
@@ -61,16 +65,8 @@ router.get("/", protect, async (req: Request, res: Response) => {
 // ============================================================================
 //                      CREATE RECONSTRUCTION ITEM
 // ============================================================================
-router.post("/", protect, async (req: Request, res: Response) => {
-  if (!req.user) {
-    return res.status(401).json({ message: "Neautorizováno" });
-  }
-
+router.post("/", protect, requireCabin, validate(createReconstructionItemSchema), async (req: Request, res: Response) => {
   const { category, title, description, link, cost, status, thumbnail, tag, specialization, email, phone, deadline, sourceMessageId } = req.body;
-
-  if (!category || !title) {
-    return res.status(400).json({ message: "Chybí povinné údaje (kategorie, název)." });
-  }
 
   try {
     const newItem = await prisma.reconstructionItem.create({
@@ -87,7 +83,8 @@ router.post("/", protect, async (req: Request, res: Response) => {
         email: email || undefined,
         phone: phone || undefined,
         deadline: deadline ? new Date(deadline) : undefined,
-        createdById: req.user.userId,
+        createdById: req.user!.userId,
+        cabinId: req.user!.cabinId!,
         sourceMessageId: sourceMessageId || null,
       },
       include: {
@@ -126,19 +123,19 @@ router.post("/", protect, async (req: Request, res: Response) => {
 // ============================================================================
 //                      UPDATE RECONSTRUCTION ITEM
 // ============================================================================
-router.put("/:id", protect, async (req: Request, res: Response) => {
-  if (!req.user) {
-    return res.status(401).json({ message: "Neautorizováno" });
-  }
-
+router.put("/:id", protect, requireCabin, validate(updateReconstructionItemSchema), async (req: Request, res: Response) => {
   const { id } = req.params;
   const { category, title, description, link, cost, status, thumbnail, tag, specialization, email, phone, deadline } = req.body;
 
-  if (!category || !title) {
-    return res.status(400).json({ message: "Chybí povinné údaje (kategorie, název)." });
-  }
-
   try {
+    // Verify item belongs to user's cabin
+    const existing = await prisma.reconstructionItem.findFirst({
+      where: { id, cabinId: req.user!.cabinId },
+    });
+    if (!existing) {
+      return res.status(404).json({ message: "Položka nenalezena." });
+    }
+
     const updatedItem = await prisma.reconstructionItem.update({
       where: { id },
       data: {
@@ -200,14 +197,18 @@ router.put("/:id", protect, async (req: Request, res: Response) => {
 // ============================================================================
 //                      DELETE RECONSTRUCTION ITEM
 // ============================================================================
-router.delete("/:id", protect, async (req: Request, res: Response) => {
-  if (!req.user) {
-    return res.status(401).json({ message: "Neautorizováno" });
-  }
-
+router.delete("/:id", protect, requireCabin, async (req: Request, res: Response) => {
   const { id } = req.params;
 
   try {
+    // Verify item belongs to user's cabin
+    const existing = await prisma.reconstructionItem.findFirst({
+      where: { id, cabinId: req.user!.cabinId },
+    });
+    if (!existing) {
+      return res.status(404).json({ message: "Položka nenalezena." });
+    }
+
     await prisma.reconstructionItem.delete({
       where: { id },
     });
@@ -222,19 +223,23 @@ router.delete("/:id", protect, async (req: Request, res: Response) => {
 // ============================================================================
 //                          TOGGLE VOTE
 // ============================================================================
-router.patch("/:id/vote", protect, async (req: Request, res: Response) => {
-  if (!req.user) {
-    return res.status(401).json({ message: "Neautorizováno" });
-  }
-
+router.patch("/:id/vote", protect, requireCabin, async (req: Request, res: Response) => {
   const { id } = req.params;
 
   try {
+    // Verify item belongs to user's cabin
+    const voteTarget = await prisma.reconstructionItem.findFirst({
+      where: { id, cabinId: req.user!.cabinId },
+    });
+    if (!voteTarget) {
+      return res.status(404).json({ message: "Položka nenalezena." });
+    }
+
     const existingVote = await prisma.reconstructionVote.findUnique({
       where: {
         itemId_userId: {
           itemId: id,
-          userId: req.user.userId,
+          userId: req.user!.userId,
         },
       },
     });
@@ -245,7 +250,7 @@ router.patch("/:id/vote", protect, async (req: Request, res: Response) => {
         where: {
           itemId_userId: {
             itemId: id,
-            userId: req.user.userId,
+            userId: req.user!.userId,
           },
         },
       });
@@ -254,7 +259,7 @@ router.patch("/:id/vote", protect, async (req: Request, res: Response) => {
       await prisma.reconstructionVote.create({
         data: {
           itemId: id,
-          userId: req.user.userId,
+          userId: req.user!.userId,
         },
       });
     }
@@ -311,17 +316,13 @@ router.patch("/:id/vote", protect, async (req: Request, res: Response) => {
 // ============================================================================
 //                         UPDATE STATUS (tasks only)
 // ============================================================================
-router.patch("/:id/status", protect, async (req: Request, res: Response) => {
-  if (!req.user) {
-    return res.status(401).json({ message: "Neautorizováno" });
-  }
-
+router.patch("/:id/status", protect, requireCabin, async (req: Request, res: Response) => {
   const { id } = req.params;
   const { status } = req.body;
 
   try {
-    const item = await prisma.reconstructionItem.findUnique({
-      where: { id },
+    const item = await prisma.reconstructionItem.findFirst({
+      where: { id, cabinId: req.user!.cabinId },
     });
 
     if (!item) {

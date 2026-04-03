@@ -3,7 +3,7 @@ export interface JwtPayload {
   userId: string;
   username: string;
   role: string;
-  isSuperAdmin?: boolean;
+  cabinId: string | null;
 }
 
 export interface User {
@@ -27,6 +27,9 @@ export interface Reservation {
   status?: "primary" | "backup" | "soft";
   userColor?: string;
   userAnimalIcon?: string | null;
+  isCheckoutCompleted?: boolean;
+  checkoutCompletedBy?: string | null;
+  checkoutCompletedAt?: string | null;
 }
 
 export interface ShoppingListItem {

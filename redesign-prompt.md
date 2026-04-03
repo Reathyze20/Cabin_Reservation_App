@@ -161,7 +161,7 @@ Redesignuj webovou aplikaci pro správu chaty s těmito hlavními funkcemi:
 ### Nákupní Seznam - Scroll Feed
 ```
 ┌─────────────────────────────────────────┐
-│  🛒  Co potřebujeme                     │
+│     Co potřebujeme                     │
 ├─────────────────────────────────────────┤
 │                                         │
 │  ⚪ [X] Mléko (2L)                      │
@@ -352,13 +352,13 @@ Zde je přehled vaší chaty
 └──────────────────────┴──────────────────────┘
 
 ┌──────────────────────┬──────────────────────┐
-│ 📅 Nadcházející       │ 🛒 K dokoupení        │
+│ 📅 Nadcházející       │   K dokoupení        │
 │ Martin    10.-15.2.   │ ● Toaletní papír      │
 │ Jana      23.-25.2.   │ ● Káva                │
 │ Ty        1.-3.3.     │ ● Sůl                 │
 │ → Všechny rezervace   │ → Nákupní seznamy     │
 ├──────────────────────┼──────────────────────┤
-│ 📌 Poslední vzkazy    │ 📖 Deník              │
+│  Poslední vzkazy    │ 📖 Deník              │
 │ Jana: "Nezapomeňte…" │ Leden · Martin        │
 │ Martin: "Klíče…"      │ "Dnes jsme vyrazili…" │
 │ → Nástěnka            │ → Celý deník          │

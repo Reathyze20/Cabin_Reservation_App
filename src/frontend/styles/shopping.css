@@ -1,225 +1,851 @@
 /* ============================================================================
-   Shopping Page Styles (Sophisticated Multi-List Grid)
+   Shopping Page — Master-Detail Layout
    ============================================================================ */
+
+/* ─── Page container ─────────────────────────────────────────────────────── */
 
 .shopping-page {
   display: flex;
   flex-direction: column;
-  gap: var(--space-lg);
-  padding: var(--space-xl);
+  flex-grow: 1;
+  min-height: 0;
   background-color: var(--color-bg-main);
-  /* Keep the clean background just for this tool */
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-lg);
   width: 100%;
-  flex-grow: 1;
-  min-height: 0;
+  overflow: hidden;
 }
 
-/* Header Area */
-.shopping-header-area {
+/* ─── Mode Switcher (iOS pill toggle) ──────────────────────────────────────────── */
+
+.mode-switcher-bar {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--space-md);
-  margin-bottom: var(--space-md);
+  justify-content: center;
+  width: 100%;
+  padding: 20px 20px 0;
+  flex-shrink: 0;
 }
 
-.shopping-header-area h2 {
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  color: var(--color-text);
-  font-weight: 700;
-  letter-spacing: -0.5px;
-}
-
-.shopping-header-area .button-primary {
-  width: auto;
-}
-
-/* Grid Layout */
-.shopping-lists-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 20px;
-  align-items: start;
-  flex-grow: 1;
-  min-height: 0;
-  overflow-y: auto;
-}
-
-/* ── Segmented Tabs (iOS-style) ─────────────────────────────────────────── */
-
-.tabs-container {
-  background: var(--color-bg-hover);
-  padding: 4px;
-  border-radius: var(--radius-md);
-  display: flex;
+.mode-switcher {
+  display: inline-flex;
   gap: 4px;
-  max-width: 400px;
-  margin: 0 auto 24px auto;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 9999px;
 }
 
-.tab-button {
+.mode-switcher-btn {
+  background: transparent;
+  border: none;
+  border-radius: 9999px;
+  padding: 9px 24px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-family: var(--font-family);
+  color: #64748b;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  white-space: nowrap;
+  line-height: 1.3;
+}
+
+.mode-switcher-btn.is-active {
+  background: #fff;
+  color: var(--text-main, #1a2721);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.mode-switcher-btn:not(.is-active):hover {
+  color: var(--text-main, #1a2721);
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* ─── Two-column layout ──────────────────────────────────────────────────── */
+
+.shopping-layout {
+  display: flex;
   flex: 1;
-  padding: 8px 16px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MASTER PANEL (left sidebar — list of baskets)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.shopping-master {
+  width: 300px;
+  min-width: 260px;
+  max-width: 300px;
+  background: var(--color-bg-alt);
+  border-right: 1px solid var(--border-strong, #e5e7eb);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+/* ── New basket button ───────────────────────────────────────────────────── */
+
+.master-new-btn {
+  margin: 12px 12px 8px;
+  padding: 10px 16px;
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 0.9rem;
+  font-family: var(--font-family);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background var(--transition-fast), transform 0.1s;
+  text-align: center;
+}
+
+.master-new-btn:hover {
+  background: var(--color-primary-dark);
+  transform: translateY(-1px);
+}
+
+.master-new-btn:active {
+  transform: scale(0.98);
+}
+
+/* ── Master list (scrollable area) ───────────────────────────────────────── */
+
+.master-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0 8px;
+}
+
+.master-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.master-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.master-list::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 2px;
+}
+
+/* ── Master item (single basket in list) ─────────────────────────────────── */
+
+.master-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  margin: 0 12px 3px;
+  cursor: pointer;
+  border-radius: var(--radius-md, 10px);
+  border: none;
+  transition: background 0.15s;
+  gap: 8px;
+}
+
+.master-item:hover {
+  background: var(--bg-hover, #e8ece9);
+}
+
+.master-item.is-active {
+  background: var(--brand-primary-light, #e8f4ef);
+}
+
+.master-item.is-active .master-item-name {
+  color: var(--color-primary-dark);
+  font-weight: 600;
+}
+
+.master-item.is-complete .master-item-name {
+  color: var(--color-text-light);
+}
+
+.master-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.master-item-name {
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.3;
+}
+
+.master-item-meta {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  letter-spacing: 0.01em;
+}
+
+/* ── Master item action buttons ──────────────────────────────────────────── */
+
+.master-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.master-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+
+.master-action-btn:hover {
+  background: var(--color-bg-hover, #e8ece9);
+  color: var(--color-text);
+}
+
+.master-action-delete:hover {
+  background: var(--color-danger-bg, #fef2f2);
+  color: var(--color-danger, #dc2626);
+}
+
+.master-action-archive:hover {
+  background: var(--color-success-bg, #ecfdf5);
+  color: var(--color-success-text, #059669);
+}
+
+.master-action-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.master-item-badge {
+  flex-shrink: 0;
+  background: var(--color-bg-hover);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-text-light);
+  white-space: nowrap;
+}
+
+.master-item-badge.badge-done {
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
+}
+
+/* ── Empty state in master ───────────────────────────────────────────────── */
+
+.master-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--color-text-muted);
+  gap: 8px;
+  flex: 1;
+}
+
+.master-empty-icon {
+  opacity: 0.15;
+  margin-bottom: 4px;
+}
+
+.master-empty p {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.master-empty-hint {
+  font-size: 0.78rem !important;
+  color: var(--color-text-light);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DETAIL PANEL (right — selected basket content)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.shopping-detail {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--color-bg-card);
+  min-width: 0;
+}
+
+/* ── Placeholder (no list selected) ──────────────────────────────────────── */
+
+.detail-placeholder {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  gap: 12px;
+  padding: 48px;
+}
+
+.detail-placeholder-icon {
+  opacity: 0.15;
+}
+
+.detail-placeholder p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+/* ── Detail header ───────────────────────────────────────────────────────── */
+
+.detail-header {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 36px 40px 28px;
+  background: var(--color-bg-card);
+}
+
+/* ── Back button (mobile only) ───────────────────────────────────────────── */
+
+.detail-back-btn {
+  display: none; /* shown only on mobile */
+  align-items: center;
+  gap: 4px;
   border: none;
   background: transparent;
-  color: var(--color-text-light);
-  font-weight: 500;
-  font-size: 0.9rem;
-  border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: all var(--transition-fast);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
+  font-size: 0.88rem;
+  font-weight: 500;
   font-family: var(--font-family);
+  color: var(--color-primary);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s;
+  flex-shrink: 0;
+  white-space: nowrap;
+  align-self: flex-start;
 }
 
-.tab-button.active {
-  background: var(--color-bg-card);
-  color: var(--color-text-main);
-  box-shadow: var(--shadow-xs);
+.detail-back-btn:hover {
+  background: var(--color-primary-bg);
 }
 
-.tab-button:not(.active):hover {
-  background: rgba(255, 255, 255, 0.5);
-  color: var(--color-text-dark);
-}
+/* ── Row 1: Title + Actions ──────────────────────────────────────────────── */
 
-/* ── Inventory list (pantry view) ────────────────────────────────────────── */
-
-.inventory-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.inventory-item {
+.detail-row-1 {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  padding: 10px 16px;
-  border-radius: var(--radius-md);
-  transition: box-shadow 0.2s;
-  gap: 8px;
+  align-items: flex-start;
+  gap: 16px;
+  width: 100%;
 }
 
-.inventory-item:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-.inventory-item .item-name {
-  font-weight: 500;
-  color: #111827;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* ── Status Badges ───────────────────────────────────────────────────────── */
-
-.badge {
-  padding: 4px 8px;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.badge-full {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.badge-low {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-/* ── Inventory item actions ──────────────────────────────────────────────── */
-
-.item-actions {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.btn-add-to-cart {
-  background: var(--color-bg-hover);
-  color: var(--color-primary);
-  border: none;
-  padding: 6px 12px;
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-xs);
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  transition: background var(--transition-fast);
-  font-family: var(--font-family);
-}
-
-.btn-add-to-cart:hover {
-  background: var(--color-border);
-}
-
-/* ── Inventory Empty State ───────────────────────────────────────────────── */
-
-.inventory-empty-state {
+.detail-title-block {
   display: flex;
   flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.detail-title {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--text-main, #1a2721);
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detail-counter {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #64748b;
+  letter-spacing: 0.01em;
+}
+
+.detail-actions {
+  display: none;
+}
+
+/* ── Row 2: Full-width Input Form ────────────────────────────────────────── */
+
+.detail-row-2 {
+  display: flex;
+  width: 100%;
+  gap: 10px;
+  align-items: center;
+}
+
+.detail-add-input {
+  flex: 1;
+  border: 1.5px solid var(--border-strong, #e5e7eb);
+  background: var(--bg-app, #f4f7f5);
+  padding: 12px 16px;
+  font-size: 0.95rem;
+  font-family: var(--font-family);
+  outline: none;
+  color: var(--text-main, #1a2721);
+  min-width: 0;
+  border-radius: var(--radius-md, 10px);
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+
+.detail-add-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(63, 123, 99, 0.1);
+  background: var(--bg-card, #fff);
+}
+
+.detail-add-input::placeholder {
+  color: var(--text-placeholder, #9ca3af);
+}
+
+.detail-add-btn {
+  display: flex;
   align-items: center;
   justify-content: center;
-  text-align: center;
-  width: 100%;
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-md, 10px);
+  height: 44px;
+  padding: 0 20px;
+  flex-shrink: 0;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: var(--font-family);
+  transition: background 0.2s, transform 0.15s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.detail-add-btn:hover {
+  background: var(--color-primary-dark);
+  transform: translateY(-1px) scale(1.04);
+}
+
+.detail-add-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DETAIL ITEMS LIST
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.detail-items {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.detail-items::-webkit-scrollbar {
+  width: 5px;
+}
+
+.detail-items::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.detail-items::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+
+/* Empty state */
+.detail-items-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 48px 24px;
+  color: var(--color-text-muted);
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+.detail-items-empty p {
+  margin: 0;
+}
+
+/* ── Single item row — FULL-WIDTH CLICKABLE ──────────────────────────────── */
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  padding: 14px 40px;
+  gap: 16px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-strong, #e5e7eb);
+  transition: background 0.12s;
+  user-select: none;
+  -webkit-tap-highlight-color: rgba(93, 155, 98, 0.08);
+}
+
+.detail-item:hover {
+  background: var(--bg-app, #f4f7f5);
+}
+
+.detail-item:active {
+  background: var(--color-primary-bg);
+}
+
+.detail-item:last-child {
+  border-bottom: none;
+}
+
+/* ── Checkbox circle ─────────────────────────────────────────────────────── */
+
+.item-checkbox {
+  background: transparent;
+  border: 2px solid var(--border-strong, #e5e7eb);
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  min-height: 22px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: transparent;
+  pointer-events: none; /* Click goes to parent row */
+  transition: border-color 0.18s, background 0.18s, transform 0.15s;
+}
+
+.detail-item:hover .item-checkbox:not(.is-checked) {
+  border-color: var(--color-success, #22c55e);
+  transform: scale(1.08);
+}
+
+.item-checkbox.is-checked {
+  background: var(--color-success, #22c55e);
+  border-color: var(--color-success, #22c55e);
+  color: #fff;
+  animation: checkPop 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes checkPop {
+  0% { transform: scale(0.8); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+/* ── Item name ───────────────────────────────────────────────────────────── */
+
+.detail-item-name {
+  flex: 1;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-main, #1a2721);
+  line-height: 1.5;
+  min-width: 0;
+  word-break: break-word;
+  transition: color 0.15s, text-decoration 0.15s;
+}
+
+/* ── Purchased state ─────────────────────────────────────────────────────── */
+
+.detail-item.is-purchased {
+  opacity: 0.45;
+}
+
+.detail-item.is-purchased:hover {
+  opacity: 0.7;
+}
+
+.detail-item.is-purchased .detail-item-name {
+  text-decoration: line-through;
+  color: var(--color-text-muted);
+  text-decoration-thickness: 1.5px;
+  font-weight: 400;
+}
+
+/* ── From-home state ─────────────────────────────────────────────────────── */
+
+.detail-item.is-from-home {
+  opacity: 0.5;
+}
+
+.detail-item.is-from-home:hover {
+  opacity: 0.7;
+}
+
+.detail-item.is-from-home .detail-item-name {
+  text-decoration: line-through;
+  color: #92400e;
+  text-decoration-thickness: 1.5px;
+  font-weight: 400;
+}
+
+/* ── Essential item — no special background, just the star ───────────────── */
+
+.detail-item.is-essential {
+  background-color: transparent;
+}
+
+/* ── "Ze zásob" badge ────────────────────────────────────────────────────── */
+
+.from-inventory-badge {
+  background: rgba(93, 155, 98, 0.08);
+  border: 1px solid rgba(93, 155, 98, 0.25);
+  color: var(--color-primary, #5d9b62);
+  font-size: 0.68rem;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* ── Purchased-by avatar badge ───────────────────────────────────────────── */
+
+.purchased-by-badge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  min-height: 22px;
+  border-radius: 50%;
+  background-color: var(--color-bg-alt, #e5e7eb);
+  color: var(--color-text, #111827);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  border: 1px solid var(--color-border, #e5e7eb);
+  box-sizing: border-box;
+  line-height: 1;
+}
+
+/* ── Item action buttons (right side, stop-propagation zone) ─────────────── */
+
+.detail-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.12s;
+  margin-left: auto;
+}
+
+.detail-item:hover .detail-item-actions,
+.detail-item:focus-within .detail-item-actions {
+  opacity: 1;
+}
+
+/* Keep visible when an action is active (from-home, essential) */
+.detail-item-actions:has(.is-active) {
+  opacity: 1;
+}
+
+/* Show on purchased/from-home items (for delete) */
+.detail-item.is-purchased .detail-item-actions,
+.detail-item.is-from-home .detail-item-actions {
+  opacity: 1;
+}
+
+/* Hide unnecessary icons on done items */
+.detail-item.is-purchased .btn-home,
+.detail-item.is-purchased .btn-essential,
+.detail-item.is-purchased .critical-badge,
+.detail-item.is-from-home .btn-essential,
+.detail-item.is-from-home .critical-badge {
+  display: none !important;
+}
+
+/* ── Ghost action buttons ────────────────────────────────────────────────── */
+
+.btn-action {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  width: 28px;
+  height: 28px;
+  padding: 5px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--color-text-muted, #6b7280);
+  transition: background 0.15s, color 0.15s, transform 0.1s;
+}
+
+.btn-action:hover {
+  background: var(--bg-hover, #f3f4f6);
+  color: var(--color-text, #111827);
+}
+
+.btn-action:active {
+  transform: scale(0.92);
+}
+
+/* Home button */
+.btn-home {
+  opacity: 0.5;
+  color: var(--color-text-muted);
+}
+
+.btn-home:hover {
+  opacity: 1;
+  background: rgba(245, 158, 11, 0.1);
+  color: #d97706;
+}
+
+.btn-home.is-active {
+  opacity: 1;
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+}
+
+/* Essential button */
+.btn-essential {
+  opacity: 0.4;
+  background: transparent;
+}
+
+.btn-essential:hover {
+  opacity: 1;
+  background: rgba(93, 155, 98, 0.08);
+}
+
+.btn-essential.is-active {
+  opacity: 1;
+}
+
+.btn-essential:hover .critical-badge {
+  color: var(--color-primary, #5d9b62);
+}
+
+/* Critical badge star */
+.critical-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  color: var(--color-text-muted, #9ca3af);
+  font-weight: 400;
+  line-height: 1;
+  flex-shrink: 0;
+  pointer-events: none;
+  transition: color 0.15s, transform 0.15s;
+}
+
+.critical-badge.is-active {
+  color: var(--color-primary, #5d9b62);
+  transform: scale(1.1);
+}
+
+/* Delete item button */
+.btn-delete-item {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px 5px;
+  color: transparent;
+  font-size: 12px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  transition: color 0.15s, background 0.15s;
+  line-height: 1;
+}
+
+.detail-item:hover .btn-delete-item {
   color: var(--color-text-light);
 }
 
-.inventory-empty-state .empty-icon {
-  display: block;
-  margin: 0 auto 16px auto;
-  font-size: 3rem;
-  color: var(--color-primary);
-  opacity: 0.3;
+.btn-delete-item:hover {
+  color: var(--color-danger) !important;
+  background: #fee2e2;
 }
 
-.inventory-empty-state h3 {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--color-text-main);
-  margin: 0 0 8px;
-}
+/* ── Header action icon buttons ──────────────────────────────────────────── */
 
-.inventory-empty-state p {
-  font-size: 0.9rem;
-  margin: 0;
-  max-width: 320px;
-}
-
-/* ── Inventory Add Form ──────────────────────────────────────────────────── */
-
-#pantry-view {
-  padding: var(--space-xl);
-  background-color: var(--color-bg-main);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-lg);
-  width: 100%;
-  flex-grow: 1;
-  min-height: 0;
+.btn-icon-action {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted, #9ca3af);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  transition: all 0.15s;
+  font-size: 0.85rem;
+  line-height: 1;
+  min-width: 32px;
+  min-height: 32px;
 }
+
+.btn-icon-action svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.btn-icon-action:hover {
+  color: var(--color-text, #374151);
+  background: var(--color-bg-hover);
+}
+
+.btn-icon-action.btn-icon-danger:hover {
+  color: var(--color-danger);
+  background: var(--color-danger-light);
+}
+
+.btn-icon-action.btn-icon-success:hover {
+  color: var(--color-primary);
+  background: rgba(93, 155, 98, 0.1);
+}
+
+.btn-icon-action.btn-icon-share:hover {
+  color: var(--color-primary);
+  background: rgba(93, 155, 98, 0.1);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PANTRY / INVENTORY (displayed inside detail panel)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.detail-pantry-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-lg) var(--space-xl);
+}
+
+/* ── Inventory add form ──────────────────────────────────────────────────── */
 
 .inventory-add-form {
   display: flex;
@@ -227,7 +853,6 @@
   flex-wrap: nowrap;
   gap: 10px;
   align-items: flex-start;
-  /* Alignment is handled by fixed heights of children */
   max-width: 900px;
   margin: 0 auto 32px auto;
   background: transparent;
@@ -239,7 +864,6 @@
   display: flex;
   flex-direction: column;
   flex: 2;
-  /* Main name field gets more space */
   min-width: 0;
 }
 
@@ -256,9 +880,7 @@
   color: var(--color-text-main);
   background: var(--color-bg-card);
   outline: none;
-  transition:
-    border-color var(--transition-fast),
-    box-shadow var(--transition-fast);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .inventory-input:focus {
@@ -288,7 +910,6 @@
   border-color: var(--color-primary, #5d9b62);
 }
 
-/* Tlačítko Přidat — přirozená šířka (override .button-primary { width: 100% }) */
 .inv-add-btn {
   flex-shrink: 0;
   width: 42px !important;
@@ -304,9 +925,18 @@
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-/* Mobile form layout → unified block at end of file */
+.inventory-input-location {
+  flex: 1;
+  min-width: 140px;
+}
 
-/* ── Inventory sections ─────────────────────────────────────────────────── */
+/* ── Inventory list ──────────────────────────────────────────────────────── */
+
+.inventory-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
 
 .inventory-section {
   display: flex;
@@ -323,6 +953,22 @@
   color: var(--text-muted, #6b7280);
   margin: 0 0 8px 0;
   padding: 0;
+}
+
+.inventory-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  transition: box-shadow 0.2s;
+  gap: 8px;
+}
+
+.inventory-item:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .inventory-item-name {
@@ -357,26 +1003,62 @@
   white-space: nowrap;
 }
 
-.inv-meta-location i,
-.inv-meta-updated i {
-  font-size: 0.7rem;
-  opacity: 0.7;
+.inventory-item.item-empty {
+  background: rgba(254, 226, 226, 0.2);
 }
 
-/* Location input in add form — slightly shorter than name */
-.inventory-input-location {
-  flex: 1;
-  min-width: 140px;
+/* ── Status badges ───────────────────────────────────────────────────────── */
+
+.badge {
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
 }
 
-/* ── Extended badge ──────────────────────────────────────────────────────── */
+.badge-full {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.badge-low {
+  background: #fef3c7;
+  color: #92400e;
+}
 
 .badge-empty {
   background: var(--color-danger-light);
   color: var(--color-danger-text);
 }
 
-/* ── In-cart state ───────────────────────────────────────────────────────── */
+/* ── Inventory action buttons ────────────────────────────────────────────── */
+
+.item-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn-add-to-cart {
+  background: var(--color-bg-hover);
+  color: var(--color-primary);
+  border: none;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: background var(--transition-fast);
+  font-family: var(--font-family);
+}
+
+.btn-add-to-cart:hover {
+  background: var(--color-border);
+}
 
 .btn-in-cart {
   background: var(--color-bg-hover) !important;
@@ -384,8 +1066,6 @@
   cursor: not-allowed !important;
   opacity: 0.75;
 }
-
-/* ── Ghost action buttons ────────────────────────────────────────────────── */
 
 .ghost-btn {
   background: transparent;
@@ -395,9 +1075,7 @@
   cursor: pointer;
   color: var(--color-text-muted);
   font-size: var(--font-size-xs);
-  transition:
-    background var(--transition-fast),
-    color var(--transition-fast);
+  transition: background var(--transition-fast), color var(--transition-fast);
   font-family: var(--font-family);
 }
 
@@ -411,191 +1089,210 @@
   color: #b91c1c !important;
 }
 
-/* ── Small modal ─────────────────────────────────────────────────────────── */
+/* ── Inventory empty state ───────────────────────────────────────────────── */
+
+.inventory-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  width: 100%;
+  padding: 48px 24px;
+  color: var(--color-text-light);
+}
+
+.inventory-empty-state .empty-icon {
+  display: block;
+  margin: 0 auto 16px auto;
+  font-size: 3rem;
+  color: var(--color-primary);
+  opacity: 0.3;
+}
+
+.inventory-empty-state h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text-main);
+  margin: 0 0 8px;
+}
+
+.inventory-empty-state p {
+  font-size: 0.9rem;
+  margin: 0;
+  max-width: 320px;
+}
+
+/* ── Essential toggle (inventory edit modal) ─────────────────────────────── */
+
+.essential-toggle-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-border, #d1d5db);
+  color: var(--color-text-muted, #9ca3af);
+  cursor: pointer;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  transition: border-color 0.18s, color 0.18s, background 0.18s, box-shadow 0.18s;
+}
+
+.essential-toggle-label:hover {
+  border-color: var(--color-primary, #5d9b62);
+  color: var(--color-primary, #5d9b62);
+  background: rgba(93, 155, 98, 0.06);
+}
+
+.essential-toggle-label input[type="checkbox"] {
+  display: none;
+}
+
+.essential-toggle-icon {
+  font-size: 0.95rem;
+  opacity: 0.6;
+  pointer-events: none;
+  transition: opacity 0.15s, transform 0.15s;
+  line-height: 1;
+}
+
+.essential-toggle-label input[type="checkbox"]:checked + .essential-toggle-icon {
+  opacity: 1;
+  transform: scale(1.15);
+}
+
+.essential-toggle-label:has(input:checked) {
+  background: var(--color-primary, #5d9b62);
+  border-color: var(--color-primary, #5d9b62);
+  color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(93, 155, 98, 0.15);
+}
+
+.essential-toggle-label:has(input:checked):hover {
+  background: #4a8a50;
+  border-color: #4a8a50;
+}
+
+.essential-toggle-label--form {
+  width: 100%;
+  height: auto;
+  min-height: 44px;
+  border-radius: var(--radius-md, 8px);
+  justify-content: flex-start;
+  padding: 8px 12px;
+  gap: var(--space-sm, 8px);
+  font-size: 0.9rem;
+}
+
+.essential-toggle-label--form:has(input:checked) {
+  background: #ef4444;
+  border-color: #ef4444;
+  color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MODALS (shared)
+   ═══════════════════════════════════════════════════════════════════════════ */
 
 .modal-small {
   max-width: 420px !important;
   width: 100%;
 }
 
-/* Empty State */
-.empty-state {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-3xl);
+.modal-actions {
+  text-align: right;
+  margin-top: var(--space-lg);
+}
+
+.modal-divider {
   text-align: center;
-  background: linear-gradient(to bottom, var(--color-bg-alt), transparent);
-  border-radius: var(--radius-xl);
-  border: 1px dashed var(--color-border);
-  color: var(--color-text-light);
+  color: var(--color-text-muted, #9ca3af);
+  font-size: 0.82rem;
+  margin: var(--space-sm) 0;
+  position: relative;
 }
 
-.empty-icon {
-  font-size: 3.5rem;
-  color: var(--color-primary);
-  opacity: 0.3;
-  margin-bottom: var(--space-md);
+.modal-divider::before,
+.modal-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 28%;
+  height: 1px;
+  background: var(--color-border, #e5e7eb);
 }
 
-/* Shopping Card Overlaying base card */
-div.shopping-list-card.card {
-  display: flex;
-  flex-direction: column;
-  height: auto;
-  min-height: 0;
-  padding: 0;
-  overflow: hidden;
-  border-radius: var(--radius-xl);
-  border: 1px solid var(--color-border-light);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
-  transition:
-    transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
-    box-shadow 0.3s ease;
-  background: var(--color-bg);
-}
+.modal-divider::before { left: 0; }
+.modal-divider::after { right: 0; }
 
-/* ── Collapse button ─────────────────────────────────────────────────────── */
-
-.btn-collapse-list {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 5px 7px;
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  opacity: 0.45;
-  color: var(--color-text-light);
-  transition:
-    opacity 0.2s,
-    background 0.2s;
-  flex-shrink: 0;
-}
-
-.btn-collapse-list:hover {
-  opacity: 1;
-  background: rgba(0, 0, 0, 0.05);
-}
-
-.btn-collapse-list .collapse-icon {
-  display: block;
-  transition: transform 0.25s ease;
-  transform: rotate(0deg);
-}
-
-.shopping-list-card.collapsed .btn-collapse-list .collapse-icon {
-  transform: rotate(180deg);
-}
-
-/* Hlavička je klikatelná – kurzor pointer */
-.shopping-card-toggle {
-  cursor: pointer;
-  user-select: none;
-}
-
-/* ── Sbalovací obsah ─────────────────────────────────────────────────────── */
-
-.shopping-collapsible {
-  display: grid;
-  grid-template-rows: 1fr;
-  transition:
-    grid-template-rows 0.28s ease,
-    opacity 0.28s ease;
-  opacity: 1;
-  overflow: hidden;
-}
-
-.shopping-list-card.collapsed .shopping-collapsible {
-  grid-template-rows: 0fr;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.shopping-collapsible-inner {
-  min-height: 0;
-  overflow: hidden;
-}
-
-div.shopping-list-card.card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.06);
-}
-
-/* Card Header */
-.shopping-card-header {
-  padding: var(--space-lg);
-  background: var(--color-bg-alt);
+.add-to-cart-list-btn {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid var(--color-border-light);
+  width: 100%;
+  min-height: 44px;
+  text-align: left;
+  gap: 8px;
+  padding: 8px 12px;
 }
 
-/* Header action buttons (delete, archive) */
-.shopping-card-header-actions {
-  display: flex;
-  gap: 4px;
-  align-items: center;
+.add-to-cart-list-btn:hover {
+  background: var(--color-primary-light, rgba(93, 155, 98, 0.08));
+  border-color: var(--color-primary, #5d9b62);
+  color: var(--color-primary, #5d9b62);
+}
+
+.atc-list-name {
+  font-weight: 500;
+  text-align: left;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.atc-list-count {
   flex-shrink: 0;
+  font-size: 0.8rem;
+  color: var(--color-text-muted, #9ca3af);
 }
 
-/* 3. Akční ikony v hlavičce karty — rozumná velikost */
-.btn-icon-action {
+.inv-modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-top: var(--space-lg, 20px);
+  padding-top: var(--space-md, 16px);
+  border-top: 1px solid var(--color-border-light, #f3f4f6);
+  gap: 8px;
+}
+
+.btn-modal-delete {
   background: transparent;
   border: none;
+  color: var(--color-danger, #dc2626);
+  font-size: 0.88rem;
+  font-weight: 500;
   cursor: pointer;
-  padding: 6px;
-  border-radius: var(--radius-sm);
-  font-size: 15px;
-  opacity: 0.45;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 32px;
-  min-height: 32px;
-  transition:
-    opacity 0.2s,
-    color 0.2s,
-    background 0.2s;
+  padding: 8px 10px;
+  border-radius: var(--radius-md, 8px);
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
 }
 
-.btn-icon-action svg {
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
+.btn-modal-delete:hover {
+  background: var(--color-danger-light, #fee2e2);
+  color: #b91c1c;
 }
 
-.btn-icon-danger {
-  color: var(--color-danger);
-}
-
-.btn-icon-success {
-  color: var(--color-success, #22c55e);
-}
-
-.btn-icon-share {
-  color: var(--color-primary);
-}
-
-.btn-icon-action:hover {
-  opacity: 1;
-}
-
-.btn-icon-danger:hover {
-  background: #fee2e2;
-}
-
-.btn-icon-success:hover {
-  background: #dcfce7;
-}
-
-.btn-icon-share:hover {
-  background: var(--color-primary-bg, #eff6ff);
-}
-
-/* ── Share / Nástěnka dialog ─────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════════════
+   SHARE DIALOG
+   ═══════════════════════════════════════════════════════════════════════════ */
 
 .share-note-modal-content {
   max-width: 460px;
@@ -634,10 +1331,7 @@ div.shopping-list-card.card:hover {
   border-radius: var(--radius-lg);
   cursor: pointer;
   text-align: left;
-  transition:
-    border-color 0.2s,
-    background 0.2s,
-    transform 0.15s;
+  transition: border-color 0.2s, background 0.2s, transform 0.15s;
   font-family: var(--font-family);
   width: 100%;
   position: relative;
@@ -708,8 +1402,6 @@ div.shopping-list-card.card:hover {
   color: var(--color-text-light);
 }
 
-/* ── Target section ──────────────────────────────────────────────────────── */
-
 .share-note-target-section {
   border-top: 1px solid var(--color-border-light);
   padding-top: var(--space-lg);
@@ -740,17 +1432,8 @@ div.shopping-list-card.card:hover {
   font-size: var(--font-size-sm);
   color: var(--color-text);
   text-align: left;
-  transition:
-    border-color 0.15s,
-    background 0.15s;
+  transition: border-color 0.15s, background 0.15s;
   width: 100%;
-}
-
-.share-thread-option i {
-  color: var(--color-text-light);
-  font-size: 13px;
-  width: 14px;
-  flex-shrink: 0;
 }
 
 .share-thread-option:hover {
@@ -777,9 +1460,7 @@ div.shopping-list-card.card:hover {
   gap: var(--space-sm);
   font-family: var(--font-family);
   width: 100%;
-  transition:
-    border-color 0.15s,
-    color 0.15s;
+  transition: border-color 0.15s, color 0.15s;
 }
 
 .share-note-add-thread-btn:hover {
@@ -806,1084 +1487,140 @@ div.shopping-list-card.card:hover {
   margin-top: var(--space-sm);
 }
 
-.shopping-card-title-area {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.shopping-card-title-area h3 {
-  margin: 0;
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--color-text);
-  line-height: 1.2;
-}
-
-.shopping-card-meta {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-light);
-  font-weight: 500;
-}
-
-/* Progress - Sleek Line */
-.shopping-progress {
-  padding: var(--space-sm) var(--space-lg);
-  background: var(--color-bg);
-  display: flex;
-  justify-content: flex-start;
-  /* align items close to each other */
-  align-items: center;
-  gap: var(--space-md);
-  border-bottom: 1px solid var(--color-border-light);
-}
-
-.progress-bar {
-  flex: 1;
-  height: 4px;
-  /* Thinner sophisticated bar */
-  background-color: var(--color-border-light);
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background-color: var(--color-primary);
-  transition: width 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.progress-text {
-  font-size: 10px;
-  /* slightly smaller */
-  font-weight: 600;
-  /* less bold */
-  color: var(--color-text-light);
-  white-space: nowrap;
-  letter-spacing: 0.5px;
-}
-
-/* Add Item Form */
-.shopping-add-item-form {
-  padding: var(--space-md) var(--space-lg);
-  background: var(--color-bg);
-  border-bottom: 1px solid var(--color-border);
-  /* solid light gray line instead of dashed */
-}
-
-.shopping-input-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--color-bg-alt);
-  border: 1px solid transparent;
-  border-radius: 24px;
-  /* pill shape */
-  padding: 4px 6px;
-  transition:
-    border-color 0.2s,
-    box-shadow 0.2s,
-    background 0.2s;
-}
-
-.shopping-input-wrapper:focus-within {
-  background: var(--color-bg);
-  border-color: var(--color-primary-light);
-  box-shadow: 0 0 0 3px var(--color-primary-bg);
-}
-
-.shopping-add-input {
-  flex: 1;
-  border: none;
-  background: transparent;
-  padding: 8px 12px 8px 16px;
-  font-size: var(--font-size-sm);
-  outline: none;
-  color: var(--color-text);
-}
-
-.shopping-add-input::placeholder {
-  color: var(--color-text-light);
-  opacity: 0.7;
-}
-
-.shopping-add-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-primary);
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  min-height: 32px;
-  padding: 0;
-  flex-shrink: 0;
-  cursor: pointer;
-  transition:
-    transform 0.2s,
-    background-color 0.2s;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-.shopping-add-btn:hover {
-  background: var(--color-primary-dark);
-  transform: translateY(-1px) scale(1.05);
-}
-
-.shopping-add-btn i {
-  font-size: 12px;
-}
-
-/* Items List */
-.shopping-items-list {
-  display: flex;
-  flex-direction: column;
-  flex-grow: 1;
-  /* Remove scrolling limits so it expands card height instead */
-  background-color: var(--color-bg);
-  padding: var(--space-sm) 0;
-}
-
-/* Scrollbar styling for list */
-.shopping-items-list::-webkit-scrollbar {
-  width: 6px;
-}
-
-.shopping-items-list::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.shopping-items-list::-webkit-scrollbar-thumb {
-  background-color: var(--color-border);
-  border-radius: 3px;
-}
-
-.empty-list-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: var(--space-2xl) var(--space-lg);
-  color: var(--color-text-light);
-  opacity: 0.6;
-}
-
-.empty-list-icon {
-  font-size: 2rem;
-  margin-bottom: var(--space-sm);
-}
-
-.empty-list-text {
-  text-align: center;
-  font-style: italic;
-  font-size: var(--font-size-sm);
-  margin: 0;
-}
-
-/* ── Item row ──────────────────────────────────────────────────────────────── */
-
-.shopping-item-row {
-  display: flex;
-  align-items: center;
-  padding: 8px var(--space-md);
-  gap: var(--space-sm);
-  transition:
-    background-color 0.15s,
-    opacity 0.25s;
-  border-radius: var(--radius-md);
-  margin: 0 var(--space-sm);
-}
-
-.shopping-item-row:hover {
-  background-color: var(--color-bg-hover);
-}
-
-/* Done state (purchased OR bring_from_home) */
-.shopping-item-row.is-done {
-  opacity: 0.62;
-}
-
-.shopping-item-row.is-done:hover {
-  opacity: 1;
-}
-
-/* ── 3-state status button ─────────────────────────────────────────────────── */
-
-.shopping-status-btn {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 3px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  border-radius: var(--radius-sm);
-  transition:
-    background 0.15s,
-    transform 0.1s;
-}
-
-.shopping-status-btn:hover {
-  background: rgba(0, 0, 0, 0.05);
-  transform: scale(1.12);
-}
-
-.shopping-status-btn span {
-  font-size: 19px;
-  transition: color 0.18s;
-}
-
-.si-pending {
-  color: var(--color-border);
-}
-
-.si-bring {
-  color: #f59e0b;
-  font-size: 16px;
-}
-
-.si-purchased {
-  color: var(--color-success, #22c55e);
-}
-
-/* ── Item name ─────────────────────────────────────────────────────────────── */
-
-.shopping-item-name {
-  flex: 1;
-  font-size: var(--font-size-base);
-  color: var(--color-text);
-  font-weight: 500;
-  line-height: 1.4;
-  transition:
-    color 0.2s,
-    text-decoration 0.2s;
-  word-break: break-word;
-  min-width: 0;
-}
-
-.shopping-item-row.is-done .shopping-item-name {
-  text-decoration: line-through;
-  color: var(--color-text-light);
-  text-decoration-thickness: 1.5px;
-}
-
-/* ── "Z domova" badge ──────────────────────────────────────────────────────── */
-
-.shopping-item-badge.bring-badge {
-  font-size: 11px;
-  background: #fef3c7;
-  color: #92400e;
-  border-radius: var(--radius-sm);
-  padding: 1px 7px;
-  white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font-weight: 600;
-  flex-shrink: 0;
-}
-
-/* ── Delete item button – visible on row hover ─────────────────────────────── */
-
-.btn-delete-item {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 4px 5px;
-  color: transparent;
-  /* hidden by default */
-  font-size: 12px;
-  border-radius: var(--radius-sm);
-  flex-shrink: 0;
-  transition:
-    color 0.15s,
-    background 0.15s;
-  line-height: 1;
-}
-
-.shopping-item-row:hover .btn-delete-item {
-  color: var(--color-text-light);
-}
-
-.btn-delete-item:hover {
-  color: var(--color-danger) !important;
-  background: #fee2e2;
-}
-
-/* ── Progress bar complete state ───────────────────────────────────────────── */
-
-.progress-fill.progress-complete {
-  background: var(--color-success, #22c55e);
-}
-
-/* 2. Avatar jako kolečko — textová iniciála i emoji */
-.purchased-by-badge {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  min-width: 22px;
-  min-height: 22px;
-  border-radius: 50%;
-  background-color: var(--color-bg-alt, #e5e7eb);
-  color: var(--color-text, #111827);
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  border: 1px solid var(--color-border, #e5e7eb);
-  box-sizing: border-box;
-  line-height: 1;
-}
-
-.is-done .purchased-by-badge {
-  background-color: var(--color-primary-dark);
-  color: white;
-  border-color: transparent;
-}
-
-/* .btn-icon-tiny kept for legacy compatibility */
-.btn-icon-tiny {
-  background: transparent;
-  color: transparent;
-  border: none;
-  padding: 4px 5px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  transition:
-    color 0.15s,
-    background-color 0.15s;
-}
-
-.shopping-item-row:hover .btn-icon-tiny {
-  color: var(--color-text-light);
-}
-
-.btn-icon-tiny:hover {
-  color: var(--color-danger) !important;
-  background-color: #fee2e2;
-}
-
-/* Card Footer */
-.shopping-card-footer {
-  padding: var(--space-md) var(--space-lg);
-  background-color: rgba(0, 0, 0, 0.015);
-  border-top: 1px solid var(--color-border-light);
-  text-align: center;
-  margin-top: auto;
-}
-
-.shopping-card-footer .btn-resolve-list {
-  background: transparent;
-  color: var(--color-text-light);
-  border: 1px solid transparent;
-  transition:
-    color 0.2s,
-    background 0.2s;
-  width: 100%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 42px;
-  padding: 0 var(--space-xl);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  font-family: var(--font-family);
-  font-weight: 600;
-  font-size: var(--font-size-sm);
-  white-space: nowrap;
-}
-
-.shopping-card-footer .btn-resolve-list:hover {
-  color: var(--color-primary-dark);
-  background: var(--color-primary-bg);
-  border-color: rgba(0, 0, 0, 0.05);
-}
-
-/* Mobile shopping cards → unified block at end of file */
-
-.modal-actions {
-  text-align: right;
-  margin-top: var(--space-lg);
-}
-
-/* Override .button-primary { width: 100% } uvnitř modalů zásoby */
-.modal-buttons .button-primary,
-.modal-buttons .button-secondary {
-  width: auto !important;
-  min-width: 90px;
-}
-
-/* ============================================================================
-   Essential / Critical Items Styles
-   ============================================================================ */
-
-/* Section header — neutrální štítek (sekce zrušena, ponecháno pro fallback) */
-.essential-section-header {
-  display: none;
-}
-
-.essential-divider {
-  display: none;
-}
-
-/* Essential item row — STEJNÁ jako normální položka, žádné červené pozadí */
-.shopping-item-row.is-essential {
-  background-color: transparent;
-  border: none;
-  border-radius: var(--radius-sm, 6px);
-}
-
-/* Inventory essential styles — no visual difference from normal */
-
-/* Empty/critical inventory items — subtle background only, no border */
-.inventory-item.item-empty {
-  background: rgba(254, 226, 226, 0.2);
-}
-
-/* Mobile inventory → unified block at end of file */
-
-.shopping-item-row.is-essential .item-checkbox {
-  border-color: var(--color-border, #d1d5db);
-}
-
-/* Badge "Ze zásob" — zelený štítek pro položky ze zásob */
-.from-inventory-badge {
-  background: rgba(93, 155, 98, 0.08);
-  border: 1px solid rgba(93, 155, 98, 0.25);
-  color: var(--color-primary, #5d9b62);
-  font-size: 0.7rem;
-  font-weight: 500;
-  padding: 2px 8px;
-  border-radius: 4px;
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-
-/* 1. Hotová krit. položka — checkbox vždy zelený, bez červených zbytků */
-.shopping-item-row.is-purchased .item-checkbox,
-.shopping-item-row.is-purchased.is-essential .item-checkbox {
-  border-color: var(--brand-primary, #5d9b62) !important;
-  background-color: var(--brand-primary, #5d9b62) !important;
-  color: white !important;
-}
-
-.shopping-item-row.is-essential .item-actions {
-  opacity: 1;
-}
-
-/* Essential toggle button (inline in shopping item rows) */
-.btn-toggle-essential {
-  border: none;
-  background: none;
-  cursor: pointer;
-  font-size: 0.85rem;
-  opacity: 0.3;
-  padding: 2px 4px;
-  border-radius: 4px;
-  transition:
-    opacity 0.15s,
-    transform 0.15s;
-  flex-shrink: 0;
-}
-
-.btn-toggle-essential:hover {
-  opacity: 0.7;
-  transform: scale(1.15);
-}
-
-.btn-toggle-essential.is-active {
-  opacity: 1;
-}
-
-.essential-badge-inline {
-  font-size: 0.85rem;
-  flex-shrink: 0;
-}
-
-/* 3. Přepínač důležitosti — neutrální default, červený jen aktivní */
-.essential-toggle-label {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  min-width: 34px;
-  border-radius: 50%;
-  border: 1.5px solid var(--color-border, #d1d5db);
-  color: var(--color-text-muted, #9ca3af);
-  cursor: pointer;
-  flex-shrink: 0;
-  box-sizing: border-box;
-  transition: border-color 0.18s, color 0.18s, background 0.18s, box-shadow 0.18s;
-}
-
-.essential-toggle-label:hover {
-  border-color: var(--color-primary, #5d9b62);
-  color: var(--color-primary, #5d9b62);
-  background: rgba(93, 155, 98, 0.06);
-}
-
-.essential-toggle-label input[type="checkbox"] {
-  display: none;
-}
-
-.essential-toggle-icon {
-  font-size: 0.95rem;
-  opacity: 0.6;
-  pointer-events: none;
-  transition: opacity 0.15s, transform 0.15s;
-  line-height: 1;
-}
-
-.essential-toggle-label input[type="checkbox"]:checked+.essential-toggle-icon {
-  opacity: 1;
-  transform: scale(1.15);
-}
-
-/* Aktivní stav — plná zelená */
-.essential-toggle-label:has(input:checked) {
-  background: var(--color-primary, #5d9b62);
-  border-color: var(--color-primary, #5d9b62);
-  color: #ffffff;
-  box-shadow: 0 0 0 3px rgba(93, 155, 98, 0.15);
-}
-
-.essential-toggle-label:has(input:checked):hover {
-  background: #4a8a50;
-  border-color: #4a8a50;
-}
-
-.essential-toggle-label:hover .essential-toggle-icon {
-  opacity: 0.8;
-}
-
-/* Forma modifier — používá se v edit-modal formáři (ne kružnicový ikon, ale řádkové tlačítko) */
-.essential-toggle-label--form {
-  width: 100%;
-  height: auto;
-  min-height: 44px;
-  border-radius: var(--radius-md, 8px);
-  justify-content: flex-start;
-  padding: 8px 12px;
-  gap: var(--space-sm, 8px);
-  font-size: 0.9rem;
-}
-
-.essential-toggle-label--form:has(input:checked) {
-  background: #ef4444;
-  border-color: #ef4444;
-  color: #ffffff;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
-}
-
-/* ============================================================================
-   Phase 6: New item-level components (checkbox, action buttons, badges)
-   ============================================================================ */
-
-/* ── Purchased checkbox (SVG circle) ─────────────────────────────────────── */
-.item-checkbox {
-  background: transparent;
-  border: 2px solid #9ca3af;
-  border-radius: 50%;
-  width: 22px;
-  height: 22px;
-  min-width: 22px;
-  min-height: 22px;
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  padding: 0;
-  flex-shrink: 0;
-  color: transparent;
-  -webkit-appearance: none;
-  appearance: none;
-  transition: border-color 0.18s, background 0.18s, transform 0.1s;
-}
-
-.item-checkbox:hover {
-  border-color: var(--color-success, #22c55e);
-  transform: scale(1.06);
-}
-
-.item-checkbox.is-checked {
-  background: var(--color-success, #22c55e);
-  border-color: var(--color-success, #22c55e);
-  color: #fff;
-}
-
-/* ── Shopping item-actions wrapper (right side icons) ────────────────────── */
-.shopping-item-row .item-actions {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  flex-shrink: 0;
-  opacity: 0;
-  transition: opacity 0.15s;
-  margin-left: auto;
-}
-
-.shopping-item-row:hover .item-actions,
-.shopping-item-row:focus-within .item-actions {
-  opacity: 1;
-}
-
-.shopping-item-row .item-actions:has(.is-active) {
-  opacity: 1;
-}
-
-/* ── Ghost action buttons ────────────────────────────────────────────────── */
-.btn-action {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  width: 28px;
-  height: 28px;
-  padding: 5px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  color: var(--color-text-muted, #6b7280);
-  transition: background 0.15s, color 0.15s, transform 0.1s;
-}
-
-.btn-action:hover {
-  background: var(--bg-hover, #f3f4f6);
-  color: var(--color-text, #111827);
-}
-
-.btn-action:active {
-  transform: scale(0.92);
-}
-
-/* Home button */
-.btn-home {
-  opacity: 0.5;
-  color: var(--color-text-muted);
-}
-
-.btn-home:hover {
-  opacity: 1;
-  background: rgba(245, 158, 11, 0.1);
-  color: #d97706;
-}
-
-.btn-home.is-active {
-  opacity: 1;
-  background: rgba(245, 158, 11, 0.12);
-  color: #d97706;
-}
-
-/* Essential/critical button */
-.btn-essential {
-  opacity: 0.4;
-  background: transparent;
-}
-
-.btn-essential:hover {
-  opacity: 1;
-  background: rgba(93, 155, 98, 0.08);
-}
-
-.btn-essential.is-active {
-  opacity: 1;
-  background: transparent;
-}
-
-.btn-essential:hover .critical-badge {
-  color: var(--color-primary, #5d9b62);
-}
-
-/* Critical badge — hvězdička (plain text, no circle) */
-.critical-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
-  color: var(--color-text-muted, #9ca3af);
-  font-weight: 400;
-  line-height: 1;
-  flex-shrink: 0;
-  pointer-events: none;
-  transition: color 0.15s, transform 0.15s;
-}
-
-.critical-badge.is-active {
-  color: var(--color-primary, #5d9b62);
-  transform: scale(1.1);
-}
-
-/* ── Purchased state ─────────────────────────────────────────────────────── */
-/* 1. Purchased přepisuje VŠECHNO — červené pozadí, border, opacity */
-.shopping-item-row.is-purchased {
-  background-color: var(--color-bg, #f9fafb) !important;
-  border-color: transparent !important;
-  opacity: 0.55;
-}
-
-.shopping-item-row.is-purchased .shopping-item-name {
-  text-decoration: line-through;
-  color: var(--color-text-muted, #6b7280);
-  text-decoration-thickness: 1.5px;
-  font-weight: 400;
-}
-
-/* Purchased + essential combo — essential styl se NEPROPÍŠE */
-.shopping-item-row.is-purchased.is-essential {
-  background-color: var(--color-bg, #f9fafb) !important;
-  border-color: transparent !important;
-}
-
-/* ── From-home state ─────────────────────────────────────────────────────── */
-.shopping-item-row.is-from-home {
-  background-color: var(--color-bg, #f9fafb) !important;
-  border-color: transparent !important;
-  opacity: 0.6;
-}
-
-.shopping-item-row.is-from-home .shopping-item-name {
-  text-decoration: line-through;
-  color: #92400e;
-  text-decoration-thickness: 1.5px;
-  font-weight: 400;
-}
-
-/* From-home + essential combo */
-.shopping-item-row.is-from-home.is-essential {
-  background-color: var(--color-bg, #f9fafb) !important;
-  border-color: transparent !important;
-}
-
-/* 2. Skrytí zbytečných ikon u hotových položek (clutter reduction) */
-.shopping-item-row.is-purchased .critical-badge,
-.shopping-item-row.is-purchased .btn-essential,
-.shopping-item-row.is-purchased .btn-home {
-  display: none !important;
-}
-
-.shopping-item-row.is-from-home .critical-badge,
-.shopping-item-row.is-from-home .btn-essential {
-  display: none !important;
-}
-
-/* Purchased/from-home → akce (smazat) vždy viditelné */
-.shopping-item-row.is-purchased .item-actions,
-.shopping-item-row.is-from-home .item-actions {
-  opacity: 1;
-}
-
-.shopping-item-row.is-purchased .purchased-by-badge {
-  display: inline-flex;
-  opacity: 0.8;
-}
-
-.inv-essential-icon {
-  margin-right: 4px;
-  font-size: 0.85rem;
-}
-
-.btn-inv-essential {
-  opacity: 0.3;
-  transition: opacity 0.15s;
-  font-size: 0.85rem;
-}
-
-.btn-inv-essential:hover {
-  opacity: 0.7;
-}
-
-.btn-inv-essential.is-active {
-  opacity: 1;
-}
-
-.inv-essential-label {
-  margin-left: 0;
-  height: 42px;
-  width: 42px;
-  min-width: 42px;
-  border-radius: 50%;
-  border: 1px solid var(--color-border);
-}
-
-/* ─── Add-to-cart modal ─────────────────────────────────────────────────────── */
-
-.modal-divider {
-  text-align: center;
-  color: var(--color-text-muted, #9ca3af);
-  font-size: 0.82rem;
-  margin: var(--space-sm) 0;
-  position: relative;
-}
-
-.modal-divider::before,
-.modal-divider::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  width: 28%;
-  height: 1px;
-  background: var(--color-border, #e5e7eb);
-}
-
-.modal-divider::before {
-  left: 0;
-}
-
-.modal-divider::after {
-  right: 0;
-}
-
-.add-to-cart-list-btn {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  min-height: 44px;
-  text-align: left;
-  gap: 8px;
-  padding: 8px 12px;
-}
-
-.add-to-cart-list-btn:hover {
-  background: var(--color-primary-light, rgba(93, 155, 98, 0.08));
-  border-color: var(--color-primary, #5d9b62);
-  color: var(--color-primary, #5d9b62);
-}
-
-.atc-list-name {
-  font-weight: 500;
-  text-align: left;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.atc-list-count {
-  flex-shrink: 0;
-  font-size: 0.8rem;
-  color: var(--color-text-muted, #9ca3af);
-}
-
-/* ─── Inventory edit modal footer ───────────────────────────────────────────── */
-
-.inv-modal-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  margin-top: var(--space-lg, 20px);
-  padding-top: var(--space-md, 16px);
-  border-top: 1px solid var(--color-border-light, #f3f4f6);
-  gap: 8px;
-}
-
-.btn-modal-delete {
-  background: transparent;
-  border: none;
-  color: var(--color-danger, #dc2626);
-  font-size: 0.88rem;
-  font-weight: 500;
-  cursor: pointer;
-  padding: 8px 10px;
-  border-radius: var(--radius-md, 8px);
-  transition: background 0.15s, color 0.15s;
-  white-space: nowrap;
-}
-
-.btn-modal-delete:hover {
-  background: var(--color-danger-light, #fee2e2);
-  color: #b91c1c;
-}
-
-/* ── Unified Card Action Icons (Shopping List Header) ──────────────────────── */
-
-.shopping-card-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-}
-
-.btn-icon-action {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-muted, #9ca3af);
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  border: none;
-  background: transparent;
-  transition: all 0.2s ease;
-  font-size: 0.85rem;
-  line-height: 1;
-}
-
-.btn-icon-action:hover {
-  color: var(--text-main, #374151);
-  background: var(--bg-app, #f4f7f5);
-}
-
-/* Contextual hover colors */
-.btn-icon-action.btn-icon-danger:hover {
-  color: var(--color-danger, #ef4444);
-  background: var(--color-danger-light, #fee2e2);
-}
-
-.btn-icon-action.btn-icon-success:hover {
-  color: var(--color-primary, #5d9b62);
-  background: rgba(93, 155, 98, 0.1);
-}
-
-.btn-icon-action.btn-icon-share:hover {
-  color: var(--color-primary, #5d9b62);
-  background: rgba(93, 155, 98, 0.1);
-}
-
-/* ══════════════════════════════════════════════════════════════════════════════
-   MOBILE RESPONSIVE — Shopping + Inventory (JEDINÝ sjednocený blok)
-   ══════════════════════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOBILE RESPONSIVE
+   ═══════════════════════════════════════════════════════════════════════════ */
 
 @media (max-width: 768px) {
 
-  /* ── Shopping page container ──────────────────────────────────── */
+  /* Page container — no padding, full width */
   .shopping-page {
-    padding: var(--space-md);
-    gap: var(--space-md);
+    border-radius: 0;
+    box-shadow: none;
   }
 
-  .shopping-header-area {
-    margin-bottom: var(--space-sm);
+  /* Mode switcher — smaller on mobile */
+  .mode-switcher-bar {
+    padding: 12px 16px 0;
   }
 
-  .shopping-header-area h2 {
-    font-size: 1.1rem;
+  .mode-switcher-btn {
+    padding: 7px 16px;
+    font-size: 0.82rem;
   }
 
-  .shopping-lists-grid {
-    grid-template-columns: 1fr;
+  /* Layout: stacked, master is default view */
+  .shopping-layout {
+    flex-direction: column;
+  }
+
+  /* Master: full width, no fixed width */
+  .shopping-master {
+    width: 100%;
+    min-width: unset;
+    max-width: unset;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border);
+    flex: 1;
+  }
+
+  /* Detail: hidden by default on mobile */
+  .shopping-detail {
+    display: none;
+    flex: 1;
+    min-height: 100%;
+  }
+
+  /* When detail is open: hide master, show detail */
+  .shopping-layout.detail-open .shopping-master {
+    display: none;
+  }
+
+  .shopping-layout.detail-open .shopping-detail {
+    display: flex;
+  }
+
+  /* Show back button on mobile */
+  .detail-back-btn {
+    display: flex !important;
+  }
+
+  /* Detail title — smaller on mobile */
+  .detail-title {
+    font-size: 1.25rem;
+  }
+
+  .detail-header {
+    padding: 20px 16px 16px;
     gap: 12px;
   }
 
-  /* ── Shopping cards — odříznuté od pozadí ─────────────────────── */
-  div.shopping-list-card.card {
-    max-width: 100%;
-    margin-bottom: 0;
-    background-color: #ffffff !important;
-    border: 1px solid var(--border-strong, #e5e7eb) !important;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08),
-                0 2px 4px -1px rgba(0, 0, 0, 0.04) !important;
-  }
-
-  div.shopping-list-card.card:hover {
-    transform: none;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08),
-                0 2px 4px -1px rgba(0, 0, 0, 0.04) !important;
-  }
-
-  /* ── 1. Nákupní položky — VŽDY horizontální řádek ────────────── */
-  .shopping-item-row {
-    display: flex !important;
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
-    align-items: center;
-    padding: 6px 12px;
+  .detail-row-2 {
     gap: 8px;
+  }
+
+  .detail-add-input {
+    padding: 10px 14px;
+    font-size: 0.9rem;
+  }
+
+  .detail-add-btn {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
     min-height: 40px;
   }
 
-  .shopping-item-row .shopping-item-name {
-    flex: 1;
-    min-width: 0;
-    word-break: normal;
-    overflow-wrap: break-word;
-    white-space: normal;
-    font-size: 0.88rem;
-    line-height: 1.35;
-    margin-left: 0;
+  /* Items — touch-friendly sizing */
+  .detail-item {
+    padding: 14px 16px;
+    gap: 14px;
+    min-height: 48px; /* min 48px touch target */
   }
 
-  .shopping-item-row .item-checkbox {
-    flex-shrink: 0;
-    width: 22px;
-    height: 22px;
-    min-width: 22px;
-    min-height: 22px;
+  .detail-item-name {
+    font-size: 0.9rem;
   }
 
-  .shopping-item-row .item-actions {
-    flex-shrink: 0;
-    gap: 4px;
+  /* Actions always visible on mobile (no hover) */
+  .detail-item-actions {
     opacity: 1;
-    border-top: none;
-    padding-top: 0;
-    margin-top: 0;
-    width: auto;
-    justify-content: flex-end;
+    gap: 4px;
   }
 
-  .shopping-item-row .from-inventory-badge {
-    font-size: 0.6rem;
-    padding: 1px 5px;
-    flex-shrink: 0;
+  .detail-item .btn-action {
+    min-width: 32px;
+    min-height: 32px;
   }
 
-  .shopping-item-row .purchased-by-badge {
-    font-size: 0.75rem;
-  }
-
-  .shopping-item-row .btn-action {
-    min-width: 28px;
-    min-height: 28px;
-    padding: 3px;
-  }
-
-  .shopping-item-row .btn-delete-item {
+  .detail-item .btn-delete-item {
     color: var(--color-text-muted);
     opacity: 0.6;
   }
 
-  /* ── Shopping add form — kompaktnější ─────────────────────────── */
-  .shopping-add-item-form {
-    padding: var(--space-sm) var(--space-md);
+  .detail-item .from-inventory-badge {
+    font-size: 0.6rem;
+    padding: 1px 5px;
   }
 
-  .shopping-input-wrapper {
-    padding: 3px 5px;
+  /* Master items touch-friendly */
+  .master-item {
+    padding: 14px 14px;
+    min-height: 48px;
+    margin: 0 10px 2px;
   }
 
-  .shopping-add-input {
-    font-size: 0.85rem;
+  /* Delete button is already icon-only */
+  .detail-delete-btn {
+    padding: 6px;
   }
 
-  /* ── Progress bar ────────────────────────────────────────────── */
-  .shopping-progress {
-    padding: var(--space-xs) var(--space-md);
+  .detail-delete-btn svg {
+    width: 18px;
+    height: 18px;
   }
 
-  /* ── Modal actions ───────────────────────────────────────────── */
-  .modal-actions {
-    text-align: center !important;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-  }
-
-  .modal-actions button {
-    width: 100%;
-  }
-
-  /* ── 2. Formulář Zásoby — CSS Grid 2 sloupce ─────────────────── */
+  /* Pantry: inventory form grid on mobile */
   .inventory-add-form {
     display: grid !important;
     grid-template-columns: 1fr 1fr;
@@ -1892,20 +1629,17 @@ div.shopping-list-card.card:hover {
     margin-bottom: 20px;
   }
 
-  /* Název: celá šířka */
   .inventory-add-form .inv-name-field {
     grid-column: 1 / -1;
     width: 100%;
   }
 
-  /* Lokace: celá šířka */
   .inventory-add-form .inventory-input-location {
     grid-column: 1 / -1;
     width: 100% !important;
     min-width: 0;
   }
 
-  /* Kategorie + Stav: vedle sebe (každý 1 sloupec) */
   .inventory-add-form .inventory-select {
     width: 100% !important;
     min-width: 0;
@@ -1913,7 +1647,6 @@ div.shopping-list-card.card:hover {
     padding: 8px 10px;
   }
 
-  /* Tlačítko přidat: celá šířka, obdélníkové */
   .inventory-add-form .inv-add-btn {
     grid-column: 1 / -1;
     border-radius: var(--radius-md, 8px) !important;
@@ -1929,13 +1662,6 @@ div.shopping-list-card.card:hover {
     font-size: 0.85rem;
   }
 
-  /* Essential toggle v přidání zásoby */
-  .inventory-add-form .inv-essential-label {
-    grid-column: 1 / -1;
-    justify-content: flex-start;
-  }
-
-  /* ── 4. Inventory řádek — horizontální, kompaktní ────────────── */
   .inventory-item {
     display: flex !important;
     flex-direction: row !important;
@@ -1950,16 +1676,11 @@ div.shopping-list-card.card:hover {
     padding: 2px 6px;
     flex-shrink: 0;
     white-space: nowrap;
-    order: 0;
   }
 
   .inventory-item .inventory-item-info {
     flex: 1;
     min-width: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    order: 1;
   }
 
   .inventory-item .inventory-item-name {
@@ -1976,17 +1697,6 @@ div.shopping-list-card.card:hover {
   .inventory-item .item-actions {
     flex-shrink: 0;
     gap: 4px;
-    order: 2;
-    border-top: none;
-    padding-top: 0;
-    margin-top: 0;
-    width: auto;
-    display: flex;
-    justify-content: flex-end;
-  }
-
-  .inventory-item .item-actions .text-muted {
-    font-size: 0.7rem !important;
   }
 
   .inventory-item .btn-add-to-cart {
@@ -1998,12 +1708,10 @@ div.shopping-list-card.card:hover {
     padding: 4px;
   }
 
-  /* ── Inventory list: tighter gap ─────────────────────────────── */
   .inventory-list {
     gap: 4px;
   }
 
-  /* ── Category headers: smaller ───────────────────────────────── */
   .inventory-category-label {
     font-size: 0.72rem;
     margin: 0 0 6px 0;
@@ -2012,21 +1720,47 @@ div.shopping-list-card.card:hover {
   .inventory-section {
     margin-bottom: 8px;
   }
+
+  .detail-pantry-content {
+    padding: var(--space-md);
+  }
+
+  /* Modal actions stacked */
+  .modal-actions {
+    text-align: center !important;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  .modal-actions button {
+    width: 100%;
+  }
 }
 
-/* ── Extra small screens ───────────────────────────────────────────────────── */
+/* ── Extra small screens ─────────────────────────────────────────────────── */
+
 @media (max-width: 380px) {
-  .shopping-item-row {
-    padding: 5px 8px;
-    gap: 6px;
+  .detail-item {
+    padding: 12px 12px;
+    gap: 8px;
   }
 
-  .shopping-item-row .shopping-item-name {
-    font-size: 0.82rem;
+  .detail-item-name {
+    font-size: 0.84rem;
   }
 
-  .shopping-item-row .from-inventory-badge {
+  .detail-item .from-inventory-badge {
     display: none;
+  }
+
+  .master-item {
+    padding: 12px 10px;
+    margin: 0 8px 2px;
+  }
+
+  .master-item-name {
+    font-size: 0.84rem;
   }
 
   .inventory-add-form {
@@ -2036,8 +1770,7 @@ div.shopping-list-card.card:hover {
   .inventory-add-form .inventory-select,
   .inventory-add-form .inv-name-field,
   .inventory-add-form .inventory-input-location,
-  .inventory-add-form .inv-add-btn,
-  .inventory-add-form .inv-essential-label {
+  .inventory-add-form .inv-add-btn {
     grid-column: 1 / -1;
   }
 }

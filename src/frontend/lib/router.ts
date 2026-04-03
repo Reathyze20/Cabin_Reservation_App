@@ -2,6 +2,8 @@
    lib/router.ts — Minimal hash-based SPA router
    ============================================================================ */
 
+import { isFeatureEnabled } from './common';
+
 export interface Route {
   /** Hash path, e.g. "/reservations" */
   path: string;
@@ -27,7 +29,7 @@ export interface PageModule {
 // ─── Route Table ──────────────────────────────────────────────────────
 
 const isAdmin = () => localStorage.getItem('role') === 'admin';
-const isSuperAdmin = () => localStorage.getItem('isSuperAdmin') === 'true';
+const featureGuard = (key: string) => () => isFeatureEnabled(key);
 
 export const routes: Route[] = [
   {
@@ -41,36 +43,42 @@ export const routes: Route[] = [
     label: 'Rezervace',
     icon: 'fa-calendar-alt',
     loader: () => import('../pages/reservations').then((m) => m.default),
+    guard: featureGuard('reservations'),
   },
   {
     path: '/notes',
     label: 'Chat',
     icon: 'fa-comments',
     loader: () => import('../pages/notes').then((m) => m.default),
+    guard: featureGuard('notes'),
   },
   {
     path: '/shopping',
     label: 'Nákupy',
     icon: 'fa-shopping-cart',
     loader: () => import('../pages/shopping').then((m) => m.default),
+    guard: featureGuard('shopping'),
   },
   {
     path: '/gallery',
     label: 'Galerie',
     icon: 'fa-images',
     loader: () => import('../pages/gallery').then((m) => m.default),
+    guard: featureGuard('gallery'),
   },
   {
     path: '/diary',
     label: 'Deník',
     icon: 'fa-book-open',
     loader: () => import('../pages/diary').then((m) => m.default),
+    guard: featureGuard('diary'),
   },
   {
     path: '/reconstruction',
     label: 'Rekonstrukce',
     icon: 'fa-hammer',
     loader: () => import('../pages/reconstruction').then((m) => m.default),
+    guard: featureGuard('reconstruction'),
   },
   {
     path: '/admin',
@@ -80,12 +88,11 @@ export const routes: Route[] = [
     guard: isAdmin,
   },
   {
-    path: '/superadmin',
-    label: 'Velení',
-    icon: 'fa-shield-alt',
-    loader: () => import('../pages/superadmin'),
-    guard: isSuperAdmin,
-    navClass: 'nav-superadmin',
+    path: '/cabin-settings',
+    label: 'Nastavení chaty',
+    icon: 'fa-sliders-h',
+    loader: () => import('../pages/cabin-settings').then((m) => m.default),
+    guard: isAdmin,
   },
 ];
 
@@ -171,6 +178,7 @@ export function navigate(path: string): void {
 
 async function handleRouteChange(): Promise<void> {
   const path = getHashPath();
+  const supportsViewTransition = !!document.startViewTransition;
 
   // Don't re-mount if same route
   if (path === currentPath && currentModule) return;
@@ -193,8 +201,9 @@ async function handleRouteChange(): Promise<void> {
     currentModule.unmount();
   }
 
-  // Clear container — show skeleton loader while page loads
-  if (appContainer) {
+  // Show skeleton loader only when View Transitions are not supported
+  // (otherwise it creates a ghost snapshot during transition)
+  if (appContainer && !supportsViewTransition) {
     appContainer.innerHTML = buildSkeleton(path);
   }
 
@@ -207,8 +216,22 @@ async function handleRouteChange(): Promise<void> {
     currentPath = path;
 
     if (appContainer) {
-      appContainer.innerHTML = '';
-      await mod.mount(appContainer);
+      // Wrap DOM swap in View Transition API for cinematic page transitions
+      const updateDOM = async () => {
+        appContainer!.innerHTML = '';
+        await mod.mount(appContainer!);
+      };
+
+      if (document.startViewTransition) {
+        const transition = document.startViewTransition(async () => {
+          await updateDOM();
+        });
+        // Don't block navigation — silently ignore interrupted transitions
+        transition.finished.catch(() => {});
+      } else {
+        // Fallback for browsers without View Transitions API
+        await updateDOM();
+      }
     }
   } catch (err) {
     console.error('Failed to load page:', err);

@@ -1,4 +1,5 @@
 import express from "express";
+import http from "http";
 import cors from "cors";
 import helmet from "helmet";
 import compression from "compression";
@@ -6,12 +7,14 @@ import rateLimit from "express-rate-limit";
 import path from "path";
 import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
+import cron from "node-cron";
 import { PORT, UPLOADS_PATH } from "../config/config";
 import prisma from "../utils/prisma";
 import logger from "../utils/logger";
 import { requestContext } from "../utils/asyncContext";
 import { httpLogger } from "../middleware/httpLogger";
-import { checkBannedUser } from "../middleware/bannedUserMiddleware";
+import { checkFrostAlerts } from "./jobs/weatherAlerts";
+import { initSocketServer } from "../utils/socket";
 
 // Import routes
 import authRoutes from "./routes/auth";
@@ -20,19 +23,28 @@ import usersRoutes from "./routes/users";
 import reservationsRoutes from "./routes/reservations";
 import shoppingListRoutes from "./routes/shoppingList";
 import notesRoutes from "./routes/notes";
+import channelsRoutes from "./routes/channels";
+import messagesRoutes from "./routes/messages";
 import galleryRoutes from "./routes/gallery";
 import diaryRoutes from "./routes/diary";
 import reconstructionRoutes from "./routes/reconstruction";
 import dashboardRoutes from "./routes/dashboard";
+// noteThreadsRoutes kept for backward-compat; superseded by channelsRoutes
 import noteThreadsRoutes from "./routes/noteThreads";
 import shoppingListsRoutes from "./routes/shoppingLists";
 import adminRoutes from "./routes/admin";
 import inventoryRoutes from "./routes/inventory";
 import workspaceRoutes from "./routes/workspace";
-import superadminRoutes from "./routes/superadmin";
+import invitesRoutes from "./routes/invites";
+import cabinRoutes from "./routes/cabin";
+import wallpapersRoutes from "./routes/wallpapers";
 
 const app = express();
+const server = http.createServer(app);
 const isProd = process.env.NODE_ENV === "production";
+
+// Initialize Socket.io
+initSocketServer(server);
 
 // ============================================================================
 //                              MIDDLEWARE
@@ -131,7 +143,7 @@ if (isProd) {
 // Health check (with real DB ping)
 app.get("/api/health", async (req, res) => {
   try {
-    await prisma.$queryRawUnsafe("SELECT 1");
+    await prisma.$queryRaw`SELECT 1`;
     res.json({
       status: "ok",
       timestamp: new Date().toISOString(),
@@ -152,10 +164,6 @@ app.use("/api/login", authLimiter);
 app.use("/api/register", authLimiter);
 app.use("/api", authRoutes);
 
-// Banned user middleware (read-only enforcement for banned users)
-// Applied to all API routes except auth endpoints
-app.use("/api", checkBannedUser);
-
 // API routes
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/workspace", workspaceRoutes);
@@ -166,12 +174,17 @@ app.use("/api/shopping-list", shoppingListRoutes);
 app.use("/api/inventory", inventoryRoutes);
 app.use("/api/notes", notesRoutes);
 app.use("/api/note-threads", noteThreadsRoutes);
+app.use("/api/channels", channelsRoutes);
+app.use("/api/messages", messagesRoutes);
 app.use("/api/gallery", galleryRoutes);
 app.use("/api/diary", diaryRoutes);
 app.use("/api/reconstruction", reconstructionRoutes);
 app.use("/api/logs", logsRoutes);
 app.use("/api/admin", adminRoutes);
-app.use("/api/superadmin", superadminRoutes);
+app.use("/api/cabin", cabinRoutes);
+app.use("/api/wallpapers", wallpapersRoutes);
+app.use("/api/invites/accept", authLimiter); // Rate limit invite accept (public)
+app.use("/api/invites", invitesRoutes);
 
 // ============================================================================
 //                            SPA FALLBACK
@@ -187,58 +200,6 @@ if (isProd) {
 // ============================================================================
 //                          ERROR HANDLING
 // ============================================================================
-
-// Global error handler — automaticky loguje chyby do SystemLog
-app.use(async (err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  // Extract requestId from headers (set by earlier middleware)
-  const requestId = (req.headers['x-request-id'] as string) || 'unknown';
-  
-  // Determine error level
-  const statusCode = err.status || err.statusCode || 500;
-  const level = statusCode >= 500 ? "ERROR" : "WARN";
-
-  // Log to console via logger
-  logger.error("GLOBAL_ERROR", err.message || "Unhandled error", {
-    requestId,
-    statusCode,
-    method: req.method,
-    path: req.path,
-    userId: (req as any).user?.userId,
-    stack: err.stack,
-  });
-
-  // Log to SystemLog database (only for 500+ errors and if user is known)
-  if (statusCode >= 500) {
-    try {
-      await prisma.systemLog.create({
-        data: {
-          level,
-          message: err.message || "Internal Server Error",
-          metadata: {
-            requestId,
-            method: req.method,
-            path: req.path,
-            statusCode,
-            stack: err.stack,
-            body: req.body,
-          },
-          userId: (req as any).user?.userId || null,
-        },
-      });
-    } catch (dbError) {
-      // If database logging fails, just log to console — don't break the response
-      logger.error("GLOBAL_ERROR", "Failed to save error to SystemLog", {
-        error: String(dbError),
-      });
-    }
-  }
-
-  // Send error response
-  res.status(statusCode).json({
-    message: statusCode >= 500 ? "Interní chyba serveru" : err.message || "Chyba při zpracování požadavku",
-    errorId: requestId,
-  });
-});
 
 process.on("SIGINT", async () => {
   logger.info("Gracefully shutting down (SIGINT)...");
@@ -256,7 +217,15 @@ process.on("SIGTERM", async () => {
 //                            START SERVER
 // ============================================================================
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   logger.info(`🚀 Backend server naslouchá na http://localhost:${PORT}`);
   logger.info(`📊 Health check: http://localhost:${PORT}/api/health`);
+
+  // ── Cron Jobs ──────────────────────────────────────────────────────────
+  // Frost alert check — every day at 12:00 (noon)
+  cron.schedule("0 12 * * *", () => {
+    logger.info("CRON", "Running scheduled frost alert check");
+    checkFrostAlerts();
+  });
+  logger.info("CRON", "Frost alert cron scheduled (daily at 12:00)");
 });

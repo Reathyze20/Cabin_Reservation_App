@@ -1,0 +1,2456 @@
+/* ============================================================================
+   Shopping Page — Master-Detail Layout
+   ============================================================================ */
+
+/* ─── Page container ─────────────────────────────────────────────────────── */
+
+.shopping-page {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  min-height: 0;
+  /* Subtle forest gradient — same as chat area */
+  background: linear-gradient(180deg, #f0f4f1 0%, #e8ede9 50%, #f4f7f5 100%);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  width: 100%;
+  overflow: hidden;
+}
+
+/* ─── Mode Switcher (iOS pill toggle) ──────────────────────────────────────────── */
+
+/* ─── Full-width switcher bar (above layout, always centered on card) ───────── */
+
+.shopping-switcher-bar {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding: 20px 20px 0;
+  flex-shrink: 0;
+}
+
+/* Mobile-only switcher: hidden on desktop */
+.shopping-switcher-bar--mobile {
+  display: none;
+}
+
+/* Desktop-only switcher: shown by default */
+.shopping-switcher-bar--desktop {
+  display: flex;
+}
+
+.detail-view-switcher {
+  display: contents;
+  /* transparent wrapper */
+}
+
+.detail-view-switcher-track {
+  display: inline-flex;
+  gap: 0;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 4px;
+  border-radius: 9999px;
+  width: 340px;
+  max-width: 85vw;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.detail-view-switcher-btn {
+  position: relative;
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-radius: 9999px;
+  padding: 9px 12px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-family: var(--font-family);
+  color: var(--color-text-muted, #64748b);
+  cursor: pointer;
+  transition: color 0.2s;
+  white-space: nowrap;
+  line-height: 1.3;
+  z-index: 1;
+  outline: none;
+}
+
+.detail-view-switcher-btn.is-active {
+  color: var(--color-primary-dark, #1a4731);
+  font-weight: 600;
+}
+
+.detail-view-switcher-btn:not(.is-active):hover {
+  color: var(--text-main, #1a2721);
+}
+
+.detail-view-switcher-label {
+  position: relative;
+  z-index: 2;
+}
+
+.detail-view-switcher-pill {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-card);
+  border-radius: 9999px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  z-index: 0;
+}
+
+/* ── Badge count on switcher tab ─────────────────────────────────────────── */
+
+.switcher-badge-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9999px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-left: 4px;
+  position: relative;
+  z-index: 2;
+}
+
+.detail-view-switcher-btn.is-active .switcher-badge-count {
+  background: #dc2626;
+  color: #fff;
+}
+
+/* ─── Two-column layout ──────────────────────────────────────────────────── */
+
+.shopping-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Right column: switcher bar + detail panel */
+.shopping-right-col {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MASTER PANEL (left sidebar — list of baskets)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.shopping-master {
+  width: 300px;
+  min-width: 260px;
+  max-width: 300px;
+  /* Frosted glass sidebar */
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-right: 1px solid rgba(255, 255, 255, 0.6);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+  /* Ensure full height within layout */
+  min-height: 0;
+  align-self: stretch;
+  /* Match card border-radius on left side */
+  border-radius: var(--radius-xl) 0 0 var(--radius-xl);
+}
+
+/* ── Master heading ──────────────────────────────────────────────────────── */
+
+.master-heading {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+  padding: 14px 14px 0;
+  flex-shrink: 0;
+  order: -2;
+}
+
+/* ── New basket button ───────────────────────────────────────────────────── */
+
+.master-new-btn {
+  order: -1;
+  margin: 10px 12px;
+  padding: 10px 16px;
+  background: var(--color-primary);
+  color: var(--text-on-primary);
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 0.9rem;
+  font-family: var(--font-family);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background var(--transition-fast), transform 0.1s;
+  text-align: center;
+}
+
+.master-new-btn:hover {
+  background: var(--color-primary-dark);
+  transform: translateY(-1px);
+}
+
+.master-new-btn:active {
+  transform: scale(0.98);
+}
+
+/* ── Master list (scrollable area) ───────────────────────────────────────── */
+
+.master-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0 8px;
+}
+
+.master-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.master-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.master-list::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 2px;
+}
+
+/* ── Master item (single basket in list) ─────────────────────────────────── */
+
+.master-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  margin: 0 12px 3px;
+  cursor: pointer;
+  border-radius: var(--radius-md, 10px);
+  border: none;
+  transition: background 0.15s;
+  gap: 8px;
+}
+
+.master-item:hover {
+  background: var(--bg-hover, #e8ece9);
+}
+
+.master-item.is-active {
+  background: #f1f5f9;
+}
+
+.master-item.is-active .master-item-name {
+  color: var(--color-primary-dark);
+  font-weight: 600;
+}
+
+.master-item.is-complete .master-item-name {
+  color: var(--color-text-light);
+}
+
+.master-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.master-item-name {
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.3;
+}
+
+.master-item-meta {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  letter-spacing: 0.01em;
+}
+
+/* ── Master item action buttons ──────────────────────────────────────────── */
+
+.master-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.master-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+
+.master-action-btn:hover {
+  background: var(--color-bg-hover, #e8ece9);
+  color: var(--color-text);
+}
+
+.master-action-delete:hover {
+  background: var(--color-danger-bg, #fef2f2);
+  color: var(--color-danger, #dc2626);
+}
+
+.master-action-archive:hover {
+  background: var(--color-success-bg, #ecfdf5);
+  color: var(--color-success-text, #059669);
+}
+
+.master-action-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.master-item-badge {
+  flex-shrink: 0;
+  background: var(--color-bg-hover);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-text-light);
+  white-space: nowrap;
+}
+
+.master-item-badge.badge-done {
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
+}
+
+/* ── Empty state in master ───────────────────────────────────────────────── */
+
+.master-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--color-text-muted);
+  gap: 8px;
+  flex: 1;
+}
+
+.master-empty-icon {
+  font-size: 2rem;
+  opacity: 0.2;
+  margin-bottom: 4px;
+}
+
+.master-empty p {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.master-empty p.master-empty-hint {
+  font-size: 0.78rem;
+  color: var(--color-text-light);
+}
+
+/* ── Skeleton placeholder for loading state ──────────────────────────────── */
+
+.skeleton-list-item--master {
+  margin: 0 16px 12px;
+  border-radius: 10px;
+}
+
+.skeleton-list-item--master .skeleton-list-text {
+  flex: 1;
+}
+
+.skeleton-list-item--master .skeleton-text.medium {
+  margin-bottom: 6px;
+}
+
+.error-text {
+  padding: 16px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DETAIL PANEL (right — selected basket content)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.shopping-detail {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  min-height: 0;
+  /* Transparent — page gradient shows through */
+  background: transparent;
+  min-width: 0;
+}
+
+.shopping-detail::-webkit-scrollbar {
+  width: 5px;
+}
+
+.shopping-detail::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.shopping-detail::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+
+/* ── Placeholder (no list selected) ──────────────────────────────────────── */
+
+.detail-placeholder {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  gap: 8px;
+  padding: 48px;
+}
+
+.detail-placeholder-icon {
+  font-size: 3rem;
+  opacity: 0.2;
+  margin-bottom: 8px;
+}
+
+.detail-placeholder-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.detail-placeholder-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-placeholder);
+}
+
+.detail-placeholder p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+/* ── Back button (mobile only) ───────────────────────────────────────────── */
+
+.detail-back-btn {
+  display: none;
+  /* shown only on mobile */
+  align-items: center;
+  gap: 4px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 500;
+  font-family: var(--font-family);
+  color: var(--color-primary);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm, 6px);
+  transition: all 0.15s ease;
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
+  flex-shrink: 0;
+  white-space: nowrap;
+  align-self: flex-start;
+}
+
+.detail-back-btn:hover {
+  background: var(--color-primary-bg);
+}
+
+/* ── Single item row — FULL-WIDTH CLICKABLE ──────────────────────────────── */
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  gap: 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.12s;
+  user-select: none;
+  -webkit-tap-highlight-color: rgba(93, 155, 98, 0.08);
+}
+
+.detail-item:hover {
+  background: var(--bg-app, #f4f7f5);
+}
+
+.detail-item:active {
+  background: var(--color-primary-bg);
+}
+
+.detail-item:last-child {
+  border-bottom: none;
+}
+
+/* ── Checkbox circle ─────────────────────────────────────────────────────── */
+
+.item-checkbox {
+  background: transparent;
+  border: 2px solid var(--border-strong, #e5e7eb);
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  min-height: 22px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: transparent;
+  pointer-events: none;
+  /* Click goes to parent row */
+  transition: border-color 0.18s, background 0.18s, transform 0.15s;
+}
+
+.detail-item:hover .item-checkbox:not(.is-checked) {
+  border-color: var(--color-success, #22c55e);
+  transform: scale(1.08);
+}
+
+.item-checkbox.is-checked {
+  background: var(--color-success, #22c55e);
+  border-color: var(--color-success, #22c55e);
+  color: var(--text-on-primary);
+  animation: checkPop 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes checkPop {
+  0% {
+    transform: scale(0.8);
+  }
+
+  50% {
+    transform: scale(1.15);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ── Item name ───────────────────────────────────────────────────────────── */
+
+.detail-item-name {
+  flex: 1;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-main, #1a2721);
+  line-height: 1.5;
+  min-width: 0;
+  word-break: break-word;
+  transition: color 0.15s, text-decoration 0.15s;
+}
+
+/* ── Purchased state ─────────────────────────────────────────────────────── */
+
+.detail-item.is-purchased {
+  opacity: 0.45;
+}
+
+.detail-item.is-purchased:hover {
+  opacity: 0.7;
+}
+
+.detail-item.is-purchased .detail-item-name {
+  text-decoration: line-through;
+  color: var(--color-text-muted);
+  text-decoration-thickness: 1.5px;
+  font-weight: 400;
+}
+
+/* ── From-home state ─────────────────────────────────────────────────────── */
+
+.detail-item.is-from-home {
+  opacity: 0.5;
+}
+
+.detail-item.is-from-home:hover {
+  opacity: 0.7;
+}
+
+.detail-item.is-from-home .detail-item-name {
+  text-decoration: line-through;
+  color: #92400e;
+  text-decoration-thickness: 1.5px;
+  font-weight: 400;
+}
+
+/* ── Essential item — no special background, just the star ───────────────── */
+
+.detail-item.is-essential {
+  background-color: transparent;
+}
+
+/* ── "Ze zásob" badge ────────────────────────────────────────────────────── */
+
+.from-inventory-badge {
+  background: rgba(93, 155, 98, 0.08);
+  border: 1px solid rgba(93, 155, 98, 0.25);
+  color: var(--color-primary, #5d9b62);
+  font-size: 0.68rem;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* ── Purchased-by avatar badge ───────────────────────────────────────────── */
+
+.purchased-by-badge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  min-height: 22px;
+  border-radius: 50%;
+  background-color: var(--color-bg-alt, #e5e7eb);
+  color: var(--color-text, #111827);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  border: 1px solid var(--color-border, #e5e7eb);
+  box-sizing: border-box;
+  line-height: 1;
+}
+
+/* ── Item action buttons (right side, stop-propagation zone) ─────────────── */
+
+.detail-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.12s;
+  margin-left: auto;
+}
+
+.detail-item:hover .detail-item-actions,
+.detail-item:focus-within .detail-item-actions {
+  opacity: 1;
+}
+
+/* Keep visible when an action is active (from-home, essential) */
+.detail-item-actions:has(.is-active) {
+  opacity: 1;
+}
+
+/* Show on purchased/from-home items (for delete) */
+.detail-item.is-purchased .detail-item-actions,
+.detail-item.is-from-home .detail-item-actions {
+  opacity: 1;
+}
+
+/* Hide unnecessary icons on done items */
+.detail-item.is-purchased .btn-home,
+.detail-item.is-purchased .btn-essential,
+.detail-item.is-purchased .critical-badge,
+.detail-item.is-from-home .btn-essential,
+.detail-item.is-from-home .critical-badge {
+  display: none;
+}
+
+/* ── Ghost action buttons ────────────────────────────────────────────────── */
+
+.btn-action {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  width: 28px;
+  height: 28px;
+  padding: 5px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--color-text-muted, #6b7280);
+  transition: background 0.15s, color 0.15s, transform 0.1s;
+}
+
+.btn-action:hover {
+  background: var(--bg-hover, #f3f4f6);
+  color: var(--color-text, #111827);
+}
+
+.btn-action:active {
+  transform: scale(0.92);
+}
+
+/* Home button */
+.btn-home {
+  opacity: 0.5;
+  color: var(--color-text-muted);
+}
+
+.btn-home:hover {
+  opacity: 1;
+  background: rgba(245, 158, 11, 0.1);
+  color: #d97706;
+}
+
+.btn-home.is-active {
+  opacity: 1;
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+}
+
+/* Essential button */
+.btn-essential {
+  opacity: 0.4;
+  background: transparent;
+}
+
+.btn-essential:hover {
+  opacity: 1;
+  background: rgba(93, 155, 98, 0.08);
+}
+
+.btn-essential.is-active {
+  opacity: 1;
+}
+
+.btn-essential:hover .critical-badge {
+  color: var(--color-primary, #5d9b62);
+}
+
+/* Critical badge star */
+.critical-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  color: var(--color-text-muted, #9ca3af);
+  font-weight: 400;
+  line-height: 1;
+  flex-shrink: 0;
+  pointer-events: none;
+  transition: color 0.15s, transform 0.15s;
+}
+
+.critical-badge.is-active {
+  color: var(--color-primary, #5d9b62);
+  transform: scale(1.1);
+}
+
+/* Delete item button */
+.btn-delete-item {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px 5px;
+  color: transparent;
+  font-size: 12px;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  transition: color 0.15s, background 0.15s;
+  line-height: 1;
+}
+
+.detail-item:hover .btn-delete-item {
+  color: var(--color-text-light);
+}
+
+.detail-item:hover .btn-delete-item:hover {
+  color: var(--color-danger);
+  background: #fee2e2;
+}
+
+/* ── Header action icon buttons ──────────────────────────────────────────── */
+
+.btn-icon-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted, #9ca3af);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  transition: all 0.15s;
+  font-size: 0.85rem;
+  line-height: 1;
+  min-width: 32px;
+  min-height: 32px;
+}
+
+.btn-icon-action svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.btn-icon-action:hover {
+  color: var(--color-text, #374151);
+  background: var(--color-bg-hover);
+}
+
+.btn-icon-action.btn-icon-danger:hover {
+  color: var(--color-danger);
+  background: var(--color-danger-light);
+}
+
+.btn-icon-action.btn-icon-success:hover {
+  color: var(--color-primary);
+  background: rgba(93, 155, 98, 0.1);
+}
+
+.btn-icon-action.btn-icon-share:hover {
+  color: var(--color-primary);
+  background: rgba(93, 155, 98, 0.1);
+}
+
+/* ── Add-form submit button (used in ListDetail + PantryView) ────────── */
+
+.add-form-submit-btn {
+  width: 42px;
+  height: 42px;
+  background-color: var(--brand-primary);
+  color: var(--text-on-primary);
+  font-size: 1.3rem;
+  font-weight: 900;
+  border-radius: var(--radius-md);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 6px -1px rgba(63, 123, 99, 0.3);
+  transition: background-color var(--transition-fast), opacity var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.add-form-submit-btn:hover:not(:disabled) {
+  background-color: var(--brand-primary-hover);
+}
+
+.add-form-submit-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Status badges ───────────────────────────────────────────────────────── */
+
+.badge {
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.badge-full {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.badge-low {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.badge-empty {
+  background: var(--color-danger-light);
+  color: var(--color-danger-text);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DETAIL CONTENT PATTERNS (shared by ListDetail + PantryView)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.detail-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 24px 64px;
+  width: 100%;
+  flex: 1;
+}
+
+/* ── Pantry-specific: fixed header + scrollable list ─────────────────────── */
+
+.pantry-view-root {
+  overflow: hidden;   /* prevent double scrollbar — pantry manages its own scroll */
+}
+
+.pantry-content-wrapper {
+  overflow: hidden;
+  flex: 1;
+  min-height: 0;
+  padding-bottom: 0;
+}
+
+.pantry-inner-container {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.pantry-sticky-header {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* ── Pantry add form toggle + collapse ───────────────────────────────────── */
+
+.pantry-add-section {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Toggle button — hidden on desktop (form always visible) */
+.pantry-add-toggle {
+  display: none;
+}
+
+/* Collapse wrapper — always open on desktop */
+.pantry-add-form-collapse {
+  display: block;
+}
+
+.pantry-add-toggle-chevron {
+  margin-left: auto;
+  transition: transform 0.2s ease;
+}
+
+.pantry-add-toggle-chevron.is-open {
+  transform: rotate(180deg);
+}
+
+.pantry-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  padding-top: 8px;
+  /* smooth overscroll on iOS */
+  -webkit-overflow-scrolling: touch;
+}
+
+.pantry-scroll-area::-webkit-scrollbar {
+  width: 5px;
+}
+
+.pantry-scroll-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.pantry-scroll-area::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+
+.detail-inner-container {
+  max-width: 900px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  /* Cohesive glass card — grounds the content */
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: var(--radius-xl, 16px);
+  padding: 28px 32px 36px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
+.detail-page-header {
+  padding-left: 0;
+}
+
+.detail-back-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.detail-page-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--text-main);
+  margin: 0;
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+}
+
+/* Editable title */
+.detail-title-text {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: var(--radius-sm);
+  padding: 2px 4px;
+  margin: -2px -4px;
+  transition: background 0.15s;
+}
+
+.detail-title-text:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.detail-title-edit-icon {
+  opacity: 0;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+
+.detail-title-text:hover .detail-title-edit-icon {
+  opacity: 0.5;
+}
+
+.detail-title-edit {
+  font: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  color: inherit;
+  width: 100%;
+  border: 1px solid var(--brand-primary);
+  border-radius: var(--radius-sm);
+  padding: 2px 6px;
+  margin: -3px -7px;
+  outline: none;
+  background: var(--bg-card);
+  box-shadow: var(--focus-ring);
+}
+
+/* Inline row: subtitle counter + add-item form */
+.detail-header-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.detail-page-subtitle {
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.detail-inline-form {
+  display: flex;
+  flex: 1;
+  gap: 8px;
+  align-items: center;
+}
+
+.detail-inline-form .add-form-submit-btn {
+  width: 38px;
+  height: 38px;
+  font-size: 1.2rem;
+}
+
+/* Keep old classes for PantryView which still uses them */
+.detail-form-card {
+  background-color: rgba(255, 255, 255, 0.55);
+  padding: 20px 24px;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  width: 100%;
+}
+
+.detail-add-form-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.detail-add-form-field {
+  flex: 1;
+}
+
+.detail-form-label {
+  font-size: 11px;
+  font-weight: bold;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.detail-form-input {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border, var(--border-strong));
+  padding: 10px 16px;
+  width: 100%;
+  outline: none;
+  font-size: var(--font-size-sm);
+  color: var(--text-main);
+  background-color: var(--bg-card);
+  font-family: var(--font-family);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.detail-form-input:focus {
+  border-color: var(--brand-primary);
+  box-shadow: var(--focus-ring);
+}
+
+.detail-items-card {
+  background-color: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
+}
+
+.detail-empty-state {
+  text-align: center;
+  padding: 64px 0;
+  color: var(--text-placeholder);
+}
+
+.detail-empty-state-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.detail-empty-state-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.detail-empty-state-text {
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+/* ── Pantry form grid ────────────────────────────────────────────────────── */
+
+.pantry-form-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 16px;
+  align-items: flex-end;
+}
+
+.pantry-form-col-4 { grid-column: span 4; }
+.pantry-form-col-3 { grid-column: span 3; }
+.pantry-form-col-2 { grid-column: span 2; }
+.pantry-form-col-1 { grid-column: span 1; display: flex; justify-content: flex-end; }
+
+.add-form-submit-btn--full-width {
+  width: 100%;
+}
+
+/* ── Pantry filter chips (horizontal scrollable bar) ─────────────────────── */
+
+.pantry-filter-bar {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 0 2px 4px;
+  scrollbar-width: none;            /* Firefox */
+  -ms-overflow-style: none;         /* IE */
+}
+
+.pantry-filter-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.pantry-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 9999px;
+  border: 1.5px solid var(--border-strong);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  font-weight: 500;
+  font-family: var(--font-family);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.18s ease;
+  line-height: 1.3;
+}
+
+.pantry-filter-chip:hover {
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+  background: rgba(63, 123, 99, 0.04);
+}
+
+.pantry-filter-chip.is-active {
+  background: var(--brand-primary);
+  border-color: var(--brand-primary);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(63, 123, 99, 0.25);
+}
+
+.pantry-filter-chip.is-danger:not(.is-active) {
+  border-color: #fca5a5;
+  color: #dc2626;
+  background: #fef2f2;
+}
+
+.pantry-filter-chip.is-danger.is-active {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.25);
+}
+
+.pantry-filter-chip-count {
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: rgba(0, 0, 0, 0.08);
+  padding: 1px 6px;
+  border-radius: 9999px;
+  line-height: 1.4;
+}
+
+.pantry-filter-chip.is-active .pantry-filter-chip-count {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* ── Bulk add chip (inline with filter chips) ────────────────────────────── */
+
+.pantry-bulk-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 9999px;
+  border: 1.5px dashed rgba(239, 68, 68, 0.4);
+  background: rgba(254, 226, 226, 0.35);
+  color: #b91c1c;
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: var(--font-family);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.18s ease;
+  line-height: 1.3;
+  margin-left: auto;
+}
+
+.pantry-bulk-chip:hover {
+  border-color: rgba(239, 68, 68, 0.7);
+  background: rgba(254, 226, 226, 0.6);
+  color: #991b1b;
+}
+
+.pantry-bulk-chip-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.15);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.pantry-bulk-chip .pantry-filter-chip-count {
+  background: rgba(239, 68, 68, 0.15);
+  color: #b91c1c;
+}
+
+.bulk-list-selected {
+  border-color: var(--brand-primary) !important;
+  background: var(--brand-primary-light) !important;
+}
+
+/* ── Inventory row ────────────────────────────────────────────────────────── */
+
+.inventory-row {
+  display: grid;
+  grid-template-columns: 72px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  transition: background 0.15s;
+}
+
+.inventory-row:last-child {
+  border-bottom: none;
+}
+
+.inventory-row:hover {
+  background: var(--bg-hover);
+}
+
+.inventory-row--empty {
+  background-color: rgba(254, 226, 226, 0.12);
+}
+
+/* Badge column — fixed width for alignment */
+.inventory-row .badge {
+  min-width: 68px;
+  text-align: center;
+  justify-self: start;
+}
+
+.inventory-row-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.inventory-row-name {
+  font-weight: 500;
+  font-size: 0.92rem;
+  color: var(--text-main);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+.inventory-row-meta {
+  display: flex;
+  gap: 10px;
+  margin-top: 1px;
+  font-size: 0.75rem;
+  color: var(--text-placeholder);
+  flex-wrap: wrap;
+  line-height: 1.3;
+}
+
+.inventory-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.inventory-row-in-cart {
+  font-size: 0.8rem;
+  white-space: nowrap;
+  color: var(--text-placeholder);
+}
+
+.inventory-row-add-btn {
+  background: var(--border-light);
+  color: var(--brand-primary);
+  border: none;
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: 6px;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+  font-family: var(--font-family);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Desktop: show text, hide icon */
+.inventory-row-add-btn-icon {
+  display: none;
+}
+
+.inventory-row-add-btn:hover {
+  background: var(--brand-primary-light);
+  color: var(--brand-primary-hover);
+}
+
+.inventory-row-icon-btn {
+  padding: 6px;
+  border-radius: 8px;
+  color: var(--text-placeholder);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: color 0.15s, background 0.15s, opacity 0.15s;
+}
+
+.inventory-row:hover .inventory-row-icon-btn {
+  opacity: 1;
+}
+
+.inventory-row-icon-btn:hover {
+  color: var(--text-muted);
+  background: var(--bg-hover);
+}
+
+/* ── Inventory category section ──────────────────────────────────────────── */
+
+.inventory-category-section {
+  margin-bottom: 16px;
+}
+
+.inventory-category-section:last-child {
+  margin-bottom: 0;
+}
+
+.inventory-category-heading {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-placeholder);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  margin-bottom: 8px;
+  padding: 4px 8px;
+}
+
+/* ── Essential toggle (inventory edit modal) ─────────────────────────────── */
+
+.essential-toggle-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-border, #d1d5db);
+  color: var(--color-text-muted, #9ca3af);
+  cursor: pointer;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  transition: border-color 0.18s, color 0.18s, background 0.18s, box-shadow 0.18s;
+}
+
+.essential-toggle-label:hover {
+  border-color: var(--color-primary, #5d9b62);
+  color: var(--color-primary, #5d9b62);
+  background: rgba(93, 155, 98, 0.06);
+}
+
+.essential-toggle-label input[type="checkbox"] {
+  display: none;
+}
+
+.essential-toggle-icon {
+  font-size: 0.95rem;
+  opacity: 0.6;
+  pointer-events: none;
+  transition: opacity 0.15s, transform 0.15s;
+  line-height: 1;
+}
+
+.essential-toggle-label input[type="checkbox"]:checked+.essential-toggle-icon {
+  opacity: 1;
+  transform: scale(1.15);
+}
+
+.essential-toggle-label:has(input:checked) {
+  background: var(--color-primary, #5d9b62);
+  border-color: var(--color-primary, #5d9b62);
+  color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(93, 155, 98, 0.15);
+}
+
+.essential-toggle-label:has(input:checked):hover {
+  background: #4a8a50;
+  border-color: #4a8a50;
+}
+
+.essential-toggle-label--form {
+  width: 100%;
+  height: auto;
+  min-height: 44px;
+  border-radius: var(--radius-md, 8px);
+  justify-content: flex-start;
+  padding: 8px 12px;
+  gap: var(--space-sm, 8px);
+  font-size: 0.9rem;
+}
+
+.essential-toggle-label--form:has(input:checked) {
+  background: var(--color-primary, #5d9b62);
+  border-color: var(--color-primary, #5d9b62);
+  color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(93, 155, 98, 0.15);
+}
+
+/* ── Clean essential toggle row (EditInventoryModal) ─────────────────────── */
+
+.essential-toggle-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--color-bg-secondary, #f8fafc);
+  border-radius: var(--radius-md, 10px);
+  border: 1px solid var(--color-border, #e5e7eb);
+  margin-top: 4px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.essential-toggle-row:hover {
+  border-color: var(--color-primary, #5d9b62);
+  background: rgba(93, 155, 98, 0.04);
+}
+
+.essential-toggle-row:has(input:checked) {
+  border-color: var(--color-primary, #5d9b62);
+  background: rgba(93, 155, 98, 0.06);
+}
+
+.essential-toggle-checkbox {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  margin-top: 2px;
+  accent-color: var(--color-primary, #5d9b62);
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.essential-toggle-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.essential-toggle-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--color-text, #1a2721);
+  cursor: pointer;
+}
+
+.essential-toggle-desc {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary, #6b7280);
+  line-height: 1.4;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MODALS (shared)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.modal-small {
+  max-width: 420px !important;
+  width: 100%;
+}
+
+.modal-actions {
+  text-align: right;
+  margin-top: var(--space-lg);
+}
+
+.modal-divider {
+  text-align: center;
+  color: var(--color-text-muted, #9ca3af);
+  font-size: 0.82rem;
+  margin: var(--space-sm) 0;
+  position: relative;
+}
+
+.modal-divider::before,
+.modal-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 28%;
+  height: 1px;
+  background: var(--color-border, #e5e7eb);
+}
+
+.modal-divider::before {
+  left: 0;
+}
+
+.modal-divider::after {
+  right: 0;
+}
+
+.add-to-cart-list-btn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  min-height: 44px;
+  text-align: left;
+  gap: 8px;
+  padding: 8px 12px;
+}
+
+.add-to-cart-list-btn:hover {
+  background: var(--color-primary-light, rgba(93, 155, 98, 0.08));
+  border-color: var(--color-primary, #5d9b62);
+  color: var(--color-primary, #5d9b62);
+}
+
+.atc-list-name {
+  font-weight: 500;
+  text-align: left;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.atc-list-count {
+  flex-shrink: 0;
+  font-size: 0.8rem;
+  color: var(--color-text-muted, #9ca3af);
+}
+
+.inv-modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-top: var(--space-lg, 20px);
+  padding-top: var(--space-md, 16px);
+  border-top: 1px solid var(--color-border-light, #f3f4f6);
+  gap: 8px;
+}
+
+.btn-modal-delete {
+  background: transparent;
+  border: none;
+  color: var(--color-danger, #dc2626);
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 8px 10px;
+  border-radius: var(--radius-md, 8px);
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.btn-modal-delete:hover {
+  background: var(--color-danger-light, #fee2e2);
+  color: #b91c1c;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SHARE DIALOG
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.share-note-modal-content {
+  max-width: 460px;
+}
+
+.share-note-subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-light);
+  margin: -8px 0 var(--space-md);
+  font-style: italic;
+}
+
+.share-note-step-label {
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--color-text-light);
+  margin: 0 0 var(--space-sm);
+}
+
+.share-note-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-lg);
+}
+
+.share-note-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  background: var(--color-bg-alt);
+  border: 1.5px solid var(--color-border-light);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.2s, background 0.2s, transform 0.15s;
+  font-family: var(--font-family);
+  width: 100%;
+  position: relative;
+}
+
+.share-note-btn:hover {
+  background: var(--color-bg);
+  border-color: var(--color-primary-light);
+  transform: translateY(-1px);
+}
+
+.share-note-btn.is-selected {
+  border-color: var(--color-primary);
+  background: var(--color-primary-bg, #eff6ff);
+}
+
+.share-note-btn-urgent.is-selected {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.share-note-btn-urgent:hover {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.share-note-selected-mark {
+  margin-left: auto;
+  color: var(--color-primary);
+  font-size: 13px;
+  opacity: 0;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+
+.share-note-btn.is-selected .share-note-selected-mark {
+  opacity: 1;
+}
+
+.share-note-btn-urgent.is-selected .share-note-selected-mark {
+  color: #f59e0b;
+}
+
+.share-note-btn-icon {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+  line-height: 1;
+  width: 24px;
+  text-align: center;
+  color: var(--color-text-light);
+}
+
+.share-note-btn div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.share-note-btn strong {
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.share-note-btn span {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-light);
+}
+
+.share-note-target-section {
+  border-top: 1px solid var(--color-border-light);
+  padding-top: var(--space-lg);
+  margin-top: var(--space-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.share-note-thread-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.share-thread-option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 8px var(--space-md);
+  border: 1.5px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-alt);
+  cursor: pointer;
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+  width: 100%;
+}
+
+.share-thread-option:hover {
+  border-color: var(--color-primary-light);
+  background: var(--color-bg);
+}
+
+.share-thread-option.is-selected {
+  border-color: var(--color-primary);
+  background: var(--color-primary-bg, #eff6ff);
+  font-weight: 600;
+}
+
+.share-note-add-thread-btn {
+  background: transparent;
+  border: 1.5px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 7px var(--space-md);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-light);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-family: var(--font-family);
+  width: 100%;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.share-note-add-thread-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.share-note-new-thread-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  padding: var(--space-sm) 0;
+}
+
+.share-note-new-thread-form input {
+  width: 100%;
+}
+
+.share-note-send-row {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: var(--space-sm);
+  border-top: 1px solid var(--color-border-light);
+  margin-top: var(--space-sm);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MOBILE RESPONSIVE
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+
+  /* Page container — no padding, full width, fill viewport */
+  .shopping-page {
+    border-radius: 0;
+    box-shadow: none;
+    min-height: calc(100dvh - 64px - 76px - env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Mode switcher — smaller on mobile */
+  .mode-switcher-bar {
+    padding: 12px 16px 0;
+  }
+
+  .mode-switcher-btn {
+    padding: 7px 16px;
+    font-size: 0.82rem;
+  }
+
+  /* Layout: stacked, master is default view */
+  .shopping-layout {
+    flex-direction: column;
+  }
+
+  /* Right column: full width stacked on mobile */
+  .shopping-right-col {
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* Switcher: show mobile version above layout, hide desktop one inside right-col */
+  .shopping-switcher-bar--mobile {
+    display: flex;
+  }
+
+  .shopping-switcher-bar--desktop {
+    display: none;
+  }
+
+  /* Master: full width, no fixed width */
+  .shopping-master {
+    width: 100%;
+    min-width: unset;
+    max-width: unset;
+    border-right: none;
+    border-bottom: none;
+    border-radius: 0;
+    flex: 1;
+    /* Disable glass on mobile for performance */
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: transparent;
+  }
+
+  /* Heading above lists — tighter on mobile */
+  .master-heading {
+    padding: 14px 14px 0;
+    font-size: 1.15rem;
+  }
+
+  /* Reorder: button at top, list below */
+  .master-new-btn {
+    margin: 8px 14px 10px;
+    min-height: 44px;
+    font-size: 0.88rem;
+    border-radius: var(--radius-md, 10px);
+  }
+
+  /* List: no flex stretch, natural height */
+  .master-list {
+    flex: none;
+    overflow-y: visible;
+    padding: 0;
+  }
+
+  /* Items: card-like, full-touch, actions always visible */
+  .master-item {
+    padding: 14px 14px;
+    min-height: 52px;
+    margin: 0 14px 6px;
+    background: rgba(255, 255, 255, 0.75);
+    border-radius: var(--radius-md, 10px);
+    border: 1px solid rgba(0, 0, 0, 0.04);
+  }
+
+  .master-item:active {
+    background: rgba(255, 255, 255, 0.5);
+  }
+
+  .master-item.is-active {
+    background: rgba(255, 255, 255, 0.92);
+    border-color: var(--brand-primary, #3f7b63);
+    box-shadow: 0 0 0 1px var(--brand-primary, #3f7b63);
+  }
+
+  /* Actions: always visible on mobile */
+  .master-item-actions {
+    opacity: 1 !important;
+  }
+
+  .master-action-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+  }
+
+  .master-action-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* Empty state: compact */
+  .master-empty {
+    padding: 40px 16px;
+  }
+
+  /* Detail: hidden by default on mobile */
+  .shopping-detail {
+    display: none;
+    flex: 1;
+    min-height: 100%;
+  }
+
+  /* When detail is open: hide master, show detail */
+  .shopping-layout.detail-open .shopping-master {
+    display: none;
+  }
+
+  .shopping-layout.detail-open .shopping-detail {
+    display: flex;
+  }
+
+
+
+  /* Show back button on mobile */
+  .detail-back-btn {
+    display: flex !important;
+  }
+
+  /* Glass card → solid card on mobile for performance */
+  .detail-inner-container {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(255, 255, 255, 0.92);
+    padding: 20px 16px 28px;
+    border-radius: var(--radius-lg, 12px);
+  }
+
+  /* Items — compact but touch-friendly */
+  .detail-item {
+    padding: 8px 12px;
+    gap: 10px;
+    min-height: 40px;
+  }
+
+  .detail-item-name {
+    font-size: 0.88rem;
+    line-height: 1.3;
+  }
+
+  /* Inline form: smaller button to match compact header */
+  .detail-inline-form .add-form-submit-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 1.1rem;
+  }
+
+  .detail-inline-form .detail-form-input {
+    padding: 8px 12px;
+    font-size: 0.88rem;
+  }
+
+  .detail-header-row {
+    gap: 8px;
+  }
+
+  .detail-page-title {
+    font-size: 20px;
+  }
+
+  /* Edit icon always visible on touch devices */
+  .detail-title-edit-icon {
+    opacity: 0.4;
+  }
+
+  /* Actions always visible on mobile (no hover) */
+  .detail-item-actions {
+    opacity: 1;
+    gap: 4px;
+  }
+
+  .detail-item .btn-action {
+    min-width: 32px;
+    min-height: 32px;
+  }
+
+  .detail-item .btn-delete-item {
+    color: var(--color-text-muted);
+    opacity: 0.6;
+  }
+
+  .detail-item .from-inventory-badge {
+    font-size: 0.6rem;
+    padding: 1px 5px;
+  }
+
+  /* Master items touch-friendly */
+  .master-item {
+    padding: 14px 14px;
+    min-height: 48px;
+    margin: 0 10px 2px;
+  }
+
+  /* Delete button is already icon-only */
+  .detail-delete-btn {
+    padding: 6px;
+  }
+
+  .detail-delete-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  /* Modal actions stacked */
+  .modal-actions {
+    text-align: center !important;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  .modal-actions button {
+    width: 100%;
+  }
+
+  /* Pantry: tighter sticky header on mobile */
+  .pantry-sticky-header {
+    gap: 8px;
+    padding-bottom: 8px;
+  }
+
+  /* Hide subtitle on mobile to save space */
+  .pantry-sticky-header .detail-page-subtitle {
+    display: none;
+  }
+
+  /* Compact header: hide back button, title only */
+  .pantry-header-compact .detail-back-btn {
+    display: none !important;
+  }
+
+  .pantry-header-compact .detail-page-title {
+    font-size: 1.2rem;
+    margin: 0;
+  }
+
+  .pantry-content-wrapper {
+    padding: 8px 0 0;
+  }
+
+  /* Edge-to-edge on mobile — no glass card, no radius */
+  .pantry-inner-container.detail-inner-container {
+    padding: 14px 14px 28px;
+    border-radius: 0;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  /* Show toggle button on mobile */
+  .pantry-add-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px dashed var(--border-strong, #d1d5db);
+    border-radius: var(--radius-md, 10px);
+    background: rgba(255, 255, 255, 0.5);
+    color: var(--brand-primary, #3f7b63);
+    font-size: 0.85rem;
+    font-weight: 600;
+    font-family: var(--font-family);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    min-height: 44px;
+  }
+
+  .pantry-add-toggle:active {
+    background: rgba(63, 123, 99, 0.06);
+    border-color: var(--brand-primary, #3f7b63);
+  }
+
+  /* Collapse form on mobile — max-height approach (bulletproof) */
+  .pantry-add-form-collapse {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, opacity 0.2s ease;
+    opacity: 0;
+  }
+
+  .pantry-add-form-collapse.is-open {
+    max-height: 400px;
+    opacity: 1;
+  }
+
+  .pantry-add-form-collapse > .detail-form-card {
+    margin-top: 10px;
+  }
+
+  /* Form card: less padding on mobile */
+  .pantry-add-form-collapse .detail-form-card {
+    padding: 14px 14px;
+  }
+
+  /* Pantry form: stack vertically on mobile */
+  .pantry-form-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .pantry-form-col-4,
+  .pantry-form-col-3,
+  .pantry-form-col-2,
+  .pantry-form-col-1 {
+    grid-column: unset;
+  }
+
+  .add-form-submit-btn--full-width {
+    width: 100%;
+    height: 44px;
+  }
+
+  /* Detail content wrapper: edge-to-edge */
+  .detail-content-wrapper {
+    padding: 16px 16px 48px;
+  }
+
+  /* ── Filter bar: scrollable with fade hint ── */
+  .pantry-filter-bar {
+    -webkit-mask-image: linear-gradient(to right, #000 80%, transparent 100%);
+    mask-image: linear-gradient(to right, #000 80%, transparent 100%);
+    padding-right: 24px;
+    gap: 6px;
+  }
+
+  .pantry-filter-chip {
+    padding: 6px 10px;
+    font-size: 0.76rem;
+  }
+
+  .pantry-filter-chip-count {
+    font-size: 0.66rem;
+    padding: 0 5px;
+  }
+
+  .pantry-bulk-chip {
+    font-size: 0.76rem;
+    padding: 6px 10px;
+  }
+
+  /* ── Inventory rows: compact with status dots ── */
+  .inventory-row {
+    grid-template-columns: 30px 1fr auto;
+    gap: 10px;
+    padding: 10px 14px;
+  }
+
+  /* Badge → small colored circle with status icon */
+  .inventory-row .badge {
+    font-size: 0;             /* hide text like "Dostatek" */
+    min-width: 30px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .inventory-row .badge::before {
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .inventory-row .badge.badge-full::before {
+    content: "✓";
+  }
+
+  .inventory-row .badge.badge-low::before {
+    content: "!";
+  }
+
+  .inventory-row .badge.badge-empty::before {
+    content: "✕";
+  }
+
+  .inventory-row-name {
+    font-size: 0.9rem;
+  }
+
+  .inventory-row-meta {
+    display: none;
+  }
+
+  /* Actions: consistent icon-button style */
+  .inventory-row-actions {
+    gap: 2px;
+  }
+
+  /* "V nákupním seznamu" → small cart icon */
+  .inventory-row-in-cart {
+    font-size: 0;
+    display: flex;
+    align-items: center;
+  }
+
+  .inventory-row-in-cart::before {
+    content: "🛒";
+    font-size: 14px;
+  }
+
+  /* Add-to-cart → same style as edit/delete (outline icon button) */
+  .inventory-row-add-btn {
+    min-width: 36px;
+    min-height: 36px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    padding: 0;
+    margin-right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    color: var(--brand-primary, #3f7b63);
+    border: 1.5px solid var(--brand-primary, #3f7b63);
+  }
+
+  /* Mobile: show SVG icon, hide text */
+  .inventory-row-add-btn-icon {
+    display: block;
+    flex-shrink: 0;
+  }
+
+  .inventory-row-add-btn-text {
+    display: none;
+  }
+
+  .inventory-row-add-btn::before {
+    content: none;
+  }
+
+  .inventory-row-add-btn:hover,
+  .inventory-row-add-btn:active {
+    background: rgba(63, 123, 99, 0.08);
+    color: var(--brand-primary, #3f7b63);
+  }
+
+  /* All icon buttons: always visible + touch-friendly */
+  .inventory-row-icon-btn,
+  .inventory-row-add-btn {
+    opacity: 1;
+  }
+
+  .inventory-row-icon-btn {
+    min-width: 36px;
+    min-height: 36px;
+    border-radius: 50%;
+  }
+
+  .inventory-row-icon-btn:active {
+    background: var(--bg-hover, rgba(0, 0, 0, 0.05));
+  }
+
+  /* Category headings: smaller, tighter */
+  .inventory-category-heading {
+    font-size: 10px;
+    letter-spacing: 1.4px;
+    padding: 4px 14px;
+    margin-bottom: 4px;
+  }
+
+  .inventory-category-section {
+    margin-bottom: 10px;
+  }
+
+  /* Items card: subtle radius */
+  .pantry-scroll-area .detail-items-card {
+    border-radius: var(--radius-md, 10px);
+  }
+
+  /* Scroll area: smooth iOS */
+  .pantry-scroll-area {
+    padding-top: 4px;
+  }
+}
+
+/* ── Extra small screens ─────────────────────────────────────────────────── */
+
+@media (max-width: 380px) {
+  .detail-item {
+    padding: 6px 10px;
+    gap: 6px;
+  }
+
+  .detail-item-name {
+    font-size: 0.82rem;
+  }
+
+  .detail-item .from-inventory-badge {
+    display: none;
+  }
+
+  .master-item {
+    padding: 12px 10px;
+    margin: 0 10px 4px;
+  }
+
+  .master-item-name {
+    font-size: 0.84rem;
+  }
+
+  .master-new-btn {
+    margin: 0 10px 8px;
+  }
+
+  /* Pantry: even tighter on tiny screens */
+  .inventory-row {
+    gap: 8px;
+    padding: 8px 10px;
+  }
+
+  .inventory-row .badge {
+    width: 26px;
+    height: 26px;
+    min-width: 26px;
+  }
+
+  .inventory-row .badge::before {
+    font-size: 11px;
+  }
+
+  .inventory-row-name {
+    font-size: 0.84rem;
+  }
+
+  .inventory-row-add-btn {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+  }
+
+  .inventory-row-add-btn::before {
+    font-size: 16px;
+  }
+
+  .inventory-row-icon-btn {
+    min-width: 32px;
+    min-height: 32px;
+  }
+
+  .pantry-filter-chip {
+    padding: 5px 8px;
+    font-size: 0.72rem;
+  }
+
+  .pantry-inner-container.detail-inner-container {
+    padding: 10px 10px 24px;
+  }
+}
