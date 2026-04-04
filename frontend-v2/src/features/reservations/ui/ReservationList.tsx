@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from "react";
-import { Plus, ChevronDown, PenLine, Umbrella } from "lucide-react";
+import { Plus, ChevronDown, PenLine } from "lucide-react";
 import type { Reservation } from "@/api/reservations";
 import { motion, AnimatePresence } from "framer-motion";
 import { Modal } from "@/components/shared/Modal";
@@ -102,8 +102,6 @@ interface Props {
   onMonthChange: (month: number, year: number) => void;
   onShowDetail: (r: Reservation) => void;
   onNewReservation: () => void;
-  onShowAvailability?: () => void;
-  myAvailabilityCount?: number;
   selectedDay?: string | null;
   onClearDayFilter?: () => void;
 }
@@ -121,8 +119,6 @@ export function ReservationList({
   onMonthChange,
   onShowDetail,
   onNewReservation,
-  onShowAvailability,
-  myAvailabilityCount = 0,
   selectedDay,
   onClearDayFilter,
 }: Props) {
@@ -305,31 +301,17 @@ export function ReservationList({
         </div>
       </div>
 
-      {/* ── E. Action buttons ── */}
-      <div className={css.ctaRow}>
-        {onShowAvailability && (
-          <button
-            type="button"
-            onClick={onShowAvailability}
-            className={`${css.ctaButton} ${css.ctaButtonSecondary}`}
-          >
-            <span className={css.ctaIcon}>
-              <Umbrella size={18} strokeWidth={2.5} />
-            </span>
-            Moje volno{myAvailabilityCount > 0 ? ` (${myAvailabilityCount})` : ""}
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={onNewReservation}
-          className={`${css.ctaButton} ${css.ctaButtonLayout}`}
-        >
-          <span className={css.ctaIcon}>
-            <Plus size={18} strokeWidth={2.5} />
-          </span>
-          Vytvořit rezervaci
-        </button>
-      </div>
+      {/* ── E. Create reservation button ── */}
+      <button
+        type="button"
+        onClick={onNewReservation}
+        className={`${css.ctaButton} ${css.ctaButtonLayout}`}
+      >
+        <span className={css.ctaIcon}>
+          <Plus size={18} strokeWidth={2.5} />
+        </span>
+        Vytvořit rezervaci
+      </button>
 
       {/* ── Note edit modal ── */}
       <Modal

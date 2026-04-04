@@ -254,8 +254,6 @@ export function ReservationsPage() {
                 setBookingTo("");
                 setBookingOpen(true);
               }}
-              onShowAvailability={handleAvailabilityClick}
-              myAvailabilityCount={myAvailabilities.length}
             />
           )}
          </div>
