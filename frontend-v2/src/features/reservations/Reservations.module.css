@@ -649,6 +649,41 @@ button.ctaButton:active {
   gap: 10px;
 }
 
+.ctaRow {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.ctaRow .ctaButtonLayout {
+  margin-top: 0;
+  flex: 1;
+}
+
+button.ctaButtonSecondary {
+  background-color: transparent;
+  color: #3f7a63;
+  border: 1.5px solid #3f7a63;
+  box-shadow: none;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  padding: 0.75rem 1rem;
+}
+
+button.ctaButtonSecondary:hover {
+  background-color: rgba(63, 122, 99, 0.08);
+  box-shadow: none;
+}
+
+button.ctaButtonSecondary .ctaIcon {
+  background: rgba(63, 122, 99, 0.12);
+  color: #3f7a63;
+}
+
 .ctaIcon {
   width: 28px;
   height: 28px;
@@ -2116,6 +2151,20 @@ button.btnReset {
 
   .ctaButtonLayout {
     margin-top: var(--space-md) !important;
+  }
+
+  .ctaRow {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .ctaRow .ctaButtonLayout {
+    margin-top: 0 !important;
+  }
+
+  button.ctaButtonSecondary {
+    width: 100%;
+    padding: 0.7rem;
   }
 
   .rangeHint {

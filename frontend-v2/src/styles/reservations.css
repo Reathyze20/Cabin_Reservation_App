@@ -2169,13 +2169,19 @@
 
 .avail-btn--danger {
   color: var(--status-error, #dc2626);
-  border-color: transparent;
-  background: transparent;
-  font-size: var(--font-size-base, 1rem);
-  padding: 4px 8px;
-  line-height: 1;
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.05);
+  font-size: var(--font-size-xs, 0.75rem);
+  padding: 4px 10px;
+  min-height: 32px;
 }
 
 .avail-btn--danger:hover {
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.avail-btn--danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

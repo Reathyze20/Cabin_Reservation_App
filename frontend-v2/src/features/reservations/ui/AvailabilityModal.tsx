@@ -76,12 +76,17 @@ export function AvailabilityModal({ open, onClose, fromDate, toDate, myAvailabil
     }
   };
 
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
   const handleDelete = async (id: string) => {
+    setDeletingId(id);
     try {
       await del.mutateAsync(id);
       showToast("Dostupnost smazána.", "success");
     } catch {
       showToast("Chyba při mazání.", "error");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -141,14 +146,17 @@ export function AvailabilityModal({ open, onClose, fromDate, toDate, myAvailabil
                     <button
                       className="avail-btn"
                       onClick={() => startEdit(a)}
+                      disabled={deletingId === a.id}
                     >
                       Upravit
                     </button>
                     <button
                       className="avail-btn avail-btn--danger"
                       onClick={() => handleDelete(a.id)}
+                      disabled={deletingId === a.id}
+                      aria-label="Smazat dostupnost"
                     >
-                      ×
+                      {deletingId === a.id ? "…" : "Smazat"}
                     </button>
                   </div>
                 </li>
