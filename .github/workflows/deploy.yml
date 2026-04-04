@@ -141,7 +141,9 @@ jobs:
           npx prisma generate
 
           echo "=== Running database migrations ==="
-          # Load all .env variables into shell environment (handles quoted values)
+          # Remove BOM if present (Windows-created .env files may have UTF-8 BOM)
+          sed -i '1s/^\xEF\xBB\xBF//' .env
+          # Load all .env variables into shell environment
           set -a
           source .env
           set +a
