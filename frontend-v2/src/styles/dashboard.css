@@ -83,8 +83,17 @@
 
 @media (max-width: 767px) {
   .glass-card::before {
-    filter: blur(16px) saturate(1.6) brightness(1.05);
-    margin: -16px;
+    display: none;
+  }
+
+  .glass-card::after {
+    display: none;
+  }
+
+  .glass-card {
+    background: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
   }
 }
 
