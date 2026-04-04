@@ -4,7 +4,7 @@
  * Wrapper pro všechny přihlášené stránky: offline banner, header, nav, page outlet, mobile nav.
  */
 import { useState } from 'react'
-import { useLocation, useOutlet } from 'react-router-dom'
+import { useLocation, Outlet } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useAuth } from '@/context/AuthContext'
 import { TopBar } from './TopBar'
@@ -14,24 +14,14 @@ import { ProfileDrawer } from './ProfileDrawer'
 import { HelpFab } from '@/components/shared/HelpFab'
 import { OfflineBanner } from '@/components/shared/OfflineBanner'
 
-/**
- * Captures the outlet element once on mount and freezes it.
- * Prevents the exiting route from flashing new content during framer-motion exit animation.
- */
-function FrozenOutlet() {
-  const currentOutlet = useOutlet()
-  const [frozenOutlet] = useState(currentOutlet)
-  return frozenOutlet
-}
-
 const pageVariants = {
-  initial: { opacity: 0, y: 8 },
-  animate: { opacity: 1, y: 0 },
-  exit:    { opacity: 0, y: -8 },
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  exit:    { opacity: 0 },
 }
 
 const pageTransition = {
-  duration: 0.25,
+  duration: 0.12,
   ease: 'easeOut' as const,
 }
 
@@ -71,7 +61,7 @@ export function AppShell() {
               transition={pageTransition}
               style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, minHeight: 0 }}
             >
-              <FrozenOutlet />
+              <Outlet />
             </motion.div>
           </AnimatePresence>
         </div>

@@ -2191,21 +2191,43 @@
 
   /* Form card: less padding on mobile */
   .pantry-add-form-collapse .detail-form-card {
-    padding: 14px 14px;
+    padding: 12px;
   }
 
-  /* Pantry form: stack vertically on mobile */
+  /* Pantry form: compact 2-column grid on mobile */
   .pantry-form-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
   }
 
-  .pantry-form-col-4,
-  .pantry-form-col-3,
-  .pantry-form-col-2,
+  /* Name — full width, row 1 */
+  .pantry-form-col-4 {
+    grid-column: 1 / -1;
+    order: 1;
+  }
+
+  /* Category & Status — side by side, row 2 */
+  .pantry-form-col-2 {
+    order: 2;
+  }
+
+  /* Location — full width, row 3 (moved below category/status) */
+  .pantry-form-col-3 {
+    grid-column: 1 / -1;
+    order: 3;
+  }
+
+  /* Submit — full width, row 4 */
   .pantry-form-col-1 {
-    grid-column: unset;
+    grid-column: 1 / -1;
+    order: 4;
+  }
+
+  /* Smaller labels on compact form */
+  .pantry-form-grid .detail-form-label {
+    font-size: 0.75rem;
+    margin-bottom: 2px;
   }
 
   .add-form-submit-btn--full-width {
@@ -2452,5 +2474,14 @@
 
   .pantry-inner-container.detail-inner-container {
     padding: 10px 10px 24px;
+  }
+
+  /* Form: stack back to single column on very small screens */
+  .pantry-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pantry-form-col-2 {
+    grid-column: 1 / -1;
   }
 }

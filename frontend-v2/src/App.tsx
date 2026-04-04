@@ -14,20 +14,21 @@ import { AppShell } from '@/components/layout/AppShell'
 import { Toast } from '@/components/shared/Toast'
 import { GlobalFallback } from '@/components/shared/GlobalFallback'
 import { FeatureErrorFallback } from '@/components/shared/FeatureErrorFallback'
-import { lazy, Suspense } from 'react'
+import { lazyRetry } from '@/lib/lazyRetry'
+import { Suspense } from 'react'
 import type { ReactNode } from 'react'
 
 // ── Lazy-loaded page components (code splitting) ───────────────────────────────
-const DashboardPage = lazy(() => import('@/features/dashboard/DashboardPage').then(m => ({ default: m.DashboardPage })))
-const ReservationsPage = lazy(() => import('@/features/reservations/ReservationsPage').then(m => ({ default: m.ReservationsPage })))
-const NotesPage = lazy(() => import('@/features/notes/NotesPage').then(m => ({ default: m.NotesPage })))
-const ShoppingPage = lazy(() => import('@/features/shopping/ShoppingPage').then(m => ({ default: m.ShoppingPage })))
-const GalleryPage = lazy(() => import('@/features/gallery/GalleryPage').then(m => ({ default: m.GalleryPage })))
-const DiaryPage = lazy(() => import('@/features/diary/DiaryPage').then(m => ({ default: m.DiaryPage })))
-const ReconstructionPage = lazy(() => import('@/features/reconstruction/ReconstructionPage').then(m => ({ default: m.ReconstructionPage })))
-const AdminPage = lazy(() => import('@/features/admin/AdminPage').then(m => ({ default: m.AdminPage })))
-const CabinSettingsPage = lazy(() => import('@/features/settings/CabinSettingsPage').then(m => ({ default: m.CabinSettingsPage })))
-const OnboardingPage = lazy(() => import('@/features/onboarding/OnboardingPage'))
+const DashboardPage = lazyRetry(() => import('@/features/dashboard/DashboardPage').then(m => ({ default: m.DashboardPage })))
+const ReservationsPage = lazyRetry(() => import('@/features/reservations/ReservationsPage').then(m => ({ default: m.ReservationsPage })))
+const NotesPage = lazyRetry(() => import('@/features/notes/NotesPage').then(m => ({ default: m.NotesPage })))
+const ShoppingPage = lazyRetry(() => import('@/features/shopping/ShoppingPage').then(m => ({ default: m.ShoppingPage })))
+const GalleryPage = lazyRetry(() => import('@/features/gallery/GalleryPage').then(m => ({ default: m.GalleryPage })))
+const DiaryPage = lazyRetry(() => import('@/features/diary/DiaryPage').then(m => ({ default: m.DiaryPage })))
+const ReconstructionPage = lazyRetry(() => import('@/features/reconstruction/ReconstructionPage').then(m => ({ default: m.ReconstructionPage })))
+const AdminPage = lazyRetry(() => import('@/features/admin/AdminPage').then(m => ({ default: m.AdminPage })))
+const CabinSettingsPage = lazyRetry(() => import('@/features/settings/CabinSettingsPage').then(m => ({ default: m.CabinSettingsPage })))
+const OnboardingPage = lazyRetry(() => import('@/features/onboarding/OnboardingPage'))
 
 // ─── Placeholder pages (budou nahrazeny v Fázích 2–7) ─────────────────────────
 function PageSpinner() {
