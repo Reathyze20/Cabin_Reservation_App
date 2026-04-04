@@ -141,8 +141,19 @@ jobs:
           npx prisma generate
 
           echo "=== Running database migrations ==="
-          # Extract DATABASE_URL from .env for direct psql access
-          export DATABASE_URL=$(grep '^DATABASE_URL=' .env | cut -d'=' -f2-)
+          # Load all .env variables into shell environment (handles quoted values)
+          set -a
+          source .env
+          set +a
+
+          # Verify DATABASE_URL is available
+          if [ -z "$DATABASE_URL" ]; then
+            echo "ERROR: DATABASE_URL is empty after sourcing .env!"
+            echo ".env contents (keys only):"
+            grep -oP '^[A-Z_]+(?==)' .env || echo "(no matches)"
+            exit 1
+          fi
+          echo "DATABASE_URL loaded (length: ${#DATABASE_URL})"
 
           # Check if cabins table exists (created by migration 20260301133234)
           echo "Checking cabins table..."
