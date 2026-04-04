@@ -3,6 +3,8 @@
  * Překlad: header.mobile-header z index.html + mobile menu btn logika z main.ts
  */
 import { Link } from 'react-router-dom'
+import { AnimalAvatar } from '@/components/shared/AnimalAvatar'
+import { isAvatarId } from '@/lib/avatars'
 
 interface MobileHeaderProps {
   animalIcon: string | null
@@ -11,7 +13,7 @@ interface MobileHeaderProps {
 }
 
 export function MobileHeader({ animalIcon, username, onOpenProfileDrawer }: MobileHeaderProps) {
-  const menuIcon = animalIcon || '☰'
+  const hasAvatar = isAvatarId(animalIcon) || !!animalIcon
 
   return (
     <header className="mobile-header" id="mobile-header">
@@ -26,9 +28,11 @@ export function MobileHeader({ animalIcon, username, onOpenProfileDrawer }: Mobi
         title={`Menu — ${username}`}
         onClick={onOpenProfileDrawer}
       >
-        <span className="mobile-menu-avatar" id="mobile-menu-icon">
-          {menuIcon}
-        </span>
+        {hasAvatar ? (
+          <AnimalAvatar icon={animalIcon} username={username} size={32} />
+        ) : (
+          <span className="mobile-menu-avatar" id="mobile-menu-icon">☰</span>
+        )}
       </button>
     </header>
   )

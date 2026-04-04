@@ -131,7 +131,7 @@ export async function fetchWeather(location: string | null | undefined): Promise
       `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
       `&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m` +
       `&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset` +
-      `&timezone=auto&forecast_days=4`,
+      `&timezone=auto&forecast_days=6`,
     );
     const fx = await fxRes.json() as {
       current: { temperature_2m: number; relative_humidity_2m: number; apparent_temperature: number; weather_code: number; wind_speed_10m: number };
@@ -151,8 +151,8 @@ export async function fetchWeather(location: string | null | undefined): Promise
 
     const DAY_NAMES_CZ = ["Ne", "Po", "Út", "St", "Čt", "Pá", "So"];
 
-    // Forecast: days 1–3 (tomorrow + 2)
-    const forecast: WeatherForecastDay[] = [1, 2, 3].map((i) => {
+    // Forecast: days 1–5 (tomorrow + 4)
+    const forecast: WeatherForecastDay[] = [1, 2, 3, 4, 5].map((i) => {
       const dateStr = fx.daily.time[i];
       const dayName = dateStr ? DAY_NAMES_CZ[new Date(dateStr + "T12:00:00").getDay()] : "";
       const { icon: fIcon, color: fColor } = mapWMOCode(fx.daily.weather_code[i] ?? 0, false);

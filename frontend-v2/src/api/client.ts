@@ -42,10 +42,22 @@ apiClient.interceptors.request.use((config) => {
   return config
 })
 
-// ─── Response interceptor: handle 401 globally ───────────────────────────────
+// ─── Response interceptor: handle 401 and network errors globally ────────────
+let lastNetworkErrorToast = 0
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Network/SSL errors — no response at all
+    if (!error.response && (error.code === 'ERR_NETWORK' || error.message?.includes('Network Error'))) {
+      const now = Date.now()
+      // Throttle: show toast max once per 10 seconds to avoid spam
+      if (now - lastNetworkErrorToast > 10_000) {
+        lastNetworkErrorToast = now
+        showToast('Chyba připojení k serveru. Zkontrolujte internet.', 'error')
+      }
+      return Promise.reject(error)
+    }
+
     if (error.response?.status === 401) {
       const savedTheme = localStorage.getItem('theme')
       ;['authToken', 'username', 'userId', 'role', 'animalIcon', 'cabinId'].forEach((k) => {
