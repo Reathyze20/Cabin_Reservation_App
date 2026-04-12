@@ -1285,15 +1285,18 @@
 }
 
 .chart-bar-value-temp {
-  color: #d97706;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(180, 100, 0, 0.5);
 }
 
 .chart-bar-value-rain {
-  color: #2563eb;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(30, 80, 180, 0.5);
 }
 
 .chart-bar-value-wind {
-  color: #059669;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(5, 100, 70, 0.5);
 }
 
 /* "No rain" fallback */
