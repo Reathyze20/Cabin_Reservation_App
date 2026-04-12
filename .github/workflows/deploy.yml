@@ -211,6 +211,9 @@ jobs:
           npm run build
 
           echo "=== Restarting application ==="
+          # Kill any orphan process on port 3000 (not under PM2 control)
+          fuser -k 3000/tcp 2>/dev/null || true
+          sleep 1
           # Restart PM2 process, or start it if it doesn't exist yet
           pm2 restart chata-app 2>/dev/null || pm2 start npm --name "chata-app" -- run start
           pm2 save
