@@ -1270,12 +1270,18 @@
   color: #d97706;
 }
 
-/* Peak value label above bar */
 .chart-bar-value {
+  position: absolute;
+  top: 3px;
+  left: 0;
+  right: 0;
+  text-align: center;
   font-size: 10px;
   font-weight: 700;
   line-height: 1;
   white-space: nowrap;
+  z-index: 1;
+  pointer-events: none;
 }
 
 .chart-bar-value-temp {
