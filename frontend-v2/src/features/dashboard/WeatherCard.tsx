@@ -29,6 +29,12 @@ function stormSeverity(description: string): string {
   return "storm-caution";
 }
 
+function stormAlertIcon(description: string): "severe" | "rain" {
+  const lower = description.toLowerCase();
+  if (lower.includes("bou\u0159ka") || lower.includes("sn\u011bhov\u00e9")) return "severe";
+  return "rain";
+}
+
 function windLabel(speed: number): string {
   if (speed < 5) return "Bezvětří";
   if (speed < 20) return "Slabý";
@@ -179,7 +185,9 @@ export function WeatherCard({ weather }: Props) {
           {/* Storm alert — only for tomorrow+ or severe today (thunderstorms) */}
           {weather.stormAlert && weather.stormAlert.day !== "Dnes" && (
             <div className={`weather-storm-alert ${stormSeverity(weather.stormAlert.description)}`}>
-              <Zap size={14} />
+              {stormAlertIcon(weather.stormAlert.description) === "severe"
+                ? <Zap size={14} />
+                : <CloudRain size={14} />}
               <span><strong>{weather.stormAlert.day}:</strong> {weather.stormAlert.description}</span>
             </div>
           )}

@@ -248,7 +248,7 @@ export function ActiveReservation({ data, cabinDepartureChecklist }: Props) {
             </div>
             <div className="status-hero-text">
               <div className="status-name-row">
-                <div className="status-name">Nyní volná</div>
+                <div className="status-name">Chata je nyní volná</div>
               </div>
             </div>
           </div>
