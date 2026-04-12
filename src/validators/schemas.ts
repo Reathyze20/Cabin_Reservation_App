@@ -276,7 +276,7 @@ export const updateCabinSettingsSchema = z.object({
   coverPhotoUrl: z.string().max(1000).optional().nullable(),
   weatherLocation: z.string().max(100).optional().nullable(),
   isWinterized: z.boolean().optional(),
-  features: z.record(z.boolean()).optional().nullable(),
+  features: z.record(z.string(), z.boolean()).optional().nullable(),
 });
 
 // Cabin create

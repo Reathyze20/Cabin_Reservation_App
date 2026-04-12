@@ -54,7 +54,7 @@ export default function OnboardingPage() {
         remember: !!localStorage.getItem('authToken'), // preserve remember-me choice
       })
 
-      showToast(`Chata „${data.cabinName}" byla úspěšně vytvořena! 🏡`, 'success')
+      showToast(`Chata „${data.cabinName}“ byla úspěšně vytvořena!`, 'success')
       navigate('/dashboard', { replace: true })
     } catch (err: unknown) {
       const message =

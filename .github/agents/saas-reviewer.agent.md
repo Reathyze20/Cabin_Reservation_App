@@ -29,7 +29,6 @@ If something is mediocre, say so. If something is great, acknowledge it. Be hone
 
 ### Tech Stack
 - **Frontend:** React 18 + TypeScript + Vite + Tailwind CSS + shadcn/ui (`frontend-v2/`)
-- **Legacy frontend:** Vanilla TS SPA (`src/frontend/`) — being migrated
 - **Backend:** Node.js + Express + TypeScript + Prisma ORM + PostgreSQL
 - **Infrastructure:** VPS (Wedos), PM2, GitHub Actions CI/CD
 

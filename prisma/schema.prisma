@@ -14,8 +14,10 @@ datasource db {
 // APP SETTINGS (singleton — id = "singleton")
 // ============================================================================
 model AppSettings {
-  id                 String  @id @default("singleton")
-  pinnedHandoverNote String? @map("pinned_handover_note") @db.Text
+  id                       String    @id @default("singleton")
+  pinnedHandoverNote       String?   @map("pinned_handover_note") @db.Text
+  handoverNoteAuthor       String?   @map("handover_note_author")
+  handoverNoteUpdatedAt    DateTime? @map("handover_note_updated_at")
 
   @@map("app_settings")
 }

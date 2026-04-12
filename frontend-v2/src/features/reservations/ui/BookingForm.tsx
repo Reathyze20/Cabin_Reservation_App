@@ -156,7 +156,7 @@ export function BookingForm({ open, onClose, fromDate, toDate, existing, allRese
 
           {backupWarning && (
             <div className="backup-warning-message">
-              ⚠️ V tomto termínu existuje jiná rezervace. Vaše bude uložena jako záložní.
+              V tomto termínu existuje jiná rezervace. Vaše bude uložena jako záložní.
             </div>
           )}
 

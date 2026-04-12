@@ -59,9 +59,11 @@ export function UploadModal({ folderId, onClose }: Props) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!files.length) return
-    await upload.mutateAsync(files)
-    showToast(`Nahráno ${files.length} fotek.`, 'success')
-    onClose()
+    try {
+      await upload.mutateAsync(files)
+      showToast(`Nahráno ${files.length} fotek.`, 'success')
+      onClose()
+    } catch { /* onError in hook */ }
   }
 
   const totalSize = files.reduce((sum, f) => sum + f.size, 0)

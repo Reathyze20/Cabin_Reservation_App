@@ -4,7 +4,6 @@
  */
 import { useState, useEffect, useRef } from 'react'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
-import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import {
   useAdminUsers,
@@ -13,53 +12,15 @@ import {
   useDeleteUser,
   useDeleteUserReservations,
   useSystemInfo,
-  useLogFiles,
+  useAdminInvites,
+  useCreateInvite,
+  useRevokeInvite,
 } from './hooks/useAdmin'
-import { adminApi, type CabinUser } from '@/api/admin'
+import { type CabinUser } from '@/api/admin'
 import { showToast } from '@/lib/toast'
 import { Modal } from '@/components/shared/Modal'
 import { AnimalAvatar } from '@/components/shared/AnimalAvatar'
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const SKIP_LOG_KEYS = new Set([
-  'level', 'time', 'msg', 'module', 'userId', 'username', 'role',
-  'source', 'requestId', 'actorId', 'app', 'env', 'pid',
-])
-
-function formatLogEntry(entry: Record<string, unknown>): { text: string; color: string } {
-  const lvl = String(entry.level ?? 'info').toLowerCase().replace(/\d+/, (n) => {
-    const lvls: Record<string, string> = { '10': 'trace', '20': 'debug', '30': 'info', '40': 'warn', '50': 'error', '60': 'fatal' }
-    return lvls[n] ?? 'info'
-  })
-
-  const rawTime = entry.time
-  let time = ''
-  if (rawTime) {
-    const d = typeof rawTime === 'number' ? new Date(rawTime) : new Date(String(rawTime))
-    if (!isNaN(d.getTime())) {
-      time = d.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-    }
-  }
-
-  const module = entry.module ? `[${entry.module}] ` : ''
-  const msg = String(entry.msg ?? '')
-  const userId = entry.userId ? ` | user:${entry.userId}` : ''
-  const source = entry.source === 'frontend' ? ' [FE]' : ''
-  const reqId = entry.requestId ? ` | req:${entry.requestId}` : ''
-  const extra = Object.entries(entry)
-    .filter(([k]) => !SKIP_LOG_KEYS.has(k))
-    .map(([k, v]) => `${k}:${typeof v === 'object' ? JSON.stringify(v) : v}`)
-    .join(' | ')
-
-  const text = `[${time}]${source} [${lvl.toUpperCase()}] ${module}${msg}${userId}${reqId}${extra ? ' | ' + extra : ''}`
-  const color = lvl === 'error' || lvl === 'fatal' ? 'var(--log-error)'
-    : lvl === 'warn' ? 'var(--log-warn)'
-    : lvl === 'debug' || lvl === 'trace' ? 'var(--log-muted)'
-    : 'var(--log-info)'
-
-  return { text, color }
-}
+import { AlertTriangle, Check, Copy, Pencil } from 'lucide-react'
 
 // ─── EditUserModal ────────────────────────────────────────────────────────────
 
@@ -214,10 +175,21 @@ function EditUserModal({ user, onClose, onDeleted }: EditUserModalProps) {
 // ─── SystemStats ──────────────────────────────────────────────────────────────
 
 function SystemStats() {
-  const { data, isLoading } = useSystemInfo()
+  const { data, isLoading, isError } = useSystemInfo()
 
-  if (isLoading) return <div className="spinner" />
-  if (!data) return null
+  if (isLoading) return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 'var(--space-md)', padding: 'var(--space-md) 0' }}>
+      {[0, 1, 2, 3].map((i) => (
+        <div key={i} className="skeleton" style={{ height: 72, borderRadius: 'var(--radius-lg)' }} />
+      ))}
+    </div>
+  )
+  if (isError || !data) return (
+    <div style={{ textAlign: 'center', padding: '1.5rem' }}>
+      <AlertTriangle size={28} style={{ color: 'var(--color-warning)' }} />
+      <p style={{ margin: '0.5rem 0 0', fontWeight: 600 }}>Nepodařilo se načíst statistiky</p>
+    </div>
+  )
 
   const stats = [
     { label: 'Uživatelé', value: data.userCount },
@@ -234,143 +206,6 @@ function SystemStats() {
           <div className="stat-label">{s.label}</div>
         </div>
       ))}
-    </div>
-  )
-}
-
-// ─── LogsViewer ───────────────────────────────────────────────────────────────
-
-function LogsViewer() {
-  const { data: filesData } = useLogFiles()
-  const files = filesData?.files ?? []
-
-  const [selectedDate, setSelectedDate] = useState('')
-  const [level, setLevel] = useState('')
-  const [logsEntries, setLogsEntries] = useState<{ text: string; color: string }[]>([])
-  const [logsStatus, setLogsStatus] = useState<'idle' | 'empty' | 'error' | 'loaded'>('idle')
-  const [isLoading, setIsLoading] = useState(false)
-  const logsRef = useRef<HTMLDivElement>(null)
-
-  // Auto-select first file
-  useEffect(() => {
-    if (files.length > 0 && !selectedDate) {
-      setSelectedDate(files[0])
-    }
-  }, [files, selectedDate])
-
-  useEffect(() => {
-    if (selectedDate) loadLogs()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDate, level])
-
-  async function loadLogs() {
-    setIsLoading(true)
-    try {
-      const data = await adminApi.getLogs({ date: selectedDate, lines: 500, level: level || undefined })
-      const logs = data?.logs ?? []
-
-      if (logs.length === 0) {
-        setLogsEntries([])
-        setLogsStatus('empty')
-        return
-      }
-
-      const entries = logs.map((entry) => {
-        if (typeof entry === 'string') {
-          return { text: entry, color: 'var(--log-info)' }
-        }
-        return formatLogEntry(entry as Record<string, unknown>)
-      })
-
-      setLogsEntries(entries)
-      setLogsStatus('loaded')
-    } catch {
-      setLogsEntries([])
-      setLogsStatus('error')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    if (logsRef.current) logsRef.current.scrollTop = logsRef.current.scrollHeight
-  }, [logsEntries])
-
-  function downloadLogs() {
-    const el = logsRef.current
-    if (!el) return
-    const text = (el.textContent ?? '').trim()
-    const blob = new Blob([text], { type: 'text/plain' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `chata-logs-${selectedDate || 'logs'}.txt`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-  }
-
-  return (
-    <div id="server-logs">
-      <div className="logs-controls" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
-        <select
-          id="log-date-select"
-          value={selectedDate}
-          onChange={(e) => setSelectedDate(e.target.value)}
-          style={{ minWidth: '10rem' }}
-        >
-          {files.map((f) => (
-            <option key={f} value={f}>{f}</option>
-          ))}
-        </select>
-        <select
-          id="log-level-select"
-          value={level}
-          onChange={(e) => setLevel(e.target.value)}
-        >
-          <option value="">Všechny levely</option>
-          <option value="error">Error</option>
-          <option value="warn">Warn</option>
-          <option value="info">Info</option>
-          <option value="debug">Debug</option>
-        </select>
-        <button id="btn-refresh-logs" className="btn btn-secondary" onClick={loadLogs} disabled={isLoading}>
-          {isLoading ? '⟳ Načítám…' : '⟳ Obnovit'}
-        </button>
-        <button id="btn-download-logs" className="btn btn-secondary" onClick={downloadLogs}>
-          ↓ Stáhnout
-        </button>
-      </div>
-      <div
-        id="logs-content"
-        ref={logsRef}
-        style={{
-          background: 'var(--log-bg)',
-          color: 'var(--log-text)',
-          fontFamily: 'monospace',
-          fontSize: '0.75rem',
-          padding: '0.75rem',
-          borderRadius: '8px',
-          height: '400px',
-          overflowY: 'auto',
-          whiteSpace: 'pre-wrap',
-          lineHeight: '1.5',
-        }}
-      >
-        {logsStatus === 'idle' && (
-          <span style={{ color: 'var(--log-muted)' }}>Vyberte datum pro zobrazení logů…</span>
-        )}
-        {logsStatus === 'empty' && (
-          <span style={{ color: 'var(--log-muted)' }}>Žádné záznamy pro tento den/level.</span>
-        )}
-        {logsStatus === 'error' && (
-          <span style={{ color: 'var(--log-error)' }}>Nepodařilo se načíst logy.</span>
-        )}
-        {logsStatus === 'loaded' && logsEntries.map((entry, i) => (
-          <span key={i} style={{ color: entry.color }}>{entry.text}{'\n'}</span>
-        ))}
-      </div>
     </div>
   )
 }
@@ -398,12 +233,171 @@ function UserListSkeleton() {
   )
 }
 
+// ─── InvitesSection ───────────────────────────────────────────────────────────
+
+function InvitesSection() {
+  const { data: invites = [], isLoading } = useAdminInvites()
+  const createInvite = useCreateInvite()
+  const revokeInvite = useRevokeInvite()
+  const [copiedId, setCopiedId] = useState<string | null>(null)
+  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => { if (copyTimerRef.current) clearTimeout(copyTimerRef.current) }
+  }, [])
+
+  function handleCreate(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    const fd = new FormData(e.currentTarget)
+    const role = String(fd.get('invite-role') ?? 'user')
+    const days = Number(fd.get('invite-days') ?? 7)
+    createInvite.mutate(
+      { role, expiresInDays: days },
+      {
+        onSuccess: () => {
+          showToast('Pozvánka vytvořena', 'success')
+          e.currentTarget.reset()
+        },
+        onError: () => showToast('Nepodařilo se vytvořit pozvánku', 'error'),
+      },
+    )
+  }
+
+  function handleRevoke(id: string) {
+    revokeInvite.mutate(id, {
+      onSuccess: () => showToast('Pozvánka zrušena', 'success'),
+      onError: () => showToast('Nepodařilo se zrušit pozvánku', 'error'),
+    })
+  }
+
+  function copyLink(token: string, id: string) {
+    const url = `${window.location.origin}/invite/${token}`
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedId(id)
+      showToast('Odkaz zkopírován', 'success')
+      copyTimerRef.current = setTimeout(() => setCopiedId(null), 2000)
+    }).catch(() => showToast('Nepodařilo se zkopírovat', 'error'))
+  }
+
+  function isExpired(expiresAt: string) {
+    return new Date() > new Date(expiresAt)
+  }
+
+  function isExhausted(invite: { maxUses: number | null; usedCount: number }) {
+    return invite.maxUses !== null && invite.usedCount >= invite.maxUses
+  }
+
+  const activeInvites = invites.filter((i) => !isExpired(i.expiresAt) && !isExhausted(i))
+  const inactiveInvites = invites.filter((i) => isExpired(i.expiresAt) || isExhausted(i))
+
+  return (
+    <div className="page-card admin-page-card admin-section">
+      <h2>Pozvánky</h2>
+
+      {/* Create invite form */}
+      <form onSubmit={handleCreate} style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: '1.5rem' }}>
+        <div className="form-group" style={{ margin: 0, flex: '1 1 8rem' }}>
+          <label htmlFor="invite-role">Role</label>
+          <select id="invite-role" name="invite-role">
+            <option value="user">Člen</option>
+            <option value="admin">Admin</option>
+            <option value="guest">Host</option>
+          </select>
+        </div>
+        <div className="form-group" style={{ margin: 0, flex: '1 1 6rem' }}>
+          <label htmlFor="invite-days">Platnost (dní)</label>
+          <input id="invite-days" name="invite-days" type="number" min={1} max={365} defaultValue={7} style={{ width: '100%' }} />
+        </div>
+        <button type="submit" className="btn btn-primary" disabled={createInvite.isPending} style={{ whiteSpace: 'nowrap' }}>
+          {createInvite.isPending ? 'Vytvářím…' : '+ Nová pozvánka'}
+        </button>
+      </form>
+
+      {/* Active invites */}
+      {isLoading ? (
+        <div className="spinner" />
+      ) : activeInvites.length === 0 ? (
+        <p className="empty-state">Žádné aktivní pozvánky</p>
+      ) : (
+        <div className="users-list">
+          {activeInvites.map((inv) => (
+            <div key={inv.id} className="user-row" style={{ flexWrap: 'wrap' }}>
+              <div className="user-row-left" style={{ flex: '1 1 auto', minWidth: 0 }}>
+                <span className={`user-role-badge ${inv.role === 'admin' ? 'badge-admin' : inv.role === 'guest' ? 'badge-guest' : 'badge-member'}`}>
+                  {inv.role === 'admin' ? 'Admin' : inv.role === 'guest' ? 'Host' : 'Člen'}
+                </span>
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginLeft: '0.5rem' }}>
+                  {inv.maxUses !== null ? `${inv.usedCount}/${inv.maxUses} použito` : `${inv.usedCount}× použito`}
+                  {' · '}
+                  platí do {new Date(inv.expiresAt).toLocaleDateString('cs-CZ')}
+                </span>
+              </div>
+              <div className="user-row-right" style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => copyLink(inv.token, inv.id)}
+                  title="Zkopírovat odkaz"
+                >
+                  {copiedId === inv.id ? <><Check size={14} style={{ verticalAlign: 'text-bottom' }} /> Zkopírováno</> : <><Copy size={14} style={{ verticalAlign: 'text-bottom' }} /> Kopírovat</>}
+                </button>
+                <button
+                  className="btn btn-danger"
+                  onClick={() => handleRevoke(inv.id)}
+                  disabled={revokeInvite.isPending}
+                  title="Zrušit pozvánku"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Inactive (expired / exhausted) */}
+      {inactiveInvites.length > 0 && (
+        <details style={{ marginTop: '1rem' }}>
+          <summary style={{ cursor: 'pointer', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+            Neaktivní pozvánky ({inactiveInvites.length})
+          </summary>
+          <div className="users-list" style={{ marginTop: '0.5rem', opacity: 0.6 }}>
+            {inactiveInvites.map((inv) => (
+              <div key={inv.id} className="user-row">
+                <div className="user-row-left" style={{ flex: '1 1 auto' }}>
+                  <span className="user-role-badge" style={{ opacity: 0.5 }}>
+                    {inv.role === 'admin' ? 'Admin' : inv.role === 'guest' ? 'Host' : 'Člen'}
+                  </span>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginLeft: '0.5rem' }}>
+                    {isExpired(inv.expiresAt) ? 'Vypršela' : 'Vyčerpána'}
+                    {' · '}
+                    {inv.usedCount}× použito
+                  </span>
+                </div>
+                <div className="user-row-right">
+                  <button
+                    className="btn btn-danger"
+                    onClick={() => handleRevoke(inv.id)}
+                    disabled={revokeInvite.isPending}
+                    title="Smazat"
+                    style={{ fontSize: '0.8rem' }}
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
+    </div>
+  )
+}
+
 // ─── AdminPage ────────────────────────────────────────────────────────────────
 
 export function AdminPage() {
   useDocumentTitle('Administrace');
   const { isAdmin } = useAuth()
-  const navigate = useNavigate()
 
   const { data: users = [], isLoading: usersLoading } = useAdminUsers()
   const createUser = useCreateUser()
@@ -413,7 +407,7 @@ export function AdminPage() {
   // Guard
   if (!isAdmin) {
     return (
-      <div className="admin-page-card">
+      <div className="page-card admin-page-card">
         <h2>Přístup odepřen</h2>
         <p>Nemáte administrátorská oprávnění.</p>
       </div>
@@ -449,8 +443,8 @@ export function AdminPage() {
   return (
     <div className="main-content-admin p-4 md:p-6 lg:p-8 space-y-6 pb-20 md:pb-0">
       {/* Users section */}
-      <div className="admin-page-card admin-section users-section">
-        <h2>👤 Správa uživatelů</h2>
+      <div className="page-card admin-page-card admin-section users-section">
+        <h2>Správa uživatelů</h2>
 
         {/* User list */}
         {usersLoading ? (
@@ -476,7 +470,7 @@ export function AdminPage() {
                     onClick={() => setEditUser(u)}
                     title="Upravit"
                   >
-                    ✎ Upravit
+                    <Pencil size={14} style={{ verticalAlign: 'text-bottom' }} /> Upravit
                   </button>
                 </div>
               </div>
@@ -511,21 +505,13 @@ export function AdminPage() {
         </div>
       </div>
 
-      {/* System info */}
-      <div className="admin-page-card" id="system-info">
-        <h2>📊 Statistiky systému</h2>
-        <SystemStats />
-      </div>
+      {/* Invites section */}
+      <InvitesSection />
 
-      {/* Server logs */}
-      <div className="admin-page-card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <h2>📋 Serverové logy</h2>
-          <button className="btn btn-secondary" onClick={() => navigate('/cabin-settings')}>
-            ⚙️ Nastavení chaty
-          </button>
-        </div>
-        <LogsViewer />
+      {/* System info */}
+      <div className="page-card admin-page-card" id="system-info">
+        <h2>Statistiky systému</h2>
+        <SystemStats />
       </div>
 
       {/* Edit user modal */}

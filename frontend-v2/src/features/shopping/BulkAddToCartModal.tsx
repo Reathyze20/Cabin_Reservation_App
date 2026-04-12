@@ -23,8 +23,10 @@ export function BulkAddToCartModal({ items, onClose }: Props) {
 
   async function handleConfirm() {
     if (!selectedListId) return
-    await bulkAdd.mutateAsync({ ids, listId: selectedListId })
-    onClose()
+    try {
+      await bulkAdd.mutateAsync({ ids, listId: selectedListId })
+      onClose()
+    } catch { /* onError in hook */ }
   }
 
   function getPendingCount(list: typeof activeLists[number]) {

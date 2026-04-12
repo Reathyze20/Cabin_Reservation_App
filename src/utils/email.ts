@@ -48,7 +48,6 @@ export const sendVerificationEmailWithPIN = async (email: string, code: string):
     <div style="max-width: 500px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);">
       
       <div style="text-align: center; padding: 32px 32px 16px 32px;">
-        <div style="font-size: 48px; margin-bottom: 12px;">🏡</div>
         <h1 style="margin: 0; color: #111827; font-size: 24px; font-weight: 600;">KdyNaChatu.cz</h1>
       </div>
 
@@ -125,7 +124,6 @@ export const sendVerificationEmailWithToken = async (email: string, token: strin
     <div style="max-width: 500px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);">
       
       <div style="text-align: center; padding: 32px 32px 16px 32px;">
-        <div style="font-size: 48px; margin-bottom: 12px;">🏡</div>
         <h1 style="margin: 0; color: #111827; font-size: 24px; font-weight: 600;">KdyNaChatu.cz</h1>
       </div>
 
@@ -196,7 +194,7 @@ export const sendFrostAlertEmail = async (
     return;
   }
 
-  const subject = `🥶 Varování před mrazem — ${cabinName}`;
+  const subject = `Varování před mrazem — ${cabinName}`;
 
   const htmlContent = `<!DOCTYPE html>
 <html lang="cs">
@@ -205,7 +203,7 @@ export const sendFrostAlertEmail = async (
   <div style="max-width: 500px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);">
 
     <div style="background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8e 100%); padding: 32px; text-align: center;">
-      <div style="font-size: 48px; margin-bottom: 12px;">🥶</div>
+      <div style="font-size: 48px; margin-bottom: 12px;">❄</div>
       <h1 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: 700;">Pozor, hrozí mrazy!</h1>
     </div>
 
@@ -219,7 +217,7 @@ export const sendFrostAlertEmail = async (
 
       <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; margin: 16px 0;">
         <p style="margin: 0 0 8px 0; font-weight: 700; color: #991b1b; font-size: 14px;">
-          ❄️ Nejnižší očekávaná teplota: <span style="font-size: 18px;">${lowestTemp} °C</span>
+          Nejnižší očekávaná teplota: <span style="font-size: 18px;">${lowestTemp} °C</span>
         </p>
         <p style="margin: 0; color: #991b1b; font-size: 13px;">
           Dny s mrazem: ${frostDatesFormatted}
@@ -231,7 +229,7 @@ export const sendFrostAlertEmail = async (
       </p>
 
       <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; margin: 16px 0;">
-        <p style="margin: 0 0 8px 0; font-weight: 700; color: #166534; font-size: 14px;">✅ Co můžete udělat:</p>
+        <p style="margin: 0 0 8px 0; font-weight: 700; color: #166534; font-size: 14px;">Co můžete udělat:</p>
         <ul style="margin: 0; padding-left: 20px; color: #166534; font-size: 13px; line-height: 1.8;">
           <li>Vypustit vodu z potrubí a bojleru</li>
           <li>Zavřít hlavní uzávěr vody</li>
@@ -283,3 +281,25 @@ export const sendFrostAlertEmail = async (
  * @deprecated Use sendVerificationEmailWithPIN instead
  */
 export const sendVerificationEmail = sendVerificationEmailWithPIN;
+
+// ─── Generic send email ──────────────────────────────────────────────────────
+
+export const sendEmail = async (opts: { to: string; subject: string; html: string }): Promise<void> => {
+  if (!transporter) {
+    logger.warn("EMAIL", `[SIMULATION] Email to ${opts.to}: ${opts.subject}`);
+    return;
+  }
+
+  try {
+    await transporter.sendMail({
+      from: EMAIL_FROM || "noreply@kdynachatu.cz",
+      to: opts.to,
+      subject: opts.subject,
+      html: opts.html,
+    });
+    logger.info("EMAIL", `Email sent to ${opts.to}`, { subject: opts.subject });
+  } catch (error) {
+    logger.error("EMAIL", `Failed to send email to ${opts.to}`, { error: String(error) });
+    throw error;
+  }
+};

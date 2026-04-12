@@ -2,14 +2,25 @@
  * GlobalFallback.tsx — Fullscreen chybová stránka pro root ErrorBoundary.
  * Zobrazí se pouze při pádu celého stromu (White Screen of Death).
  */
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import type { FallbackProps } from 'react-error-boundary'
 import { reportError } from '@/lib/errorReporting'
+
+const GLOBAL_ERROR_QUIPS = [
+  'Celá aplikace odešla. To se jen tak nevidí.',
+  'Server se rozhodl dát si pauzu. Bez upozornění.',
+  'Tohle je ta vzácná chyba, o které se píše v učebnicích.',
+  'Aplikace zkusila něco odvážného. Nevyšlo to.',
+  'I ti nejlepší programátoři nechávají někdy chyby. Tohle je jeden z těch případů.',
+  'Technicky vzato — tohle by nemělo existovat.',
+]
 
 type ErrorWithMessage = { message?: string; stack?: string }
 
 export function GlobalFallback({ error, resetErrorBoundary }: FallbackProps) {
   const err = error as ErrorWithMessage;
+  const quipRef = useRef(GLOBAL_ERROR_QUIPS[Math.floor(Math.random() * GLOBAL_ERROR_QUIPS.length)])
+  const quip = quipRef.current
 
   useEffect(() => {
     reportError({
@@ -42,13 +53,21 @@ export function GlobalFallback({ error, resetErrorBoundary }: FallbackProps) {
           gap: '1rem',
         }}
       >
-        <div style={{ fontSize: '3.5rem', lineHeight: 1 }}>🏚️</div>
+        <img
+          src="/icons/error-path.svg"
+          alt=""
+          aria-hidden="true"
+          style={{ maxHeight: 160, width: 'auto', opacity: 0.75 }}
+        />
         <h2 style={{ margin: 0, fontSize: '1.4rem', color: 'var(--color-text, #1a1a1a)' }}>
           Aplikace narazila na chybu
         </h2>
         <p style={{ margin: 0, color: 'var(--color-text-muted, #666)', lineHeight: 1.5 }}>
           Omlouváme se za nepříjemnosti. Zkuste obnovit stránku — pokud chyba přetrvá,
           kontaktujte správce chaty.
+        </p>
+        <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--color-text-muted, #666)', fontStyle: 'italic', opacity: 0.75 }}>
+          {quip}
         </p>
 
         {/* Dev-only: zobraz technický detail chyby */}
@@ -79,7 +98,7 @@ export function GlobalFallback({ error, resetErrorBoundary }: FallbackProps) {
             className="button-primary"
             onClick={resetErrorBoundary}
           >
-            🔄 Zkusit znovu
+            Zkusit znovu
           </button>
           <button
             className="button-secondary"

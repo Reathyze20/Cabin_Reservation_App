@@ -4,9 +4,10 @@ interface ColorPickerProps {
   value: string
   onChange: (color: string) => void
   colors?: string[]
+  size?: number
 }
 
-export function ColorPicker({ value, onChange, colors }: ColorPickerProps) {
+export function ColorPicker({ value, onChange, colors, size = 32 }: ColorPickerProps) {
   const palette = colors ?? SWATCH_COLORS
 
   return (
@@ -21,8 +22,8 @@ export function ColorPicker({ value, onChange, colors }: ColorPickerProps) {
           type="button"
           className={`color-swatch${value === color ? ' selected' : ''}`}
           style={{
-            width: 32,
-            height: 32,
+            width: size,
+            height: size,
             borderRadius: '50%',
             backgroundColor: color,
             border: value === color ? '3px solid var(--color-text, #1f2937)' : '2px solid transparent',
@@ -31,6 +32,8 @@ export function ColorPicker({ value, onChange, colors }: ColorPickerProps) {
             outlineOffset: -3,
             transition: 'border-color 0.15s, outline 0.15s',
             flexShrink: 0,
+            padding: 0,
+            minWidth: 0,
           }}
           onClick={() => onChange(color)}
           title={color}

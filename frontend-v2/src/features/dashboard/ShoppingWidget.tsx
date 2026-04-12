@@ -1,33 +1,53 @@
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import apiClient from "@/api/client";
 import { showToast } from "@/lib/toast";
+import { CircleCheck, AlertTriangle } from "lucide-react";
 import type { PendingShoppingItem } from "@/api/dashboard";
 
 interface Props {
   items: PendingShoppingItem[];
   totalCount: number;
+  totalItemsCount: number;
 }
 
-export function ShoppingWidget({ items: initialItems, totalCount: initialTotal }: Props) {
+export function ShoppingWidget({ items: initialItems, totalCount: initialTotal, totalItemsCount }: Props) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [localItems, setLocalItems] = useState(initialItems);
   const [localTotal, setLocalTotal] = useState(initialTotal);
+  const checkedIds = useRef(new Set<string>());
+
+  // Sync local state when props change (after refetch), keeping optimistic removals
+  useEffect(() => {
+    setLocalItems(initialItems.filter((i) => !checkedIds.current.has(i.id)));
+    setLocalTotal(initialTotal - checkedIds.current.size);
+  }, [initialItems, initialTotal]);
 
   const toggleMutation = useMutation({
     mutationFn: async ({ listId, itemId, purchased }: { listId: string; itemId: string; purchased: boolean }) => {
       await apiClient.put(`/shopping-lists/${listId}/items/${itemId}`, { purchased });
     },
-    onError: () => {
-      // Rollback: refetch dashboard
-      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    onSuccess: () => {
+      // Refetch so new items replace the checked-off ones
+      queryClient.invalidateQueries({ queryKey: ["dashboard", "shopping"] });
+    },
+    onSettled: (_data, _error, variables) => {
+      // Clean up tracked ID after server round-trip so next refetch is clean
+      if (variables) checkedIds.current.delete(variables.itemId);
+    },
+    onError: (_err, variables) => {
+      // Rollback: remove from checked set and refetch
+      if (variables) checkedIds.current.delete(variables.itemId);
+      queryClient.invalidateQueries({ queryKey: ["dashboard", "shopping"] });
       showToast("Nepodařilo se aktualizovat položku", "error");
     },
   });
 
   const handleCheck = (item: PendingShoppingItem) => {
+    // Track checked ID so it stays hidden even after refetch arrives
+    checkedIds.current.add(item.id);
     // Optimistic: remove from local list
     setLocalItems((prev) => prev.filter((i) => i.id !== item.id));
     setLocalTotal((prev) => Math.max(0, prev - 1));
@@ -54,7 +74,7 @@ export function ShoppingWidget({ items: initialItems, totalCount: initialTotal }
           {header}
           <div className="empty-state-card">
             <span className="empty-state-icon" style={{ color: "var(--color-primary)", opacity: 0.7 }}>
-              <i className="fas fa-circle-check fa-2x" />
+              <CircleCheck size={32} />
             </span>
             <p className="empty-text">Na chatě nic nechybí!</p>
             <a href="/shopping" className="empty-cta" onClick={(e) => { e.preventDefault(); navigate("/shopping"); }}>
@@ -66,13 +86,23 @@ export function ShoppingWidget({ items: initialItems, totalCount: initialTotal }
     );
   }
 
-  const shownItems = localItems.slice(0, 5);
+  const shownItems = localItems.slice(0, 6);
   const remaining = localTotal - shownItems.length;
+  const purchasedCount = totalItemsCount - localTotal;
+  const progressPct = totalItemsCount > 0 ? Math.round((purchasedCount / totalItemsCount) * 100) : 0;
 
   return (
     <div className="glass-card">
       <div className="card-body-full" id="dashboard-shopping">
         {header}
+        {totalItemsCount > 0 && (
+          <div className="shopping-progress-wrap">
+            <div className="shopping-progress-bar">
+              <div className="shopping-progress-fill" style={{ width: `${progressPct}%` }} />
+            </div>
+            <span className="shopping-progress-label">{purchasedCount}/{totalItemsCount}</span>
+          </div>
+        )}
         <div className="list-content shopping-widget-list">
           {shownItems.map((item) => (
             <label key={item.id} className="dashboard-shopping-item">
@@ -83,11 +113,11 @@ export function ShoppingWidget({ items: initialItems, totalCount: initialTotal }
               />
               {item.isEssential && (
                 <span className="shopping-essential-mark" title="Nutné">
-                  ❗
+                  <AlertTriangle size={14} />
                 </span>
               )}
               <span className="shopping-item-name">{item.name}</span>
-              <span className="shopping-item-list">{item.listName}</span>
+              <span className="shopping-item-list" title={item.listName}>{item.listName}</span>
             </label>
           ))}
         </div>

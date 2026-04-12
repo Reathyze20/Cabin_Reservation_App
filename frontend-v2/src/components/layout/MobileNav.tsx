@@ -23,7 +23,7 @@ export function MobileNav() {
           to={route.path}
           className={({ isActive }) => `mobile-nav-link${isActive ? ' active' : ''}`}
         >
-          <i className={`fas ${route.icon}`}></i>
+          <route.icon size={20} />
           <span>{route.label}</span>
         </NavLink>
       ))}

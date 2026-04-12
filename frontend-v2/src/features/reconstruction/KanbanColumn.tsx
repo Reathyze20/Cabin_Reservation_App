@@ -124,7 +124,7 @@ function TaskCard({ item, currentUserId, isGuest = false, onEdit }: TaskCardProp
               onClick={handleVote}
               disabled={vote.isPending}
             >
-              👍 {item.votes?.length ?? 0}
+              Hlasy: {item.votes?.length ?? 0}
             </button>
           </div>
         </div>
@@ -174,17 +174,17 @@ function TaskCard({ item, currentUserId, isGuest = false, onEdit }: TaskCardProp
           <div className="company-contact-row">
             {item.phone && (
               <a href={`tel:${item.phone}`} className="company-action-btn">
-                📞 Zavolat
+                Zavolat
               </a>
             )}
             {item.email && (
               <a href={`mailto:${item.email}`} className="company-action-btn">
-                ✉️ Napsat
+                Napsat
               </a>
             )}
             {item.link && (
               <a href={item.link} target="_blank" rel="noopener noreferrer" className="company-action-btn">
-                🌐 Web
+                Web
               </a>
             )}
           </div>
@@ -262,7 +262,7 @@ function TaskCard({ item, currentUserId, isGuest = false, onEdit }: TaskCardProp
           )}
           {item.deadline && (
             <span className={`task-deadline${isDeadlineNear(item.deadline) ? ' deadline-near' : ''}`}>
-              📅 {formatDate(item.deadline)}
+              {formatDate(item.deadline)}
             </span>
           )}
         </div>
@@ -284,23 +284,23 @@ function TaskCard({ item, currentUserId, isGuest = false, onEdit }: TaskCardProp
 
 const COLUMN_CONFIG: Record<
   RecCategory,
-  { title: string; icon: string; cssClass: string; listId: string }
+  { title: string; iconSrc: string; cssClass: string; listId: string }
 > = {
   idea: {
     title: 'Nápady & Inspirace',
-    icon: '💡',
+    iconSrc: '/icons/bulp.svg',
     cssClass: 'col-navrzeno',
     listId: 'list-idea',
   },
   company: {
     title: 'Firmy & Kontakty',
-    icon: '🏢',
+    iconSrc: '/icons/company.svg',
     cssClass: 'col-schvaleno',
     listId: 'list-company',
   },
   task: {
     title: 'Úkoly & Práce',
-    icon: '✅',
+    iconSrc: '/icons/task.svg',
     cssClass: 'col-probehlo',
     listId: 'list-task',
   },
@@ -324,12 +324,13 @@ export function KanbanColumn({ category, items, currentUserId, isGuest = false, 
     <div className={`kanban-column ${cfg.cssClass}`}>
       <div className="kanban-column-header">
         <span>
-          {cfg.icon} {cfg.title}
+          <img src={cfg.iconSrc} alt="" width={22} height={22} className="kanban-column-icon" />
+          {cfg.title}
         </span>
         <span className="kanban-count">{items.length}</span>
         {!isGuest && (
           <button
-            className="add-col-btn gallery-btn"
+            className="add-col-btn"
             data-category={category}
             onClick={() => onAdd(category)}
             title={`Přidat ${cfg.title.toLowerCase()}`}
@@ -342,7 +343,7 @@ export function KanbanColumn({ category, items, currentUserId, isGuest = false, 
       <div className="kanban-column-body" id={cfg.listId}>
         {items.length === 0 ? (
           <div className="kanban-empty-state">
-            <div className="empty-state-icon">{cfg.icon}</div>
+            <img src={cfg.iconSrc} alt="" width={48} height={48} className="kanban-empty-icon" />
             <p>Zatím žádné položky</p>
           </div>
         ) : (

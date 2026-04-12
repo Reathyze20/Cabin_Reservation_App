@@ -10,14 +10,8 @@
   overflow: hidden;
 }
 .admin-page-card {
-  background-color: white;
-  border-radius: var(--radius-xl);
+  /* extends .page-card */
   padding: var(--space-2xl);
-  box-shadow: var(--shadow-lg);
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  flex-grow: 1;
   overflow-y: auto;
 }
 .admin-page-card h2 {

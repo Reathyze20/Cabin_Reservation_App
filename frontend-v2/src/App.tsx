@@ -10,6 +10,9 @@ import { VerifyEmailPage } from '@/features/auth/VerifyEmailPage'
 import { LandingPage } from '@/features/landing/LandingPage'
 import { InvitePage } from '@/features/invite/InvitePage'
 import { NotFoundPage } from '@/features/not-found/NotFoundPage'
+import { PrivacyPage } from '@/features/legal/PrivacyPage'
+import { TermsPage } from '@/features/legal/TermsPage'
+import { CookieConsent } from '@/components/shared/CookieConsent'
 import { AppShell } from '@/components/layout/AppShell'
 import { Toast } from '@/components/shared/Toast'
 import { GlobalFallback } from '@/components/shared/GlobalFallback'
@@ -65,6 +68,9 @@ function AppRoutes() {
       <Route path="/login" element={isLoggedIn ? <Navigate to="/dashboard" replace /> : <AuthPage />} />
       {/* Token-based verify route (standalone stránka) */}
       <Route path="/verify" element={<VerifyEmailPage />} />
+      {/* Legal pages — public, no auth needed */}
+      <Route path="/privacy" element={<PrivacyPage />} />
+      <Route path="/terms" element={<TermsPage />} />
       <Route path="/invite/:token" element={isLoggedIn ? <Navigate to="/dashboard" replace /> : <InvitePage />} />
 
       {/* Onboarding — přihlášený uživatel bez chaty */}
@@ -114,6 +120,7 @@ export default function App() {
         <AppRoutes />
         {/* Toast je mimo AppShell — musí fungovat i na auth stránkách */}
         <Toast />
+        <CookieConsent />
       </AuthProvider>
     </ErrorBoundary>
   )

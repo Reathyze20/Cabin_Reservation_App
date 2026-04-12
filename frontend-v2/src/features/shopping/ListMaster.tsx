@@ -37,7 +37,7 @@ export function ListMaster({
       <ul className="master-list" id="master-list">
         {lists.length === 0 && (
           <li className="master-empty">
-            <span className="master-empty-icon">📋</span>
+            <img src="/icons/empty_basket.svg" alt="" aria-hidden="true" style={{ maxHeight: 72, width: 'auto', opacity: 0.65, marginBottom: '0.25rem' }} />
             <p>Žádné aktivní nákupy</p>
             <p className="master-empty-hint">Klikněte na „+ Nový seznam"</p>
           </li>

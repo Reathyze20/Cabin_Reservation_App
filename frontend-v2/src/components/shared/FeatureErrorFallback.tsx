@@ -3,9 +3,19 @@
  * Vykreslí se uvnitř glass-card widgetu místo spadlé komponenty.
  * Zbytek stránky funguje normálně.
  */
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import type { FallbackProps } from 'react-error-boundary'
 import { reportError } from '@/lib/errorReporting'
+
+const FEATURE_ERROR_QUIPS = [
+  'Tahle část si vzala neplánovanou dovolenou.',
+  'Server se zrovna díval z okna. Zkus to znovu.',
+  'Tohle by se stát nemělo. Ale stalo se.',
+  'Pokud problém přetrvává, viníkem je pravděpodobně WiFi.',
+  'Část aplikace odešla na procházku do lesa.',
+  'Chyba č. 500: příliš mnoho sušenek v systému.',
+  'Programátor na tenhle případ nemyslel. Omluva.',
+]
 
 type ErrorWithMessage = { message?: string; stack?: string }
 
@@ -20,6 +30,8 @@ export function FeatureErrorFallback({
   title,
 }: FeatureErrorFallbackProps) {
   const err = error as ErrorWithMessage;
+  const quipRef = useRef(FEATURE_ERROR_QUIPS[Math.floor(Math.random() * FEATURE_ERROR_QUIPS.length)])
+  const quip = quipRef.current
 
   useEffect(() => {
     reportError({
@@ -42,9 +54,17 @@ export function FeatureErrorFallback({
           textAlign: 'center',
         }}
       >
-        <span style={{ fontSize: '1.75rem' }}>⚠️</span>
+        <img
+          src="/icons/error-cesta.svg"
+          alt=""
+          aria-hidden="true"
+          style={{ maxHeight: 180, width: 'auto', opacity: 0.7 }}
+        />
         <p style={{ margin: 0, fontWeight: 600, color: 'var(--color-text, #1a1a1a)', fontSize: '0.95rem' }}>
-          {title ?? 'Komponentu se nepodařilo načíst'}
+          {title ?? 'Tato část se momentálně nenačítá'}
+        </p>
+        <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--color-text-muted, #666)', fontStyle: 'italic' }}>
+          {quip}
         </p>
         {import.meta.env.DEV && err?.message && (
           <p
@@ -60,7 +80,7 @@ export function FeatureErrorFallback({
           </p>
         )}
         <button
-          className="button-secondary"
+          className="button-primary"
           style={{ marginTop: '0.25rem', fontSize: '0.85rem', padding: '0.35rem 0.9rem' }}
           onClick={resetErrorBoundary}
         >

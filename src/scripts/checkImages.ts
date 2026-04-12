@@ -10,7 +10,7 @@ const photos = await p.galleryPhoto.findMany({ take: 3, select: { id: true, src:
 console.log("=== Photos ===");
 console.log(JSON.stringify(photos, null, 2));
 
-const folders = await p.galleryFolder.findMany({ take: 3, select: { id: true, name: true, coverPhotoUrl: true } });
+const folders = await p.galleryFolder.findMany({ take: 3, select: { id: true, name: true } });
 console.log("=== Folders ===");
 console.log(JSON.stringify(folders, null, 2));
 

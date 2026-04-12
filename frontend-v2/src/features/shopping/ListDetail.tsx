@@ -66,7 +66,7 @@ export function ListDetail({ list, onBack }: Props) {
     return (
       <section className="shopping-detail" id="shopping-detail">
         <div className="detail-placeholder">
-          <span className="detail-placeholder-icon">🛒</span>
+          <img src="/icons/empty_basket.svg" alt="" aria-hidden="true" style={{ maxHeight: 80, width: 'auto', opacity: 0.65, marginBottom: '0.5rem' }} />
           <p className="detail-placeholder-title">Vyberte nákupní seznam</p>
           <p className="detail-placeholder-hint">Klikněte na seznam vlevo, nebo vytvořte nový.</p>
         </div>
@@ -92,9 +92,11 @@ export function ListDetail({ list, onBack }: Props) {
       showToast('Název položky je příliš dlouhý (max 100 znaků).', 'error')
       return
     }
-    await addItem.mutateAsync({ listId: list!.id, name })
-    setNewItemName('')
-    inputRef.current?.focus()
+    try {
+      await addItem.mutateAsync({ listId: list!.id, name })
+      setNewItemName('')
+      inputRef.current?.focus()
+    } catch { /* onError in hook */ }
   }
 
   return (
@@ -178,8 +180,8 @@ export function ListDetail({ list, onBack }: Props) {
           <div>
             {sorted.length === 0 ? (
               <div className="detail-empty-state">
-                <p className="detail-empty-state-icon"> </p>
-                <h3 className="detail-empty-state-title">Seznam je prázdný</h3>
+                <img src="/icons/empty_basket.svg" alt="" aria-hidden="true" style={{ maxHeight: 80, width: 'auto', opacity: 0.65, marginBottom: '0.5rem' }} />
+                <h3 className="detail-empty-state-title">Košík je prázdný</h3>
                 <p className="detail-empty-state-text">Přidejte první položku.</p>
               </div>
             ) : (

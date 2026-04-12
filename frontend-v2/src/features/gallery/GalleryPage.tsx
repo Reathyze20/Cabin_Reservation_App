@@ -102,20 +102,24 @@ export function GalleryPage() {
 
   async function handleConfirmedDeleteSelected() {
     setBulkDeleteConfirmOpen(false)
-    await deletePhotos.mutateAsync([...selectedPhotos])
-    showToast('Fotky smazány.', 'success')
-    setSelectedPhotos(new Set())
-    setIsSelectionMode(false)
+    try {
+      await deletePhotos.mutateAsync([...selectedPhotos])
+      showToast('Fotky smazány.', 'success')
+      setSelectedPhotos(new Set())
+      setIsSelectionMode(false)
+    } catch { /* onError in hook */ }
   }
 
   async function handleCreateFolder(e: React.FormEvent) {
     e.preventDefault()
     const name = createFolderName.trim()
     if (!name) return
-    await createFolder.mutateAsync(name)
-    showToast('Album vytvořeno.', 'success')
-    setCreateFolderName('')
-    setShowCreateModal(false)
+    try {
+      await createFolder.mutateAsync(name)
+      showToast('Album vytvořeno.', 'success')
+      setCreateFolderName('')
+      setShowCreateModal(false)
+    } catch { /* onError in hook */ }
   }
 
   function openRenameModal(id: string) {
@@ -130,10 +134,12 @@ export function GalleryPage() {
     e.preventDefault()
     const name = renameFolderValue.trim()
     if (!name || !renameFolderId) return
-    await renameFolder.mutateAsync({ id: renameFolderId, name })
-    showToast('Přejmenováno.', 'success')
-    setRenameFolderId(null)
-    setShowRenameModal(false)
+    try {
+      await renameFolder.mutateAsync({ id: renameFolderId, name })
+      showToast('Přejmenováno.', 'success')
+      setRenameFolderId(null)
+      setShowRenameModal(false)
+    } catch { /* onError in hook */ }
   }
 
   function openDeleteConfirm(id: string) {
@@ -142,14 +148,16 @@ export function GalleryPage() {
 
   async function handleConfirmedDeleteFolder() {
     if (!deleteFolderId) return
-    await deleteFolder.mutateAsync(deleteFolderId)
-    showToast('Album smazáno.', 'success')
-    setDeleteFolderId(null)
+    try {
+      await deleteFolder.mutateAsync(deleteFolderId)
+      showToast('Album smazáno.', 'success')
+      setDeleteFolderId(null)
+    } catch { /* onError in hook */ }
   }
 
   return (
     <div className="gallery-page-wrapper">
-      <div className="gallery-glass-card">
+      <div className="page-card gallery-glass-card">
         <AnimatePresence mode="wait">
           {view === 'folders' ? (
             <motion.div

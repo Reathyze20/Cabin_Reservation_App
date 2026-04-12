@@ -105,7 +105,7 @@ export function ShareListDialog({ listName, onClose }: Props) {
               className={`share-note-btn${selectedAction === 'new' ? ' is-selected' : ''}`}
               onClick={() => handleSelectAction('new')}
             >
-              <span className="share-note-btn-icon">📋</span>
+              <span className="share-note-btn-icon">✉</span>
               <div>
                 <strong>Upozornit na nový seznam</strong>
                 <span>Pošle zprávu ostatním, ať doplní položky</span>
@@ -117,7 +117,7 @@ export function ShareListDialog({ listName, onClose }: Props) {
               className={`share-note-btn share-note-btn-urgent${selectedAction === 'going' ? ' is-selected' : ''}`}
               onClick={() => handleSelectAction('going')}
             >
-              <span className="share-note-btn-icon">🏃</span>
+              <span className="share-note-btn-icon">⇨</span>
               <div>
                 <strong>Jdu do obchodu</strong>
                 <span>Urgentní výzva k doplnění seznamu</span>

@@ -153,8 +153,10 @@ export function ReservationList({
   };
 
   const handleSaveNote = async () => {
-    await updateNote.mutateAsync({ year, month, text: noteText.trim() });
-    setNoteModalOpen(false);
+    try {
+      await updateNote.mutateAsync({ year, month, text: noteText.trim() });
+      setNoteModalOpen(false);
+    } catch { /* onError in hook */ }
   };
 
   const handlePrevMonth = () => {

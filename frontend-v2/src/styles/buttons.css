@@ -3,23 +3,10 @@
    ============================================================================ */
 
 /* ── Base button reset ─────────────────────────────────────────────────── */
+/* Minimal reset — only inherited font + cursor. Shape/color lives in .btn classes. */
 button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 8px 20px;
-  border: 1px solid transparent;
-  border-radius: var(--radius-full);
-  background-color: var(--color-bg-card, #ffffff);
-  color: var(--color-text-main, #1a2721);
   cursor: pointer;
   font-family: var(--font-family);
-  font-weight: 500;
-  font-size: var(--font-size-sm);
-  line-height: 1.4;
-  transition: all var(--transition-base);
-  white-space: nowrap;
   outline: none;
   -webkit-user-select: none;
   user-select: none;

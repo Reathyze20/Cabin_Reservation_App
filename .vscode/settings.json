@@ -1,11 +1,25 @@
 {
-    "liveServer.settings.ignoreFiles": [
-        ".vscode/**",
-        "data/**",
-        "src/backend/**",
-        "node_modules/**",
-        "*.json"
-    ],
-    "liveServer.settings.port": 5501,
-    "css.lint.unknownProperties": "ignore"
+    "css.lint.unknownProperties": "ignore",
+    "typescript.tsdk": "node_modules/typescript/lib",
+
+    "files.exclude": {
+        "src/generated": true,
+        "data/logs": true,
+        "data/archive": true
+    },
+    "files.watcherExclude": {
+        "**/node_modules/**": true,
+        "**/dist/**": true,
+        "data/uploads/**": true,
+        "data/logs/**": true,
+        "src/generated/**": true,
+        "prisma/migrations/**": true
+    },
+    "search.exclude": {
+        "**/node_modules": true,
+        "**/dist": true,
+        "src/generated/**": true,
+        "prisma/migrations/**": true,
+        "data/**": true
+    }
 }

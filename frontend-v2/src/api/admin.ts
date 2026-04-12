@@ -35,10 +35,11 @@ export interface Invite {
   id: string
   token: string
   role: string
+  maxUses: number | null
+  usedCount: number
   createdAt: string
-  expiresAt: string | null
-  usedAt: string | null
-  invitedBy: string | null
+  expiresAt: string
+  createdBy?: { username: string }
 }
 
 // ─── API functions ─────────────────────────────────────────────────────────────

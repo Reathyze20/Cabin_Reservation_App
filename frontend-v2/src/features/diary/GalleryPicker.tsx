@@ -86,7 +86,10 @@ export function GalleryPicker({ currentEntryPhotoIds, onConfirm, onClose }: Prop
           foldersLoading ? (
             <div className="spinner-container"><div className="spinner" /></div>
           ) : allFolders.length === 0 ? (
-            <p className="empty-state">Žádná alba v galerii.</p>
+            <div className="empty-state" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', padding: '2rem' }}>
+              <img src="/icons/empty_picture.svg" alt="" aria-hidden="true" style={{ maxHeight: 80, width: 'auto', opacity: 0.65 }} />
+              <p style={{ margin: 0 }}>Žádná alba v galerii.</p>
+            </div>
           ) : (
             <div className="folders-grid gallery-picker-folders">
               {allFolders.map(folder => (
@@ -98,7 +101,7 @@ export function GalleryPicker({ currentEntryPhotoIds, onConfirm, onClose }: Prop
                   {folder.coverPhotoUrl ? (
                     <img className="folder-cover" src={folder.coverPhotoUrl} alt={folder.name} />
                   ) : (
-                    <div className="folder-cover folder-cover-placeholder">📁</div>
+                    <div className="folder-cover folder-cover-placeholder">—</div>
                   )}
                   <div className="folder-info">
                     <span className="folder-name">{folder.name}</span>
@@ -113,7 +116,10 @@ export function GalleryPicker({ currentEntryPhotoIds, onConfirm, onClose }: Prop
           photosLoading ? (
             <div className="spinner-container"><div className="spinner" /></div>
           ) : pickerPhotos.length === 0 ? (
-            <p className="empty-state">Toto album je prázdné.</p>
+            <div className="empty-state" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', padding: '2rem' }}>
+              <img src="/icons/empty_picture.svg" alt="" aria-hidden="true" style={{ maxHeight: 80, width: 'auto', opacity: 0.65 }} />
+              <p style={{ margin: 0 }}>Toto album je prázdné.</p>
+            </div>
           ) : (
             <>
               <p className="picker-folder-name"><strong>{pickerFolderName}</strong></p>

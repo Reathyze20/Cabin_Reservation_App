@@ -5,9 +5,9 @@
  *   Left  — CalendarGrid + QuickStats
  *   Right — ReservationList | ReservationDetail
  */
-import { useState, useCallback, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Umbrella, Home } from "lucide-react";
 import { ErrorBoundary } from "react-error-boundary";
 import { useReservationsData, fetchMissingSummary, useDeleteReservation } from "./hooks/useReservations";
@@ -57,6 +57,7 @@ function filterFuture(reservations: Reservation[]) {
 export function ReservationsPage() {
   useDocumentTitle('Rezervace');
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const cal = useCalendar();
 
@@ -73,10 +74,10 @@ export function ReservationsPage() {
   // Day filter — set when a calendar day is clicked
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
-  const handleDaySelect = useCallback((dateStr: string) => {
+  const handleDaySelect = (dateStr: string) => {
     setSelectedDay((prev) => prev === dateStr ? null : dateStr);
     setSelectedReservation(null);
-  }, []);
+  };
 
   // Booking modal
   const [bookingOpen, setBookingOpen] = useState(false);
@@ -98,6 +99,19 @@ export function ReservationsPage() {
   const [invSummary, setInvSummary]   = useState<MissingSummary | null>(null);
   const [invDialogOpen, setInvDialogOpen] = useState(false);
 
+  // Auto-open booking form from query params (e.g. ?from=2026-04-17&to=2026-04-18)
+  useEffect(() => {
+    const qFrom = searchParams.get("from");
+    const qTo = searchParams.get("to");
+    if (qFrom && qTo && /^\d{4}-\d{2}-\d{2}$/.test(qFrom) && /^\d{4}-\d{2}-\d{2}$/.test(qTo)) {
+      setBookingFrom(qFrom);
+      setBookingTo(qTo);
+      setEditingReservation(null);
+      setBookingOpen(true);
+      setSearchParams({}, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+
   // Escape → clear calendar range selection
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -108,12 +122,12 @@ export function ReservationsPage() {
   }, [cal]);
 
   // Open choice modal to decide between Reservation or Availability
-  const handleRangeComplete = useCallback((from: string, to: string) => {
+  const handleRangeComplete = (from: string, to: string) => {
     setEditingReservation(null);
     setChoiceFrom(from);
     setChoiceTo(to);
     setChoiceOpen(true);
-  }, []);
+  };
 
   const handleCreateReservation = () => {
     setChoiceOpen(false);
@@ -130,14 +144,14 @@ export function ReservationsPage() {
   };
 
   // Open availability modal from calendar button
-  const handleAvailabilityClick = useCallback(() => {
+  const handleAvailabilityClick = () => {
     setAvailFrom("");
     setAvailTo("");
     setAvailOpen(true);
-  }, []);
+  };
 
   // After successful reservation create → check inventory
-  const handleReservationCreated = useCallback(async (_: string) => {
+  const handleReservationCreated = async (_: string) => {
     showToast("Rezervace uložena! Kontroluji zásoby…", "info");
     const summary = await fetchMissingSummary();
     if (!summary || (summary.count === 0 && !summary.hasShoppingItems)) {
@@ -146,18 +160,18 @@ export function ReservationsPage() {
     }
     setInvSummary(summary);
     setInvDialogOpen(true);
-  }, []);
+  };
 
   // Edit from detail or list
-  const handleEdit = useCallback((r: Reservation) => {
+  const handleEdit = (r: Reservation) => {
     setEditingReservation(r);
     setBookingFrom(r.from ?? "");
     setBookingTo(r.to ?? "");
     setBookingOpen(true);
-  }, []);
+  };
 
   // Delete reservation (called from detail — ethical friction is handled there)
-  const handleDelete = useCallback(async (id: string) => {
+  const handleDelete = async (id: string) => {
     try {
       await del.mutateAsync(id);
       showToast("Rezervace smazána.", "success");
@@ -165,12 +179,12 @@ export function ReservationsPage() {
     } catch {
       showToast("Chyba při mazání rezervace.", "error");
     }
-  }, [del]);
+  };
 
   // Assign from detail/list
-  const handleAssign = useCallback((_: string) => {
+  const handleAssign = (_: string) => {
     showToast("Funkce přiřazení bude brzy dostupná.", "info");
-  }, []);
+  };
 
   // ── Skeleton while loading ────────────────────────────────────────────
   if (isLoading) {

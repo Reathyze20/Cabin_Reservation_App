@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 
 export interface CalendarState {
   month: number;   // 0–11
@@ -34,10 +34,10 @@ export function useCalendar(): UseCalendarReturn {
     });
   };
 
-  const goToMonth = useCallback((m: number, y: number) => {
+  const goToMonth = (m: number, y: number) => {
     setMonth(m);
     setYear(y);
-  }, []);
+  };
 
   const clearRange = () => setRangeStartState(null);
 

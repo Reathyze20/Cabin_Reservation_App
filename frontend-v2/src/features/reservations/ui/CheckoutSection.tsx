@@ -97,7 +97,7 @@ export function CheckoutSection({ reservation }: Props) {
     if (!allChecked) return;
     try {
       await checkout.mutateAsync(reservation.id);
-      showToast("Odjezd potvrzen! Díky 🐕", "success");
+      showToast("Odjezd potvrzen!", "success");
     } catch {
       showToast("Chyba při potvrzení odjezdu.", "error");
     }

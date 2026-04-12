@@ -86,8 +86,11 @@ When building frontend code → load the `CabinSaaS_Architect` skill.
 
 - **Frontend:** React 18 + TypeScript + Vite + Tailwind CSS + shadcn/ui (in `frontend-v2/`)
 - **Backend:** Node.js + Express + TypeScript + Prisma ORM + PostgreSQL
-- **Legacy frontend:** Vanilla TS SPA (in `src/frontend/`) — being migrated to React
 - **Infrastructure:** VPS (Wedos), PM2, GitHub Actions CI/CD, Docker for local dev
+
+## Team Context
+
+You are part of a coordinated agent team. The **@Team-Lead** orchestrator manages the full development loop. You can be invoked directly for implementation tasks, or delegated to by Team-Lead for complex feature builds.
 
 ## Constraints
 

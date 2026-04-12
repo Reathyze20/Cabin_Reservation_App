@@ -81,17 +81,19 @@ export function PantryView({ onBack }: Props) {
       showToast('Název zásoby je příliš dlouhý (max 100 znaků).', 'error')
       return
     }
-    await createItem.mutateAsync({
-      name,
-      category: newCategory,
-      status: newStatus,
-      location: newLocation.trim() || undefined,
-      isEssential: newEssential,
-    })
-    setNewName('')
-    setNewLocation('')
-    setNewEssential(false)
-    setNewStatus('OK')
+    try {
+      await createItem.mutateAsync({
+        name,
+        category: newCategory,
+        status: newStatus,
+        location: newLocation.trim() || undefined,
+        isEssential: newEssential,
+      })
+      setNewName('')
+      setNewLocation('')
+      setNewEssential(false)
+      setNewStatus('OK')
+    } catch { /* onError in hook */ }
   }
 
   // Skupiny dle kategorie (from filteredInventory)
@@ -287,7 +289,7 @@ export function PantryView({ onBack }: Props) {
             <p style={{ color: 'var(--status-error)', padding: '16px 0' }}>Chyba při načítání zásob.</p>
           ) : inventory.length === 0 ? (
             <div className="detail-empty-state">
-              <p className="detail-empty-state-icon">📦</p>
+              <img src="/icons/empty_basket.svg" alt="" aria-hidden="true" style={{ maxHeight: 80, width: 'auto', opacity: 0.65, marginBottom: '0.5rem' }} />
               <h3 className="detail-empty-state-title">Žádné zásoby</h3>
               <p className="detail-empty-state-text">Přidejte první položku, kterou chcete na chatě sledovat.</p>
             </div>
@@ -360,8 +362,10 @@ export function PantryView({ onBack }: Props) {
         loading={deleteItem.isPending}
         onConfirm={async () => {
           if (!deleteTarget) return
-          await deleteItem.mutateAsync(deleteTarget.id)
-          setDeleteTarget(null)
+          try {
+            await deleteItem.mutateAsync(deleteTarget.id)
+            setDeleteTarget(null)
+          } catch { /* onError in hook */ }
         }}
         onCancel={() => setDeleteTarget(null)}
       />

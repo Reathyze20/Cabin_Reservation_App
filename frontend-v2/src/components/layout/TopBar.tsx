@@ -8,6 +8,7 @@ import { useAuth } from '@/context/AuthContext'
 import { showToast } from '@/lib/toast'
 import { NAV_ROUTES } from '@/lib/navRoutes'
 import { useCabinFeatures, isFeatureEnabled } from '@/hooks/useCabinFeatures'
+import { Settings, Users } from 'lucide-react'
 import { AnimalAvatar } from '@/components/shared/AnimalAvatar'
 
 interface TopBarProps {
@@ -73,6 +74,8 @@ export function TopBar({ onOpenProfileDrawer }: TopBarProps) {
           id="nav-dropdown-trigger"
           className="nav-dropdown-trigger"
           title="Otevřít profilové menu"
+          aria-expanded={dropdownOpen}
+          aria-haspopup="true"
           onClick={() => setDropdownOpen((v) => !v)}
         >
           <span id="nav-animal-icon" className="nav-avatar">
@@ -85,10 +88,10 @@ export function TopBar({ onOpenProfileDrawer }: TopBarProps) {
           <span className="nav-dropdown-arrow">▼</span>
         </button>
 
-        <div id="nav-dropdown-menu" className={`nav-dropdown-menu${dropdownOpen ? '' : ' hidden'}`}>
+        <div id="nav-dropdown-menu" className={`nav-dropdown-menu${dropdownOpen ? '' : ' hidden'}`} role="menu">
           {cabin?.name && (
             <>
-              <div className="nav-dropdown-label" title={cabin.name}>🏡 {cabin.name}</div>
+              <div className="nav-dropdown-label" title={cabin.name}>{cabin.name}</div>
               <div className="nav-dropdown-separator"></div>
             </>
           )}
@@ -109,7 +112,8 @@ export function TopBar({ onOpenProfileDrawer }: TopBarProps) {
                 className="nav-dropdown-item"
                 onClick={() => setDropdownOpen(false)}
               >
-                ⚙️ Nastavení chaty
+                <Settings size={16} style={{ marginRight: '8px', verticalAlign: 'text-bottom' }} />
+                Nastavení chaty
               </Link>
               <Link
                 to="/admin"
@@ -117,7 +121,8 @@ export function TopBar({ onOpenProfileDrawer }: TopBarProps) {
                 className="nav-dropdown-item"
                 onClick={() => setDropdownOpen(false)}
               >
-                🔑 Přehled členů
+                <Users size={16} style={{ marginRight: '8px', verticalAlign: 'text-bottom' }} />
+                Přehled členů
               </Link>
             </>
           )}

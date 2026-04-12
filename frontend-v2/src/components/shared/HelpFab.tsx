@@ -10,7 +10,7 @@ import { useLocation } from 'react-router-dom'
 const helpDictionary: Record<string, ReactNode> = {
   dashboard: (
     <>
-      <h3>📊 Přehled (Dashboard)</h3>
+      <h3>Přehled (Dashboard)</h3>
       <p>Zde najdete souhrn aktuálního dění na chatě — nadcházející rezervace, počasí, rychlé statistiky a upozornění.</p>
       <ul>
         <li><strong>Widgety</strong> zobrazují nejdůležitější informace na jednom místě.</li>
@@ -21,7 +21,7 @@ const helpDictionary: Record<string, ReactNode> = {
   ),
   reservations: (
     <>
-      <h3>📅 Rezervace</h3>
+      <h3>Rezervace</h3>
       <p>Správa pobytů na chatě. Můžete si zarezervovat termín, spravovat stávající rezervace a sledovat dostupnost.</p>
       <ul>
         <li><strong>Kalendář</strong> — barevně odlišené rezervace. Kliknutím na den otevřete detail.</li>
@@ -55,7 +55,7 @@ const helpDictionary: Record<string, ReactNode> = {
   ),
   gallery: (
     <>
-      <h3>🖼️ Galerie</h3>
+      <h3>Galerie</h3>
       <p>Sdílená fotogalerie pro všechny pobyty.</p>
       <ul>
         <li><strong>Složky</strong> — fotky jsou organizovány do složek (např. podle pobytů).</li>
@@ -66,7 +66,7 @@ const helpDictionary: Record<string, ReactNode> = {
   ),
   diary: (
     <>
-      <h3>📖 Deník</h3>
+      <h3>Deník</h3>
       <p>Zapisujte si zážitky z jednotlivých pobytů. Každý den má svou „stránku" v sešitě.</p>
       <ul>
         <li><strong>Pobyty</strong> — vytvořte nový pobyt a pak vyplňujte jednotlivé dny.</li>
@@ -76,17 +76,17 @@ const helpDictionary: Record<string, ReactNode> = {
   ),
   reconstruction: (
     <>
-      <h3>🔨 Rekonstrukce</h3>
+      <h3>Rekonstrukce</h3>
       <p>Kanban nástěnka pro plánování a sledování úprav na chatě.</p>
       <ul>
-        <li><strong>Nápady</strong> — inspirace, fotky, odhadovaná cena. Hlasujte ❤️ pro prioritizaci.</li>
+        <li><strong>Nápady</strong> — inspirace, fotky, odhadovaná cena. Hlasujte pro prioritizaci.</li>
         <li><strong>Úkoly</strong> — konkrétní práce s termínem a rozpočtem.</li>
       </ul>
     </>
   ),
   admin: (
     <>
-      <h3>⚙️ Administrace</h3>
+      <h3>Administrace</h3>
       <p>Správa uživatelů a systémové nastavení. Pouze pro administrátory.</p>
       <ul>
         <li><strong>Uživatelé</strong> — přehled registrovaných účtů, jejich rolí a stavu.</li>
@@ -96,7 +96,7 @@ const helpDictionary: Record<string, ReactNode> = {
   ),
   default: (
     <>
-      <h3>❓ Nápověda</h3>
+      <h3>Nápověda</h3>
       <p>Vítejte v aplikaci <strong>kdynachatu.cz</strong> — rodinné aplikaci pro správu chaty.</p>
       <ul>
         <li><strong>Přehled</strong> — souhrn dění na chatě</li>

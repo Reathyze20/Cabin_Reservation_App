@@ -3,6 +3,16 @@
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { adminApi } from '@/api/admin'
+import { showToast } from '@/lib/toast'
+import { isNetworkError, OFFLINE_TOAST_MSG } from '@/lib/networkError'
+
+function defaultOnError(fallbackMsg: string) {
+  return (err: Error) => {
+    if (isNetworkError(err)) { showToast(OFFLINE_TOAST_MSG, 'info'); return }
+    const msg = (err as unknown as { response?: { data?: { message?: string } } })?.response?.data?.message
+    showToast(msg || fallbackMsg, 'error')
+  }
+}
 
 const USERS_QK = ['admin-users'] as const
 const SYSTEM_QK = ['admin-system'] as const
@@ -21,6 +31,7 @@ export function useCreateUser() {
   return useMutation({
     mutationFn: adminApi.createUser,
     onSuccess: () => qc.invalidateQueries({ queryKey: USERS_QK }),
+    onError: defaultOnError('Nepodařilo se vytvořit uživatele.'),
   })
 }
 
@@ -30,6 +41,7 @@ export function useUpdateUser() {
     mutationFn: ({ id, data }: { id: string; data: { role?: string; password?: string } }) =>
       adminApi.updateUser(id, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: USERS_QK }),
+    onError: defaultOnError('Nepodařilo se upravit uživatele.'),
   })
 }
 
@@ -48,6 +60,7 @@ export function useDeleteUser() {
       qc.invalidateQueries({ queryKey: ['gallery'] })
       qc.invalidateQueries({ queryKey: SYSTEM_QK })
     },
+    onError: defaultOnError('Nepodařilo se smazat uživatele.'),
   })
 }
 
@@ -59,6 +72,7 @@ export function useDeleteUserReservations() {
       qc.invalidateQueries({ queryKey: ['reservations'] })
       qc.invalidateQueries({ queryKey: SYSTEM_QK })
     },
+    onError: defaultOnError('Nepodařilo se smazat rezervace uživatele.'),
   })
 }
 
@@ -91,6 +105,7 @@ export function useCreateInvite() {
   return useMutation({
     mutationFn: adminApi.createInvite,
     onSuccess: () => qc.invalidateQueries({ queryKey: INVITES_QK }),
+    onError: defaultOnError('Nepodařilo se vytvořit pozvánku.'),
   })
 }
 
@@ -99,5 +114,6 @@ export function useRevokeInvite() {
   return useMutation({
     mutationFn: adminApi.revokeInvite,
     onSuccess: () => qc.invalidateQueries({ queryKey: INVITES_QK }),
+    onError: defaultOnError('Nepodařilo se zrušit pozvánku.'),
   })
 }

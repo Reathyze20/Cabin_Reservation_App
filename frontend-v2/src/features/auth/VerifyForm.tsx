@@ -2,7 +2,7 @@
  * features/auth/VerifyForm.tsx
  * Překlad: #verify-section z index.html + bindVerifyForm() z main.ts
  */
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 interface VerifyFormProps {
   username: string
@@ -14,6 +14,11 @@ export function VerifyForm({ username, prefillCode = '', onShowLogin }: VerifyFo
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null)
   const [loading, setLoading] = useState(false)
   const codeRef = useRef<HTMLInputElement>(null)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => { if (timerRef.current) clearTimeout(timerRef.current) }
+  }, [])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -37,7 +42,7 @@ export function VerifyForm({ username, prefillCode = '', onShowLogin }: VerifyFo
       }
 
       setMessage({ text: 'Ověření úspěšné, můžete se přihlásit.', type: 'success' })
-      setTimeout(onShowLogin, 1500)
+      timerRef.current = setTimeout(onShowLogin, 1500)
     } catch {
       setMessage({ text: 'Chyba sítě', type: 'error' })
     } finally {

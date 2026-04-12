@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom";
-import type { DashboardReservationsData, UpcomingReservation, ActiveReservation as ActiveRes } from "@/api/dashboard";
-import { formatDateRange, formatWeekendRange, nightsBetween, nightsLabel, daysUntil, getTodayFormatted } from "@/lib/dateUtils";
+import type { DashboardReservationsData, UpcomingReservation, LastStay } from "@/api/dashboard";
+import { formatDateRange, formatWeekendRange, nightsBetween, daysUntil, getTodayFormatted } from "@/lib/dateUtils";
 import { AnimalAvatar } from "@/components/shared/AnimalAvatar";
+import { CalendarPlus } from "lucide-react";
 
 interface Props {
   data: DashboardReservationsData;
@@ -16,7 +17,8 @@ function isValidReservation(r: { from: string; to: string } | null | undefined):
 function buildNextBlock(res: UpcomingReservation | null): React.ReactNode {
   if (!res) return null;
   const days = daysUntil(res.from);
-  const daysChip = days === 0 ? "dnes" : days === 1 ? "zítra" : `za ${days} d.`;
+  const dLabel = days === 1 ? "den" : days >= 2 && days <= 4 ? "dny" : "dní";
+  const daysChip = days === 0 ? "dnes" : days === 1 ? "zítra" : `za ${days} ${dLabel}`;
   return (
     <div className="status-next-block">
       <div className="status-next-avatar">
@@ -28,6 +30,25 @@ function buildNextBlock(res: UpcomingReservation | null): React.ReactNode {
         <div className="status-next-date">{formatDateRange(res.from, res.to)}</div>
       </div>
       <span className="status-next-chip">{daysChip}</span>
+    </div>
+  );
+}
+
+function buildLastStayBlock(lastStay: LastStay | null | undefined): React.ReactNode {
+  if (!lastStay) return null;
+  const daysLabel = lastStay.daysEmpty === 0 ? "dnes" :
+    lastStay.daysEmpty === 1 ? "1 den" :
+    lastStay.daysEmpty < 5 ? `${lastStay.daysEmpty} dny` :
+    `${lastStay.daysEmpty} dní`;
+  const isLongEmpty = lastStay.daysEmpty >= 14;
+  const checklistPart = lastStay.isCheckoutCompleted
+    ? " · Checklist OK"
+    : lastStay.daysEmpty > 0 ? " · Checklist nevyplněn" : "";
+  return (
+    <div className={`last-stay-inline${isLongEmpty ? " last-stay-warning" : ""}`}>
+      <span className="last-stay-text">
+        Prázdná {daysLabel}{checklistPart}
+      </span>
     </div>
   );
 }
@@ -44,15 +65,93 @@ export function ActiveReservation({ data, cabinDepartureChecklist }: Props) {
     ? (validUpcoming.find((r) => r.id !== active.id) ?? null)
     : (validUpcoming[0] ?? null);
 
+  // Up to 3 upcoming reservations (excluding active)
+  const upcomingList = active
+    ? validUpcoming.filter((r) => r.id !== active.id).slice(0, 3)
+    : validUpcoming.slice(0, 3);
+
   const freeWeekendNode = data.nextFreeWeekend ? (
-    <div className="next-free-weekend">
-      <span className="free-weekend-dot" /> Nejbližší volný víkend:{" "}
-      <strong>{formatWeekendRange(data.nextFreeWeekend.start, data.nextFreeWeekend.end)}</strong>
-    </div>
+    <button 
+      className="status-cta status-cta-smart" 
+      onClick={() => navigate(`/reservations?from=${data.nextFreeWeekend!.start}&to=${data.nextFreeWeekend!.end}`)}
+    >
+      <CalendarPlus size={14} /> Volný víkend {formatWeekendRange(data.nextFreeWeekend.start, data.nextFreeWeekend.end)}
+    </button>
   ) : null;
 
   const dateNode = <div className="dashboard-date">{formattedDate}</div>;
   const hasCheckoutTasks = cabinDepartureChecklist && cabinDepartureChecklist.length > 0;
+
+  const myNext = data.myNextReservation;
+  const myNextDays = myNext ? daysUntil(myNext.from) : null;
+  const isMyNextSameAsNext = myNext && nextRes && myNext.from === nextRes.from && myNext.to === nextRes.to;
+  const isMyNextSameAsActive = myNext && active && myNext.from === active.from && myNext.to === active.to;
+
+  function buildCombinedNextBlock(): React.ReactNode {
+    if (!nextRes) return null;
+    const days = daysUntil(nextRes.from);
+    const daysChip = days === 0 ? "dnes" : days === 1 ? "zítra" : `za ${days} dní`;
+
+    if (isMyNextSameAsNext && myNext) {
+      const label = days === 0 ? "Váš pobyt začíná dnes" : days === 1 ? "Váš pobyt začíná zítra" : `Váš pobyt ${daysChip}`;
+      return (
+        <div className="status-next-block status-next-personal">
+          <div className="status-next-accent-line"></div>
+          <div className="status-next-avatar">
+            <AnimalAvatar icon={nextRes.userAnimalIcon} username={nextRes.username} color={nextRes.userColor || undefined} size={36} />
+          </div>
+          <div className="status-next-info">
+            <div className="status-next-label status-next-label-personal">{label}</div>
+            <div className="status-next-date">{formatDateRange(nextRes.from, nextRes.to)}{myNext.purpose ? ` · ${myNext.purpose}` : ""}</div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <>
+        {myNext && !isMyNextSameAsNext && !isMyNextSameAsActive && (() => {
+          const label = myNextDays === 0 ? "Váš pobyt začíná dnes" : myNextDays === 1 ? "Váš pobyt začíná zítra" : `Váš pobyt za ${myNextDays} dní`;
+          return (
+            <div className="status-next-block status-next-personal">
+              <div className="status-next-accent-line"></div>
+              <div className="status-next-info" style={{ marginLeft: 6 }}>
+                <div className="status-next-label status-next-label-personal">{label}</div>
+                <div className="status-next-date">{formatDateRange(myNext.from, myNext.to)} · {myNext.purpose}</div>
+              </div>
+            </div>
+          );
+        })()}
+        {buildNextBlock(nextRes)}
+      </>
+    );
+  }
+
+  function buildUpcomingList(): React.ReactNode {
+    if (upcomingList.length === 0) return null;
+    const rest = nextRes ? upcomingList.filter((r) => r.id !== nextRes.id) : upcomingList;
+    if (rest.length === 0) return null;
+
+    return (
+      <div className="status-upcoming-list">
+        {rest.map((r) => {
+          const days = daysUntil(r.from);
+          const daysChip = days === 0 ? "dnes" : days === 1 ? "zítra" : `za ${days} dní`;
+          const isMyRes = myNext && r.from === myNext.from && r.to === myNext.to;
+          return (
+            <div className={`status-upcoming-row${isMyRes ? " status-upcoming-mine" : ""}`} key={r.id}>
+              <AnimalAvatar icon={r.userAnimalIcon} username={r.username} color={r.userColor || undefined} size={28} />
+              <div className="status-upcoming-info">
+                <span className="status-upcoming-name">{r.username}</span>
+                <span className="status-upcoming-date">{formatDateRange(r.from, r.to)}</span>
+              </div>
+              <span className="status-upcoming-chip">{daysChip}</span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
 
   // ── Stav C: Occupied ─────────────────────────────────────────────────
   if (active && isValidReservation(active)) {
@@ -63,51 +162,49 @@ export function ActiveReservation({ data, cabinDepartureChecklist }: Props) {
     let subtitle: string;
     let cardClass: string;
     let avatarNode: React.ReactNode;
-    let badgePill: React.ReactNode;
-    let remainingChip: React.ReactNode = null;
     let checkoutReminderNode: React.ReactNode = null;
 
     if (departingToday && currentHour >= 14) {
       title = "Volná!";
-      subtitle = `Dnes odjel${active.username.endsWith("a") ? "a" : ""} ${active.username} · ${active.purpose}`;
+      subtitle = `Dnes uvolnil${active.username.endsWith("a") ? "a" : ""} ${active.username} · ${active.purpose}`;
       cardClass = "glass-card status-card is-free";
       avatarNode = (
         <div className="status-avatar-block" style={{ background: "var(--color-primary)" }}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
         </div>
       );
-      badgePill = <div className="status-badge-pill"><span className="status-dot" /> Volná</div>;
       if (hasCheckoutTasks) {
         checkoutReminderNode = active.isCheckoutCompleted
-          ? <div className="checkout-reminder checkout-reminder-done">✅ Odjezdový checklist splněn</div>
+          ? <div className="checkout-reminder checkout-reminder-done">✓ Odjezdový checklist splněn</div>
           : <div className="checkout-reminder checkout-reminder-missed">⚠ Odjezdový checklist nebyl vyplněn</div>;
       }
     } else if (departingToday) {
-      title = `Dnes odjíždí ${active.username}`;
-      subtitle = `${formatDateRange(active.from, active.to)} · ${active.purpose}`;
+      title = active.username;
+      subtitle = `Odjíždí dnes · ${active.purpose}`;
       cardClass = "glass-card status-card is-occupied";
       avatarNode = <div className="status-avatar-block"><AnimalAvatar icon={active.userAnimalIcon} username={active.username} color={userColor} size={48} /></div>;
-      badgePill = <div className="status-badge-pill"><span className="status-dot" /> Odjezd dnes</div>;
       if (hasCheckoutTasks) {
         checkoutReminderNode = active.isCheckoutCompleted
-          ? <div className="checkout-reminder checkout-reminder-done">✅ Odjezdový checklist splněn</div>
+          ? <div className="checkout-reminder checkout-reminder-done">Odjezdový checklist splněn</div>
           : (
             <div className="checkout-reminder checkout-reminder-warn">
-              <span className="checkout-reminder-icon">📋</span>{" "}
               <span>Před odjezdem vyplňte <a href="/reservations">odjezdový checklist</a></span>
             </div>
           );
       }
     } else {
       const nights = nightsBetween(todayStr, active.to);
+      const dLabel = nights === 1 ? "1 den" : nights >= 2 && nights <= 4 ? `${nights} dny` : `${nights} dní`;
       title = active.username;
-      subtitle = `${formatDateRange(active.from, active.to)} · ${active.purpose}`;
+      
+      const toDate = new Date(active.to);
+      const formattedToObj = new Intl.DateTimeFormat("cs-CZ", { weekday: "long", day: "numeric", month: "numeric" }).format(toDate);
+      const formattedTo = formattedToObj.split(' ').map(w => w === 'Zítra' ? w : w).join(' ');
+
+      // Subtitle e.g.: "Pobyt do pátku 17. 4. (ještě 5 dní) · Test"
+      subtitle = `Pobyt do ${formattedTo} (ještě ${dLabel}) · ${active.purpose}`;
       cardClass = "glass-card status-card is-occupied";
       avatarNode = <div className="status-avatar-block"><AnimalAvatar icon={active.userAnimalIcon} username={active.username} color={userColor} size={48} /></div>;
-      badgePill = <div className="status-badge-pill"><span className="status-dot" /> Obsazeno</div>;
-      if (nights > 0) {
-        remainingChip = <span className="status-remaining-chip">Zbývá {nights} {nightsLabel(nights)}</span>;
-      }
     }
 
     return (
@@ -119,21 +216,20 @@ export function ActiveReservation({ data, cabinDepartureChecklist }: Props) {
             <div className="status-hero-text">
               <div className="status-name-row">
                 <div className="status-name">{title}</div>
-                {badgePill}
               </div>
               <div className="status-meta">
                 <span className="status-dates">{subtitle}</span>
-                {remainingChip}
               </div>
             </div>
           </div>
           {checkoutReminderNode}
-          {buildNextBlock(nextRes)}
+          {buildCombinedNextBlock()}
+          {buildUpcomingList()}
           <div className="status-cta-row">
             {freeWeekendNode}
-            <a href="/reservations" onClick={(e) => { e.preventDefault(); navigate("/reservations"); }} className="status-cta status-cta-neutral">
-              Kalendář rezervací
-            </a>
+            <button onClick={() => navigate("/reservations")} className="status-cta status-cta-neutral">
+              Kalendář
+            </button>
           </div>
         </div>
       </div>
@@ -152,20 +248,18 @@ export function ActiveReservation({ data, cabinDepartureChecklist }: Props) {
             </div>
             <div className="status-hero-text">
               <div className="status-name-row">
-                <div className="status-name">Volná!</div>
-                <div className="status-badge-pill"><span className="status-dot" /> Volná</div>
-              </div>
-              <div className="status-meta">
-                <span className="status-dates">Žádný aktuální pobyt</span>
+                <div className="status-name">Nyní volná</div>
               </div>
             </div>
           </div>
-          {buildNextBlock(nextRes)}
+          {buildCombinedNextBlock()}
+          {buildUpcomingList()}
+          {buildLastStayBlock(data.lastStay)}
           <div className="status-cta-row">
             {freeWeekendNode}
-            <a href="/reservations" onClick={(e) => { e.preventDefault(); navigate("/reservations"); }} className="status-cta status-cta-neutral">
-              Kalendář rezervací
-            </a>
+            <button onClick={() => navigate("/reservations")} className="status-cta status-cta-neutral">
+              Kalendář
+            </button>
           </div>
         </div>
       </div>
@@ -183,22 +277,23 @@ export function ActiveReservation({ data, cabinDepartureChecklist }: Props) {
           </div>
           <div className="status-hero-text">
             <div className="status-name-row">
-              <div className="status-name">Volná!</div>
-              <div className="status-badge-pill"><span className="status-dot" /> Volná</div>
+              <div className="status-name">Chata je volná!</div>
             </div>
             <div className="status-meta">
               <span className="status-dates">Žádný plánovaný pobyt. Ideální čas vyrazit.</span>
             </div>
           </div>
         </div>
+        {buildLastStayBlock(data.lastStay)}
+        {buildCombinedNextBlock()}
+        {buildUpcomingList()}
         <div className="status-cta-row">
           {freeWeekendNode}
           <button className="status-cta status-cta-primary" onClick={() => navigate("/reservations")}>
-            Zarezervovat termín
+            Nová rezervace
           </button>
         </div>
       </div>
     </div>
   );
-  void (active as ActiveRes | null);
 }

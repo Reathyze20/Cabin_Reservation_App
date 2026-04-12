@@ -71,7 +71,7 @@ router.get("/reservations", protect, requireCabin, async (req: Request, res: Res
     const todayStr = now.toISOString().split("T")[0];
     const cabinId = req.user!.cabinId!;
 
-    const [upcomingReservations, activeReservation, departingTodayReservation, myNextReservation, nextFreeWeekend] = await Promise.all([
+    const [upcomingReservations, activeReservation, departingTodayReservation, myNextReservation, nextFreeWeekend, lastStayReservation, myStaysThisYear, totalStaysThisMonth] = await Promise.all([
       prisma.reservation.findMany({
         where: { cabinId, dateFrom: { gte: new Date(todayStr) }, status: "primary" },
         include: { user: { select: { username: true, color: true, animalIcon: true } } },
@@ -90,7 +90,33 @@ router.get("/reservations", protect, requireCabin, async (req: Request, res: Res
         where: { cabinId, userId: req.user.userId, dateFrom: { gte: new Date(todayStr) } },
         orderBy: { dateFrom: "asc" },
       }),
-      findNextFreeWeekend(cabinId)
+      findNextFreeWeekend(cabinId),
+      // Last completed stay (ended before today)
+      prisma.reservation.findFirst({
+        where: { cabinId, dateTo: { lt: new Date(todayStr) }, status: "primary" },
+        include: { user: { select: { username: true, color: true, animalIcon: true } } },
+        orderBy: { dateTo: "desc" },
+      }),
+      // My stays this year (for stats)
+      prisma.reservation.findMany({
+        where: {
+          cabinId,
+          userId: req.user.userId,
+          status: "primary",
+          dateFrom: { gte: new Date(`${now.getFullYear()}-01-01`) },
+          dateTo: { lte: new Date(todayStr) },
+        },
+        select: { dateFrom: true, dateTo: true },
+      }),
+      // Total stays this month
+      prisma.reservation.count({
+        where: {
+          cabinId,
+          status: "primary",
+          dateFrom: { lte: new Date(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()}`) },
+          dateTo: { gte: new Date(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`) },
+        },
+      }),
     ]);
 
     res.json({
@@ -125,6 +151,22 @@ router.get("/reservations", protect, requireCabin, async (req: Request, res: Res
       } : null,
       departingToday: departingTodayReservation !== null && !departingTodayReservation.handoverNote,
       nextFreeWeekend,
+      lastStay: lastStayReservation ? {
+        username: lastStayReservation.user.username,
+        userColor: lastStayReservation.user.color,
+        userAnimalIcon: lastStayReservation.user.animalIcon,
+        from: lastStayReservation.dateFrom.toISOString().split("T")[0],
+        to: lastStayReservation.dateTo.toISOString().split("T")[0],
+        isCheckoutCompleted: lastStayReservation.isCheckoutCompleted,
+        daysEmpty: Math.floor((new Date(todayStr).getTime() - lastStayReservation.dateTo.getTime()) / (1000 * 60 * 60 * 24)),
+      } : null,
+      stats: {
+        myNightsThisYear: myStaysThisYear.reduce((sum, r) => {
+          const nights = Math.max(0, Math.floor((r.dateTo.getTime() - r.dateFrom.getTime()) / (1000 * 60 * 60 * 24)));
+          return sum + nights;
+        }, 0),
+        totalStaysThisMonth: totalStaysThisMonth,
+      },
     });
   } catch (error) {
     logger.error("DASHBOARD", "Get reservations error", { error: String(error) });
@@ -141,18 +183,22 @@ router.get("/shopping", protect, requireCabin, async (req: Request, res: Respons
   try {
     const cabinId = req.user!.cabinId!;
 
-    const [pendingShoppingItems, totalPendingCount, essentialPendingItems] = await Promise.all([
+    const activeListFilter = { isResolved: false, isPantry: false, cabinId };
+    const [pendingShoppingItems, totalPendingCount, totalItemsCount, essentialPendingItems] = await Promise.all([
       prisma.shoppingListItem.findMany({
-        where: { purchased: false, status: { not: "purchased" }, list: { isResolved: false, isPantry: false, cabinId } },
+        where: { purchased: false, status: { not: "purchased" }, list: activeListFilter },
         include: { list: { select: { id: true, name: true } } },
         orderBy: [{ isEssential: "desc" }, { createdAt: "asc" }],
-        take: 5,
+        take: 6,
       }),
       prisma.shoppingListItem.count({
-        where: { purchased: false, status: { not: "purchased" }, list: { isResolved: false, isPantry: false, cabinId } },
+        where: { purchased: false, status: { not: "purchased" }, list: activeListFilter },
+      }),
+      prisma.shoppingListItem.count({
+        where: { list: activeListFilter },
       }),
       prisma.shoppingListItem.findMany({
-        where: { isEssential: true, purchased: false, status: { not: "purchased" }, list: { isResolved: false, isPantry: false, cabinId } },
+        where: { isEssential: true, purchased: false, status: { not: "purchased" }, list: activeListFilter },
         select: { id: true, name: true },
         take: 10,
       })
@@ -167,6 +213,7 @@ router.get("/shopping", protect, requireCabin, async (req: Request, res: Respons
         listName: i.list?.name ?? null,
       })),
       totalPendingShoppingCount: totalPendingCount,
+      totalItemsCount,
       essentialWarning: essentialPendingItems.length > 0 ? {
         count: essentialPendingItems.length,
         items: essentialPendingItems.map((i) => ({ id: i.id, name: i.name })),
@@ -207,10 +254,91 @@ router.get("/notes", protect, requireCabin, async (req: Request, res: Response) 
         createdAt: n.createdAt.toISOString(),
       })),
       pinnedHandoverNote: appSettings?.pinnedHandoverNote ?? null,
+      handoverNoteAuthor: appSettings?.handoverNoteAuthor ?? null,
+      handoverNoteUpdatedAt: appSettings?.handoverNoteUpdatedAt?.toISOString() ?? null,
     });
   } catch (error) {
     logger.error("DASHBOARD", "Get notes error", { error: String(error) });
     res.status(500).json({ message: "Chyba při načítání nástěnky." });
+  }
+});
+
+// 4. Reconstruction Route — dashboard summary
+router.get("/reconstruction", protect, requireCabin, async (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({ message: "Neautorizováno" });
+  }
+
+  try {
+    const cabinId = req.user!.cabinId!;
+
+    const [activeItems, totalCount] = await Promise.all([
+      prisma.reconstructionItem.findMany({
+        where: { cabinId, status: { in: ["pending", "approved"] } },
+        include: {
+          createdBy: { select: { username: true } },
+          votes: { select: { userId: true } },
+        },
+        orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+        take: 3,
+      }),
+      prisma.reconstructionItem.count({
+        where: { cabinId, status: { in: ["pending", "approved"] } },
+      }),
+    ]);
+
+    res.json({
+      totalActiveCount: totalCount,
+      items: activeItems.map((item) => ({
+        id: item.id,
+        title: item.title,
+        category: item.category,
+        status: item.status,
+        votesCount: item.votes.length,
+        createdBy: item.createdBy.username,
+        deadline: item.deadline ? item.deadline.toISOString().split("T")[0] : null,
+      })),
+    });
+  } catch (error) {
+    logger.error("DASHBOARD", "Get reconstruction error", { error: String(error) });
+    res.status(500).json({ message: "Chyba při načítání rekonstrukce." });
+  }
+});
+
+// 5. Gallery Route — latest photos
+router.get("/gallery", protect, requireCabin, async (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({ message: "Neautorizováno" });
+  }
+
+  try {
+    const cabinId = req.user!.cabinId!;
+
+    const latestPhotos = await prisma.galleryPhoto.findMany({
+      where: { folder: { cabinId } },
+      include: {
+        uploadedBy: { select: { username: true } },
+        folder: { select: { name: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 4,
+    });
+
+    res.json({
+      photos: latestPhotos.map((p) => {
+        const fileName = p.src.split("/uploads/")[1];
+        return {
+          id: p.id,
+          thumb: fileName ? `/uploads/thumbs/${fileName}` : p.src,
+          folderName: p.folder.name,
+          uploadedBy: p.uploadedBy?.username ?? null,
+          createdAt: p.createdAt.toISOString(),
+        };
+      }),
+    });
+  } catch (error) {
+    logger.error("DASHBOARD", "Get gallery error", { error: String(error) });
+    res.status(500).json({ message: "Chyba při načítání galerie." });
   }
 });
 

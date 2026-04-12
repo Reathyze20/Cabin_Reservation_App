@@ -140,7 +140,7 @@ export function CabinSettingsPage() {
   useDocumentTitle('Nastavení chaty');
   const { isAdmin } = useAuth()
   const navigate = useNavigate()
-  const { data: settings, isLoading } = useCabinSettings()
+  const { data: settings, isLoading, isError } = useCabinSettings()
   const updateSettings = useUpdateCabinSettings()
 
   const [activeTab, setActiveTab] = useState<TabId>('tab-basic')
@@ -192,7 +192,7 @@ export function CabinSettingsPage() {
       },
       {
         onSuccess: () => {
-          showToast('Nastavení uloženo ✓', 'success')
+          showToast('Nastavení uloženo', 'success')
           setSaveSuccess(true)
           if (successTimerRef.current) clearTimeout(successTimerRef.current)
           successTimerRef.current = setTimeout(() => setSaveSuccess(false), 2500)
@@ -221,7 +221,7 @@ export function CabinSettingsPage() {
   if (!isAdmin) {
     return (
       <div className="main-content-settings">
-        <div className="settings-page-card" style={{ padding: '28px' }}>
+        <div className="page-card settings-page-card" style={{ padding: '28px' }}>
           <h1 className="cs-title">Přístup odepřen</h1>
           <p className="cs-subtitle">Tato stránka je dostupná pouze pro administrátory.</p>
         </div>
@@ -235,11 +235,11 @@ export function CabinSettingsPage() {
     'tab-modules': 'Moduly',
   }
 
-  const saveBtnText = updateSettings.isPending ? 'Ukládám…' : saveSuccess ? 'Uloženo ✓' : 'Uložit změny'
+  const saveBtnText = updateSettings.isPending ? 'Ukládám…' : saveSuccess ? 'Uloženo' : 'Uložit změny'
 
   return (
     <div className="main-content-settings">
-      <div className="settings-page-card">
+      <div className="page-card settings-page-card">
 
         {/* ── Header ── */}
         <div className="cs-header">
@@ -287,13 +287,18 @@ export function CabinSettingsPage() {
               <div className="spinner" />
               <p>Načítám nastavení…</p>
             </div>
+          ) : isError ? (
+            <div className="cabin-settings-loading" style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+              <img src="/icons/empty_shelf.svg" alt="" aria-hidden="true" style={{ maxHeight: 96, width: 'auto', opacity: 0.65 }} />
+              <p style={{ margin: '0.5rem 0 0', fontWeight: 600 }}>Nepodařilo se načíst nastavení</p>
+            </div>
           ) : (
             <form id="cs-form" className="cabin-settings-form" noValidate onSubmit={handleSubmit}>
               {/* Tab 1: Basic */}
               <div className={`cs-tab-pane${activeTab === 'tab-basic' ? ' active' : ''}`} id="tab-basic">
                 <section className="cs-section">
                   <div className="cs-section-header">
-                    <h2>🏠 Základní informace</h2>
+                    <h2>Základní informace</h2>
                     <p>Jak se vaše chata jmenuje a kde se nachází</p>
                   </div>
 
@@ -340,7 +345,7 @@ export function CabinSettingsPage() {
                       placeholder="Např. Třebenice nebo 412 01"
                     />
                     <span className="cs-hint">
-                      🛡️ Z bezpečnostních důvodů úmyslně neukládáme přesnou adresu ani GPS vaší chaty.
+                      Z bezpečnostních důvodů úmyslně neukládáme přesnou adresu ani GPS vaší chaty.
                       K zobrazení počasí nám stačí pouze název nejbližší obce nebo PSČ.
                     </span>
                   </div>
@@ -360,7 +365,7 @@ export function CabinSettingsPage() {
                       maxLength={300}
                       value={welcomeMessage}
                       onChange={(e) => setWelcomeMessage(e.target.value)}
-                      placeholder="např. U nás je vždy příjemně — ať prší nebo svítí ☀️"
+                      placeholder="např. U nás je vždy příjemně — ať prší nebo svítí"
                     />
                     <span className="cs-hint">Zobrazí se novým členům v pozvánce a na dashboardu</span>
                   </div>
@@ -386,7 +391,7 @@ export function CabinSettingsPage() {
               <div className={`cs-tab-pane${activeTab === 'tab-operations' ? ' active' : ''}`} id="tab-operations">
                 <section className="cs-section">
                   <div className="cs-section-header">
-                    <h2>✅ Odjezdový checklist</h2>
+                    <h2>Odjezdový checklist</h2>
                     <p>Co zkontrolovat před uzamčením chaty</p>
                   </div>
                   <ChecklistEditor items={checklist} onChange={setChecklist} />
@@ -394,7 +399,7 @@ export function CabinSettingsPage() {
 
                 <section className="cs-section">
                   <div className="cs-section-header">
-                    <h2>❄️ Zazimování</h2>
+                    <h2>Zazimování</h2>
                     <p>Stav chaty v zimním období</p>
                   </div>
                   <label className="cs-toggle-row">
@@ -416,7 +421,7 @@ export function CabinSettingsPage() {
               <div className={`cs-tab-pane${activeTab === 'tab-modules' ? ' active' : ''}`} id="tab-modules">
                 <section className="cs-section">
                   <div className="cs-section-header">
-                    <h2>🧩 Aktivní moduly</h2>
+                    <h2>Aktivní moduly</h2>
                     <p>Zapněte nebo vypněte funkce podle potřeb vaší rodiny</p>
                   </div>
                   <FeatureToggles features={features} onChange={setFeatures} />

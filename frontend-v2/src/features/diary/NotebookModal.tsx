@@ -86,8 +86,10 @@ export function NotebookModal({ dateObj, entry, folderId, allDates, onNavigate, 
   async function handleConfirmedDelete() {
     if (!entry?.id) return
     setDeleteConfirmOpen(false)
-    await deleteEntry.mutateAsync(entry.id)
-    onSaved()
+    try {
+      await deleteEntry.mutateAsync(entry.id)
+      onSaved()
+    } catch { /* onError in hook */ }
   }
 
   function removePhoto(id: string) {
@@ -149,7 +151,7 @@ export function NotebookModal({ dateObj, entry, folderId, allDates, onNavigate, 
               className="notebook-btn-attach"
               onClick={() => setShowPickerModal(true)}
             >
-              📸 Fotky
+              Fotky
             </button>
             {entry?.id && (
               <button

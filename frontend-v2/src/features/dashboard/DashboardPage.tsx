@@ -4,16 +4,17 @@ import { useQuery } from "@tanstack/react-query";
 import { ErrorBoundary } from "react-error-boundary";
 import apiClient from "@/api/client";
 import { fetchWeather } from "@/api/dashboard";
-import type { CabinSettings, DashboardReservationsData, DashboardShoppingData, DashboardNotesData } from "@/api/dashboard";
-import { DashboardReservationsSchema, DashboardShoppingSchema, DashboardNotesSchema } from "@/api/schemas";
+import type { CabinSettings, DashboardReservationsData, DashboardShoppingData, DashboardNotesData, DashboardReconstructionData } from "@/api/dashboard";
+import { DashboardReservationsSchema, DashboardShoppingSchema, DashboardNotesSchema, DashboardReconstructionSchema } from "@/api/schemas";
 import { WeatherCard } from "./WeatherCard";
 import { ActiveReservation } from "./ActiveReservation";
 import { ShoppingWidget } from "./ShoppingWidget";
 import { HandoverNote } from "./HandoverNote";
 import { EssentialWarning } from "./EssentialWarning";
 import { DepartureBanner } from "./DepartureBanner";
+import { ReconstructionWidget } from "./ReconstructionWidget";
 import { FeatureErrorFallback } from "@/components/shared/FeatureErrorFallback";
-import { ZenMode } from "./ZenMode";
+import { motion } from "framer-motion";
 
 // ─── Skeletons ────────────────────────────────────────────────────────
 
@@ -111,11 +112,54 @@ export function HandoverNoteSkeleton() {
   );
 }
 
+export function ReconstructionSkeleton() {
+  return (
+    <div className="glass-card">
+      <div className="card-body-full">
+        <div className="dashboard-card-header">
+          <div className="skeleton skeleton-text" style={{ width: 70, height: 14 }} />
+          <div className="skeleton skeleton-text" style={{ width: 40, height: 13 }} />
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 10 }}>
+          <div className="skeleton" style={{ width: 40, height: 28, borderRadius: 8 }} />
+          <div className="skeleton skeleton-text" style={{ width: 100, height: 13 }} />
+        </div>
+        {[0, 1].map((i) => (
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8 }}>
+            <div className="skeleton" style={{ width: 24, height: 24, borderRadius: 6 }} />
+            <div className="skeleton skeleton-text" style={{ flex: 1, height: 13 }} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Animation variants ───────────────────────────────────────────────
+
+const gridVariants = {
+  hidden: {},
+  visible: {
+    transition: { staggerChildren: 0.07 },
+  },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 16 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.35, ease: "easeOut" as const },
+  },
+};
+
 // ─── DashboardPage ────────────────────────────────────────────────────
 
 export function DashboardPage() {
   useDocumentTitle('Přehled');
   const [handoverNote, setHandoverNote] = useState<string | null>(null);
+  const [handoverNoteAuthor, setHandoverNoteAuthor] = useState<string | null>(null);
+  const [handoverNoteUpdatedAt, setHandoverNoteUpdatedAt] = useState<string | null>(null);
 
   // Cabin info
   const cabinQuery = useQuery<CabinSettings>({
@@ -159,6 +203,8 @@ export function DashboardPage() {
   useEffect(() => {
     if (notesQuery.data) {
       setHandoverNote(prev => prev === null ? notesQuery.data.pinnedHandoverNote : prev);
+      setHandoverNoteAuthor(prev => prev === null ? notesQuery.data.handoverNoteAuthor : prev);
+      setHandoverNoteUpdatedAt(prev => prev === null ? notesQuery.data.handoverNoteUpdatedAt : prev);
     }
   }, [notesQuery.data]);
 
@@ -170,6 +216,17 @@ export function DashboardPage() {
     staleTime: 10 * 60 * 1000,
   });
 
+  const reconstructionQuery = useQuery<DashboardReconstructionData>({
+    queryKey: ["dashboard", "reconstruction"],
+    queryFn: async () => {
+      const { data } = await apiClient.get<DashboardReconstructionData>("/dashboard/reconstruction");
+      return DashboardReconstructionSchema.parse(data) as DashboardReconstructionData;
+    },
+    refetchInterval: 5 * 60 * 1000,
+    staleTime: 30_000,
+  });
+
+  const cabinError = cabinQuery.isError;
   const isWinterized = !!cabinQuery.data?.isWinterized;
   const departureChecklist = cabinQuery.data?.departureChecklist ?? [];
 
@@ -179,12 +236,20 @@ export function DashboardPage() {
       {isWinterized && (
         <div id="dashboard-winter-banner" className="winter-banner">
           <div className="winter-banner-content">
-            <span className="winter-banner-icon">❄️</span>
+            <span className="winter-banner-icon">*</span>
             <div className="winter-banner-text">
               <strong>Chata je zazimovaná</strong>
               <span>Mrazové výstrahy a speciální režim jsou aktivní</span>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Cabin error banner */}
+      {cabinError && (
+        <div className="essential-warning-banner" style={{ borderLeftColor: 'var(--status-warning)' }}>
+          <span style={{ fontSize: '1.25rem' }}>⚠</span>
+          <span>Nepodařilo se načíst nastavení chaty — některé widgety nemusí fungovat správně.</span>
         </div>
       )}
 
@@ -201,59 +266,90 @@ export function DashboardPage() {
       )}
 
       {/* Main grid */}
-      <div className="dashboard-grid">
-        {/* Reservation Card */}
-        {reservationsQuery.isLoading ? (
-          <StatusCardSkeleton />
-        ) : reservationsQuery.isError ? (
-          <ErrorBoundary FallbackComponent={(props) => <FeatureErrorFallback {...props} title="Rezervace se nepodařilo načíst" />}>
-            <FeatureErrorFallback error={reservationsQuery.error as Error} resetErrorBoundary={() => reservationsQuery.refetch()} />
-          </ErrorBoundary>
-        ) : reservationsQuery.data ? (
-          <ActiveReservation data={reservationsQuery.data} cabinDepartureChecklist={departureChecklist} />
-        ) : null}
+      <motion.div
+        className="dashboard-grid"
+        variants={gridVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        {/* Row 1, Col 1: Reservation Card */}
+        <motion.div variants={cardVariants}>
+          {reservationsQuery.isLoading ? (
+            <StatusCardSkeleton />
+          ) : reservationsQuery.isError ? (
+            <ErrorBoundary FallbackComponent={(props) => <FeatureErrorFallback {...props} title="Rezervace se nepodařilo načíst" />}>
+              <FeatureErrorFallback error={reservationsQuery.error as Error} resetErrorBoundary={() => reservationsQuery.refetch()} />
+            </ErrorBoundary>
+          ) : reservationsQuery.data ? (
+            <ActiveReservation data={reservationsQuery.data} cabinDepartureChecklist={departureChecklist} />
+          ) : null}
+        </motion.div>
 
-        {/* Weather Card */}
-        {weatherQuery.isLoading && cabinQuery.isLoading ? (
-          <WeatherSkeleton />
-        ) : weatherQuery.isError ? (
-          <ErrorBoundary FallbackComponent={(props) => <FeatureErrorFallback {...props} title="Počasí se nepodařilo načíst" />}>
-            <FeatureErrorFallback error={weatherQuery.error as Error} resetErrorBoundary={() => weatherQuery.refetch()} />
-          </ErrorBoundary>
-        ) : (
-          <WeatherCard weather={weatherQuery.data ?? null} />
-        )}
+        {/* Row 1, Col 2: Weather Card */}
+        <motion.div variants={cardVariants}>
+          {weatherQuery.isLoading || cabinQuery.isLoading ? (
+            <WeatherSkeleton />
+          ) : weatherQuery.isError ? (
+            <ErrorBoundary FallbackComponent={(props) => <FeatureErrorFallback {...props} title="Počasí se nepodařilo načíst" />}>
+              <FeatureErrorFallback error={weatherQuery.error as Error} resetErrorBoundary={() => weatherQuery.refetch()} />
+            </ErrorBoundary>
+          ) : (
+            <WeatherCard weather={weatherQuery.data ?? null} />
+          )}
+        </motion.div>
 
-        {/* Shopping Widget */}
-        {shoppingQuery.isLoading ? (
-          <ShoppingSkeleton />
-        ) : shoppingQuery.isError ? (
-          <ErrorBoundary FallbackComponent={(props) => <FeatureErrorFallback {...props} title="Nákupy se nepodařilo načíst" />}>
-            <FeatureErrorFallback error={shoppingQuery.error as Error} resetErrorBoundary={() => shoppingQuery.refetch()} />
-          </ErrorBoundary>
-        ) : shoppingQuery.data ? (
-          <ShoppingWidget
-            items={shoppingQuery.data.pendingShoppingItems}
-            totalCount={shoppingQuery.data.totalPendingShoppingCount}
-          />
-        ) : null}
+        {/* Row 1, Col 3: Shopping Widget */}
+        <motion.div variants={cardVariants}>
+          {shoppingQuery.isLoading ? (
+            <ShoppingSkeleton />
+          ) : shoppingQuery.isError ? (
+            <ErrorBoundary FallbackComponent={(props) => <FeatureErrorFallback {...props} title="Nákupy se nepodařilo načíst" />}>
+              <FeatureErrorFallback error={shoppingQuery.error as Error} resetErrorBoundary={() => shoppingQuery.refetch()} />
+            </ErrorBoundary>
+          ) : shoppingQuery.data ? (
+            <ShoppingWidget
+              items={shoppingQuery.data.pendingShoppingItems}
+              totalCount={shoppingQuery.data.totalPendingShoppingCount}
+              totalItemsCount={shoppingQuery.data.totalItemsCount}
+            />
+          ) : null}
+        </motion.div>
 
-        {/* Handover Note */}
-        {notesQuery.isLoading ? (
-          <HandoverNoteSkeleton />
-        ) : notesQuery.isError ? (
-          <ErrorBoundary FallbackComponent={(props) => <FeatureErrorFallback {...props} title="Nástěnku se nepodařilo načíst" />}>
-            <FeatureErrorFallback error={notesQuery.error as Error} resetErrorBoundary={() => notesQuery.refetch()} />
-          </ErrorBoundary>
-        ) : notesQuery.data ? (
-          <HandoverNote
-            note={handoverNote}
-            onNoteUpdate={(newNote) => setHandoverNote(newNote)}
-          />
-        ) : null}
-      </div>
+        {/* Row 2, Col 1: Handover Note */}
+        <motion.div variants={cardVariants}>
+          {notesQuery.isLoading ? (
+            <HandoverNoteSkeleton />
+          ) : notesQuery.isError ? (
+            <ErrorBoundary FallbackComponent={(props) => <FeatureErrorFallback {...props} title="Nástěnku se nepodařilo načíst" />}>
+              <FeatureErrorFallback error={notesQuery.error as Error} resetErrorBoundary={() => notesQuery.refetch()} />
+            </ErrorBoundary>
+          ) : notesQuery.data ? (
+            <HandoverNote
+              note={handoverNote}
+              author={handoverNoteAuthor}
+              updatedAt={handoverNoteUpdatedAt}
+              onNoteUpdate={(newNote, author, updatedAt) => {
+                setHandoverNote(newNote);
+                setHandoverNoteAuthor(author ?? null);
+                setHandoverNoteUpdatedAt(updatedAt ?? null);
+              }}
+            />
+          ) : null}
+        </motion.div>
 
-      <ZenMode />
+        {/* Row 2, Col 2: Reconstruction Widget */}
+        <motion.div variants={cardVariants}>
+          {reconstructionQuery.isLoading ? (
+            <ReconstructionSkeleton />
+          ) : reconstructionQuery.isError ? (
+            <ErrorBoundary FallbackComponent={(props) => <FeatureErrorFallback {...props} title="Údržbu se nepodařilo načíst" />}>
+              <FeatureErrorFallback error={reconstructionQuery.error as Error} resetErrorBoundary={() => reconstructionQuery.refetch()} />
+            </ErrorBoundary>
+          ) : reconstructionQuery.data ? (
+            <ReconstructionWidget data={reconstructionQuery.data} />
+          ) : null}
+        </motion.div>
+      </motion.div>
     </div>
   );
 }

@@ -21,6 +21,12 @@ export function useCreateRecItem() {
   return useMutation({
     mutationFn: reconstructionApi.create,
     onSuccess: () => qc.invalidateQueries({ queryKey: QK }),
+    onError: (err) => {
+      showToast(
+        isNetworkError(err) ? OFFLINE_TOAST_MSG : 'Chyba při vytváření položky.',
+        isNetworkError(err) ? 'info' : 'error',
+      )
+    },
   })
 }
 
@@ -30,6 +36,12 @@ export function useUpdateRecItem() {
     mutationFn: ({ id, data }: { id: string; data: Partial<RecItemCreate> }) =>
       reconstructionApi.update(id, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: QK }),
+    onError: (err) => {
+      showToast(
+        isNetworkError(err) ? OFFLINE_TOAST_MSG : 'Chyba při úpravě položky.',
+        isNetworkError(err) ? 'info' : 'error',
+      )
+    },
   })
 }
 
@@ -53,6 +65,12 @@ export function useDeleteRecItem() {
   return useMutation({
     mutationFn: (id: string) => reconstructionApi.delete(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: QK }),
+    onError: (err) => {
+      showToast(
+        isNetworkError(err) ? OFFLINE_TOAST_MSG : 'Chyba při mazání položky.',
+        isNetworkError(err) ? 'info' : 'error',
+      )
+    },
   })
 }
 
@@ -61,5 +79,11 @@ export function useVoteRecItem() {
   return useMutation({
     mutationFn: (id: string) => reconstructionApi.vote(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: QK }),
+    onError: (err) => {
+      showToast(
+        isNetworkError(err) ? OFFLINE_TOAST_MSG : 'Chyba při hlasování.',
+        isNetworkError(err) ? 'info' : 'error',
+      )
+    },
   })
 }

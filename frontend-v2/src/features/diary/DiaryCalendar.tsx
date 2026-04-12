@@ -63,7 +63,7 @@ export function DiaryCalendar({ folder, entries, onOpenNotebook }: Props) {
               {preview && (
                 <div className="entry-preview">
                   {preview}
-                  {hasPhotos && ' 📷'}
+                  {hasPhotos && ' •'}
                 </div>
               )}
             </div>

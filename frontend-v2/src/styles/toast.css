@@ -24,6 +24,16 @@
   bottom: 20px;
 }
 
+/* Mobile: lift above bottom nav */
+@media (max-width: 768px) {
+  .toast.show {
+    bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+    right: 12px;
+    left: 12px;
+    min-width: 0;
+  }
+}
+
 .toast i {
   font-size: 1.5em;
 }

@@ -11,6 +11,7 @@ import { protect } from "../../middleware/authMiddleware";
 import { requireCabin } from "../../middleware/cabinMiddleware";
 import { validate } from "../../validators/validate";
 import { createInviteSchema, acceptInviteSchema } from "../../validators/schemas";
+import { sendEmail } from "../../utils/email";
 
 const router = Router();
 
@@ -286,6 +287,71 @@ router.post("/accept/:token", validate(acceptInviteSchema), async (req: Request,
   } catch (error) {
     logger.error("INVITES", "Failed to accept invite", { error: String(error) });
     res.status(500).json({ message: "Interní chyba serveru" });
+  }
+});
+
+// ============================================================================
+//  POST /api/invites/:id/send-email — Send invite via email (admin only)
+// ============================================================================
+router.post("/:id/send-email", protect, requireCabin, async (req: Request, res: Response) => {
+  try {
+    if (!req.user) return res.status(401).json({ message: "Neautorizováno" });
+    if (req.user.role !== "admin") return res.status(403).json({ message: "Pouze admin." });
+
+    const { email } = req.body;
+    if (!email || typeof email !== "string" || !email.includes("@")) {
+      return res.status(400).json({ message: "Neplatná e-mailová adresa." });
+    }
+
+    const invite = await prisma.inviteLink.findFirst({
+      where: { id: req.params.id, cabinId: req.user.cabinId! },
+      include: {
+        cabin: { select: { name: true } },
+        createdBy: { select: { username: true } },
+      },
+    });
+
+    if (!invite) return res.status(404).json({ message: "Pozvánka nenalezena." });
+
+    if (new Date() > invite.expiresAt) {
+      return res.status(410).json({ message: "Platnost pozvánky vypršela." });
+    }
+
+    // Construct invite URL (use origin from request or fallback)
+    const origin = req.headers.origin || `${req.protocol}://${req.headers.host}`;
+    const inviteUrl = `${origin}/invite/${invite.token}`;
+
+    await sendEmail({
+      to: email.trim(),
+      subject: `Pozvánka na chatu „${invite.cabin.name}"`,
+      html: `
+        <div style="font-family: 'Segoe UI', sans-serif; max-width: 500px; margin: 0 auto; padding: 32px; background: #f8faf9; border-radius: 16px;">
+          <h2 style="color: #1a2721; margin-bottom: 8px;">Pozvánka na chatu</h2>
+          <p style="color: #4b5563; line-height: 1.6;">
+            <strong>${invite.createdBy.username}</strong> vás zve na chatu <strong>„${invite.cabin.name}"</strong>.
+          </p>
+          <div style="text-align: center; margin: 24px 0;">
+            <a href="${inviteUrl}" style="display: inline-block; padding: 14px 32px; background: #3f7b63; color: #fff; text-decoration: none; border-radius: 10px; font-weight: 600; font-size: 16px;">
+              Připojit se k chatě →
+            </a>
+          </div>
+          <p style="color: #9ca3af; font-size: 13px; text-align: center;">
+            Odkaz je platný do ${new Date(invite.expiresAt).toLocaleDateString("cs-CZ")}.
+          </p>
+        </div>
+      `,
+    });
+
+    logger.info("INVITES", "Invite email sent", {
+      inviteId: invite.id,
+      email: email.trim(),
+      cabinId: req.user.cabinId,
+    });
+
+    res.json({ message: "Pozvánka odeslána e-mailem." });
+  } catch (error) {
+    logger.error("INVITES", "Failed to send invite email", { error: String(error) });
+    res.status(500).json({ message: "Nepodařilo se odeslat e-mail." });
   }
 });
 

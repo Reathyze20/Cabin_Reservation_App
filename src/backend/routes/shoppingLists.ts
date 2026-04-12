@@ -1,4 +1,4 @@
-import { Router, Request, Response } from "express";
+﻿import { Router, Request, Response } from "express";
 import { protect } from "../../middleware/authMiddleware";
 import { requireCabin } from "../../middleware/cabinMiddleware";
 import { validate } from "../../validators/validate";
@@ -53,7 +53,7 @@ router.get("/", protect, requireCabin, async (req: Request, res: Response) => {
         res.json(lists);
     } catch (error) {
         logger.error("SHOPPING_LISTS", "Failed to fetch shopping lists", error);
-        res.status(500).json({ error: "Failed to fetch shopping lists" });
+        res.status(500).json({ message: "Nepodařilo se načíst nákupní seznamy" });
     }
 });
 
@@ -64,9 +64,7 @@ router.post("/", protect, requireCabin, validate(createShoppingListSchema), asyn
     try {
         const { name } = req.body;
 
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore - req.user is set by authMiddleware
-        const userId = req.user.userId;
+        const userId = req.user!.userId;
 
         const newList = await prisma.shoppingList.create({
             data: {
@@ -85,7 +83,7 @@ router.post("/", protect, requireCabin, validate(createShoppingListSchema), asyn
         res.status(201).json(newList);
     } catch (error) {
         logger.error("SHOPPING_LISTS", "Failed to create shopping list", error);
-        res.status(500).json({ error: "Failed to create shopping list" });
+        res.status(500).json({ message: "Nepodařilo se vytvořit seznam" });
     }
 });
 
@@ -113,12 +111,10 @@ router.get("/pantry", protect, requireCabin, async (req: Request, res: Response)
         });
 
         if (!pantry) {
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            const userId = req.user.userId;
+            const userId = req.user!.userId;
             pantry = await prisma.shoppingList.create({
                 data: {
-                    name: "Zásoby (Spižírna)",
+                    name: "ZĂˇsoby (SpiĹľĂ­rna)",
                     createdById: userId,
                     isPantry: true,
                     cabinId,
@@ -142,7 +138,7 @@ router.get("/pantry", protect, requireCabin, async (req: Request, res: Response)
         res.json(pantry);
     } catch (error) {
         logger.error("SHOPPING_LISTS", "Failed to fetch or create pantry", error);
-        res.status(500).json({ error: "Failed to fetch or create pantry" });
+        res.status(500).json({ message: "Nepodařilo se načíst spíž" });
     }
 });
 
@@ -159,15 +155,15 @@ router.patch("/:id/rename", protect, requireCabin, validate(renameShoppingListSc
         });
 
         if (!list) {
-            return res.status(404).json({ error: "Seznam nenalezen" });
+            return res.status(404).json({ message: "Seznam nenalezen" });
         }
 
         if (list.isPantry) {
-            return res.status(400).json({ error: "Spíž nelze přejmenovat" });
+            return res.status(400).json({ error: "SpĂ­Ĺľ nelze pĹ™ejmenovat" });
         }
 
         if (list.createdById !== req.user!.userId && req.user!.role !== "admin") {
-            return res.status(403).json({ error: "Nemáte oprávnění přejmenovat tento seznam" });
+            return res.status(403).json({ error: "NemĂˇte oprĂˇvnÄ›nĂ­ pĹ™ejmenovat tento seznam" });
         }
 
         const updated = await prisma.shoppingList.update({
@@ -194,7 +190,7 @@ router.patch("/:id/rename", protect, requireCabin, validate(renameShoppingListSc
         res.json(updated);
     } catch (error) {
         logger.error("SHOPPING_LISTS", "Failed to rename shopping list", error);
-        res.status(500).json({ error: "Nepodařilo se přejmenovat seznam" });
+        res.status(500).json({ error: "NepodaĹ™ilo se pĹ™ejmenovat seznam" });
     }
 });
 
@@ -210,11 +206,11 @@ router.delete("/:id", protect, requireCabin, async (req: Request, res: Response)
         });
 
         if (!list) {
-            return res.status(404).json({ error: "List not found" });
+            return res.status(404).json({ message: "Seznam nenalezen" });
         }
 
         if (list.createdById !== req.user!.userId && req.user!.role !== "admin") {
-            return res.status(403).json({ error: "Not authorized to delete this list" });
+            return res.status(403).json({ message: "Nemáte oprávnění smazat tento seznam" });
         }
 
         await prisma.$transaction(async (tx) => {
@@ -242,7 +238,7 @@ router.delete("/:id", protect, requireCabin, async (req: Request, res: Response)
         res.json({ message: "List deleted successfully" });
     } catch (error) {
         logger.error("SHOPPING_LISTS", "Failed to delete shopping list", error);
-        res.status(500).json({ error: "Failed to delete shopping list" });
+        res.status(500).json({ message: "Nepodařilo se smazat seznam" });
     }
 });
 
@@ -255,15 +251,14 @@ router.patch("/:id/resolve", protect, requireCabin, async (req: Request, res: Re
         const { isResolved } = req.body;
 
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        const user = req.user;
+        const user = req.user!;
 
         const list = await prisma.shoppingList.findFirst({
             where: { id, cabinId: req.user!.cabinId },
         });
 
         if (!list) {
-            return res.status(404).json({ error: "List not found" });
+            return res.status(404).json({ message: "Seznam nenalezen" });
         }
 
         // Potentially only creator or admin can resolve? Or anyone?
@@ -278,7 +273,7 @@ router.patch("/:id/resolve", protect, requireCabin, async (req: Request, res: Re
         res.json(updatedList);
     } catch (error) {
         logger.error("SHOPPING_LISTS", "Failed to resolve shopping list", error);
-        res.status(500).json({ error: "Failed to resolve shopping list" });
+        res.status(500).json({ message: "Nepodařilo se archivovat seznam" });
     }
 });
 
@@ -293,15 +288,14 @@ router.put("/:listId/items/:itemId", protect, requireCabin, async (req: Request,
         const { listId, itemId } = req.params;
         const { purchased } = req.body;
 
-        // @ts-ignore
-        const userId: string = req.user.userId;
+        const userId = req.user!.userId;
 
         const item = await prisma.shoppingListItem.findUnique({
             where: { id: itemId },
         });
 
         if (!item || item.listId !== listId) {
-            return res.status(404).json({ error: "Item not found in this list" });
+            return res.status(404).json({ message: "Položka v seznamu nenalezena" });
         }
 
         const newPurchased = Boolean(purchased);
@@ -331,8 +325,9 @@ router.put("/:listId/items/:itemId", protect, requireCabin, async (req: Request,
         res.json(updatedItem);
     } catch (error) {
         logger.error("SHOPPING_LISTS", "Failed to update item purchased status", error);
-        res.status(500).json({ error: "Failed to update item" });
+        res.status(500).json({ message: "Nepodařilo se aktualizovat položku" });
     }
 });
 
 export default router;
+

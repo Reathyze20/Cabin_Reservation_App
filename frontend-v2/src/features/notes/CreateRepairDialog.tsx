@@ -60,7 +60,7 @@ export function CreateRepairDialog({ open, noteId, messageText, onClose }: Props
         sourceMessageId: noteId,
       });
       await resolve.mutateAsync(noteId);
-      showToast("Úkol vytvořen v rekonstrukcích ✓", "success");
+      showToast("Úkol vytvořen v rekonstrukcích", "success");
       onClose();
     } catch {
       showToast("Nepodařilo se vytvořit úkol.", "error");
@@ -90,7 +90,7 @@ export function CreateRepairDialog({ open, noteId, messageText, onClose }: Props
             className="button-primary"
             disabled={submitting}
           >
-            {submitting ? "Ukládám..." : "Vytvořit 🛠️"}
+            {submitting ? "Ukládám..." : "Vytvořit"}
           </button>
         </>
       }

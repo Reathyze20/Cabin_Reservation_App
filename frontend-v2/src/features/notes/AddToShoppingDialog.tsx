@@ -66,7 +66,7 @@ export function AddToShoppingDialog({ open, noteId, messageText, onClose }: Prop
         sourceMessageId: noteId,
       });
       await resolve.mutateAsync(noteId);
-      showToast("Položka přidána do nákupního seznamu ✓", "success");
+      showToast("Položka přidána do nákupního seznamu", "success");
       onClose();
     } catch {
       showToast("Nepodařilo se přidat položku.", "error");

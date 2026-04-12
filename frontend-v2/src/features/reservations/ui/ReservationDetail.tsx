@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "@/api/client";
 import type { Reservation } from "@/api/reservations";
@@ -38,6 +38,11 @@ export function ReservationDetail({ reservation: r, onBack, onEdit, onDelete, on
 
   // Ethical friction: two-phase delete
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const deleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => { if (deleteTimerRef.current) clearTimeout(deleteTimerRef.current) }
+  }, []);
 
   // Night count for timeline
   const nightCount = r.from && r.to
@@ -67,7 +72,7 @@ export function ReservationDetail({ reservation: r, onBack, onEdit, onDelete, on
   const handleDeleteClick = () => {
     if (!deleteConfirm) {
       setDeleteConfirm(true);
-      setTimeout(() => setDeleteConfirm(false), 4000);
+      deleteTimerRef.current = setTimeout(() => setDeleteConfirm(false), 4000);
     } else {
       onDelete(r.id);
       setDeleteConfirm(false);
@@ -102,7 +107,7 @@ export function ReservationDetail({ reservation: r, onBack, onEdit, onDelete, on
           <div className={styles.timelineCenter}>
             <div className={styles.timelineLine} />
             <span className={styles.timelinePill}>
-              {nightCount} {nightCount === 1 ? "noc" : nightCount < 5 ? "noci" : "nocí"} 🌙
+              {nightCount} {nightCount === 1 ? "noc" : nightCount < 5 ? "noci" : "nocí"}
             </span>
           </div>
           <div className={styles.timelineColRight}>
@@ -163,7 +168,7 @@ export function ReservationDetail({ reservation: r, onBack, onEdit, onDelete, on
           {!isMine && (
             watchData?.watching ? (
               <button className={styles.btnOutline} onClick={() => handleWatchToggle(true)}>
-                🐕 Zrušit
+                Zrušit
               </button>
             ) : (
               <button className={styles.btnOutline} title="Dostaneš zprávu, pokud bude termín uvolněn" onClick={() => handleWatchToggle(false)}>

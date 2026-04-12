@@ -1,4 +1,4 @@
-import { Router, Request, Response } from "express";
+﻿import { Router, Request, Response } from "express";
 import { protect } from "../../middleware/authMiddleware";
 import { requireCabin } from "../../middleware/cabinMiddleware";
 import { validate } from "../../validators/validate";
@@ -44,7 +44,7 @@ router.get("/", protect, requireCabin, async (req: Request, res: Response) => {
       isEssential: item.isEssential,
     }));
 
-    res.json([{ id: "default", name: "Hlavní seznam", items: formatted }]);
+    res.json([{ id: "default", name: "HlavnĂ­ seznam", items: formatted }]);
   } catch (error) {
     logger.error("SHOPPING", "Get shopping list error", { error: String(error) });
     res.status(500).json({ message: "Chyba" });
@@ -55,7 +55,7 @@ router.get("/", protect, requireCabin, async (req: Request, res: Response) => {
 //                      CREATE SHOPPING LIST
 // ============================================================================
 router.post("/", protect, requireCabin, async (req: Request, res: Response) => {
-  res.status(200).json({ id: "default", name: "Hlavní seznam", items: [] });
+  res.status(200).json({ id: "default", name: "HlavnĂ­ seznam", items: [] });
 });
 
 // ============================================================================
@@ -75,9 +75,7 @@ router.post("/:listId/items", protect, requireCabin, validate(createShoppingItem
     const newItem = await prisma.shoppingListItem.create({
       data: {
         name,
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        addedById: req.user.userId,
+        addedById: req.user!.userId,
         listId: listId === "default" ? null : listId, // For legacy / transition
         isEssential: Boolean(isEssential ?? false),
         sourceMessageId: sourceMessageId || null,
@@ -110,14 +108,14 @@ router.put("/:itemId/purchase", protect, requireCabin, validate(updateItemStatus
   // Accept either new `status` enum or legacy boolean `purchased`
   let { status, purchased, price, splitWith } = req.body;
 
-  // Map legacy boolean → enum
+  // Map legacy boolean â†’ enum
   if (status === undefined && purchased !== undefined) {
     status = purchased ? "purchased" : "pending";
   }
 
   const validStatuses = ["pending", "bring_from_home", "purchased"];
   if (!validStatuses.includes(status)) {
-    return res.status(400).json({ message: "Neplatný status položky." });
+    return res.status(400).json({ message: "NeplatnĂ˝ status poloĹľky." });
   }
 
   const isPurchased = status === "purchased";
@@ -129,10 +127,10 @@ router.put("/:itemId/purchase", protect, requireCabin, validate(updateItemStatus
       include: { list: { select: { cabinId: true } } },
     });
     if (!item || (item.list && item.list.cabinId !== req.user!.cabinId)) {
-      return res.status(404).json({ message: "Položka nenalezena." });
+      return res.status(404).json({ message: "PoloĹľka nenalezena." });
     }
 
-    // Use transaction — update item + restock linked inventory + handle splits
+    // Use transaction â€” update item + restock linked inventory + handle splits
     const { updated, splits } = await prisma.$transaction(async (tx) => {
       const updatedItem = await tx.shoppingListItem.update({
         where: { id: itemId },
@@ -157,7 +155,7 @@ router.put("/:itemId/purchase", protect, requireCabin, validate(updateItemStatus
         },
       });
 
-      // Auto-restock: if purchased and linked to inventory → set OK + remove from cart
+      // Auto-restock: if purchased and linked to inventory â†’ set OK + remove from cart
       if (isPurchased && updatedItem.linkedInventoryId) {
         await tx.inventoryItem.update({
           where: { id: updatedItem.linkedInventoryId },
@@ -202,7 +200,7 @@ router.put("/:itemId/purchase", protect, requireCabin, validate(updateItemStatus
   }
 });
 
-// Legacy endpoint — delegates to the main handler
+// Legacy endpoint â€” delegates to the main handler
 router.put(
   "/:listId/items/:itemId/purchase",
   protect,
@@ -233,22 +231,21 @@ router.post("/:itemId/move-from-pantry", protect, requireCabin, async (req: Requ
       include: { list: { select: { cabinId: true } } },
     });
     if (!item || (item.list && item.list.cabinId !== req.user!.cabinId)) {
-      return res.status(404).json({ message: "Položka nenalezena." });
+      return res.status(404).json({ message: "PoloĹľka nenalezena." });
     }
 
-    // Najdi nejnovější normální (ne-pantry) nákupní seznam v rámci cabin
+    // Najdi nejnovÄ›jĹˇĂ­ normĂˇlnĂ­ (ne-pantry) nĂˇkupnĂ­ seznam v rĂˇmci cabin
     let targetList = await prisma.shoppingList.findFirst({
       where: { isResolved: false, isPantry: false, cabinId: req.user!.cabinId },
       orderBy: { createdAt: "desc" }
     });
 
     if (!targetList) {
-      // Vytvoř nový, pokud žádný není
+      // VytvoĹ™ novĂ˝, pokud ĹľĂˇdnĂ˝ nenĂ­
       targetList = await prisma.shoppingList.create({
         data: {
-          name: "Aktuální nákup",
-          // @ts-ignore
-          createdById: req.user.userId,
+          name: "AktuĂˇlnĂ­ nĂˇkup",
+          createdById: req.user!.userId,
           cabinId: req.user!.cabinId!,
         }
       });
@@ -269,7 +266,7 @@ router.post("/:itemId/move-from-pantry", protect, requireCabin, async (req: Requ
 
     await prisma.shoppingItemSplit.deleteMany({ where: { itemId } });
 
-    res.json({ message: "Přesunuto", listId: targetList.id });
+    res.json({ message: "PĹ™esunuto", listId: targetList.id });
   } catch (error) {
     logger.error("SHOPPING", "Move from pantry error", { error: String(error), itemId });
     res.status(500).json({ message: "Chyba" });
@@ -282,10 +279,9 @@ router.post("/:itemId/move-from-pantry", protect, requireCabin, async (req: Requ
 router.patch("/:itemId/toggle-essential", protect, requireCabin, async (req: Request, res: Response) => {
   const { itemId } = req.params;
   try {
-    // @ts-ignore
-    const role: string = req.user.role;
+    const role = req.user!.role;
     if (role === "guest") {
-      return res.status(403).json({ message: "Hosté nemohou měnit kritické položky." });
+      return res.status(403).json({ message: "HostĂ© nemohou mÄ›nit kritickĂ© poloĹľky." });
     }
 
     const item = await prisma.shoppingListItem.findUnique({
@@ -293,7 +289,7 @@ router.patch("/:itemId/toggle-essential", protect, requireCabin, async (req: Req
       include: { list: { select: { cabinId: true } } },
     });
     if (!item || (item.list && item.list.cabinId !== req.user!.cabinId)) {
-      return res.status(404).json({ message: "Položka nenalezena." });
+      return res.status(404).json({ message: "PoloĹľka nenalezena." });
     }
 
     const updated = await prisma.shoppingListItem.update({
@@ -321,7 +317,7 @@ async function deleteItem(req: Request, res: Response) {
     });
 
     if (!item || (item.list && item.list.cabinId !== req.user!.cabinId)) {
-      return res.status(404).json({ message: "Položka nenalezena" });
+      return res.status(404).json({ message: "PoloĹľka nenalezena" });
     }
 
     // Delete the item and reset linked inventory in a transaction
@@ -346,7 +342,8 @@ async function deleteItem(req: Request, res: Response) {
 
 router.delete("/:itemId", protect, requireCabin, deleteItem);
 
-// Legacy endpoint — same handler, just different path pattern
+// Legacy endpoint â€” same handler, just different path pattern
 router.delete("/:listId/items/:itemId", protect, requireCabin, deleteItem);
 
 export default router;
+

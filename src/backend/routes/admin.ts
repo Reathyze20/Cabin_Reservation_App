@@ -1,4 +1,4 @@
-import { Router, Request, Response } from "express";
+﻿import { Router, Request, Response } from "express";
 import prisma from "../../utils/prisma";
 import { protect } from "../../middleware/authMiddleware";
 import { requireCabin } from "../../middleware/cabinMiddleware";
@@ -8,7 +8,7 @@ const router = Router();
 
 router.get("/system", protect, requireCabin, async (req: Request, res: Response) => {
   if (!req.user || req.user.role !== "admin") {
-    return res.status(403).json({ message: "Přístup pouze pro administrátora." });
+    return res.status(403).json({ message: "PĹ™Ă­stup pouze pro administrĂˇtora." });
   }
 
   try {
@@ -28,7 +28,7 @@ router.get("/system", protect, requireCabin, async (req: Request, res: Response)
     });
   } catch (error) {
     logger.error("ADMIN", "Failed to fetch system info", error);
-    res.status(500).json({ error: "Failed to fetch system info" });
+    res.status(500).json({ message: "Nepodařilo se načíst systémové informace" });
   }
 });
 

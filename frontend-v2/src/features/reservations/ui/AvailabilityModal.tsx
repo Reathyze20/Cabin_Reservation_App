@@ -27,6 +27,7 @@ export function AvailabilityModal({ open, onClose, fromDate, toDate, myAvailabil
   const [to, setTo] = useState(toDate ?? "");
   const [editId, setEditId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const create = useCreateAvailability();
   const update = useUpdateAvailability();
@@ -75,8 +76,6 @@ export function AvailabilityModal({ open, onClose, fromDate, toDate, myAvailabil
       setSubmitting(false);
     }
   };
-
-  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleDelete = async (id: string) => {
     setDeletingId(id);

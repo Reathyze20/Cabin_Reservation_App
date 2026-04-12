@@ -1,4 +1,4 @@
-import { Router, Request, Response } from "express";
+﻿import { Router, Request, Response } from "express";
 import { protect } from "../../middleware/authMiddleware";
 import { requireCabin } from "../../middleware/cabinMiddleware";
 import { validate } from "../../validators/validate";
@@ -21,7 +21,7 @@ router.get("/", protect, requireCabin, async (_req: Request, res: Response) => {
     res.json(items);
   } catch (error) {
     logger.error("INVENTORY", "Failed to fetch inventory items", { error: String(error) });
-    res.status(500).json({ error: "Nepodařilo se načíst zásoby." });
+    res.status(500).json({ message: "NepodaĹ™ilo se naÄŤĂ­st zĂˇsoby." });
   }
 });
 
@@ -31,8 +31,7 @@ router.get("/", protect, requireCabin, async (_req: Request, res: Response) => {
 router.post("/", protect, requireCabin, validate(createInventoryItemSchema), async (req: Request, res: Response) => {
   try {
     const { name, category, status, location, isEssential } = req.body;
-    // @ts-ignore
-    const userId: string = req.user.userId;
+    const userId = req.user!.userId;
 
     const validStatuses = ["OK", "LOW", "EMPTY"];
     const safeStatus = validStatuses.includes(status) ? status : "OK";
@@ -40,7 +39,7 @@ router.post("/", protect, requireCabin, validate(createInventoryItemSchema), asy
     const item = await prisma.inventoryItem.create({
       data: {
         name: String(name).trim(),
-        category: category ? String(category).trim() : "OSTATNÍ",
+        category: category ? String(category).trim() : "OSTATNĂŤ",
         status: safeStatus,
         location: location ? String(location).trim() || null : null,
         isEssential: Boolean(isEssential),
@@ -53,7 +52,7 @@ router.post("/", protect, requireCabin, validate(createInventoryItemSchema), asy
     res.status(201).json(item);
   } catch (error) {
     logger.error("INVENTORY", "Failed to create inventory item", { error: String(error) });
-    res.status(500).json({ error: "Nepodařilo se vytvořit zásobu." });
+    res.status(500).json({ message: "NepodaĹ™ilo se vytvoĹ™it zĂˇsobu." });
   }
 });
 
@@ -64,12 +63,11 @@ router.put("/:id", protect, requireCabin, validate(updateInventoryItemSchema), a
   try {
     const { id } = req.params;
     const { name, category, status, location, isEssential } = req.body;
-    // @ts-ignore
-    const userId: string = req.user.userId;
+    const userId = req.user!.userId;
 
     const existing = await prisma.inventoryItem.findFirst({ where: { id, cabinId: req.user!.cabinId } });
     if (!existing) {
-      return res.status(404).json({ error: "Položka nenalezena." });
+      return res.status(404).json({ message: "PoloĹľka nenalezena." });
     }
 
     const validStatuses = ["OK", "LOW", "EMPTY"];
@@ -90,7 +88,7 @@ router.put("/:id", protect, requireCabin, validate(updateInventoryItemSchema), a
     res.json(updated);
   } catch (error) {
     logger.error("INVENTORY", "Failed to update inventory item", { error: String(error) });
-    res.status(500).json({ error: "Nepodařilo se aktualizovat zásobu." });
+    res.status(500).json({ message: "NepodaĹ™ilo se aktualizovat zĂˇsobu." });
   }
 });
 
@@ -101,15 +99,14 @@ router.put("/:id", protect, requireCabin, validate(updateInventoryItemSchema), a
 router.patch("/:id/toggle-essential", protect, requireCabin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    // @ts-ignore
-    const role: string = req.user.role;
+    const role = req.user!.role;
     if (role === "guest") {
-      return res.status(403).json({ error: "Hosté nemohou měnit kritické položky." });
+      return res.status(403).json({ message: "HostĂ© nemohou mÄ›nit kritickĂ© poloĹľky." });
     }
 
     const item = await prisma.inventoryItem.findFirst({ where: { id, cabinId: req.user!.cabinId } });
     if (!item) {
-      return res.status(404).json({ error: "Položka nenalezena." });
+      return res.status(404).json({ message: "PoloĹľka nenalezena." });
     }
 
     const updated = await prisma.inventoryItem.update({
@@ -121,7 +118,7 @@ router.patch("/:id/toggle-essential", protect, requireCabin, async (req: Request
     res.json(updated);
   } catch (error) {
     logger.error("INVENTORY", "Failed to toggle essential", { error: String(error) });
-    res.status(500).json({ error: "Nepodařilo se změnit stav kritické položky." });
+    res.status(500).json({ message: "NepodaĹ™ilo se zmÄ›nit stav kritickĂ© poloĹľky." });
   }
 });
 
@@ -134,57 +131,56 @@ router.delete("/:id", protect, requireCabin, async (req: Request, res: Response)
 
     const existing = await prisma.inventoryItem.findFirst({ where: { id, cabinId: req.user!.cabinId } });
     if (!existing) {
-      return res.status(404).json({ error: "Položka nenalezena." });
+      return res.status(404).json({ message: "PoloĹľka nenalezena." });
     }
 
     await prisma.inventoryItem.delete({ where: { id } });
-    res.json({ message: "Položka smazána." });
+    res.json({ message: "PoloĹľka smazĂˇna." });
   } catch (error) {
     logger.error("INVENTORY", "Failed to delete inventory item", { error: String(error) });
-    res.status(500).json({ error: "Nepodařilo se smazat zásobu." });
+    res.status(500).json({ message: "NepodaĹ™ilo se smazat zĂˇsobu." });
   }
 });
 
 // ============================================================================
 //                    ADD INVENTORY ITEM TO SHOPPING CART
 // POST /:id/add-to-cart
-// Body: { listId?: string } — přidat do existujícího seznamu
-//       { newListName?: string } — vytvořit nový seznam a přidat
+// Body: { listId?: string } â€” pĹ™idat do existujĂ­cĂ­ho seznamu
+//       { newListName?: string } â€” vytvoĹ™it novĂ˝ seznam a pĹ™idat
 // ============================================================================
 router.post("/:id/add-to-cart", protect, requireCabin, validate(addToCartSchema), async (req: Request, res: Response) => {
   const { id } = req.params;
   const { listId, newListName } = req.body;
-  // @ts-ignore
-  const userId: string = req.user.userId;
+  const userId = req.user!.userId;
 
   try {
     if (!listId && !newListName) {
-      return res.status(400).json({ error: "Zadejte existující seznam nebo název nového." });
+      return res.status(400).json({ message: "Zadejte existujĂ­cĂ­ seznam nebo nĂˇzev novĂ©ho." });
     }
     if (newListName && String(newListName).trim().length > 100) {
-      return res.status(400).json({ error: "Název seznamu je příliš dlouhý (max 100 znaků)." });
+      return res.status(400).json({ message: "NĂˇzev seznamu je pĹ™Ă­liĹˇ dlouhĂ˝ (max 100 znakĹŻ)." });
     }
 
     const invItem = await prisma.inventoryItem.findFirst({ where: { id, cabinId: req.user!.cabinId } });
     if (!invItem) {
-      return res.status(404).json({ error: "Položka nenalezena." });
+      return res.status(404).json({ message: "PoloĹľka nenalezena." });
     }
     if (invItem.inCart) {
-      return res.status(409).json({ error: "Položka je již přidána do nákupu." });
+      return res.status(409).json({ message: "PoloĹľka je jiĹľ pĹ™idĂˇna do nĂˇkupu." });
     }
 
     await prisma.$transaction(async (tx) => {
       let targetListId: string;
 
       if (listId) {
-        // a) Ověř existenci a že seznam je aktivní
+        // a) OvÄ›Ĺ™ existenci a Ĺľe seznam je aktivnĂ­
         const existing = await tx.shoppingList.findFirst({ where: { id: listId, cabinId: req.user!.cabinId } });
         if (!existing || existing.isResolved) {
-          throw new Error("Seznam nenalezen nebo je archivovaný.");
+          throw new Error("Seznam nenalezen nebo je archivovanĂ˝.");
         }
         targetListId = existing.id;
       } else {
-        // b) Vytvoř nový seznam
+        // b) VytvoĹ™ novĂ˝ seznam
         const created = await tx.shoppingList.create({
           data: {
             name: String(newListName).trim(),
@@ -195,7 +191,7 @@ router.post("/:id/add-to-cart", protect, requireCabin, validate(addToCartSchema)
         targetListId = created.id;
       }
 
-      // Vlož položku propojenou se zásobou
+      // VloĹľ poloĹľku propojenou se zĂˇsobou
       await tx.shoppingListItem.create({
         data: {
           name: invItem.name,
@@ -206,22 +202,22 @@ router.post("/:id/add-to-cart", protect, requireCabin, validate(addToCartSchema)
         },
       });
 
-      // Označ zásobu jako in-cart
+      // OznaÄŤ zĂˇsobu jako in-cart
       await tx.inventoryItem.update({
         where: { id },
         data: { inCart: true },
       });
     });
 
-    res.json({ message: "Přidáno do nákupního seznamu." });
+    res.json({ message: "PĹ™idĂˇno do nĂˇkupnĂ­ho seznamu." });
   } catch (error) {
     logger.error("INVENTORY", "Failed to add inventory item to cart", { error: String(error) });
-    res.status(500).json({ error: "Nepodařilo se přidat do nákupu." });
+    res.status(500).json({ message: "NepodaĹ™ilo se pĹ™idat do nĂˇkupu." });
   }
 });
 
 // ============================================================================
-//  GET /missing-summary — počet LOW/EMPTY zásob pro post-rezervační notifikaci
+//  GET /missing-summary â€” poÄŤet LOW/EMPTY zĂˇsob pro post-rezervaÄŤnĂ­ notifikaci
 // ============================================================================
 router.get("/missing-summary", protect, requireCabin, async (_req: Request, res: Response) => {
   try {
@@ -230,7 +226,7 @@ router.get("/missing-summary", protect, requireCabin, async (_req: Request, res:
       prisma.inventoryItem.findMany({
         where: { cabinId, status: { in: ["LOW", "EMPTY"] } },
         select: { id: true, name: true, status: true },
-        orderBy: { status: "asc" }, // EMPTY první
+        orderBy: { status: "asc" }, // EMPTY prvnĂ­
       }),
       prisma.shoppingListItem.count({
         where: {
@@ -248,8 +244,9 @@ router.get("/missing-summary", protect, requireCabin, async (_req: Request, res:
     });
   } catch (err) {
     logger.error("INVENTORY", "Missing summary error", { error: String(err) });
-    res.status(500).json({ message: "Chyba při načítání souhrnu." });
+    res.status(500).json({ message: "Chyba pĹ™i naÄŤĂ­tĂˇnĂ­ souhrnu." });
   }
 });
 
 export default router;
+

@@ -29,19 +29,19 @@ interface NotebookState {
 
 const ACTIVITY_TAG_OPTIONS = [
   { value: '', label: '—' },
-  { value: 'relax', label: '🍃 Relaxace' },
-  { value: 'party', label: '🍻 Oslava' },
-  { value: 'work', label: '🔨 Práce na chatě' },
-  { value: 'mushroom', label: '🍄 Houbaření' },
-  { value: 'hike', label: '👟 Turistika' },
-  { value: 'family', label: '👥 Rodinné sezení' },
+  { value: 'relax', label: 'Relaxace' },
+  { value: 'party', label: 'Oslava' },
+  { value: 'work', label: 'Práce na chatě' },
+  { value: 'mushroom', label: 'Houbaření' },
+  { value: 'hike', label: 'Turistika' },
+  { value: 'family', label: 'Rodinné sezení' },
 ]
 
 export function DiaryPage() {
   useDocumentTitle('Deník');
   const { user } = useAuth()
 
-  const { data: folders = [], isLoading: foldersLoading } = useDiaryFolders()
+  const { data: folders = [], isLoading: foldersLoading, isError: foldersError } = useDiaryFolders()
   const [view, setView] = useState<View>('folders')
   const [currentFolder, setCurrentFolder] = useState<DiaryFolder | null>(null)
 
@@ -152,9 +152,11 @@ export function DiaryPage() {
     e.preventDefault()
     const name = createName.trim()
     if (!name) return
-    await createFolder.mutateAsync({ name, startDate: createStartDate || '', endDate: createEndDate || '', activityTag: createTag || null })
-    showToast('Pobyt vytvořen.', 'success')
-    setShowCreateModal(false)
+    try {
+      await createFolder.mutateAsync({ name, startDate: createStartDate || '', endDate: createEndDate || '', activityTag: createTag || null })
+      showToast('Pobyt vytvořen.', 'success')
+      setShowCreateModal(false)
+    } catch { /* onError in hook */ }
   }
 
   // ── Rename ──────────────────────────────────────────────────────────────────
@@ -168,10 +170,12 @@ export function DiaryPage() {
   async function handleRename(e: React.FormEvent) {
     e.preventDefault()
     if (!renameTarget) return
-    await renameFolder.mutateAsync({ id: renameTarget.id, name: renameValue.trim() })
-    showToast('Přejmenováno.', 'success')
-    setShowRenameModal(false)
-    setRenameTarget(null)
+    try {
+      await renameFolder.mutateAsync({ id: renameTarget.id, name: renameValue.trim() })
+      showToast('Přejmenováno.', 'success')
+      setShowRenameModal(false)
+      setRenameTarget(null)
+    } catch { /* onError in hook */ }
   }
 
   // ── Delete ──────────────────────────────────────────────────────────────────
@@ -189,20 +193,35 @@ export function DiaryPage() {
       return
     }
     if (!deleteTarget) return
-    await deleteFolder.mutateAsync(deleteTarget.id)
-    showToast('Pobyt smazán.', 'success')
-    setShowDeleteModal(false)
-    setDeleteTarget(null)
+    try {
+      await deleteFolder.mutateAsync(deleteTarget.id)
+      showToast('Pobyt smazán.', 'success')
+      setShowDeleteModal(false)
+      setDeleteTarget(null)
+    } catch { /* onError in hook */ }
   }
 
   return (
     <div className="main-content-diary">
-      <div className="diary-card">
+      <div className="page-card diary-card">
 
         {/* ── FOLDERS VIEW ─────────────────────────────────────────────── */}
         {view === 'folders' && (
           foldersLoading ? (
-            <div className="spinner-container"><div className="spinner" /></div>
+            <div style={{ padding: 'var(--space-xl)', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 'var(--space-lg)' }}>
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} className="skeleton-card" style={{ minHeight: 180 }}>
+                  <div className="skeleton skeleton-title" />
+                  <div className="skeleton skeleton-text long" />
+                  <div className="skeleton skeleton-text medium" />
+                </div>
+              ))}
+            </div>
+          ) : foldersError ? (
+            <div className="spinner-container" style={{ textAlign: 'center', padding: '2rem', flexDirection: 'column', gap: '0.5rem' }}>
+              <img src="/icons/empty_shelf.svg" alt="" aria-hidden="true" style={{ maxHeight: 96, width: 'auto', opacity: 0.65 }} />
+              <p style={{ margin: '0.5rem 0 0', fontWeight: 600 }}>Nepodařilo se načíst pobyty</p>
+            </div>
           ) : (
             <DiaryFolders
               folders={folders}

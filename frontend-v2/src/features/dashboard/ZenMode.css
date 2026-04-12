@@ -33,6 +33,13 @@ body .app-container {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* On mobile, shift up above MobileNav */
+@media (max-width: 768px) {
+    .zen-mode-toggle {
+        bottom: calc(var(--mobile-nav-height, 64px) + 16px);
+    }
+}
+
 .zen-mode-toggle:hover {
     opacity: 1;
     transform: scale(1.1) rotate(-5deg);

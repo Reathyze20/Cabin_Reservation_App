@@ -35,11 +35,13 @@ export function EditInventoryModal({ item, onClose }: Props) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!name.trim()) return
-    await updateItem.mutateAsync({
-      id: item.id,
-      data: { name: name.trim(), category, status, location: location.trim() || undefined, isEssential },
-    })
-    onClose()
+    try {
+      await updateItem.mutateAsync({
+        id: item.id,
+        data: { name: name.trim(), category, status, location: location.trim() || undefined, isEssential },
+      })
+      onClose()
+    } catch { /* onError in hook */ }
   }
 
   function handleDelete() {
@@ -47,9 +49,11 @@ export function EditInventoryModal({ item, onClose }: Props) {
   }
 
   async function confirmDelete() {
-    await deleteItem.mutateAsync(item.id)
-    setShowDeleteConfirm(false)
-    onClose()
+    try {
+      await deleteItem.mutateAsync(item.id)
+      setShowDeleteConfirm(false)
+      onClose()
+    } catch { /* onError in hook */ }
   }
 
   return (

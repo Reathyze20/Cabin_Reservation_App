@@ -18,7 +18,6 @@
     "prisma.config.ts"
   ],
   "exclude": [
-    "src/frontend/**",
     "src/generated/**",
     "node_modules",
     "dist"

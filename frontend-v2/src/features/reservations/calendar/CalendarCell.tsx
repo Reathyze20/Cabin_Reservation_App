@@ -202,7 +202,7 @@ export function CalendarCell({
               className="flex items-center justify-center w-5 h-5 rounded-full border border-white/50 shadow-sm text-xs"
               style={{ backgroundColor: hexToRgba(a.userColor || "#cbd5e1", 0.9) }}
             >
-              <span>{a.userAnimalIcon || "⛱️"}</span>
+              <span>{a.userAnimalIcon || "•"}</span>
             </div>
           ))}
         </div>

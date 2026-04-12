@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import '@/styles/landing.css'
+
+const CheckIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <polyline points="20 6 9 17 4 12" />
+  </svg>
+)
 
 export function LandingPage() {
   const navigate = useNavigate()
@@ -87,13 +93,6 @@ export function LandingPage() {
     const el = document.getElementById(id)
     el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
-
-  // SVG check icon for pricing lists
-  const CheckIcon = () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand-primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <polyline points="20 6 9 17 4 12" />
-    </svg>
-  )
 
   return (
     <>
@@ -308,7 +307,7 @@ export function LandingPage() {
         <div className="landing-section-inner">
           <div className="founder-card reveal">
             <div className="founder-photo-wrapper">
-              <div className="founder-photo-placeholder">🏡</div>
+              <div className="founder-photo-placeholder">—</div>
             </div>
             <div className="founder-text">
               <h2 className="founder-headline">Od chataře pro chataře.</h2>
@@ -438,9 +437,9 @@ export function LandingPage() {
           </div>
           <div className="footer-col">
             <h4>Právní</h4>
-            <a href="#">Obchodní podmínky</a>
-            <a href="#">Ochrana soukromí</a>
-            <a href="#">Cookies</a>
+            <Link to="/terms">Obchodní podmínky</Link>
+            <Link to="/privacy">Ochrana soukromí</Link>
+            <Link to="/privacy#cookies">Cookies</Link>
           </div>
         </div>
         <div className="footer-bottom">

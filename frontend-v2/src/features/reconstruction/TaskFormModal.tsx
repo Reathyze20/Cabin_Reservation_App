@@ -108,9 +108,9 @@ export function TaskFormModal({ initialCategory, editItem, onClose, onSubmit, is
                 value={category}
                 onChange={(e) => setCategory(e.target.value as RecCategory)}
               >
-                <option value="idea">💡 Nápad & Inspirace</option>
-                <option value="company">🏢 Firma / Kontakt</option>
-                <option value="task">✅ Úkol & Rozpočet</option>
+                <option value="idea">Nápad & Inspirace</option>
+                <option value="company">Firma / Kontakt</option>
+                <option value="task">Úkol & Rozpočet</option>
               </select>
             </div>
           )}

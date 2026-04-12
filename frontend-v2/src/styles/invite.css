@@ -22,9 +22,11 @@
 .invite-card {
   max-width: 520px;
   width: 100%;
-  background: var(--color-bg-card, #fff);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-radius: var(--radius-xl, 16px);
-  box-shadow: 0 20px 60px rgba(26, 39, 33, 0.12), 0 4px 16px rgba(26, 39, 33, 0.06);
+  box-shadow: 0 20px 60px rgba(26, 39, 33, 0.18), 0 4px 16px rgba(26, 39, 33, 0.08);
   padding: 40px 36px 32px;
   animation: inviteSlideUp 0.5s ease-out;
 }
@@ -33,6 +35,57 @@
   max-width: 420px;
   text-align: center;
   padding: 48px 40px;
+}
+
+.invite-card-compact {
+  max-width: 620px;
+  padding: 28px 32px 24px;
+}
+
+.invite-card-compact .invite-welcome-section {
+  padding: 0;
+  text-align: center;
+}
+
+.invite-card-compact .invite-heading {
+  font-size: 1.2rem;
+  margin-bottom: 6px;
+}
+
+.invite-card-compact .invite-form-group {
+  margin-bottom: 10px;
+}
+
+.invite-card-compact .invite-form-group label {
+  margin-bottom: 3px;
+  font-size: 0.8rem;
+}
+
+.invite-card-compact .invite-btn {
+  margin-top: 6px;
+  padding: 10px 24px;
+}
+
+/* ── Form row (side by side) ─────────────────────────────────────────── */
+
+.invite-form-row {
+  display: flex;
+  gap: 12px;
+}
+
+.invite-form-row > .invite-form-group {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+@media (max-width: 480px) {
+  .invite-form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+  .invite-card-compact {
+    padding: 20px 16px 16px;
+  }
 }
 
 @keyframes inviteSlideUp {
@@ -280,6 +333,28 @@
 }
 
 /* ── Buttons ─────────────────────────────────────────────────────────── */
+
+.invite-back-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-border, #e5e7eb);
+  background: var(--color-bg, #fff);
+  color: var(--color-text, #1a2721);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.invite-back-btn:hover {
+  background: var(--color-bg-secondary, #f4f7f5);
+  border-color: var(--color-text-secondary, #6b7280);
+}
 
 .invite-btn {
   display: inline-block;

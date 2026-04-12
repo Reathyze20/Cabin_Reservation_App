@@ -9,6 +9,7 @@ import { useAuth } from '@/context/AuthContext'
 import { showToast } from '@/lib/toast'
 import { AVATARS } from '@/lib/avatars'
 import { AnimalAvatar } from '@/components/shared/AnimalAvatar'
+import { useNavigate } from 'react-router-dom'
 
 // ─── Konstanty ────────────────────────────────────────────────────────────────
 const SWATCH_COLORS = [
@@ -32,7 +33,8 @@ interface ProfileDrawerProps {
 }
 
 export function ProfileDrawer({ isOpen, onClose }: ProfileDrawerProps) {
-  const { updateAnimalIcon } = useAuth()
+  const { updateAnimalIcon, logout } = useAuth()
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState<'personal' | 'security'>('personal')
 
@@ -51,6 +53,11 @@ export function ProfileDrawer({ isOpen, onClose }: ProfileDrawerProps) {
   const newPasswordConfirmRef = useRef<HTMLInputElement>(null)
   const [securityMessage, setSecurityMessage] = useState('')
   const [securityError, setSecurityError] = useState(false)
+
+  // ─── Delete account state ────────────────────────────────────────────────────
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const deletePasswordRef = useRef<HTMLInputElement>(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
 
   // ─── Zavřít klávesou Escape ─────────────────────────────────────────────────
   useEffect(() => {
@@ -155,6 +162,44 @@ export function ProfileDrawer({ isOpen, onClose }: ProfileDrawerProps) {
       setSecurityMessage(data?.message || 'Chyba.')
       setSecurityError(true)
       showToast('Nepodařilo se změnit heslo', 'error')
+    }
+  }
+
+  // ─── Exportovat data (GDPR) ─────────────────────────────────────────────────
+  async function handleExportData() {
+    try {
+      const res = await apiClient.get('/users/me/export', { responseType: 'blob' })
+      const url = URL.createObjectURL(res.data as Blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'moje-data.json'
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      showToast('Data exportována', 'success')
+    } catch {
+      showToast('Chyba při exportu dat', 'error')
+    }
+  }
+
+  // ─── Smazat účet (GDPR) ────────────────────────────────────────────────────
+  async function handleDeleteAccount(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    const password = deletePasswordRef.current?.value
+    if (!password) return
+
+    setDeleteLoading(true)
+    try {
+      await apiClient.delete('/users/me', { data: { password } })
+      showToast('Váš účet byl smazán', 'success')
+      logout()
+      navigate('/')
+    } catch (err: unknown) {
+      const data = (err as { response?: { data?: { message?: string } } })?.response?.data
+      showToast(data?.message || 'Chyba při mazání účtu', 'error')
+    } finally {
+      setDeleteLoading(false)
     }
   }
 
@@ -313,6 +358,76 @@ export function ProfileDrawer({ isOpen, onClose }: ProfileDrawerProps) {
                   </p>
                 )}
               </form>
+            </div>
+
+            {/* GDPR — Export & Delete */}
+            <div className="drawer-section" style={{ marginTop: '2rem' }}>
+              <h3>Vaše data (GDPR)</h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0.5rem 0 1rem' }}>
+                Máte právo si stáhnout svá data nebo smazat svůj účet.
+              </p>
+
+              <button
+                type="button"
+                className="button-secondary"
+                style={{ width: '100%', marginBottom: '0.75rem' }}
+                onClick={handleExportData}
+              >
+                Exportovat moje data (JSON)
+              </button>
+
+              {!showDeleteConfirm ? (
+                <button
+                  type="button"
+                  className="button-danger"
+                  style={{ width: '100%' }}
+                  onClick={() => setShowDeleteConfirm(true)}
+                >
+                  Smazat můj účet
+                </button>
+              ) : (
+                <form onSubmit={handleDeleteAccount} style={{ marginTop: '0.5rem' }}>
+                  <div style={{
+                    background: 'var(--bg-danger-light, #fef2f2)',
+                    border: '1px solid var(--color-danger, #ef4444)',
+                    borderRadius: 'var(--radius-lg, 12px)',
+                    padding: '1rem',
+                  }}>
+                    <p style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-danger)', margin: '0 0 0.75rem' }}>
+                      Tato akce je nevratná. Všechna vaše data budou smazána.
+                    </p>
+                    <div className="form-group" style={{ marginBottom: '0.75rem' }}>
+                      <label htmlFor="delete-password" style={{ fontSize: '0.85rem' }}>Potvrďte heslem:</label>
+                      <input
+                        type="password"
+                        id="delete-password"
+                        className="form-control"
+                        required
+                        ref={deletePasswordRef}
+                        autoComplete="current-password"
+                      />
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button
+                        type="button"
+                        className="button-secondary"
+                        style={{ flex: 1 }}
+                        onClick={() => setShowDeleteConfirm(false)}
+                      >
+                        Zrušit
+                      </button>
+                      <button
+                        type="submit"
+                        className="button-danger"
+                        style={{ flex: 1 }}
+                        disabled={deleteLoading}
+                      >
+                        {deleteLoading ? 'Mažu…' : 'Nenávratně smazat'}
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              )}
             </div>
           </div>
         </div>

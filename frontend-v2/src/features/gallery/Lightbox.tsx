@@ -34,7 +34,7 @@ export function Lightbox({ photos, initialIndex, folderId, onClose }: Props) {
   const overlayRef = useRef<HTMLDivElement>(null)
   const previousFocusRef = useRef<HTMLElement | null>(null)
   const onCloseRef = useRef(onClose)
-  onCloseRef.current = onClose
+  useEffect(() => { onCloseRef.current = onClose })
   const { user } = useAuth()
   const updatePhoto = useUpdatePhoto(folderId)
   const deletePhoto = useDeletePhoto(folderId)
@@ -110,20 +110,24 @@ export function Lightbox({ photos, initialIndex, folderId, onClose }: Props) {
 
   async function handleSaveDesc() {
     if (!photo) return
-    await updatePhoto.mutateAsync({ id: photo.id, description: descValue })
-    showToast('Vzpomínka uložena.', 'success')
-    setShowDescForm(false)
+    try {
+      await updatePhoto.mutateAsync({ id: photo.id, description: descValue })
+      showToast('Vzpomínka uložena.', 'success')
+      setShowDescForm(false)
+    } catch { /* onError in hook */ }
   }
 
   async function handleConfirmedDelete() {
     if (!photo) return
     setDeleteConfirmOpen(false)
-    await deletePhoto.mutateAsync(photo.id)
-    if (photos.length <= 1) {
-      onClose()
-    } else if (index >= photos.length - 1) {
-      setIndex(i => i - 1)
-    }
+    try {
+      await deletePhoto.mutateAsync(photo.id)
+      if (photos.length <= 1) {
+        onClose()
+      } else if (index >= photos.length - 1) {
+        setIndex(i => i - 1)
+      }
+    } catch { /* onError in hook */ }
   }
 
   // Touch swipe

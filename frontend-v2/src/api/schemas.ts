@@ -45,6 +45,16 @@ const UpcomingReservationSchema = z.object({
   status: z.string().optional(),
 })
 
+const LastStaySchema = z.object({
+  username: z.string(),
+  userColor: z.string().nullable(),
+  userAnimalIcon: z.string().nullable().optional(),
+  from: z.string(),
+  to: z.string(),
+  isCheckoutCompleted: z.boolean(),
+  daysEmpty: z.number(),
+})
+
 export const DashboardReservationsSchema = z.object({
   activeReservation: ActiveReservationSchema.nullable(),
   upcomingReservations: z.array(UpcomingReservationSchema),
@@ -57,11 +67,17 @@ export const DashboardReservationsSchema = z.object({
     .object({ start: z.string(), end: z.string() })
     .nullable()
     .optional(),
+  lastStay: LastStaySchema.nullable().optional(),
+  stats: z.object({
+    myNightsThisYear: z.number(),
+    totalStaysThisMonth: z.number(),
+  }).optional().default({ myNightsThisYear: 0, totalStaysThisMonth: 0 }),
 })
 
 export const DashboardShoppingSchema = z.object({
   pendingShoppingItems: z.array(PendingShoppingItemSchema),
   totalPendingShoppingCount: z.number(),
+  totalItemsCount: z.number().optional().default(0),
   essentialWarning: z
     .object({ count: z.number(), items: z.array(z.object({ name: z.string() })) })
     .nullable()
@@ -73,11 +89,41 @@ export const DashboardNotesSchema = z.object({
     z.object({ id: z.string(), username: z.string(), message: z.string(), createdAt: z.string() })
   ),
   pinnedHandoverNote: z.string().nullable().optional(),
+  handoverNoteAuthor: z.string().nullable().optional(),
+  handoverNoteUpdatedAt: z.string().nullable().optional(),
 })
 
 export type DashboardReservationsFromSchema = z.infer<typeof DashboardReservationsSchema>
 export type DashboardShoppingFromSchema = z.infer<typeof DashboardShoppingSchema>
 export type DashboardNotesFromSchema = z.infer<typeof DashboardNotesSchema>
+
+const DashboardReconstructionItemSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  category: z.string(),
+  status: z.string(),
+  votesCount: z.number(),
+  createdBy: z.string(),
+  deadline: z.string().nullable(),
+})
+
+export const DashboardReconstructionSchema = z.object({
+  totalActiveCount: z.number(),
+  items: z.array(DashboardReconstructionItemSchema),
+})
+
+export const DashboardGallerySchema = z.object({
+  photos: z.array(z.object({
+    id: z.string(),
+    thumb: z.string(),
+    folderName: z.string(),
+    uploadedBy: z.string().nullable(),
+    createdAt: z.string(),
+  })),
+})
+
+export type DashboardReconstructionFromSchema = z.infer<typeof DashboardReconstructionSchema>
+export type DashboardGalleryFromSchema = z.infer<typeof DashboardGallerySchema>
 
 // ─── Shopping ─────────────────────────────────────────────────────────────────
 

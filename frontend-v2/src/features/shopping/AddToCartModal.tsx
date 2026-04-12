@@ -29,16 +29,20 @@ export function AddToCartModal({ invId, invName, onClose }: Props) {
   }
 
   async function handleSelectList(listId: string) {
-    await addToCart.mutateAsync({ id: invId, payload: { listId } })
-    onClose()
+    try {
+      await addToCart.mutateAsync({ id: invId, payload: { listId } })
+      onClose()
+    } catch { /* onError in hook */ }
   }
 
   async function handleNewList(e: React.FormEvent) {
     e.preventDefault()
     const name = newListName.trim()
     if (!name) return
-    await addToCart.mutateAsync({ id: invId, payload: { newListName: name } })
-    onClose()
+    try {
+      await addToCart.mutateAsync({ id: invId, payload: { newListName: name } })
+      onClose()
+    } catch { /* onError in hook */ }
   }
 
   function handleShowNewForm() {

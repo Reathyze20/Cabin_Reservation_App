@@ -35,6 +35,7 @@ export function AppShell() {
 
   return (
     <div className="app-wrapper">
+      <a href="#page-container" className="skip-to-content">Přeskočit navigaci</a>
       <div id="app-section" className="app-container">
         {/* Offline banner */}
         <OfflineBanner />
@@ -50,7 +51,7 @@ export function AppShell() {
         <TopBar onOpenProfileDrawer={() => setProfileDrawerOpen(true)} />
 
         {/* Page content with route transitions */}
-        <div id="page-container">
+        <main id="page-container">
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}
@@ -64,7 +65,7 @@ export function AppShell() {
               <Outlet />
             </motion.div>
           </AnimatePresence>
-        </div>
+        </main>
 
         {/* Mobile bottom navigation */}
         <MobileNav />

@@ -7,16 +7,16 @@ import type { DiaryFolder } from '@/api/diary'
 type PeriodFilter = 'all' | 'current_year' | 'last_year' | 'older'
 
 const TAG_ICONS: Record<string, string> = {
-  relax: '🍃',
-  party: '🍻',
-  work: '🔨',
-  mushroom: '🍄',
-  hike: '👟',
-  family: '👥',
+  relax: '○',
+  party: '○',
+  work: '○',
+  mushroom: '○',
+  hike: '○',
+  family: '○',
 }
 
 function tagIcon(tag: string | null | undefined): string {
-  return (tag && TAG_ICONS[tag]) ?? '📖'
+  return (tag && TAG_ICONS[tag]) ?? '○'
 }
 
 function formatDateRange(start: string | null, end: string | null): string {

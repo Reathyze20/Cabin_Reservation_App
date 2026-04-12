@@ -2,9 +2,10 @@
  * features/auth/LoginForm.tsx
  * Překlad: #login-section z index.html + bindLoginForm() z main.ts
  */
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { showToast } from '@/lib/toast'
+import { Eye, EyeOff } from 'lucide-react'
 
 interface LoginFormProps {
   onShowRegister: () => void
@@ -20,6 +21,11 @@ export function LoginForm({ onShowRegister, onShowVerify }: LoginFormProps) {
 
   const usernameRef = useRef<HTMLInputElement>(null)
   const passwordRef = useRef<HTMLInputElement>(null)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => { if (timerRef.current) clearTimeout(timerRef.current) }
+  }, [])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -41,7 +47,7 @@ export function LoginForm({ onShowRegister, onShowVerify }: LoginFormProps) {
       if (!res.ok) {
         // Ověření e-mailu potřebné
         if (data.needsVerification) {
-          setError({ text: `✉️ ${data.message}` })
+          setError({ text: data.message })
           showToast(data.message, 'info')
           return
         }
@@ -52,7 +58,7 @@ export function LoginForm({ onShowRegister, onShowVerify }: LoginFormProps) {
             text: data.message || data.error || '',
             testCode: data.testCode,
           })
-          setTimeout(() => onShowVerify(username, data.testCode), 4000)
+          timerRef.current = setTimeout(() => onShowVerify(username, data.testCode), 4000)
           return
         }
 
@@ -121,7 +127,7 @@ export function LoginForm({ onShowRegister, onShowVerify }: LoginFormProps) {
               style={{ cursor: 'pointer' }}
               onClick={() => setShowPassword((v) => !v)}
             >
-              {showPassword ? '🙈' : '👁'}
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </span>
           </div>
         </div>

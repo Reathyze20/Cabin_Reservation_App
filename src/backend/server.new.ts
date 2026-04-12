@@ -218,8 +218,8 @@ process.on("SIGTERM", async () => {
 // ============================================================================
 
 server.listen(PORT, () => {
-  logger.info(`🚀 Backend server naslouchá na http://localhost:${PORT}`);
-  logger.info(`📊 Health check: http://localhost:${PORT}/api/health`);
+  logger.info(`Backend server naslouchá na http://localhost:${PORT}`);
+  logger.info(`Health check: http://localhost:${PORT}/api/health`);
 
   // ── Cron Jobs ──────────────────────────────────────────────────────────
   // Frost alert check — every day at 12:00 (noon)

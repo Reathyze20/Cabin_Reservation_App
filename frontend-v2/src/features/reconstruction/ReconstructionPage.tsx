@@ -16,7 +16,7 @@ import type { RecCategory, RecItem, RecItemCreate } from '@/api/reconstruction'
 export function ReconstructionPage() {
   useDocumentTitle('Rekonstrukce');
   const { user, isGuest } = useAuth()
-  const { data: items = [], isLoading } = useReconstruction()
+  const { data: items = [], isLoading, isError } = useReconstruction()
 
   const [showModal, setShowModal] = useState(false)
   const [modalCategory, setModalCategory] = useState<RecCategory>('idea')
@@ -89,10 +89,12 @@ export function ReconstructionPage() {
 
   return (
     <div className="main-content-reconstruction">
-      <div className="reconstruction-card">
+      <div className="page-card reconstruction-card">
         <div className="reconstruction-header">
-          <h1>🏗️ Rekonstrukce a plány</h1>
-          <p>Nápady, firmy a úkoly na jedno místo</p>
+          <div className="reconstruction-header-left">
+            <h1>Rekonstrukce a plány</h1>
+            <p>Nápady, firmy a úkoly na jedno místo</p>
+          </div>
         </div>
 
         {/* Budget bar */}
@@ -116,8 +118,20 @@ export function ReconstructionPage() {
         )}
 
         {isLoading ? (
-          <div className="kanban-loading">
-            <div className="spinner" />
+          <div className="kanban-board" style={{ padding: 'var(--space-xl)' }}>
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="skeleton-card" style={{ minHeight: 200 }}>
+                <div className="skeleton skeleton-title" />
+                <div className="skeleton skeleton-text long" />
+                <div className="skeleton skeleton-text medium" />
+                <div className="skeleton skeleton-text short" />
+              </div>
+            ))}
+          </div>
+        ) : isError ? (
+          <div className="kanban-loading" style={{ textAlign: 'center', padding: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+            <img src="/icons/empty_shelf.svg" alt="" aria-hidden="true" style={{ maxHeight: 96, width: 'auto', opacity: 0.65 }} />
+            <p style={{ margin: '0.5rem 0 0', fontWeight: 600 }}>Nepodařilo se načíst data</p>
           </div>
         ) : (
           <div className="kanban-board">

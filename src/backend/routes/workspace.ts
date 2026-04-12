@@ -24,14 +24,28 @@ router.patch("/handover-note", protect, requireCabin, validate(updateHandoverNot
 
   try {
     const settingsId = `cabin_${req.user.cabinId}`;
+    const noteValue = note.trim() || null;
     const settings = await prisma.appSettings.upsert({
       where: { id: settingsId },
-      update: { pinnedHandoverNote: note.trim() || null },
-      create: { id: settingsId, pinnedHandoverNote: note.trim() || null },
+      update: {
+        pinnedHandoverNote: noteValue,
+        handoverNoteAuthor: noteValue ? req.user.username : null,
+        handoverNoteUpdatedAt: noteValue ? new Date() : null,
+      },
+      create: {
+        id: settingsId,
+        pinnedHandoverNote: noteValue,
+        handoverNoteAuthor: noteValue ? req.user.username : null,
+        handoverNoteUpdatedAt: noteValue ? new Date() : null,
+      },
     });
 
     logger.info("WORKSPACE", "Pinned handover note updated", { userId: req.user.userId, cabinId: req.user.cabinId });
-    res.json({ pinnedHandoverNote: settings.pinnedHandoverNote });
+    res.json({
+      pinnedHandoverNote: settings.pinnedHandoverNote,
+      handoverNoteAuthor: settings.handoverNoteAuthor,
+      handoverNoteUpdatedAt: settings.handoverNoteUpdatedAt,
+    });
   } catch (error) {
     logger.error("WORKSPACE", "Update handover note error", { error: String(error) });
     res.status(500).json({ message: "Chyba při ukládání vzkazu." });

@@ -1,4 +1,4 @@
-import { useRef, useCallback } from 'react'
+import { useRef, useCallback, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import type { Note } from "@/api/notes";
 import { AnimalAvatar } from '@/components/shared/AnimalAvatar';
@@ -62,6 +62,10 @@ export function MessageBubble({
   const bubbleRef = useRef<HTMLDivElement>(null);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  useEffect(() => {
+    return () => { if (longPressTimer.current) clearTimeout(longPressTimer.current) }
+  }, []);
+
   const d = new Date(note.createdAt);
   const timeFmt = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
   const dateFmt = `${d.getDate()}.${d.getMonth() + 1}.`;
@@ -111,13 +115,13 @@ export function MessageBubble({
 
   const resolvedBadge = resolved ? (
     <span className="message-resolved-badge" title="Převedeno na úkol">
-      ✅
+      ✓
     </span>
   ) : null;
 
   const pinBadge = note.isPinned ? (
     <span className="message-pin-badge" title="Připnuto">
-      📌
+      •
     </span>
   ) : null;
 

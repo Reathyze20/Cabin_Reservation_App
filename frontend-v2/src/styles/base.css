@@ -119,6 +119,73 @@ body::before {
   display: none !important;
 }
 
+/* ── Skip-to-content (keyboard a11y) ──────────────────────────────── */
+.skip-to-content {
+  position: absolute;
+  top: -100%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--z-max, 9999);
+  background: var(--brand-primary, #3f7b63);
+  color: #fff;
+  padding: 8px 20px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  text-decoration: none;
+  transition: top 0.2s ease;
+}
+.skip-to-content:focus {
+  top: 8px;
+}
+
+/* ── Shared page-level card (glass effect) ─────────────────────────── */
+.page-card {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── 404 Not Found ─────────────────────────────────────────────────── */
+.not-found-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2xl);
+}
+
+.not-found-content {
+  text-align: center;
+  max-width: 420px;
+}
+
+.not-found-icon {
+  font-size: 5rem;
+  margin-bottom: var(--space-lg);
+  line-height: 1;
+}
+
+.not-found-title {
+  font-size: var(--font-size-3xl);
+  font-weight: 700;
+  margin-bottom: var(--space-sm);
+  color: var(--text-main);
+}
+
+.not-found-text {
+  color: var(--text-muted);
+  margin-bottom: var(--space-2xl);
+  font-size: var(--font-size-base);
+  line-height: 1.6;
+}
+
 /* Ensure images and broad containers never exceed viewport */
 img,
 .calendar-container,

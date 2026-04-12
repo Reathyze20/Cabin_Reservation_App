@@ -6,7 +6,6 @@ import { useAuth } from "@/context/AuthContext";
 import { showToast } from "@/lib/toast";
 import { isNetworkError, OFFLINE_TOAST_MSG } from "@/lib/networkError";
 import { THREADS_KEY } from "./useThreads";
-import { useMemo } from "react";
 
 /** Query key for a specific channel's messages */
 export function threadNotesKey(threadId: string | null) {
@@ -45,12 +44,12 @@ export function useThreadNotes(threadId: string | null) {
   });
 
   // Flatten pages into a single sorted array
-  const data = useMemo(() => {
-    if (!query.data?.pages) return [];
-    return query.data.pages.flatMap((p) => p.messages).sort(
+  let data: Note[] = [];
+  if (query.data?.pages) {
+    data = query.data.pages.flatMap((p) => p.messages).sort(
       (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
     );
-  }, [query.data?.pages]);
+  }
 
   return {
     data,
@@ -195,6 +194,13 @@ export function useResolveNote() {
 
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["channels"] });
+    },
+    onError: (err) => {
+      if (isNetworkError(err)) {
+        showToast(OFFLINE_TOAST_MSG, "info");
+      } else {
+        showToast("Nepodařilo se označit zprávu jako vyřešenou.", "error");
+      }
     },
   });
 }

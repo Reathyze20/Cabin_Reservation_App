@@ -22,6 +22,15 @@ router.get("/", protect, requireCabin, async (req: Request, res: Response) => {
         color: true,
         role: true,
         animalIcon: true,
+        email: true,
+        createdAt: true,
+        _count: {
+          select: {
+            reservations: true,
+            galleryPhotos: true,
+            noteThreads: true,
+          },
+        },
       },
     });
     res.json(users);
@@ -282,6 +291,244 @@ router.delete("/:id", protect, requireCabin, async (req: Request, res: Response)
   } catch (error) {
     logger.error("USERS", "Delete user error", { error: String(error), userId: id });
     res.status(500).json({ message: "Chyba." });
+  }
+});
+
+// ============================================================================
+//                   SOFT REMOVE USER FROM CABIN (ADMIN)
+// ============================================================================
+router.patch("/:id/remove-from-cabin", protect, requireCabin, async (req: Request, res: Response) => {
+  try {
+    if (!req.user || req.user.role !== "admin") {
+      return res.status(403).json({ message: "Přístup pouze pro administrátora." });
+    }
+
+    const { id } = req.params;
+    const { deleteData } = req.body;
+
+    // Cannot remove yourself
+    if (id === req.user.userId) {
+      return res.status(400).json({ message: "Nemůžete odebrat sami sebe." });
+    }
+
+    // Verify target user belongs to same cabin
+    const targetUser = await prisma.user.findFirst({
+      where: { id, cabinId: req.user.cabinId },
+    });
+    if (!targetUser) {
+      return res.status(404).json({ message: "Uživatel nenalezen." });
+    }
+
+    if (deleteData) {
+      // Hard remove — delete user entirely (cascade)
+      await prisma.user.delete({ where: { id } });
+      logger.info("USERS", "User hard-removed from cabin (data deleted)", {
+        userId: id,
+        username: targetUser.username,
+        cabinId: req.user.cabinId,
+        removedBy: req.user.userId,
+      });
+      res.json({ message: "Uživatel a jeho data byly smazány." });
+    } else {
+      // Soft remove — keep user but unlink from cabin
+      await prisma.user.update({
+        where: { id },
+        data: { cabinId: null, role: "user" },
+      });
+      logger.info("USERS", "User soft-removed from cabin (data preserved)", {
+        userId: id,
+        username: targetUser.username,
+        cabinId: req.user.cabinId,
+        removedBy: req.user.userId,
+      });
+      res.json({ message: "Uživatel byl odebrán z chaty. Jeho data zůstala zachována." });
+    }
+  } catch (error) {
+    logger.error("USERS", "Remove from cabin error", { error: String(error) });
+    res.status(500).json({ message: "Chyba při odebírání uživatele." });
+  }
+});
+
+// ============================================================================
+//                   EXPORT MY DATA (GDPR Art. 20)
+// ============================================================================
+router.get("/me/export", protect, async (req: Request, res: Response) => {
+  try {
+    if (!req.user) return res.status(401).json({ message: "Neautorizováno" });
+
+    const userId = req.user.userId;
+
+    // Parallel fetch of all user data
+    const [
+      profile,
+      reservations,
+      noteThreads,
+      notes,
+      diaryEntries,
+      galleryPhotos,
+      shoppingItems,
+      reconstructionItems,
+      availabilities,
+    ] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          username: true,
+          email: true,
+          color: true,
+          animalIcon: true,
+          role: true,
+          createdAt: true,
+        },
+      }),
+      prisma.reservation.findMany({
+        where: { userId },
+        select: {
+          id: true,
+          dateFrom: true,
+          dateTo: true,
+          purpose: true,
+          notes: true,
+          status: true,
+          createdAt: true,
+        },
+      }),
+      prisma.noteThread.findMany({
+        where: { createdById: userId },
+        select: { id: true, title: true, createdAt: true },
+      }),
+      prisma.note.findMany({
+        where: { userId },
+        select: { id: true, content: true, createdAt: true },
+      }),
+      prisma.diaryEntry.findMany({
+        where: { authorId: userId },
+        select: { id: true, title: true, content: true, date: true, createdAt: true },
+      }),
+      prisma.galleryPhoto.findMany({
+        where: { uploadedById: userId },
+        select: { id: true, filename: true, description: true, createdAt: true },
+      }),
+      prisma.shoppingListItem.findMany({
+        where: { addedById: userId },
+        select: { id: true, name: true, quantity: true, unit: true, createdAt: true },
+      }),
+      prisma.reconstructionItem.findMany({
+        where: { createdById: userId },
+        select: { id: true, title: true, description: true, status: true, createdAt: true },
+      }),
+      prisma.userAvailability.findMany({
+        where: { userId },
+        select: { id: true, dateFrom: true, dateTo: true, status: true },
+      }),
+    ]);
+
+    const exportData = {
+      exportedAt: new Date().toISOString(),
+      profile,
+      reservations,
+      noteThreads,
+      notes,
+      diaryEntries,
+      galleryPhotos: galleryPhotos.map(p => ({ ...p, note: "Soubory fotografií nejsou součástí exportu." })),
+      shoppingItems,
+      reconstructionItems,
+      availabilities,
+    };
+
+    res.setHeader("Content-Disposition", "attachment; filename=moje-data.json");
+    res.setHeader("Content-Type", "application/json; charset=utf-8");
+    res.json(exportData);
+  } catch (error) {
+    logger.error("USERS", "Export my data error", { error: String(error) });
+    res.status(500).json({ message: "Chyba při exportu dat." });
+  }
+});
+
+// ============================================================================
+//               DELETE MY ACCOUNT (GDPR Art. 17 — Self-service)
+// ============================================================================
+router.delete("/me", protect, async (req: Request, res: Response) => {
+  try {
+    if (!req.user) return res.status(401).json({ message: "Neautorizováno" });
+
+    const { password } = req.body;
+    if (!password || typeof password !== "string") {
+      return res.status(400).json({ message: "Pro smazání účtu zadejte heslo." });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: req.user.userId } });
+    if (!user) return res.status(404).json({ message: "Uživatel nenalezen." });
+
+    // Verify password
+    const isValid = await bcrypt.compare(password, user.passwordHash);
+    if (!isValid) {
+      return res.status(400).json({ message: "Nesprávné heslo." });
+    }
+
+    // If admin, check if they're the only one
+    if (user.cabinId && req.user.role === "admin") {
+      const adminCount = await prisma.user.count({
+        where: { cabinId: user.cabinId, role: "admin" },
+      });
+      if (adminCount <= 1) {
+        return res.status(400).json({
+          message: "Jste jediný admin chaty. Nejdříve předejte roli admina jinému členovi.",
+        });
+      }
+    }
+
+    // Delete user — Prisma cascade handles related records
+    await prisma.user.delete({ where: { id: req.user.userId } });
+
+    logger.info("USERS", "User self-deleted account (GDPR)", {
+      userId: req.user.userId,
+      username: req.user.username,
+    });
+
+    res.json({ message: "Váš účet byl nenávratně smazán." });
+  } catch (error) {
+    logger.error("USERS", "Self-delete account error", { error: String(error) });
+    res.status(500).json({ message: "Chyba při mazání účtu." });
+  }
+});
+
+// ============================================================================
+//                     LEAVE CABIN (SELF-SERVICE)
+// ============================================================================
+router.post("/me/leave-cabin", protect, requireCabin, async (req: Request, res: Response) => {
+  try {
+    if (!req.user) return res.status(401).json({ message: "Neautorizováno" });
+
+    // Check if user is the only admin — cannot leave
+    if (req.user.role === "admin") {
+      const adminCount = await prisma.user.count({
+        where: { cabinId: req.user.cabinId, role: "admin" },
+      });
+      if (adminCount <= 1) {
+        return res.status(400).json({
+          message: "Jste jediný admin. Nejdříve předejte roli admina jinému členovi.",
+        });
+      }
+    }
+
+    // Soft leave — keep user, unlink from cabin
+    await prisma.user.update({
+      where: { id: req.user.userId },
+      data: { cabinId: null, role: "user" },
+    });
+
+    logger.info("USERS", "User left cabin voluntarily", {
+      userId: req.user.userId,
+      username: req.user.username,
+      cabinId: req.user.cabinId,
+    });
+
+    res.json({ message: "Úspěšně jste opustili chatu." });
+  } catch (error) {
+    logger.error("USERS", "Leave cabin error", { error: String(error) });
+    res.status(500).json({ message: "Chyba při opouštění chaty." });
   }
 });
 

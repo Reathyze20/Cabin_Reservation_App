@@ -1,17 +1,25 @@
 import { useState, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import { SquarePen } from "lucide-react";
 import apiClient from "@/api/client";
 import { showToast } from "@/lib/toast";
 import { useAuth } from "@/context/AuthContext";
 import { Modal } from "@/components/shared/Modal";
 
-interface Props {
-  note: string | null;
-  onNoteUpdate: (note: string | null) => void;
+function formatHandoverDate(iso: string): string {
+  const date = new Date(iso);
+  return date.toLocaleDateString("cs-CZ", { day: "numeric", month: "long" });
 }
 
-export function HandoverNote({ note, onNoteUpdate }: Props) {
+interface Props {
+  note: string | null;
+  author: string | null;
+  updatedAt: string | null;
+  onNoteUpdate: (note: string | null, author?: string | null, updatedAt?: string | null) => void;
+}
+
+export function HandoverNote({ note, author, updatedAt, onNoteUpdate }: Props) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [modalOpen, setModalOpen] = useState(false);
@@ -21,13 +29,17 @@ export function HandoverNote({ note, onNoteUpdate }: Props) {
 
   const saveMutation = useMutation({
     mutationFn: async (newNote: string) => {
-      const res = await apiClient.patch<{ pinnedHandoverNote: string | null }>("/workspace/handover-note", {
+      const res = await apiClient.patch<{
+        pinnedHandoverNote: string | null;
+        handoverNoteAuthor: string | null;
+        handoverNoteUpdatedAt: string | null;
+      }>("/workspace/handover-note", {
         note: newNote,
       });
-      return res.data.pinnedHandoverNote;
+      return res.data;
     },
-    onSuccess: (savedNote) => {
-      onNoteUpdate(savedNote);
+    onSuccess: (data) => {
+      onNoteUpdate(data.pinnedHandoverNote, data.handoverNoteAuthor, data.handoverNoteUpdatedAt);
       showToast("Vzkaz uložen", "success");
       setModalOpen(false);
     },
@@ -55,24 +67,12 @@ export function HandoverNote({ note, onNoteUpdate }: Props) {
             <span className="dashboard-card-header-title">Vzkaz</span>
             {!isGuest && (
               <button className="handover-edit-btn" id="btn-edit-handover" title="Upravit vzkaz" onClick={openModal}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                </svg>
+                <SquarePen size={16} />
               </button>
             )}
           </div>
           {noteText ? (
-            <div
-              className="handover-note-text"
-              dangerouslySetInnerHTML={{
-                __html: noteText
-                  .replace(/&/g, "&amp;")
-                  .replace(/</g, "&lt;")
-                  .replace(/>/g, "&gt;")
-                  .replace(/\n/g, "<br>"),
-              }}
-            />
+            <div className="handover-note-text">{noteText}</div>
           ) : (
             <p className="handover-note-empty">
               {isGuest ? "Zatím žádný vzkaz." : "Žádný vzkaz — klikněte na tužku a napište."}
@@ -80,7 +80,11 @@ export function HandoverNote({ note, onNoteUpdate }: Props) {
           )}
           {noteText && (
             <div className="card-footer">
-              <span className="card-footer-meta">Vzkaz pro návštěvníky</span>
+              <span className="card-footer-meta">
+                {author && updatedAt
+                  ? `— ${author}, ${formatHandoverDate(updatedAt)}`
+                  : "Vzkaz pro návštěvníky"}
+              </span>
               <a
                 href="/notes"
                 className="dashboard-card-header-link"

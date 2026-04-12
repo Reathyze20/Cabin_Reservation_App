@@ -2,8 +2,9 @@
  * features/auth/RegisterForm.tsx
  * Překlad: #register-section z index.html + bindRegisterForm() z main.ts
  */
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { showToast } from '@/lib/toast'
+import { Eye, EyeOff } from 'lucide-react'
 
 const REGISTER_SWATCH_COLORS = [
   '#2d6a4f', '#40916c', '#52b788',
@@ -44,6 +45,11 @@ export function RegisterForm({ onShowLogin, onShowVerify }: RegisterFormProps) {
   const usernameRef = useRef<HTMLInputElement>(null)
   const emailRef = useRef<HTMLInputElement>(null)
   const passwordRef = useRef<HTMLInputElement>(null)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => { if (timerRef.current) clearTimeout(timerRef.current) }
+  }, [])
 
   function showMsg(text: string, type: 'success' | 'error' | 'warning') {
     setMessage({ text, type })
@@ -117,13 +123,13 @@ export function RegisterForm({ onShowLogin, onShowVerify }: RegisterFormProps) {
         } else {
           showMsg(data.message, data.message.includes('nepodařilo') ? 'error' : 'success')
         }
-        setTimeout(
+        timerRef.current = setTimeout(
           () => onShowVerify(username, data.testCode),
           data.testCode || data.message.includes('nepodařilo') ? 4000 : 1000,
         )
       } else {
         showMsg('Registrace úspěšná, přihlaste se.', 'success')
-        setTimeout(onShowLogin, 1500)
+        timerRef.current = setTimeout(onShowLogin, 1500)
       }
     } catch {
       showMsg('Chyba sítě', 'error')
@@ -216,7 +222,7 @@ export function RegisterForm({ onShowLogin, onShowVerify }: RegisterFormProps) {
               style={{ cursor: 'pointer' }}
               onClick={() => setShowPassword((v) => !v)}
             >
-              {showPassword ? '🙈' : '👁'}
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </span>
           </div>
         </div>

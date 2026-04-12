@@ -83,12 +83,14 @@ export function ShoppingPage() {
 
   async function confirmDeleteList() {
     if (!deleteListId) return
-    await deleteList.mutateAsync(deleteListId)
-    if (selectedListId === deleteListId) {
-      setSelectedListId(null)
-      setMobileDetailOpen(false)
-    }
-    showToast('Seznam smazán.', 'success')
+    try {
+      await deleteList.mutateAsync(deleteListId)
+      if (selectedListId === deleteListId) {
+        setSelectedListId(null)
+        setMobileDetailOpen(false)
+      }
+      showToast('Seznam smazán.', 'success')
+    } catch { /* onError in hook */ }
     setDeleteListId(null)
   }
 
@@ -98,8 +100,10 @@ export function ShoppingPage() {
 
   async function confirmArchiveList() {
     if (!archiveListId) return
-    await archiveList.mutateAsync(archiveListId)
-    showToast('Seznam archivován.', 'success')
+    try {
+      await archiveList.mutateAsync(archiveListId)
+      showToast('Seznam archivován.', 'success')
+    } catch { /* onError in hook */ }
     setArchiveListId(null)
   }
 
@@ -111,13 +115,15 @@ export function ShoppingPage() {
       showToast('Název seznamu je příliš dlouhý (max 100 znaků).', 'error')
       return
     }
-    const created = await createList.mutateAsync(name)
-    setNewListName('')
-    setShowNewListModal(false)
-    showToast('Nákupní seznam vytvořen.', 'success')
-    setSelectedListId(created.id)
-    setActiveView('shopping')
-    setMobileDetailOpen(true)
+    try {
+      const created = await createList.mutateAsync(name)
+      setNewListName('')
+      setShowNewListModal(false)
+      showToast('Nákupní seznam vytvořen.', 'success')
+      setSelectedListId(created.id)
+      setActiveView('shopping')
+      setMobileDetailOpen(true)
+    } catch { /* onError in hook */ }
   }
 
   return (
