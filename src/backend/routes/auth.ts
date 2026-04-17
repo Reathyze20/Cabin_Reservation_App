@@ -344,4 +344,49 @@ router.post("/verify-email", validate(verifyEmailSchema), async (req: Request, r
   }
 });
 
+// ============================================================================
+//  GET /api/auth/refresh-token — Re-issue JWT with current data from DB
+//  Used when user has stale token (e.g. cabinId was null at login time,
+//  but was later assigned by admin or invite acceptance).
+// ============================================================================
+router.get("/refresh-token", protect, async (req: Request, res: Response) => {
+  try {
+    if (!req.user) return res.status(401).json({ message: "Neautorizováno" });
+
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId },
+      select: {
+        id: true,
+        username: true,
+        role: true,
+        cabinId: true,
+        animalIcon: true,
+        color: true,
+      },
+    });
+
+    if (!user) return res.status(404).json({ message: "Uživatel nenalezen." });
+
+    const token = jwt.sign(
+      { userId: user.id, username: user.username, role: user.role, cabinId: user.cabinId },
+      JWT_SECRET,
+      { expiresIn: "30d" }
+    );
+
+    logger.info("AUTH", "Token refreshed", { userId: user.id, hasCabin: !!user.cabinId });
+
+    res.json({
+      token,
+      username: user.username,
+      userId: user.id,
+      role: user.role,
+      animalIcon: user.animalIcon,
+      cabinId: user.cabinId,
+    });
+  } catch (error) {
+    logger.error("AUTH", "Refresh token error", { error: String(error) });
+    res.status(500).json({ message: "Chyba serveru." });
+  }
+});
+
 export default router;
