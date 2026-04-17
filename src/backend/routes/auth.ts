@@ -8,6 +8,7 @@ import logger from "../../utils/logger";
 import { sendVerificationEmailWithPIN, sendVerificationEmailWithToken } from "../../utils/email";
 import { validate } from "../../validators/validate";
 import { loginSchema, registerSchema, verifyEmailSchema } from "../../validators/schemas";
+import { protect } from "../../middleware/authMiddleware";
 
 const router = Router();
 
