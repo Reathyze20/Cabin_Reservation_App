@@ -23,12 +23,13 @@ jobs:
         script: |
           set -e
 
-          # Failsafe: if any step fails, ensure app gets restarted with old build
-          trap 'echo "=== DEPLOY FAILED — restarting app with previous build ==="; pm2 restart chata-app 2>/dev/null || pm2 start npm --name "chata-app" -- run start; pm2 save' ERR
-
-          # Explicitly source nvm to make node/npm available
-          export NVM_DIR="$HOME/.nvm"
+          # Explicitly source nvm to make node/npm/pm2 available
+          # IMPORTANT: NVM is installed for 'reathyze' user, not root — use absolute path
+          export NVM_DIR="/home/reathyze/.nvm"
           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+          # Failsafe: if any step fails, ensure app gets restarted with old build
+          trap 'echo "=== DEPLOY FAILED — restarting app with previous build ==="; npx pm2 restart chata-app 2>/dev/null || npx pm2 start npm --name "chata-app" -- run start; npx pm2 save' ERR
 
           # Navigate to the app directory
           cd ${{ secrets.SERVER_PATH }}
@@ -123,11 +124,15 @@ jobs:
           fi
 
           echo "=== Installing dependencies ==="
-          npm ci
+          # Use npm install instead of npm ci to avoid ENOTEMPTY on Prisma client dirs
+          rm -rf node_modules
+          npm install
+          # Rebuild native modules (bcrypt etc.) for current Node.js version
+          npm rebuild
 
           echo "=== Stopping application ==="
           # Stop PM2 to release file locks
-          pm2 stop chata-app 2>/dev/null || true
+          npx pm2 stop chata-app 2>/dev/null || true
           
           echo "=== Generating Prisma client ==="
           # Fix permissions first (files may have been created by root in a previous deploy)
@@ -205,7 +210,7 @@ jobs:
           rm -rf dist.old.* 2>/dev/null || true
 
           echo "=== Installing frontend dependencies ==="
-          cd frontend-v2 && npm ci && cd ..
+          cd frontend-v2 && npm install && cd ..
 
           echo "=== Building frontend ==="
           npm run build
@@ -215,8 +220,8 @@ jobs:
           fuser -k 3000/tcp 2>/dev/null || true
           sleep 1
           # Restart PM2 process, or start it if it doesn't exist yet
-          pm2 restart chata-app 2>/dev/null || pm2 start npm --name "chata-app" -- run start
-          pm2 save
+          npx pm2 restart chata-app 2>/dev/null || npx pm2 start npm --name "chata-app" -- run start
+          npx pm2 save
 
           # Wait for the server to be fully ready (max 60s, test real API endpoint)
           echo "Waiting for server to be ready..."
