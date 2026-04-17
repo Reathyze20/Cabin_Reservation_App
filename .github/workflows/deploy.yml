@@ -124,8 +124,11 @@ jobs:
           fi
 
           echo "=== Installing dependencies ==="
-          # Use npm install instead of npm ci to avoid ENOTEMPTY on Prisma client dirs
-          rm -rf node_modules
+          # Fix permissions first, then remove — avoids "Permission denied" on files owned by root
+          if [ -d "node_modules" ]; then
+            chmod -R u+rwx node_modules 2>/dev/null || true
+            rm -rf node_modules
+          fi
           npm install
           # Rebuild native modules (bcrypt etc.) for current Node.js version
           npm rebuild
