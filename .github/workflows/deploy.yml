@@ -81,11 +81,13 @@ jobs:
           fi
           if [ -d "/tmp/cabin_data_backup/logs" ]; then
             rm -rf data/logs
-            cp -R /tmp/cabin_data_backup/logs data/
+            mkdir -p data/logs
+            cp -rT /tmp/cabin_data_backup/logs data/logs
           fi
           if [ -d "/tmp/cabin_data_backup/uploads" ]; then
             rm -rf data/uploads
-            cp -R /tmp/cabin_data_backup/uploads data/
+            mkdir -p data/uploads
+            cp -rT /tmp/cabin_data_backup/uploads data/uploads
           fi
 
           # Restore .env file
