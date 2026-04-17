@@ -376,6 +376,7 @@ router.get("/refresh-token", protect, async (req: Request, res: Response) => {
 
     logger.info("AUTH", "Token refreshed", { userId: user.id, hasCabin: !!user.cabinId });
 
+    res.set("Cache-Control", "no-store, no-cache, must-revalidate");
     res.json({
       token,
       username: user.username,
