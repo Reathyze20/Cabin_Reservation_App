@@ -1,12 +1,5 @@
 ﻿/**
  * features/onboarding/OnboardingPage.tsx
- * Standalone page for newly registered users who have no cabin yet.
- * Calls POST /api/cabin/create, receives a fresh JWT with cabinId embedded,
- * then updates AuthContext and redirects to /dashboard.
- *
- * Also handles the case where cabinId was assigned AFTER the user logged in
- * (stale token). On mount we call /api/auth/refresh-token â€” if cabinId is now
- * present, we silently update the token and redirect to dashboard.
  */
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -42,8 +35,6 @@ export default function OnboardingPage() {
   const [checking, setChecking] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // On mount: try to refresh the token. If the server now has a cabinId for this
-  // user (assigned after their last login), update auth and skip onboarding.
   useEffect(() => {
     let cancelled = false
     async function checkForAssignedCabin() {
@@ -64,7 +55,7 @@ export default function OnboardingPage() {
           return
         }
       } catch {
-        // Stale token or network error â€” show the onboarding form normally
+        // Error - show the form
       } finally {
         if (!cancelled) setChecking(false)
       }
@@ -77,18 +68,14 @@ export default function OnboardingPage() {
     e.preventDefault()
     const name = nameRef.current?.value.trim() ?? ''
     if (name.length < 2) {
-      setError('NĂˇzev chaty musĂ­ mĂ­t alespoĹ 2 znaky.')
+      setError('Nazev chaty musi mit alespon 2 znaky.')
       return
     }
-
     setError(null)
     setLoading(true)
-
     try {
       const res = await apiClient.post<CreateCabinResponse>('/cabin/create', { name })
       const data = res.data
-
-      // Update auth context with the fresh JWT (now has cabinId)
       login({
         token: data.token,
         username: data.username,
@@ -96,15 +83,12 @@ export default function OnboardingPage() {
         role: data.role,
         animalIcon: data.animalIcon,
         cabinId: data.cabinId,
-        remember: !!localStorage.getItem('authToken'), // preserve remember-me choice
+        remember: !!localStorage.getItem('authToken'),
       })
-
-      showToast(`Chata â€ž${data.cabinName}" byla ĂşspÄ›ĹˇnÄ› vytvoĹ™ena!`, 'success')
+      showToast('Chata byla uspesne vytvorena!', 'success')
       navigate('/dashboard', { replace: true })
     } catch (err: unknown) {
-      const message =
-        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        'NepodaĹ™ilo se vytvoĹ™it chatu. Zkuste to znovu.'
+      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Nepodarilo se vytvorit chatu.'
       setError(message)
     } finally {
       setLoading(false)
@@ -128,37 +112,21 @@ export default function OnboardingPage() {
           <img src="/logo-icon.svg" alt="Logo" className="auth-logo-icon" />
           <h1 className="auth-brand-text">kdynachatu.cz</h1>
         </div>
-
-        <h2 className="onboarding-title">VytvoĹ™te svĹŻj prostor</h2>
+        <h2 className="onboarding-title">Vytvorte svuj prostor</h2>
         <p className="auth-subtitle">
-          VĂ­tejte{user?.username ? `, ${user.username}` : ''}! JeĹˇtÄ› neĹľ zaÄŤnete, pojmenujte svou chatu.
+          Vitejte{user?.username ? `, ${user.username}` : ''}! Pojmenujte svou chatu.
         </p>
-
         <form onSubmit={handleSubmit} noValidate>
           <div className="form-group">
-            <label htmlFor="cabin-name">NĂˇzev chaty</label>
-            <input
-              ref={nameRef}
-              id="cabin-name"
-              type="text"
-              placeholder="napĹ™. Chata U Lesa"
-              maxLength={100}
-              autoFocus
-              autoComplete="off"
-              required
-            />
+            <label htmlFor="cabin-name">Nazev chaty</label>
+            <input ref={nameRef} id="cabin-name" type="text" placeholder="napr. Chata U Lesa" maxLength={100} autoFocus autoComplete="off" required />
           </div>
-
           {error && <p className="error-message">{error}</p>}
-
           <button type="submit" className="button-primary" style={{ width: '100%' }} disabled={loading}>
-            {loading ? 'VytvĂˇĹ™Ă­ seâ€¦' : 'VytvoĹ™it chatu â†’'}
+            {loading ? 'Vytvari se...' : 'Vytvorit chatu'}
           </button>
         </form>
-
-        <p className="onboarding-hint">
-          NĂˇzev chaty lze kdykoli zmÄ›nit v nastavenĂ­.
-        </p>
+        <p className="onboarding-hint">Nazev chaty lze kdykoli zmenit v nastaveni.</p>
       </div>
     </div>
   )
