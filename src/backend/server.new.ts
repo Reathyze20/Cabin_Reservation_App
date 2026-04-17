@@ -133,6 +133,12 @@ if (isProd) {
     maxAge: "1d",
     etag: true,
     lastModified: true,
+    setHeaders(res, filePath) {
+      // index.html must never be cached — SPA shell references hashed bundles
+      if (filePath.endsWith("index.html")) {
+        res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+      }
+    },
   }));
 }
 
