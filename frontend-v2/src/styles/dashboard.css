@@ -1271,32 +1271,25 @@
 }
 
 .chart-bar-value {
-  position: absolute;
-  top: 3px;
-  left: 0;
-  right: 0;
-  text-align: center;
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 700;
   line-height: 1;
   white-space: nowrap;
-  z-index: 1;
-  pointer-events: none;
+  text-align: center;
+  min-height: 12px;
+  /* Value now appears above the track in normal flex flow, not inside it */
 }
 
 .chart-bar-value-temp {
-  color: #fff;
-  text-shadow: 0 1px 3px rgba(180, 100, 0, 0.5);
+  color: #d97706;
 }
 
 .chart-bar-value-rain {
-  color: #fff;
-  text-shadow: 0 1px 3px rgba(30, 80, 180, 0.5);
+  color: #2563eb;
 }
 
 .chart-bar-value-wind {
-  color: #fff;
-  text-shadow: 0 1px 3px rgba(5, 100, 70, 0.5);
+  color: #059669;
 }
 
 /* "No rain" fallback */

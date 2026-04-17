@@ -293,6 +293,8 @@ export async function fetchWeather(location: string | null | undefined): Promise
     }
 
     // Hourly temperature: next 12 hours from current hour
+    // For the "Teď" slot (h=0) use the observed current temp instead of the
+    // model forecast, which can differ significantly (e.g. sunny spring afternoons).
     const hourlyTemp: HourlyTempPoint[] = [];
     if (fx.hourly?.time && fx.hourly?.temperature_2m) {
       const nowHour = new Date().getHours();
@@ -307,7 +309,10 @@ export async function fetchWeather(location: string | null | undefined): Promise
         if (idx >= 0) {
           hourlyTemp.push({
             hour: h === 0 ? "Teď" : `${String(hourInDay).padStart(2, "0")}h`,
-            temp: Math.round(fx.hourly.temperature_2m[idx] ?? 0),
+            // h=0: use real-time current temp so it matches the header value
+            temp: h === 0
+              ? Math.round(current.temperature_2m)
+              : Math.round(fx.hourly.temperature_2m[idx] ?? 0),
           });
         }
       }

@@ -252,8 +252,8 @@ export function WeatherCard({ weather }: Props) {
                     const isPeak = i === peakIdx;
                     return (
                       <div className={`chart-bar-col ${isPeak ? "chart-bar-peak" : ""}`} data-chart="rain" key={i}>
+                        <span className={`chart-bar-value ${isPeak ? "chart-bar-value-rain" : "chart-bar-value-dim"}`}>{h.probability}%</span>
                         <div className="chart-bar-track">
-                          <span className={`chart-bar-value ${isPeak ? "chart-bar-value-rain" : "chart-bar-value-dim"}`}>{h.probability}%</span>
                           <div
                             className={`chart-bar-fill chart-bar-fill-rain ${isPeak ? "chart-bar-fill-accent" : ""}`}
                             style={{ height: `${h.probability}%` }}
@@ -294,8 +294,8 @@ export function WeatherCard({ weather }: Props) {
                     const pct = Math.round(((t.temp - scaleMin) / (scaleMax - scaleMin)) * 100);
                     return (
                       <div className={`chart-bar-col ${isPeak ? "chart-bar-peak" : ""}`} data-chart="temp" key={i}>
+                        <span className={`chart-bar-value ${isPeak ? "chart-bar-value-temp" : "chart-bar-value-dim"}`}>{t.temp}°</span>
                         <div className="chart-bar-track">
-                          <span className={`chart-bar-value ${isPeak ? "chart-bar-value-temp" : "chart-bar-value-dim"}`}>{t.temp}°</span>
                           <div
                             className={`chart-bar-fill chart-bar-fill-temp ${isPeak ? "chart-bar-fill-accent" : ""}`}
                             style={{ height: `${pct}%` }}
@@ -332,8 +332,8 @@ export function WeatherCard({ weather }: Props) {
                     const pct = Math.round((w.speed / scaleMax) * 100);
                     return (
                       <div className={`chart-bar-col ${isPeak ? "chart-bar-peak" : ""}`} data-chart="wind" key={i}>
+                        <span className={`chart-bar-value ${isPeak ? "chart-bar-value-wind" : "chart-bar-value-dim"}`}>{w.speed}</span>
                         <div className="chart-bar-track">
-                          <span className={`chart-bar-value ${isPeak ? "chart-bar-value-wind" : "chart-bar-value-dim"}`}>{w.speed}</span>
                           <div
                             className={`chart-bar-fill chart-bar-fill-wind ${isPeak ? "chart-bar-fill-accent" : ""}`}
                             style={{ height: `${pct}%` }}
