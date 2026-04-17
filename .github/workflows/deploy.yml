@@ -126,12 +126,13 @@ jobs:
           fi
 
           echo "=== Installing dependencies ==="
-          # Fix permissions first, then remove — avoids "Permission denied" on files owned by root
+          # Move old node_modules aside instead of deleting.
+          # Previous manual/root installs can leave files we cannot remove.
           if [ -d "node_modules" ]; then
-            chmod -R u+rwx node_modules 2>/dev/null || true
-            rm -rf node_modules
+            echo "Moving old node_modules directory..."
+            mv node_modules node_modules.old.$(date +%s)
           fi
-          npm install
+          npm ci
           # Rebuild native modules (bcrypt etc.) for current Node.js version
           npm rebuild
 
@@ -215,7 +216,11 @@ jobs:
           rm -rf dist.old.* 2>/dev/null || true
 
           echo "=== Installing frontend dependencies ==="
-          cd frontend-v2 && npm install && cd ..
+          if [ -d "frontend-v2/node_modules" ]; then
+            echo "Moving old frontend-v2/node_modules directory..."
+            mv frontend-v2/node_modules frontend-v2/node_modules.old.$(date +%s)
+          fi
+          cd frontend-v2 && npm ci && cd ..
 
           echo "=== Building frontend ==="
           npm run build
