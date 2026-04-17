@@ -214,6 +214,30 @@ export function WeatherCard({ weather }: Props) {
             >
               <Thermometer size={12} /> Teplota
             </button>
+            {chartTab === "rain" && (() => {
+              const rain = weather.hourlyRain;
+              if (!rain?.length) return null;
+              const maxProb = Math.max(...rain.map(h => h.probability));
+              if (maxProb < 15) return null;
+              const peakIdx = rain.reduce((best, h, idx) => h.probability > rain[best].probability ? idx : best, 0);
+              const ph = rain[peakIdx].hour;
+              return <span className="weather-chart-context">{ph === "Teď" ? "Nejvíc nyní" : <>Nejvíc kolem <strong>{ph}</strong></>}</span>;
+            })()}
+            {chartTab === "temp" && (() => {
+              const temps = weather.hourlyTemp;
+              if (!temps?.length) return null;
+              const peakIdx = temps.reduce((best, t, idx) => t.temp > temps[best].temp ? idx : best, 0);
+              const ph = temps[peakIdx].hour;
+              return <span className="weather-chart-context">{ph === "Teď" ? "Maximum nyní" : <>Maximum kolem <strong>{ph}</strong></>}</span>;
+            })()}
+            {chartTab === "wind" && (() => {
+              const wind = weather.hourlyWind;
+              if (!wind?.length) return null;
+              const maxSpeed = Math.max(...wind.map(ww => ww.speed));
+              const peakIdx = wind.reduce((best, ww, idx) => ww.speed > wind[best].speed ? idx : best, 0);
+              const ph = wind[peakIdx].hour;
+              return <span className="weather-chart-context">{windLabel(maxSpeed)}{ph === "Teď" ? " nyní" : <> kolem <strong>{ph}</strong></>}</span>;
+            })()}
           </div>
 
           {chartTab === "rain" && (() => {
@@ -240,32 +264,26 @@ export function WeatherCard({ weather }: Props) {
             }
 
             const peakIdx = rain.reduce((best, h, idx) => h.probability > rain[best].probability ? idx : best, 0);
-            const peakHour = rain[peakIdx].hour;
 
             return (
-              <>
-                <div className="weather-chart-headline">
-                  Nejvíc {peakHour === "Teď" ? "nyní" : <>kolem <strong>{peakHour}</strong></>}
-                </div>
-                <div className="weather-chart-bars">
-                  {rain.map((h, i) => {
-                    const isPeak = i === peakIdx;
-                    return (
-                      <div className={`chart-bar-col ${isPeak ? "chart-bar-peak" : ""}`} data-chart="rain" key={i}>
-                        <span className={`chart-bar-value ${isPeak ? "chart-bar-value-rain" : "chart-bar-value-dim"}`}>{h.probability}%</span>
-                        <div className="chart-bar-track">
-                          <div
-                            className={`chart-bar-fill chart-bar-fill-rain ${isPeak ? "chart-bar-fill-accent" : ""}`}
-                            style={{ height: `${h.probability}%` }}
-                            title={`${h.hour}: ${h.probability} %`}
-                          />
-                        </div>
-                        <span className={`chart-bar-label ${isPeak ? "chart-bar-label-accent" : ""} ${h.hour === "Teď" ? "chart-bar-now" : ""}`}>{h.hour}</span>
+              <div className="weather-chart-bars">
+                {rain.map((h, i) => {
+                  const isPeak = i === peakIdx;
+                  return (
+                    <div className={`chart-bar-col ${isPeak ? "chart-bar-peak" : ""}`} data-chart="rain" key={i}>
+                      <span className={`chart-bar-value ${isPeak ? "chart-bar-value-rain" : "chart-bar-value-dim"}`}>{h.probability}%</span>
+                      <div className="chart-bar-track">
+                        <div
+                          className={`chart-bar-fill chart-bar-fill-rain ${isPeak ? "chart-bar-fill-accent" : ""}`}
+                          style={{ height: `${h.probability}%` }}
+                          title={`${h.hour}: ${h.probability} %`}
+                        />
                       </div>
-                    );
-                  })}
-                </div>
-              </>
+                      <span className={`chart-bar-label ${isPeak ? "chart-bar-label-accent" : ""} ${h.hour === "Teď" ? "chart-bar-now" : ""}`}>{h.hour}</span>
+                    </div>
+                  );
+                })}
+              </div>
             );
           })()}
 
@@ -277,37 +295,31 @@ export function WeatherCard({ weather }: Props) {
             const maxTemp = Math.max(...values);
             const minTemp = Math.min(...values);
             const peakIdx = temps.reduce((best, t, idx) => t.temp > temps[best].temp ? idx : best, 0);
-            const peakHour = temps[peakIdx].hour;
             // Scale bars relative to range (add padding so min isn't 0-height)
             const range = Math.max(maxTemp - minTemp, 1);
             const scaleMin = minTemp - range * 0.15;
             const scaleMax = maxTemp + range * 0.15;
 
             return (
-              <>
-                <div className="weather-chart-headline">
-                  Maximum {peakHour === "Teď" ? "nyní" : <>kolem <strong>{peakHour}</strong></>}
-                </div>
-                <div className="weather-chart-bars">
-                  {temps.map((t, i) => {
-                    const isPeak = i === peakIdx;
-                    const pct = Math.round(((t.temp - scaleMin) / (scaleMax - scaleMin)) * 100);
-                    return (
-                      <div className={`chart-bar-col ${isPeak ? "chart-bar-peak" : ""}`} data-chart="temp" key={i}>
-                        <span className={`chart-bar-value ${isPeak ? "chart-bar-value-temp" : "chart-bar-value-dim"}`}>{t.temp}°</span>
-                        <div className="chart-bar-track">
-                          <div
-                            className={`chart-bar-fill chart-bar-fill-temp ${isPeak ? "chart-bar-fill-accent" : ""}`}
-                            style={{ height: `${pct}%` }}
-                            title={`${t.hour}: ${t.temp}°C`}
-                          />
-                        </div>
-                        <span className={`chart-bar-label ${isPeak ? "chart-bar-label-accent" : ""} ${t.hour === "Teď" ? "chart-bar-now" : ""}`}>{t.hour}</span>
+              <div className="weather-chart-bars">
+                {temps.map((t, i) => {
+                  const isPeak = i === peakIdx;
+                  const pct = Math.round(((t.temp - scaleMin) / (scaleMax - scaleMin)) * 100);
+                  return (
+                    <div className={`chart-bar-col ${isPeak ? "chart-bar-peak" : ""}`} data-chart="temp" key={i}>
+                      <span className={`chart-bar-value ${isPeak ? "chart-bar-value-temp" : "chart-bar-value-dim"}`}>{t.temp}°</span>
+                      <div className="chart-bar-track">
+                        <div
+                          className={`chart-bar-fill chart-bar-fill-temp ${isPeak ? "chart-bar-fill-accent" : ""}`}
+                          style={{ height: `${pct}%` }}
+                          title={`${t.hour}: ${t.temp}°C`}
+                        />
                       </div>
-                    );
-                  })}
-                </div>
-              </>
+                      <span className={`chart-bar-label ${isPeak ? "chart-bar-label-accent" : ""} ${t.hour === "Teď" ? "chart-bar-now" : ""}`}>{t.hour}</span>
+                    </div>
+                  );
+                })}
+              </div>
             );
           })()}
 
@@ -317,35 +329,29 @@ export function WeatherCard({ weather }: Props) {
 
             const maxSpeed = Math.max(...wind.map(w => w.speed));
             const peakIdx = wind.reduce((best, w, idx) => w.speed > wind[best].speed ? idx : best, 0);
-            const peakHour = wind[peakIdx].hour;
             // Scale: 60 km/h = 100% bar height (cap for visual)
             const scaleMax = Math.max(maxSpeed, 60);
 
             return (
-              <>
-                <div className="weather-chart-headline">
-                  {windLabel(maxSpeed)} {peakHour === "Teď" ? "nyní" : <>kolem <strong>{peakHour}</strong></>}
-                </div>
-                <div className="weather-chart-bars">
-                  {wind.map((w, i) => {
-                    const isPeak = i === peakIdx;
-                    const pct = Math.round((w.speed / scaleMax) * 100);
-                    return (
-                      <div className={`chart-bar-col ${isPeak ? "chart-bar-peak" : ""}`} data-chart="wind" key={i}>
-                        <span className={`chart-bar-value ${isPeak ? "chart-bar-value-wind" : "chart-bar-value-dim"}`}>{w.speed}</span>
-                        <div className="chart-bar-track">
-                          <div
-                            className={`chart-bar-fill chart-bar-fill-wind ${isPeak ? "chart-bar-fill-accent" : ""}`}
-                            style={{ height: `${pct}%` }}
-                            title={`${w.hour}: ${w.speed} km/h`}
-                          />
-                        </div>
-                        <span className={`chart-bar-label ${isPeak ? "chart-bar-label-accent" : ""} ${w.hour === "Teď" ? "chart-bar-now" : ""}`}>{w.hour}</span>
+              <div className="weather-chart-bars">
+                {wind.map((w, i) => {
+                  const isPeak = i === peakIdx;
+                  const pct = Math.round((w.speed / scaleMax) * 100);
+                  return (
+                    <div className={`chart-bar-col ${isPeak ? "chart-bar-peak" : ""}`} data-chart="wind" key={i}>
+                      <span className={`chart-bar-value ${isPeak ? "chart-bar-value-wind" : "chart-bar-value-dim"}`}>{w.speed}</span>
+                      <div className="chart-bar-track">
+                        <div
+                          className={`chart-bar-fill chart-bar-fill-wind ${isPeak ? "chart-bar-fill-accent" : ""}`}
+                          style={{ height: `${pct}%` }}
+                          title={`${w.hour}: ${w.speed} km/h`}
+                        />
                       </div>
-                    );
-                  })}
-                </div>
-              </>
+                      <span className={`chart-bar-label ${isPeak ? "chart-bar-label-accent" : ""} ${w.hour === "Teď" ? "chart-bar-now" : ""}`}>{w.hour}</span>
+                    </div>
+                  );
+                })}
+              </div>
             );
           })()}
         </div>
