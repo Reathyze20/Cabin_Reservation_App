@@ -3,6 +3,7 @@
  */
 import { useState } from 'react'
 import type { DiaryFolder } from '@/api/diary'
+import { formatCount } from '@/lib/utils'
 
 type PeriodFilter = 'all' | 'current_year' | 'last_year' | 'older'
 
@@ -103,7 +104,7 @@ export function DiaryFolders({ folders, onOpen, onRename, onDelete, onNewFolder 
                 {folder.stats && (
                   <>
                     <span className="badge">{folder.stats.entries} dnů</span>
-                    <span className="badge">{folder.stats.photos} {folder.stats.photos === 1 ? 'fotka' : folder.stats.photos >= 2 && folder.stats.photos <= 4 ? 'fotky' : 'fotek'}</span>
+                    <span className="badge">{formatCount(folder.stats.photos, 'fotka', 'fotky', 'fotek')}</span>
                   </>
                 )}
               </div>

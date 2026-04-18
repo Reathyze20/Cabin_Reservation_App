@@ -9,6 +9,7 @@ import {
 } from '@/features/gallery/hooks/useGallery'
 import type { GalleryFolder } from '@/api/gallery'
 import { Modal } from '@/components/shared/Modal'
+import { formatCount } from '@/lib/utils'
 
 interface Props {
   /** IDs fotek již přidaných do záznamu (greyscale, nelze znovu vybrat) */
@@ -105,7 +106,7 @@ export function GalleryPicker({ currentEntryPhotoIds, onConfirm, onClose }: Prop
                   )}
                   <div className="folder-info">
                     <span className="folder-name">{folder.name}</span>
-                    <span className="folder-meta">{folder.photoCount} {folder.photoCount === 1 ? 'fotka' : folder.photoCount >= 2 && folder.photoCount <= 4 ? 'fotky' : 'fotek'}</span>
+                    <span className="folder-meta">{formatCount(folder.photoCount, 'fotka', 'fotky', 'fotek')}</span>
                   </div>
                 </div>
               ))}

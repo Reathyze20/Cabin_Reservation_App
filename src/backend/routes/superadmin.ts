@@ -81,8 +81,10 @@ router.post("/users", protect, requireSuperAdmin, validate(superadminCreateUserS
     });
 
     // Pošli e-mail s dočasným heslem a aktivačním linkem
+    let verificationEmailSent = false;
     try {
       await sendVerificationEmailWithToken(email, verificationToken);
+      verificationEmailSent = true;
       logger.info("SUPERADMIN", `User ${username} created and verification email sent`, {
         userId: newUser.id,
         email,
@@ -95,12 +97,15 @@ router.post("/users", protect, requireSuperAdmin, validate(superadminCreateUserS
     }
 
     res.status(201).json({
-      message: `Uživatel ${username} byl vytvořen. Verifikační e-mail byl odeslán.`,
+      message: verificationEmailSent
+        ? `Uživatel ${username} byl vytvořen. Verifikační e-mail byl odeslán.`
+        : `Uživatel ${username} byl vytvořen, ale verifikační e-mail se nepodařilo odeslat. Použijte dočasné údaje níže.`,
       user: {
         id: newUser.id,
         username: newUser.username,
         email: newUser.email,
       },
+      verificationEmailSent,
       tempPassword, // Pro Super Admina (v produkci by se měl poslat jen e-mailem)
       verificationToken, // Fallback pokud e-mail selže
     });

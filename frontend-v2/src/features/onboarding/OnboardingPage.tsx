@@ -28,12 +28,13 @@ interface RefreshTokenResponse {
 }
 
 export default function OnboardingPage() {
-  const { login, user } = useAuth()
+  const { login, logout, user } = useAuth()
   const navigate = useNavigate()
   const nameRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
   const [checking, setChecking] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [retryCount, setRetryCount] = useState(0)
 
   useEffect(() => {
     let cancelled = false
@@ -41,6 +42,13 @@ export default function OnboardingPage() {
       try {
         const res = await apiClient.get<RefreshTokenResponse>('/auth/refresh-token')
         if (cancelled) return
+        
+        // Debug logging for mobile troubleshooting
+        console.log('[Onboarding] refresh-token response:', {
+          hasCabinId: !!res.data.cabinId,
+          username: res.data.username,
+        })
+        
         if (res.data.cabinId) {
           login({
             token: res.data.token,
@@ -51,18 +59,20 @@ export default function OnboardingPage() {
             cabinId: res.data.cabinId,
             remember: !!localStorage.getItem('authToken'),
           })
+          showToast('Přesměrování na dashboard...', 'info')
           navigate('/dashboard', { replace: true })
           return
         }
-      } catch {
-        // Error - show the form
+      } catch (err) {
+        // Log error for debugging
+        console.error('[Onboarding] refresh-token error:', err)
       } finally {
         if (!cancelled) setChecking(false)
       }
     }
     checkForAssignedCabin()
     return () => { cancelled = true }
-  }, [login, navigate])
+  }, [login, navigate, retryCount])
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -100,9 +110,20 @@ export default function OnboardingPage() {
       <div className="onboarding-page">
         <div className="onboarding-card card" style={{ textAlign: 'center' }}>
           <div className="spinner" />
+          <p style={{ marginTop: '1rem', color: 'var(--text-muted)' }}>Kontroluji přiřazení k chatě...</p>
         </div>
       </div>
     )
+  }
+
+  function handleRetryCheck() {
+    setChecking(true)
+    setRetryCount((c) => c + 1)
+  }
+
+  function handleLogout() {
+    logout()
+    navigate('/', { replace: true })
   }
 
   return (
@@ -112,21 +133,45 @@ export default function OnboardingPage() {
           <img src="/logo-icon.svg" alt="Logo" className="auth-logo-icon" />
           <h1 className="auth-brand-text">kdynachatu.cz</h1>
         </div>
-        <h2 className="onboarding-title">Vytvorte svuj prostor</h2>
+        <h2 className="onboarding-title">Vytvořte svůj prostor</h2>
         <p className="auth-subtitle">
-          Vitejte{user?.username ? `, ${user.username}` : ''}! Pojmenujte svou chatu.
+          Vítejte{user?.username ? `, ${user.username}` : ''}! Pojmenujte svou chatu.
         </p>
         <form onSubmit={handleSubmit} noValidate>
           <div className="form-group">
-            <label htmlFor="cabin-name">Nazev chaty</label>
-            <input ref={nameRef} id="cabin-name" type="text" placeholder="napr. Chata U Lesa" maxLength={100} autoFocus autoComplete="off" required />
+            <label htmlFor="cabin-name">Název chaty</label>
+            <input ref={nameRef} id="cabin-name" type="text" placeholder="např. Chata U Lesa" maxLength={100} autoFocus autoComplete="off" required />
           </div>
           {error && <p className="error-message">{error}</p>}
           <button type="submit" className="button-primary" style={{ width: '100%' }} disabled={loading}>
-            {loading ? 'Vytvari se...' : 'Vytvorit chatu'}
+            {loading ? 'Vytváří se...' : 'Vytvořit chatu'}
           </button>
         </form>
-        <p className="onboarding-hint">Nazev chaty lze kdykoli zmenit v nastaveni.</p>
+        <p className="onboarding-hint">Název chaty lze kdykoli změnit v nastavení.</p>
+        
+        <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--border-color)' }}>
+          <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+            Byli jste pozváni do existující chaty? Požádejte správce o novou pozvánku, nebo zkuste znovu načíst stránku.
+          </p>
+          <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <button 
+              type="button" 
+              onClick={handleRetryCheck}
+              className="button-secondary"
+              style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
+            >
+              Zkusit znovu
+            </button>
+            <button 
+              type="button" 
+              onClick={handleLogout}
+              className="button-secondary"
+              style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
+            >
+              Odhlásit se
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   )

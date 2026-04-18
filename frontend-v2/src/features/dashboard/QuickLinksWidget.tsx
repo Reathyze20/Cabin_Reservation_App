@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import type { DashboardGalleryData, DashboardNotesData } from "@/api/dashboard";
+import { formatCount } from "@/lib/utils";
 import { Camera, MessageCircle, BookOpen } from "lucide-react";
 
 interface Props {
@@ -40,7 +41,7 @@ export function QuickLinksWidget({ gallery, notes }: Props) {
               <span className="quick-link-label">Galerie</span>
               <span className="quick-link-meta">
                 {photoCount > 0
-                  ? `${photoCount} nových fotek`
+                  ? formatCount(photoCount, 'nová fotka', 'nové fotky', 'nových fotek')
                   : "Zatím žádné fotky"
                 }
               </span>

@@ -7,6 +7,7 @@ import { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Search, Plus, FolderOpen, MoreVertical, Pencil, Trash2, Image } from 'lucide-react'
 import type { GalleryFolder } from '@/api/gallery'
+import { formatCount } from '@/lib/utils'
 
 interface Props {
   folders: GalleryFolder[]
@@ -187,7 +188,7 @@ export function FolderGrid({
             animate="visible"
             whileHover={{ y: -4, boxShadow: '0 12px 28px rgba(0,0,0,0.12)' }}
             role="listitem"
-            aria-label={`Album ${f.name}, ${f.photoCount ?? 0} ${(f.photoCount ?? 0) === 1 ? 'fotka' : (f.photoCount ?? 0) >= 2 && (f.photoCount ?? 0) <= 4 ? 'fotky' : 'fotek'}`}
+            aria-label={`Album ${f.name}, ${formatCount(f.photoCount ?? 0, 'fotka', 'fotky', 'fotek')}`}
           >
             <div className="folder-card__cover">
               {f.coverPhotoUrl ? (
@@ -201,7 +202,7 @@ export function FolderGrid({
             <div className="folder-card__info">
               <span className="folder-card__name">{f.name}</span>
               <div className="folder-card__meta">
-                <span>{f.photoCount ?? 0} {(f.photoCount ?? 0) === 1 ? 'fotka' : (f.photoCount ?? 0) >= 2 && (f.photoCount ?? 0) <= 4 ? 'fotky' : 'fotek'}</span>
+                <span>{formatCount(f.photoCount ?? 0, 'fotka', 'fotky', 'fotek')}</span>
                 <span>{new Date(f.createdAt).toLocaleDateString('cs-CZ')}</span>
               </div>
             </div>

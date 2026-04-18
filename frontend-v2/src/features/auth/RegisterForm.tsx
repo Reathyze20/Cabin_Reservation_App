@@ -99,7 +99,7 @@ export function RegisterForm({ onShowLogin, onShowVerify }: RegisterFormProps) {
       // Token-based flow: e-mail pro aktivaci byl odeslán
       if (data.requiresVerification) {
         if (data.testToken) {
-          showToast('E-mail se nepodařil odeslat — automaticky aktivujeme váš účet...', 'info')
+          showToast('E-mail se nepodařilo odeslat. Otevírám nouzový aktivační odkaz.', 'info')
           setTimeout(() => {
             // Přesměrování na verify stránku s tokenem — v React routeru
             window.location.href = `/verify?token=${data.testToken}`

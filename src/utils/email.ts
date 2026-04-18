@@ -9,7 +9,7 @@ import { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, EMAIL_FROM, FRONTEND_URL } 
 // ─── Nodemailer transporter (Amazon SES SMTP) ────────────────────────────────
 
 const createTransporter = () => {
-  if (!SMTP_HOST || (!SMTP_USER && !SMTP_PASS)) {
+  if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) {
     logger.warn("EMAIL", "SMTP credentials are not fully configured. Emails will not be sent.");
     return null;
   }
@@ -27,9 +27,21 @@ const createTransporter = () => {
 
 const transporter = createTransporter();
 
+function ensureEmailTransport(emailKind: string): void {
+  if (transporter) {
+    return;
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    logger.error("EMAIL", `${emailKind} email could not be sent because SMTP is not fully configured.`);
+    throw new Error("SMTP_NOT_CONFIGURED");
+  }
+}
+
 // ─── Legacy: Send verification email with PIN code ──────────────────────────
 
 export const sendVerificationEmailWithPIN = async (email: string, code: string): Promise<void> => {
+  ensureEmailTransport("Verification PIN");
   if (!transporter) {
     logger.warn("EMAIL", `[SIMULATION] Verification PIN email for ${email} with code ${code}`);
     return;
@@ -102,6 +114,7 @@ export const sendVerificationEmailWithPIN = async (email: string, code: string):
 // ─── New SaaS: Send verification email with activation link ─────────────────
 
 export const sendVerificationEmailWithToken = async (email: string, token: string): Promise<void> => {
+  ensureEmailTransport("Verification token");
   if (!transporter) {
     logger.warn("EMAIL", `[SIMULATION] Verification token email for ${email} — token: ${token}`);
     logger.info("EMAIL", `Verify URL (no SMTP): ${FRONTEND_URL}/#/verify?token=${token}`);
@@ -189,6 +202,7 @@ export const sendFrostAlertEmail = async (
   lowestTemp: number,
   frostDatesFormatted: string
 ): Promise<void> => {
+  ensureEmailTransport("Frost alert");
   if (!transporter) {
     logger.warn("EMAIL", `[SIMULATION] Frost alert for ${email} — cabin "${cabinName}", lowest ${lowestTemp} °C`);
     return;

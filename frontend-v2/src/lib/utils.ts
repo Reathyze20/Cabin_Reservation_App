@@ -9,6 +9,19 @@ export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs))
 }
 
+export function pluralize(count: number, one: string, few: string, many: string): string {
+  const normalized = Math.abs(count)
+
+  if (normalized === 1) return one
+  if (normalized >= 2 && normalized <= 4) return few
+
+  return many
+}
+
+export function formatCount(count: number, one: string, few: string, many: string): string {
+  return `${count} ${pluralize(count, one, few, many)}`
+}
+
 // ─── Date helpers ──────────────────────────────────────────────────────────────
 
 const MONTH_NAMES = [

@@ -63,7 +63,7 @@ router.post("/login", validate(loginSchema), async (req: Request, res: Response)
     });
 
     if (!user) {
-      return res.status(401).json({ message: "Uživatel nenalezen." });
+      return res.status(401).json({ message: "Nesprávné uživatelské jméno." });
     }
 
     if (!(await bcrypt.compare(password, user.passwordHash))) {

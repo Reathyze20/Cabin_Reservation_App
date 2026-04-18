@@ -6,6 +6,7 @@ import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Check, CheckSquare, ChevronLeft, ChevronRight, Trash2, Upload, X } from 'lucide-react'
 import type { GalleryPhoto } from '@/api/gallery'
+import { formatCount } from '@/lib/utils'
 
 const PAGE_SIZE = 10
 
@@ -220,7 +221,7 @@ export function PhotoGrid({
             </div>
           ) : null}
           <div className="gallery-photo-count">
-            {photos.length} {photos.length === 1 ? 'fotka' : photos.length < 5 ? 'fotky' : 'fotek'}
+            {formatCount(photos.length, 'fotka', 'fotky', 'fotek')}
           </div>
         </div>
       )}

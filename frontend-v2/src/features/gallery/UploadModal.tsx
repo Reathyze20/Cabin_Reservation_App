@@ -4,6 +4,7 @@
 import { useState, useRef, useMemo, useEffect } from 'react'
 import { useUploadPhotos } from './hooks/useGallery'
 import { showToast } from '@/lib/toast'
+import { formatCount, pluralize } from '@/lib/utils'
 import { Modal } from '@/components/shared/Modal'
 import { Upload, ImagePlus, X } from 'lucide-react'
 
@@ -61,7 +62,8 @@ export function UploadModal({ folderId, onClose }: Props) {
     if (!files.length) return
     try {
       await upload.mutateAsync(files)
-      showToast(`Nahráno ${files.length} fotek.`, 'success')
+      const verb = pluralize(files.length, 'Nahrána', 'Nahrány', 'Nahráno')
+      showToast(`${verb} ${formatCount(files.length, 'fotka', 'fotky', 'fotek')}.`, 'success')
       onClose()
     } catch { /* onError in hook */ }
   }
