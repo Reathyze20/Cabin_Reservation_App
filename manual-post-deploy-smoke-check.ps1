@@ -7,7 +7,7 @@ param(
     [string]$Pm2ProcessName = "chata-app",
     [string]$LocalHealthUrl = "http://localhost:3000/api/health",
     [string]$LocalWebUrl = "http://localhost:3000/",
-    [string]$PublicBaseUrl = "https://kdynachatu.cz",
+    [string]$PublicBaseUrl = "https://chataceskestredohori.cz",
     [switch]$RequireOperationsMinimum,
     [switch]$SkipPublicChecks
 )
@@ -136,7 +136,7 @@ if (-not $SkipPublicChecks.IsPresent) {
     $publicHealthUrl = "$normalizedPublicBaseUrl/api/health"
 
     Write-Host "Running public web checks..."
-    $publicWebResponse = Invoke-WebRequest -Uri $normalizedPublicBaseUrl -Method Get -TimeoutSec 20
+    $publicWebResponse = Invoke-WebRequest -Uri $normalizedPublicBaseUrl -Method Get -TimeoutSec 20 -UseBasicParsing
     if ($publicWebResponse.StatusCode -lt 200 -or $publicWebResponse.StatusCode -ge 400) {
         throw "Public web returned unexpected status code: $($publicWebResponse.StatusCode)"
     }

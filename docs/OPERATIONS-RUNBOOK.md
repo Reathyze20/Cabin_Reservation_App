@@ -23,13 +23,13 @@ Pro family-ready minimum staci dva uptime monitory a jeden alert channel.
 ### Doporucene monitory
 
 1. Hlavni web
-- URL: `https://kdynachatu.cz`
+- URL: `https://chataceskestredohori.cz`
 - Typ: HTTP(S)
 - Interval: 5 minut na free tieru
 - Ocekavani: HTTP 200-399
 
 2. API health endpoint
-- URL: `https://kdynachatu.cz/api/health`
+- URL: `https://chataceskestredohori.cz/api/health`
 - Typ: HTTP(S)
 - Interval: 5 minut na free tieru
 - Ocekavani: HTTP 200 a JSON se `status = ok`
@@ -159,8 +159,8 @@ Jdi po nejkratsim operational sledu. Cilem je rychle zjistit, jestli je problem 
 ### 1. Overit verejny signal
 
 ```powershell
-Invoke-WebRequest https://kdynachatu.cz -Method Get
-Invoke-RestMethod https://kdynachatu.cz/api/health
+Invoke-WebRequest https://chataceskestredohori.cz -Method Get
+Invoke-RestMethod https://chataceskestredohori.cz/api/health
 ```
 
 Kdyz failuje oboji, je to globalnejsi problem nez jen jedna feature.
