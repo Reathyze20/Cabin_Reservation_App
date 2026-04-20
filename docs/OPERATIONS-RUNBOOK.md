@@ -75,7 +75,7 @@ Bez log rotation riskujes, ze `pm2 logs` a soubory v `data/logs` casem zbytecne 
 ### Co po instalaci overit
 
 - `npx pm2 module:list` obsahuje `pm2-logrotate`
-- `npx pm2 conf pm2-logrotate` ukaze spravne hodnoty
+- v `/home/reathyze/.pm2/module_conf.json` je sekce `pm2-logrotate` se spravnymi hodnotami
 - po case neroste disk jen kvuli logum
 
 ---

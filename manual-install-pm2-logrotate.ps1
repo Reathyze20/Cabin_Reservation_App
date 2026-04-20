@@ -52,6 +52,8 @@ $remoteLines = @(
     "retain=$Retain",
     "worker_interval=$WorkerInterval",
     "compress_value=$compressValue",
+    'user_home=$(dirname "$nvm_dir")',
+    'module_conf_path="$user_home/.pm2/module_conf.json"',
     '',
     'if ! id "$app_user" >/dev/null 2>&1; then',
     '  echo "Missing user: $app_user" >&2',
@@ -76,7 +78,14 @@ $remoteLines = @(
     '',
     'su - "$app_user" -s /bin/bash -c "$app_shell_base; npx pm2 set pm2-logrotate:max_size \"$max_size\"; npx pm2 set pm2-logrotate:retain $retain; npx pm2 set pm2-logrotate:compress $compress_value; npx pm2 set pm2-logrotate:rotateInterval \"$rotate_interval\"; npx pm2 set pm2-logrotate:workerInterval $worker_interval; npx pm2 save"',
     'echo "PM2 log rotation configured:"',
-    'su - "$app_user" -s /bin/bash -c "$app_shell_base; npx pm2 module:list; echo; npx pm2 conf pm2-logrotate"'
+    'su - "$app_user" -s /bin/bash -c "$app_shell_base; npx pm2 module:list"',
+    'echo',
+    'if [ -f "$module_conf_path" ]; then',
+    '  grep -A8 '"'"'"pm2-logrotate"'"'"' "$module_conf_path" || cat "$module_conf_path"',
+    'else',
+    '  echo "Missing PM2 module config file: $module_conf_path" >&2',
+    '  exit 1',
+    'fi'
 )
 
 $remoteScript = $remoteLines -join "`n"
