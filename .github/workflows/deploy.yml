@@ -26,6 +26,7 @@ jobs:
           # Explicitly source nvm to make node/npm/pm2 available
           # IMPORTANT: NVM is installed for 'reathyze' user, not root — use absolute path
           export NVM_DIR="/home/reathyze/.nvm"
+          export PM2_HOME="/home/reathyze/.pm2"
           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
           # Failsafe: if any step fails, ensure app gets restarted with old build
