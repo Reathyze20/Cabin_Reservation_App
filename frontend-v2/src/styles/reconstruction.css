@@ -1,9 +1,9 @@
-﻿/* ============================================================================
-   Reconstruction (Kanban) Page — Redesigned
+/* ============================================================================
+   Reconstruction (Kanban) Page � Redesigned
    Frosted glass kanban board matching the app's design language.
    ============================================================================ */
 
-/* ── Page wrapper ──────────────────────────────────────────────────────────── */
+/* �� Page wrapper ������������������������������������������������������������ */
 .main-content-reconstruction {
   width: 100%;
   flex-grow: 1;
@@ -18,9 +18,32 @@
   background: rgba(255, 255, 255, 0.95);
   border-radius: var(--radius-2xl, 16px);
   height: 100%;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.74);
+  backdrop-filter: blur(18px);
+  box-shadow:
+    0 28px 70px rgba(15, 23, 42, 0.12),
+    0 10px 26px rgba(15, 23, 42, 0.08);
 }
 
-/* ── Header ────────────────────────────────────────────────────────────────── */
+.reconstruction-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 220px;
+  background:
+    radial-gradient(circle at top left, rgba(232, 244, 239, 0.9) 0%, rgba(232, 244, 239, 0) 56%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0) 100%);
+  pointer-events: none;
+}
+
+.reconstruction-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* �� Header ������������������������������������������������������������������ */
 .reconstruction-header {
   padding: var(--space-lg) var(--space-xl);
   border-bottom: 1px solid var(--border-light, #f1f5f9);
@@ -29,6 +52,7 @@
   align-items: center;
   flex-shrink: 0;
   min-height: 64px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.18) 100%);
 }
 
 .reconstruction-header-left {
@@ -51,13 +75,14 @@
   margin: 0;
 }
 
-/* ── Budget bar ────────────────────────────────────────────────────────────── */
+/* �� Budget bar �������������������������������������������������������������� */
 .budget-container {
   display: flex;
   flex-direction: column;
   gap: 6px;
   padding: var(--space-md) var(--space-xl) var(--space-lg);
   border-bottom: 1px solid var(--border-light, #f1f5f9);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.34) 0%, rgba(255, 255, 255, 0.12) 100%);
 }
 
 .budget-labels {
@@ -99,7 +124,7 @@
   color: var(--text-muted);
 }
 
-/* ── Kanban board ──────────────────────────────────────────────────────────── */
+/* �� Kanban board ������������������������������������������������������������ */
 .kanban-board {
   display: flex;
   gap: var(--space-lg);
@@ -114,7 +139,7 @@
   scrollbar-color: var(--border-strong) transparent;
 }
 
-/* ── Kanban column ─────────────────────────────────────────────────────────── */
+/* �� Kanban column ����������������������������������������������������������� */
 .kanban-column {
   flex: 1 1 0;
   min-width: 300px;
@@ -128,6 +153,10 @@
   min-height: 0;
   scroll-snap-align: start;
   border: 1px solid rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(14px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    0 14px 28px rgba(15, 23, 42, 0.08);
 }
 
 .kanban-column-header {
@@ -183,7 +212,7 @@
   filter: grayscale(0.3);
 }
 
-/* ── Column variants ───────────────────────────────────────────────────────── */
+/* �� Column variants ��������������������������������������������������������� */
 .kanban-column.col-navrzeno {
   background: linear-gradient(180deg, rgba(219, 234, 254, 0.35) 0%, rgba(255, 255, 255, 0.5) 100%);
 }
@@ -238,7 +267,7 @@
   color: #047857;
 }
 
-/* ── Column body (scrollable) ──────────────────────────────────────────────── */
+/* �� Column body (scrollable) ������������������������������������������������ */
 .kanban-column-body {
   padding: var(--space-sm) var(--space-md);
   overflow-y: auto;
@@ -252,7 +281,20 @@
   scrollbar-color: var(--border-strong) transparent;
 }
 
-/* ── Kanban item card (base) ───────────────────────────────────────────────── */
+.kanban-column-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.kanban-column-body::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.45);
+  border-radius: 999px;
+}
+
+.kanban-item-motion {
+  display: flex;
+}
+
+/* �� Kanban item card (base) ������������������������������������������������� */
 .kanban-item {
   background: var(--bg-card);
   border-radius: var(--radius-md);
@@ -265,6 +307,17 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  position: relative;
+  will-change: transform;
+}
+
+.kanban-item::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: linear-gradient(90deg, rgba(63, 123, 99, 0.85), rgba(52, 211, 153, 0.35));
+  opacity: 0.85;
 }
 
 .kanban-item:hover {
@@ -273,7 +326,7 @@
   border-color: var(--border-strong);
 }
 
-/* ── Card header ───────────────────────────────────────────────────────────── */
+/* �� Card header ������������������������������������������������������������� */
 .card-header {
   display: flex;
   justify-content: space-between;
@@ -291,7 +344,7 @@
   flex: 1;
 }
 
-/* ── Card actions (edit + delete) ──────────────────────────────────────────── */
+/* �� Card actions (edit + delete) �������������������������������������������� */
 .card-actions {
   display: flex;
   gap: 2px;
@@ -366,7 +419,7 @@
   background: var(--brand-primary-light);
 }
 
-/* ── Card footer ───────────────────────────────────────────────────────────── */
+/* �� Card footer ������������������������������������������������������������� */
 .card-footer {
   display: flex;
   justify-content: space-between;
@@ -396,7 +449,7 @@
   overflow: hidden;
 }
 
-/* ── Idea card ─────────────────────────────────────────────────────────────── */
+/* �� Idea card ��������������������������������������������������������������� */
 .idea-thumbnail {
   width: 100%;
   height: 120px;
@@ -421,25 +474,7 @@
   flex-direction: column;
 }
 
-/* Legacy */
-.idea-header {
-  display: none;
-}
-
-.idea-actions {
-  display: none;
-}
-
-.idea-link {
-  color: var(--text-muted);
-  transition: color var(--transition-fast);
-}
-
-.idea-link:hover {
-  color: var(--brand-primary);
-}
-
-/* ── Company card ──────────────────────────────────────────────────────────── */
+/* �� Company card ������������������������������������������������������������ */
 .company-card {
   padding: var(--space-md);
 }
@@ -535,7 +570,28 @@
   color: var(--brand-primary);
 }
 
-/* ── Task card ─────────────────────────────────────────────────────────────── */
+.company-status-control {
+  margin-top: 0.5rem;
+}
+
+.company-status-select {
+  width: 100%;
+  font: inherit;
+  font-size: var(--font-size-xs);
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--border-strong, #e5e7eb);
+  border-radius: var(--radius-md);
+  padding: 8px 10px;
+}
+
+.company-status-select:focus {
+  outline: none;
+  border-color: var(--brand-primary);
+  box-shadow: var(--focus-ring);
+}
+
+/* �� Task card ��������������������������������������������������������������� */
 .task-card {
   padding: var(--space-md);
 }
@@ -546,12 +602,6 @@
   gap: 9px;
   flex: 1;
   min-width: 0;
-}
-
-.task-header {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
 }
 
 .task-checkbox-wrapper {
@@ -610,28 +660,13 @@
 }
 
 .kanban-item.task-done {
-  opacity: 0.55;
+  opacity: 0.62;
   transition: opacity 0.2s;
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.95) 0%, rgba(241, 245, 249, 0.95) 100%);
 }
 
 .kanban-item.task-done:hover {
   opacity: 1;
-}
-
-/* task-footer alias */
-.task-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid var(--border-light, #f1f5f9);
-}
-
-.task-cost {
-  font-size: var(--font-size-xs);
-  font-weight: 600;
-  color: var(--text-muted);
 }
 
 .task-deadline {
@@ -647,7 +682,7 @@
   font-weight: 600;
 }
 
-/* ── Empty states ──────────────────────────────────────────────────────────── */
+/* �� Empty states ������������������������������������������������������������ */
 .kanban-empty-state {
   display: flex;
   flex-direction: column;
@@ -666,20 +701,6 @@
   font-size: var(--font-size-sm);
   margin: 0;
   color: var(--text-muted);
-}
-
-/* ── Shared buttons ────────────────────────────────────────────────────────── */
-.delete-card-btn {
-  background: none;
-  border: none;
-  color: var(--text-disabled, #9ca3af);
-  cursor: pointer;
-  transition: color var(--transition-fast);
-  padding: 0;
-}
-
-.delete-card-btn:hover {
-  color: var(--status-error);
 }
 
 .vote-btn {
@@ -706,7 +727,7 @@
   font-weight: 700;
 }
 
-/* ── Add column button ─────────────────────────────────────────────────────── */
+/* �� Add column button ������������������������������������������������������� */
 .add-col-btn {
   width: 28px;
   height: 28px;
@@ -730,7 +751,7 @@
   border-color: var(--brand-primary);
 }
 
-/* ── Responsive ────────────────────────────────────────────────────────────── */
+/* �� Responsive �������������������������������������������������������������� */
 @media (max-width: 900px) {
   .kanban-board {
     flex-direction: column;
@@ -780,80 +801,8 @@
 }
 
 /* ============================================================================
-   MODAL — Rekonstrukce form
+   MODAL � Rekonstrukce form
    ============================================================================ */
-
-.rec-modal-content {
-  max-width: 520px;
-  width: 100%;
-  border-radius: 16px;
-  padding: 0;
-  overflow: hidden;
-  box-shadow:
-    0 20px 60px rgba(0, 0, 0, 0.18),
-    0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-.rec-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 18px 24px 14px;
-  border-bottom: 1px solid var(--border-strong, #e5e7eb);
-}
-
-.rec-modal-header h2 {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text-main);
-  margin: 0;
-  line-height: 1.3;
-}
-
-.modal-close-btn-icon {
-  width: 30px;
-  height: 30px;
-  border: none;
-  background: none;
-  border-radius: 8px;
-  color: var(--text-disabled, #9ca3af);
-  font-size: 14px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition:
-    background 0.15s,
-    color 0.15s;
-  flex-shrink: 0;
-}
-
-.modal-close-btn-icon:hover {
-  background: var(--bg-hover, #e8ece9);
-  color: var(--text-main);
-}
-
-/* Form body */
-#add-reconstruction-form {
-  padding: 20px 24px 0;
-  max-height: calc(90dvh - 130px);
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border-strong) transparent;
-}
-
-#add-reconstruction-form::-webkit-scrollbar {
-  width: 4px;
-}
-
-#add-reconstruction-form::-webkit-scrollbar-thumb {
-  background: var(--border-strong, #e5e7eb);
-  border-radius: 2px;
-}
-
-.rec-modal-content .form-group {
-  margin-bottom: 14px;
-}
 
 .form-label {
   display: block;
@@ -917,30 +866,6 @@ select.form-input {
   cursor: pointer;
 }
 
-/* Two-column form row */
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 14px;
-}
-
-.form-row > .form-group {
-  margin-bottom: 0;
-}
-
-/* Modal footer */
-.rec-modal-footer {
-  position: sticky;
-  bottom: 0;
-  background: var(--bg-card);
-  padding: 14px 24px 20px;
-  margin-top: 6px;
-  border-top: 1px solid var(--border-strong, #e5e7eb);
-  display: flex;
-  justify-content: flex-end;
-}
-
 .rec-submit-btn {
   display: inline-flex;
   align-items: center;
@@ -990,960 +915,406 @@ select.form-input {
   }
 }
 
-/* ── Modal mobile ──────────────────────────────────────────────────────────── */
+/* �� Modal mobile ������������������������������������������������������������ */
 @media (max-width: 600px) {
-  .form-row {
-    grid-template-columns: 1fr;
-    gap: 0;
-  }
-
-  .form-row > .form-group {
-    margin-bottom: 14px;
-  }
-
-  .rec-modal-content {
-    border-radius: 12px 12px 0 0;
-  }
-
-  .rec-modal-footer {
-    padding: 12px 16px;
-    padding-bottom: max(16px, env(safe-area-inset-bottom));
-  }
-
   .rec-submit-btn {
     width: 100%;
     min-width: 0;
   }
-
-  #add-reconstruction-form {
-    padding: 16px 16px 0;
-  }
-
-  .rec-modal-header {
-    padding: 14px 16px 12px;
-  }
 }
+
 /* ============================================================================
-   Reconstruction (Kanban) Page
+   Reconstruction overrides � Sprint 2A polish
    ============================================================================ */
-.main-content-reconstruction {
-  width: 100%;
-  flex-grow: 1;
-  min-height: 0;
+
+.reconstruction-summary {
   display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
 }
 
-.reconstruction-card {
-  /* extends .page-card */
-  height: 100%;
-}
-
-.reconstruction-header {
-  padding: 15px var(--space-xl);
-  border-bottom: 1px solid var(--color-border-light);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.reconstruction-header h2 {
-  font-size: var(--font-size-2xl);
-  color: var(--color-text-main);
-  margin: 0;
+.reconstruction-summary-pill {
   display: flex;
   align-items: center;
   gap: 10px;
-}
-
-.reconstruction-header h2 i {
-  color: var(--color-primary);
-}
-
-/* Budget UI */
-.budget-container {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  min-width: 250px;
-}
-
-.budget-labels {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.95rem;
-}
-
-.budget-title {
-  color: var(--color-text-muted);
-  font-weight: 600;
-}
-
-.budget-amount {
-  color: var(--color-text-dark);
-  font-size: 1.1rem;
-}
-
-.budget-progress-bar {
-  height: 8px;
-  background-color: var(--color-border-light);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.budget-progress-fill {
-  height: 100%;
-  background-color: var(--color-primary);
-  transition: width 0.5s ease;
-}
-
-.budget-details {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-}
-
-/* Kanban Board */
-.kanban-board {
-  display: flex;
-  gap: var(--space-xl);
-  padding: var(--space-xl);
-  overflow-x: auto;
-  overflow-y: hidden;
-  flex-grow: 1;
-  align-items: flex-start;
-  min-height: 0;
-  scroll-snap-type: x proximity;
-}
-
-.kanban-column {
-  flex: 1 1 0;
-  min-width: 320px;
-  max-width: 400px;
-  background-color: var(--color-background);
+  min-width: 116px;
+  padding: 10px 12px;
   border-radius: var(--radius-lg);
-  display: flex;
-  flex-direction: column;
-  max-height: 100%;
-  overflow: hidden;
-  min-height: 0;
-  scroll-snap-align: start;
-}
-
-.kanban-column-header {
-  padding: 15px;
-  font-weight: 700;
-  font-size: var(--font-size-lg);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-  border-bottom: 3px solid transparent;
-}
-
-.kanban-column-header i {
-  font-size: 1.1em;
-}
-
-.kanban-column-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  vertical-align: middle;
-  margin-right: 4px;
-  width: 30px;
-  height: 30px;
-  padding: 4px;
-  background: rgba(93, 155, 98, 0.12);
-  border-radius: 8px;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
-  object-fit: contain;
-}
-
-.kanban-empty-icon {
-  display: block;
-  margin: 0 auto 8px;
-  opacity: 0.6;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
-}
-
-/* Column variants */
-.kanban-column.col-navrzeno .kanban-column-header {
-  border-bottom-color: #60a5fa;
-  color: #2563eb;
-}
-
-.kanban-column.col-schvaleno .kanban-column-header {
-  border-bottom-color: #8bb88b;
-  color: #6b9e6b;
-}
-
-.kanban-column.col-probehlo .kanban-column-header {
-  border-bottom-color: #34d399;
-  color: #059669;
-}
-
-.kanban-column-body {
-  padding: 10px;
-  overflow-y: auto;
-  flex-grow: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  max-height: 60vh;
-  padding-right: 8px;
-}
-
-/* Kanban Item Card Base */
-.kanban-item {
-  background: var(--color-bg-card);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
+  background: rgba(248, 250, 252, 0.88);
+  border: 1px solid var(--border-strong, #e5e7eb);
   box-shadow: var(--shadow-xs);
-  transition:
-    box-shadow var(--transition-base),
-    transform var(--transition-base);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  backdrop-filter: blur(10px);
 }
 
-.kanban-item:hover {
-  box-shadow: var(--shadow-md);
-  transform: translateY(-1px);
+.reconstruction-summary-pill svg {
+  color: var(--brand-primary);
+  flex-shrink: 0;
 }
 
-/* ── 1. Hlavička karty ─────────────────────────────────────────── */
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
+.reconstruction-summary-label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.2;
 }
 
-.kanban-item-title {
-  font-weight: 600;
-  font-size: 0.95rem;
-  color: #111827;
-  line-height: 1.35;
-  margin: 0;
-  word-break: break-word;
-  flex: 1;
+.reconstruction-summary-value {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-main);
+  line-height: 1.2;
 }
 
-/* ── 2. Akce (tužka + koš) ─────────────────────────────────────── */
-.card-actions {
-  display: flex;
-  gap: 4px;
-  flex-shrink: 0;  /* Schovat akce do hovered stavu (clutter reduction) */
-  opacity: 0;
-  transition: opacity 0.15s;
+.reconstruction-state-wrap {
+  padding: var(--space-lg) var(--space-xl) var(--space-xl);
 }
-
-/* Zobrazit akce při najetí na kartu */
-.kanban-item:hover .card-actions,
-.kanban-item:focus-within .card-actions {
-  opacity: 1;}
 
 .card-action-edit,
-.card-action-del {
-  background: transparent;
-  border: none;
-  color: #d1d5db;
-  cursor: pointer;
-  padding: 4px 5px;
-  border-radius: 5px;
-  font-size: 12px;
-  line-height: 1;
-  transition:
-    color 0.18s,
-    background 0.18s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.card-action-edit:hover {
-  color: var(--color-primary);
-  background: var(--color-primary-bg);
-}
-
-.card-action-del:hover {
-  color: var(--color-danger);
-  background: var(--color-danger-light);
-}
-
-/* Link-typ akce (e-shop u nápadu) */
+.card-action-del,
 .card-action-link {
-  background: transparent;
-  border: none;
-  color: var(--color-border-dark);
-  cursor: pointer;
-  padding: 4px 5px;
-  border-radius: var(--radius-sm);
-  font-size: 12px;
-  line-height: 1;
-  transition:
-    color var(--transition-fast),
-    background var(--transition-fast);
-  display: flex;
-  align-items: center;
-  text-decoration: none;
-}
-
-.card-action-link:hover {
-  color: var(--color-primary);
-  background: var(--color-primary-bg);
-}
-
-/* ── 3. Patička karty ───────────────────────────────────────────── */
-.card-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid var(--color-border);
-}
-
-.card-cost {
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--color-text-light);
-}
-
-.kanban-item-desc {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-muted);
-  margin-top: 6px;
-  line-height: 1.45;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* Idea Card */
-.idea-card {
-  /* specific styles if needed */
-}
-
-.idea-thumbnail {
-  width: 100%;
-  height: 140px;
-  overflow: hidden;
-  border-bottom: 1px solid var(--color-border-light);
-}
-
-.idea-thumbnail img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.idea-content {
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Legacy — zachovat pro zpětnou kompatibilitu */
-.idea-header {
-  display: none;
-}
-
-.idea-actions {
-  display: none;
-}
-
-.idea-link {
-  color: var(--color-text-muted);
-  transition: color var(--transition-fast);
-}
-
-.idea-link:hover {
-  color: var(--color-primary);
-}
-
-/* Company Card */
-.company-card {
-  padding: 14px;
-}
-
-/* Badge stavu — pod titulkem */
-.company-status-badge {
-  display: inline-flex;
-  align-items: center;
-  margin-top: 6px;
-  margin-bottom: 4px;
-  font-size: 11px;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 20px;
-  letter-spacing: 0.01em;
-}
-
-.company-status-badge.status-pending {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.company-status-badge.status-contacted {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.company-status-badge.status-approved {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.company-status-badge.status-rejected {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-/* Kontaktní řádek */
-.company-contact-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid #e5e7eb;
-}
-
-/* Legacy status classes — ponech pro selektor .status-X na badge */
-.status-pending {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.status-contacted {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.status-approved {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.status-rejected {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.company-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 15px;
-  flex-wrap: wrap;
-}
-
-.company-action-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  background-color: var(--color-bg-alt);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  font-size: 0.8rem;
-  color: var(--color-text-dark);
-  text-decoration: none;
-  transition: all var(--transition-fast);
-  font-weight: 500;
-}
-
-.company-action-btn:hover {
-  background-color: var(--color-primary-bg);
-  border-color: var(--color-primary-light);
-  color: var(--color-primary-dark);
-}
-
-/* Task Card */
-.task-card {
-  padding: 14px;
-}
-
-/* Titulek + checkbox vedle sebe */
-.task-title-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 9px;
-  flex: 1;
-  min-width: 0;
-}
-
-.task-header {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-}
-
-.task-checkbox-wrapper {
-  position: relative;
-  display: inline-block;
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.task-checkbox {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.checkmark {
-  position: absolute;
-  top: 0;
-  left: 0;
-  height: 20px;
-  width: 20px;
-  background-color: #fff;
-  border: 2px solid var(--color-border-dark);
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.task-checkbox:checked~.checkmark {
-  background-color: var(--color-primary);
-  border-color: var(--color-primary);
-}
-
-.checkmark:after {
-  content: "";
-  position: absolute;
-  display: none;
-  left: 6px;
-  top: 2px;
-  width: 5px;
-  height: 10px;
-  border: solid white;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
-}
-
-.task-checkbox:checked~.checkmark:after {
-  display: block;
-}
-
-.task-done .kanban-item-title {
-  text-decoration: line-through;
-  color: var(--color-text-muted);
-}
-
-/* Hotová karta — celá ztmažená, akce stále přístupné na hover */
-.kanban-item.task-done {
-  opacity: 0.6;
-  transition: opacity 0.2s;
-}
-
-.kanban-item.task-done:hover {
-  opacity: 1;
-}
-
-/* task-footer alias — používáme .card-footer, ale zachováme pro starý HTML */
-.task-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid var(--color-border);
-}
-
-.task-cost {
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--color-text-light);
-}
-
-.task-deadline {
-  font-size: 0.8rem;
-  color: var(--color-text-muted);
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.deadline-near {
-  color: var(--color-danger);
-  font-weight: 600;
-}
-
-/* Empty States */
-.kanban-empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 30px 20px;
-  text-align: center;
-  color: var(--color-text-muted);
-  background-color: rgba(255, 255, 255, 0.5);
-  border: 2px dashed var(--color-border-light);
-  border-radius: var(--radius-md);
-  gap: 10px;
-}
-
-.kanban-empty-state i {
-  font-size: 2rem;
-  color: var(--color-border-dark);
-  opacity: 0.5;
-}
-
-.kanban-empty-state p {
-  font-size: 0.9rem;
-  margin: 0;
-}
-
-/* Shared */
-.delete-card-btn {
-  background: none;
-  border: none;
-  color: var(--color-border-dark);
-  cursor: pointer;
-  transition: color var(--transition-fast);
+  min-width: 36px;
+  min-height: 36px;
   padding: 0;
 }
 
-.delete-card-btn:hover {
-  color: var(--color-danger);
+.rec-action-icon {
+  width: 15px;
+  height: 15px;
+  stroke-width: 2.2;
+}
+
+.vote-btn svg,
+.company-action-btn svg,
+.reconstruction-empty-action svg,
+.add-col-btn svg {
+  flex-shrink: 0;
+}
+
+.company-action-btn,
+.reconstruction-empty-action {
+  min-height: 36px;
 }
 
 .vote-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: var(--radius-sm);
-  font-size: 1rem;
-  transition: all var(--transition-fast);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--color-text-muted);
+  gap: 6px;
 }
 
-.vote-btn:hover {
-  background-color: var(--color-border-light);
+.add-col-btn {
+  font-size: 0;
 }
 
-.vote-btn.voted-up {
-  color: var(--color-danger);
-  font-weight: 700;
-}
-
-/* ── Responsive ─────────────────────────────────────────────────────── */
-@media (max-width: 900px) {
-  .kanban-board {
-    flex-direction: column;
-    align-items: stretch;
-    overflow-y: auto;
-    overflow-x: hidden;
-    scroll-snap-type: none;
-  }
-
-  .kanban-column {
-    max-width: 100%;
-    min-width: 0;
-    max-height: none;
-  }
-
-  .kanban-column-body {
-    max-height: 400px;
-  }
-
-  .reconstruction-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
-  }
-
-  .budget-container {
-    width: 100%;
-  }
-}
-
-@media (max-width: 480px) {
-  .reconstruction-header {
-    padding: 15px;
-  }
-
-  .reconstruction-header h2 {
-    font-size: var(--font-size-xl);
-  }
-
-  .kanban-board {
-    padding: 15px;
-    gap: 15px;
-  }
-}
-
-/* ============================================================================
-   MODAL REDESIGN — Rekonstrukce
-   ============================================================================ */
-
-.rec-modal-content {
-  max-width: 520px;
-  width: 100%;
-  border-radius: 16px;
-  padding: 0;
-  overflow: hidden;
-  box-shadow:
-    0 20px 60px rgba(0, 0, 0, 0.18),
-    0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-/* Hlavička modalu */
-.rec-modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 18px 24px 14px;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.rec-modal-header h2 {
-  font-size: 15px;
-  font-weight: 700;
-  color: #111827;
+.kanban-empty-title {
   margin: 0;
-  line-height: 1.3;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--text-main);
 }
 
-/* Zavírací tlačítko */
-.modal-close-btn-icon {
-  width: 30px;
-  height: 30px;
-  border: none;
-  background: none;
-  border-radius: 8px;
-  color: #9ca3af;
-  font-size: 14px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition:
-    background 0.15s,
-    color 0.15s;
-  flex-shrink: 0;
-}
-
-.modal-close-btn-icon:hover {
-  background: var(--color-bg-hover);
-  color: var(--color-text-main);
-}
-
-/* Tělo formuláře */
-#add-reconstruction-form {
-  padding: 20px 24px 0;
-  max-height: calc(90dvh - 130px);
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: #e5e7eb transparent;
-}
-
-#add-reconstruction-form::-webkit-scrollbar {
-  width: 4px;
-}
-
-#add-reconstruction-form::-webkit-scrollbar-thumb {
-  background: #e5e7eb;
-  border-radius: 2px;
-}
-
-/* ── 2. Form groups ───────────────────────────────────────────────── */
-
-.rec-modal-content .form-group {
-  margin-bottom: 14px;
-}
-
-.form-label {
-  display: block;
-  font-size: 0.82rem;
-  font-weight: 500;
-  color: var(--color-text-light);
-  margin-bottom: 5px;
-  line-height: 1.3;
-}
-
-/* Removed .form-label-icon - no longer used */
-
-.label-required {
-  color: #ef4444;
-  font-size: 0.75rem;
-  margin-left: 2px;
-}
-
-/* ── 1. Standardní vstupní pole ───────────────────────────────────── */
-
-.form-input {
-  width: 100%;
-  box-sizing: border-box;
-  font-size: 13.5px;
-  font-family: inherit;
-  color: var(--color-text-main);
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: 9px 12px;
-  box-shadow: var(--shadow-xs);
-  transition:
-    border-color var(--transition-fast),
-    box-shadow var(--transition-fast);
-  outline: none;
-  appearance: none;
-  -webkit-appearance: none;
-  line-height: 1.4;
-}
-
-.form-input:focus {
-  border-color: var(--color-primary);
-  box-shadow:
-    0 0 0 3px rgba(93, 155, 98, 0.15),
-    0 1px 2px rgba(0, 0, 0, 0.04);
-}
-
-.form-input::placeholder {
-  color: var(--color-text-muted);
-  font-size: 13px;
-}
-
-.form-input[rows] {
-  resize: vertical;
-  min-height: 78px;
+.kanban-empty-hint {
+  max-width: 28ch;
+  font-size: var(--font-size-xs);
   line-height: 1.5;
 }
 
-select.form-input {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  padding-right: 28px;
-  cursor: pointer;
-}
-
-/* ── 3. Dvousloupcové rozložení ───────────────────────────────────── */
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 14px;
-}
-
-.form-row>.form-group {
-  margin-bottom: 0;
-}
-
-/* ── 4. Modal footer ─────────────────────────────────────────────── */
-
-.rec-modal-footer {
-  position: sticky;
-  bottom: 0;
-  background: var(--color-bg-card);
-  padding: 14px 24px 20px;
-  margin-top: 6px;
-  border-top: 1px solid var(--color-border);
-  display: flex;
-  justify-content: flex-end;
-}
-
-.rec-submit-btn {
+.reconstruction-empty-action {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 9px 22px;
-  min-width: 140px;
   justify-content: center;
-  background: var(--color-primary) !important;
-  color: #ffffff !important;
-  border: none;
-  border-radius: var(--radius-md);
-  font-size: 14px;
-  font-weight: 600;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 8px 12px;
+  border: 1px solid var(--brand-primary);
+  border-radius: var(--radius-full);
+  background: var(--brand-primary-light);
+  color: var(--brand-primary);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
   cursor: pointer;
   transition:
-    background 0.15s,
-    box-shadow 0.15s,
-    transform 0.1s;
-  box-shadow: 0 2px 6px rgba(93, 155, 98, 0.3);
+    background var(--transition-fast),
+    color var(--transition-fast),
+    border-color var(--transition-fast),
+    transform var(--transition-fast);
 }
 
-.rec-submit-btn:hover {
-  background: var(--color-primary-hover) !important;
-  box-shadow: 0 4px 12px rgba(93, 155, 98, 0.4);
+.reconstruction-empty-action:hover {
+  background: var(--brand-primary);
+  color: var(--text-on-primary);
   transform: translateY(-1px);
 }
 
-.rec-submit-btn:active {
-  transform: translateY(0);
-  box-shadow: none;
+.rec-modal-form {
+  display: flex;
+  flex-direction: column;
 }
 
-.rec-submit-btn i {
-  font-size: 12px;
+.rec-modal-footer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  width: 100%;
 }
 
-/* Animace dynamických polí */
-.dynamic-fields {
-  animation: fieldsReveal 0.16s ease;
+.rec-category-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
 }
 
-@keyframes fieldsReveal {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.rec-category-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-strong, #e5e7eb);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--text-main);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color var(--transition-fast),
+    background var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
 }
 
-/* Mobilní přizpůsobení */
-@media (max-width: 600px) {
-  .form-row {
-    grid-template-columns: 1fr;
-    gap: 0;
-  }
+.rec-category-tab svg {
+  color: var(--text-muted);
+}
 
-  .form-row>.form-group {
-    margin-bottom: 14px;
-  }
+.rec-category-tab:hover {
+  border-color: var(--brand-primary);
+  background: var(--brand-primary-light);
+}
 
-  .rec-modal-content {
-    border-radius: 12px 12px 0 0;
-  }
+.rec-category-tab.is-active {
+  border-color: var(--brand-primary);
+  background: rgba(232, 244, 239, 0.95);
+  box-shadow: 0 6px 18px rgba(63, 123, 99, 0.12);
+}
 
-  .rec-modal-footer {
-    padding: 12px 16px;
-    padding-bottom: max(16px, env(safe-area-inset-bottom));
-  }
+.rec-category-tab.is-active svg {
+  color: var(--brand-primary);
+}
 
-  .rec-submit-btn {
+.rec-label-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rec-label-icon {
+  color: var(--brand-primary);
+}
+
+#rec-task-form .form-input {
+  width: 100%;
+}
+
+.reconstruction-board-skeleton {
+  align-items: stretch;
+}
+
+.reconstruction-summary-pill--skeleton {
+  min-width: 138px;
+}
+
+.reconstruction-skeleton-title {
+  width: 220px;
+  height: 32px;
+  border-radius: 12px;
+}
+
+.reconstruction-skeleton-subtitle {
+  width: 180px;
+  height: 14px;
+  border-radius: 999px;
+}
+
+.reconstruction-skeleton-pill-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+}
+
+.reconstruction-skeleton-pill-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.reconstruction-skeleton-pill-label {
+  width: 56px;
+  height: 10px;
+  border-radius: 999px;
+}
+
+.reconstruction-skeleton-pill-value {
+  width: 22px;
+  height: 16px;
+  border-radius: 999px;
+}
+
+.reconstruction-budget-skeleton {
+  gap: 10px;
+}
+
+.reconstruction-skeleton-budget-label,
+.reconstruction-skeleton-budget-amount,
+.reconstruction-skeleton-detail,
+.reconstruction-skeleton-progress,
+.reconstruction-skeleton-icon,
+.reconstruction-skeleton-column-title,
+.reconstruction-skeleton-count,
+.reconstruction-skeleton-badge {
+  background: var(--color-bg-hover);
+}
+
+.reconstruction-skeleton-budget-label {
+  width: 120px;
+  height: 12px;
+  border-radius: 999px;
+}
+
+.reconstruction-skeleton-budget-amount {
+  width: 88px;
+  height: 16px;
+  border-radius: 999px;
+}
+
+.reconstruction-skeleton-progress {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+}
+
+.reconstruction-skeleton-detail {
+  width: 120px;
+  height: 10px;
+  border-radius: 999px;
+}
+
+.reconstruction-skeleton-detail--short {
+  width: 96px;
+}
+
+.reconstruction-column-skeleton {
+  min-width: 300px;
+  max-width: 420px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0.46) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.62);
+}
+
+.reconstruction-column-header-skeleton {
+  gap: 10px;
+}
+
+.reconstruction-column-body-skeleton {
+  gap: 12px;
+}
+
+.reconstruction-skeleton-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+}
+
+.reconstruction-skeleton-column-title {
+  flex: 1;
+  height: 14px;
+  border-radius: 999px;
+}
+
+.reconstruction-skeleton-count {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+}
+
+.reconstruction-item-skeleton {
+  min-height: 144px;
+}
+
+.reconstruction-item-skeleton-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 14px;
+}
+
+.reconstruction-skeleton-badge {
+  width: 72px;
+  height: 24px;
+  border-radius: 999px;
+}
+
+.reconstruction-skeleton-badge--small {
+  width: 52px;
+}
+
+@media (max-width: 900px) {
+  .reconstruction-summary {
     width: 100%;
+    justify-content: flex-start;
+  }
+
+  .reconstruction-summary-pill {
+    flex: 1 1 128px;
+  }
+}
+
+@media (max-width: 600px) {
+  .reconstruction-state-wrap {
+    padding: var(--space-md);
+  }
+
+  .kanban-column-body {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .reconstruction-summary-pill {
+    width: 100%;
+  }
+
+  .card-action-edit,
+  .card-action-del,
+  .card-action-link,
+  .add-col-btn {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .company-action-btn,
+  .reconstruction-empty-action,
+  .vote-btn,
+  .company-status-select {
+    min-height: 44px;
+  }
+
+  .rec-category-tabs {
+    grid-template-columns: 1fr;
+  }
+
+  .rec-modal-footer-actions {
+    flex-direction: column-reverse;
+  }
+
+  .rec-modal-footer-actions > button {
+    width: 100%;
+  }
+
+  .reconstruction-column-skeleton {
     min-width: 0;
-  }
-
-  #add-reconstruction-form {
-    padding: 16px 16px 0;
-  }
-
-  .rec-modal-header {
-    padding: 14px 16px 12px;
   }
 }

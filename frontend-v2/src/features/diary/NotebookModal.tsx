@@ -10,6 +10,7 @@ import { GalleryPicker } from './GalleryPicker'
 import { DiaryLightbox } from './DiaryLightbox'
 import { Modal } from '@/components/shared/Modal'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
+import { getNetworkAwareActionMessage } from '@/lib/networkError'
 
 const MAX_CHARS = 20000
 
@@ -37,6 +38,8 @@ export function NotebookModal({ dateObj, entry, folderId, allDates, onNavigate, 
   const [entryPhotoIds, setEntryPhotoIds] = useState<string[]>(entry?.galleryPhotoIds ?? [])
   const [showPickerModal, setShowPickerModal] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
+  const [saveError, setSaveError] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const saveEntry = useSaveDiaryEntry(folderId)
@@ -54,10 +57,13 @@ export function NotebookModal({ dateObj, entry, folderId, allDates, onNavigate, 
   useEffect(() => {
     setContent(entry?.content ?? '')
     setEntryPhotoIds(entry?.galleryPhotoIds ?? [])
+    setSaveError(null)
+    setDeleteError(null)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entry?.id, dateKey])
 
   async function save(): Promise<boolean> {
+    setSaveError(null)
     try {
       await saveEntry.mutateAsync({
         entryId: entry?.id ?? null,
@@ -66,7 +72,14 @@ export function NotebookModal({ dateObj, entry, folderId, allDates, onNavigate, 
         galleryPhotoIds: entryPhotoIds,
       })
       return true
-    } catch {
+    } catch (error) {
+      setSaveError(
+        getNetworkAwareActionMessage(
+          error,
+          'Zápis se nepodařilo uložit. Zkuste to znovu.',
+          'Spojení vypadlo dřív, než se zápis stihl uložit. Zkuste to znovu po obnovení připojení.',
+        ),
+      )
       return false
     }
   }
@@ -80,23 +93,35 @@ export function NotebookModal({ dateObj, entry, folderId, allDates, onNavigate, 
 
   function handleDeleteClick() {
     if (!entry?.id) return
+    setDeleteError(null)
     setDeleteConfirmOpen(true)
   }
 
   async function handleConfirmedDelete() {
     if (!entry?.id) return
-    setDeleteConfirmOpen(false)
+    setDeleteError(null)
     try {
       await deleteEntry.mutateAsync(entry.id)
+      setDeleteConfirmOpen(false)
       onSaved()
-    } catch { /* onError in hook */ }
+    } catch (error) {
+      setDeleteError(
+        getNetworkAwareActionMessage(
+          error,
+          'Zápis se nepodařilo smazat. Zkuste to znovu.',
+          'Spojení vypadlo dřív, než se zápis stihl smazat. Zkuste to znovu po obnovení připojení.',
+        ),
+      )
+    }
   }
 
   function removePhoto(id: string) {
+    if (saveError) setSaveError(null)
     setEntryPhotoIds(prev => prev.filter(pid => pid !== id))
   }
 
   function handlePickerConfirm(newIds: string[]) {
+    if (saveError) setSaveError(null)
     setEntryPhotoIds(prev => {
       const set = new Set(prev)
       for (const id of newIds) set.add(id)
@@ -107,7 +132,8 @@ export function NotebookModal({ dateObj, entry, folderId, allDates, onNavigate, 
 
   async function navigate(direction: 'prev' | 'next') {
     // Uložit (tiše) před navigací
-    await save()
+    const ok = await save()
+    if (!ok) return
     const idx = direction === 'prev' ? currentIdx - 1 : currentIdx + 1
     if (idx < 0 || idx >= allDates.length) return
     const newDateStr = allDates[idx]
@@ -181,7 +207,10 @@ export function NotebookModal({ dateObj, entry, folderId, allDates, onNavigate, 
               <textarea
                 ref={textareaRef}
                 value={content}
-                onChange={e => setContent(e.target.value.slice(0, MAX_CHARS))}
+                onChange={e => {
+                  if (saveError) setSaveError(null)
+                  setContent(e.target.value.slice(0, MAX_CHARS))
+                }}
                 placeholder="Napiš co se dnes dělo…"
                 maxLength={MAX_CHARS}
                 rows={12}
@@ -212,6 +241,9 @@ export function NotebookModal({ dateObj, entry, folderId, allDates, onNavigate, 
               ))}
             </div>
           )}
+          {saveError ? (
+            <div className="error-message show" role="alert">{saveError}</div>
+          ) : null}
       </Modal>
 
       {/* Výběr fotek z galerie */}
@@ -238,8 +270,13 @@ export function NotebookModal({ dateObj, entry, folderId, allDates, onNavigate, 
         message="Opravdu chcete vytrhnout tento zápisník? Tato akce je nevratná."
         confirmLabel="Vytrhnout"
         danger
+        loading={deleteEntry.isPending}
+        errorMessage={deleteError}
         onConfirm={handleConfirmedDelete}
-        onCancel={() => setDeleteConfirmOpen(false)}
+        onCancel={() => {
+          setDeleteConfirmOpen(false)
+          setDeleteError(null)
+        }}
       />
     </>
   )

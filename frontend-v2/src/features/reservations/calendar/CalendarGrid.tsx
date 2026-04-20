@@ -31,6 +31,7 @@ interface CalendarGridProps {
   reservations: Reservation[];
   availabilities: UserAvailability[];
   currentUserId: string;
+  selectedDay?: string | null;
   rangeStart: string | null;
   onGoToPrev: () => void;
   onGoToNext: () => void;
@@ -51,6 +52,7 @@ export function CalendarGrid({
   reservations,
   availabilities,
   currentUserId,
+  selectedDay,
   rangeStart,
   onGoToPrev,
   onGoToNext,
@@ -102,6 +104,10 @@ export function CalendarGrid({
 
     if (!rangeStart) {
       if (isOtherMonth) return;
+      if (selectedDay !== dateStr) {
+        onDaySelect(dateStr);
+        return;
+      }
       onRangeStartSet(dateStr);
     } else {
       if (dateStr === rangeStart) {
@@ -120,6 +126,18 @@ export function CalendarGrid({
       }
     }
   };
+
+  const rangeTitle = rangeStart
+    ? `Příjezd: ${formatCzechDate(rangeStart)} — vyberte odjezd`
+    : selectedDay
+      ? `Vybraný den: ${formatCzechDate(selectedDay)}`
+      : "Vyberte den v kalendáři";
+
+  const rangeDescription = rangeStart
+    ? "Druhý tap na pozdější den potvrdí odjezd. Detail rezervací zůstává dostupný v seznamu vpravo."
+    : selectedDay
+      ? "Vpravo vidíte jen rezervace pro zvolený den. Znovu klepněte na stejný den a tím zahájíte novou rezervaci."
+      : "První klepnutí zobrazí rezervace pro konkrétní den. Druhým klepnutím na stejný den začnete vybírat pobyt.";
 
   const handleHover = (dateStr: string) => {
     if (rangeStart && dateStr > rangeStart) {
@@ -148,67 +166,68 @@ export function CalendarGrid({
       </div>
 
       {/* Calendar grid */}
-      <div className={styles.calendarGrid}>
-        <div className={styles.calWeekdays}>
-          {WEEKDAY_LABELS.map((d) => (
-            <div key={d} className={styles.calWeekday}>{d}</div>
-          ))}
-        </div>
-        <div
-          className={rangeStart ? styles.calDaysSelecting : styles.calDays}
-          onMouseLeave={handleGridMouseLeave}
-        >
-          {cells.map(({ date, isOtherMonth }) => {
-            const dateStr = toDateStr(date);
-            return (
-              <CalendarCell
-                key={dateStr + (isOtherMonth ? "-o" : "")}
-                date={date}
-                dateStr={dateStr}
-                isOtherMonth={isOtherMonth}
-                todayMidnight={todayMidnight}
-                reservations={reservations}
-                availabilities={availabilities}
-                currentUserId={currentUserId}
-                rangeStart={rangeStart}
-                rangeHoverDate={rangeHoverDate}
-                onCellClick={handleCellClick}
-                onHover={handleHover}
-                onShowDetail={onShowDetail}
-                onShowMonthList={onShowMonthList}
-                onDaySelect={onDaySelect}
-              />
-            );
-          })}
+      <div className={styles.calendarGridScroller}>
+        <div className={styles.calendarGrid}>
+          <div className={styles.calWeekdays}>
+            {WEEKDAY_LABELS.map((d) => (
+              <div key={d} className={styles.calWeekday}>{d}</div>
+            ))}
+          </div>
+          <div
+            className={rangeStart ? styles.calDaysSelecting : styles.calDays}
+            onMouseLeave={handleGridMouseLeave}
+          >
+            {cells.map(({ date, isOtherMonth }) => {
+              const dateStr = toDateStr(date);
+              return (
+                <CalendarCell
+                  key={dateStr + (isOtherMonth ? "-o" : "")}
+                  date={date}
+                  dateStr={dateStr}
+                  isOtherMonth={isOtherMonth}
+                  todayMidnight={todayMidnight}
+                  reservations={reservations}
+                  availabilities={availabilities}
+                  currentUserId={currentUserId}
+                  rangeStart={rangeStart}
+                  rangeHoverDate={rangeHoverDate}
+                  onCellClick={handleCellClick}
+                  onHover={handleHover}
+                  onShowDetail={onShowDetail}
+                  onShowMonthList={onShowMonthList}
+                  onDaySelect={onDaySelect}
+                  selectedDay={selectedDay}
+                />
+              );
+            })}
+          </div>
         </div>
       </div>
 
       {/* Range hint + action buttons */}
       <div className={styles.panelActions}>
-        <div className={rangeStart ? styles.rangeHint : styles.rangeHintHidden}>
+        <div className={styles.rangeHint}>
           <div className={styles.rangeHintIcon}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12" />
             </svg>
           </div>
           <div className={styles.rangeHintBody}>
-            <strong>
-              {rangeStart
-                ? `Příjezd: ${formatCzechDate(rangeStart)} — vyberte odjezd`
-                : "Vyberte datum odjezdu"}
-            </strong>
-            <span>Klikněte na den v kalendáři</span>
+            <strong>{rangeTitle}</strong>
+            <span>{rangeDescription}</span>
           </div>
-          <button
-            type="button"
-            className={styles.rangeHintCancel}
-            title="Zrušit výběr"
-            onClick={() => { onRangeClear(); setRangeHoverDate(null); }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
+          {rangeStart ? (
+            <button
+              type="button"
+              className={styles.rangeHintCancel}
+              title="Zrušit výběr"
+              onClick={() => { onRangeClear(); setRangeHoverDate(null); }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          ) : null}
         </div>
 
         <div className={styles.panelActionsButtons}>

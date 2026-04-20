@@ -8,6 +8,7 @@ import type { ShoppingList, ItemStatus } from '@/api/shopping'
 import { useAddItem, useRenameList } from './hooks/useShoppingLists'
 import { ItemRow } from './ItemRow'
 import { showToast } from '@/lib/toast'
+import { getNetworkAwareActionMessage } from '@/lib/networkError'
 
 interface Props {
   list: ShoppingList | null
@@ -20,6 +21,7 @@ function isDone(status: ItemStatus): boolean {
 
 export function ListDetail({ list, onBack }: Props) {
   const [newItemName, setNewItemName] = useState('')
+  const [addItemError, setAddItemError] = useState<string | null>(null)
   const addItem = useAddItem()
   const renameList = useRenameList()
   const inputRef = useRef<HTMLInputElement>(null)
@@ -36,6 +38,7 @@ export function ListDetail({ list, onBack }: Props) {
   // Reset editing state when list changes
   useEffect(() => {
     setIsEditing(false)
+    setAddItemError(null)
   }, [list?.id])
 
   const startEditing = useCallback(() => {
@@ -92,11 +95,20 @@ export function ListDetail({ list, onBack }: Props) {
       showToast('Název položky je příliš dlouhý (max 100 znaků).', 'error')
       return
     }
+    setAddItemError(null)
     try {
       await addItem.mutateAsync({ listId: list!.id, name })
       setNewItemName('')
       inputRef.current?.focus()
-    } catch { /* onError in hook */ }
+    } catch (error) {
+      setAddItemError(
+        getNetworkAwareActionMessage(
+          error,
+          'Položku se nepodařilo přidat. Zkuste to znovu.',
+          'Spojení vypadlo dřív, než se položka stihla přidat. Zkuste to znovu po obnovení připojení.',
+        ),
+      )
+    }
   }
 
   return (
@@ -161,7 +173,10 @@ export function ListDetail({ list, onBack }: Props) {
                   required
                   autoComplete="off"
                   value={newItemName}
-                  onChange={e => setNewItemName(e.target.value)}
+                  onChange={e => {
+                    if (addItemError) setAddItemError(null)
+                    setNewItemName(e.target.value)
+                  }}
                   className="detail-form-input"
                 />
                 <button
@@ -174,6 +189,9 @@ export function ListDetail({ list, onBack }: Props) {
                 </button>
               </form>
             </div>
+            {addItemError ? (
+              <div className="error-message show" role="alert">{addItemError}</div>
+            ) : null}
           </div>
 
           {/* ITEMS — White card wrapper matching PantryView */}

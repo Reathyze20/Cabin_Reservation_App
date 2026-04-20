@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Modal } from "@/components/shared/Modal";
 import { useMonthlyNote, useUpdateMonthlyNote } from "../hooks/useReservations";
 import { AnimalAvatar } from "@/components/shared/AnimalAvatar";
+import { getNetworkAwareActionMessage } from "@/lib/networkError";
 import css from "../Reservations.module.css";
 
 const MONTH_NAMES = [
@@ -54,16 +55,18 @@ function MonthPicker({
       <div className="flex items-center justify-between mb-2">
         <button
           type="button"
-          className="text-sm font-bold text-slate-500 hover:text-slate-800 px-2 py-1 rounded transition-colors"
+          className="inline-flex h-11 w-11 items-center justify-center rounded-lg px-2 py-1 text-sm font-bold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
           onClick={() => setPickerYear((y) => y - 1)}
+          aria-label="Předchozí rok"
         >
           ‹
         </button>
         <span className="font-bold text-slate-800">{pickerYear}</span>
         <button
           type="button"
-          className="text-sm font-bold text-slate-500 hover:text-slate-800 px-2 py-1 rounded transition-colors"
+          className="inline-flex h-11 w-11 items-center justify-center rounded-lg px-2 py-1 text-sm font-bold text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
           onClick={() => setPickerYear((y) => y + 1)}
+          aria-label="Další rok"
         >
           ›
         </button>
@@ -76,7 +79,7 @@ function MonthPicker({
               key={i}
               type="button"
               onClick={() => { onSelect(i, pickerYear); onClose(); }}
-              className={`text-xs font-medium py-1.5 px-1 rounded-lg transition-colors ${
+              className={`min-h-11 rounded-lg px-1 py-2 text-xs font-medium transition-colors ${
                 isActive
                   ? "bg-emerald-600 text-white"
                   : "text-slate-600 hover:bg-emerald-50 hover:text-emerald-700"
@@ -125,6 +128,7 @@ export function ReservationList({
   const [pickerOpen, setPickerOpen] = useState(false);
   const [noteModalOpen, setNoteModalOpen] = useState(false);
   const [noteText, setNoteText] = useState("");
+  const [noteSaveError, setNoteSaveError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"month" | "upcoming">("month");
 
   // Reset view to month when user navigates to a different month
@@ -137,7 +141,11 @@ export function ReservationList({
     }
   }, [year, month]);
 
-  const { data: monthlyNote } = useMonthlyNote(year, month);
+  const {
+    data: monthlyNote,
+    isError: monthlyNoteFailed,
+    refetch: refetchMonthlyNote,
+  } = useMonthlyNote(year, month);
   const updateNote = useUpdateMonthlyNote();
 
   const sourceList = viewMode === "upcoming" ? futureReservations : reservations;
@@ -148,15 +156,25 @@ export function ReservationList({
   );
 
   const openNoteModal = () => {
+    setNoteSaveError(null);
     setNoteText(monthlyNote?.text ?? "");
     setNoteModalOpen(true);
   };
 
   const handleSaveNote = async () => {
+    setNoteSaveError(null);
     try {
       await updateNote.mutateAsync({ year, month, text: noteText.trim() });
       setNoteModalOpen(false);
-    } catch { /* onError in hook */ }
+    } catch (error) {
+      setNoteSaveError(
+        getNetworkAwareActionMessage(
+          error,
+          "Poznámku se nepodařilo uložit. Zkuste to znovu.",
+          "Spojení vypadlo dřív, než se poznámka stihla uložit. Zkuste to znovu po obnovení připojení.",
+        ),
+      );
+    }
   };
 
   const handlePrevMonth = () => {
@@ -285,17 +303,36 @@ export function ReservationList({
           <h4 className={css.sectionHeading} style={{ margin: 0 }}>
             Poznámka k {MONTH_NAMES_GENITIVE[month]}
           </h4>
-          <button
-            type="button"
-            onClick={openNoteModal}
-            className={`${css.btnReset} ${css.noteEditBtn}`}
-            title="Upravit poznámku"
-          >
-            <PenLine size={16} />
-          </button>
+          {monthlyNoteFailed ? (
+            <button
+              type="button"
+              onClick={() => {
+                void refetchMonthlyNote();
+              }}
+              className={`${css.btnReset} ${css.noteEditBtn}`}
+              title="Načíst poznámku znovu"
+            >
+              Znovu
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={openNoteModal}
+              className={`${css.btnReset} ${css.noteEditBtn}`}
+              title="Upravit poznámku"
+            >
+              <PenLine size={16} />
+            </button>
+          )}
         </div>
-        <div className={css.noteBox} onClick={openNoteModal}>
-          {monthlyNote?.text ? (
+        <div
+          className={css.noteBox}
+          onClick={monthlyNoteFailed ? undefined : openNoteModal}
+          style={monthlyNoteFailed ? { cursor: 'default' } : undefined}
+        >
+          {monthlyNoteFailed ? (
+            <p className={css.notePlaceholder}>Poznámku k měsíci se nepodařilo načíst.</p>
+          ) : monthlyNote?.text ? (
             <p>&ldquo;{monthlyNote.text}&rdquo;</p>
           ) : (
             <p className={css.notePlaceholder}>Přidat vzkaz k tomuto měsíci pro ostatní…</p>
@@ -318,7 +355,10 @@ export function ReservationList({
       {/* ── Note edit modal ── */}
       <Modal
         isOpen={noteModalOpen}
-        onClose={() => setNoteModalOpen(false)}
+        onClose={() => {
+          setNoteModalOpen(false);
+          setNoteSaveError(null);
+        }}
         title={`Poznámka k měsíci — ${MONTH_NAMES[month]} ${year}`}
         maxWidth="max-w-md"
         footer={
@@ -352,12 +392,18 @@ export function ReservationList({
           </p>
           <textarea
             value={noteText}
-            onChange={(e) => setNoteText(e.target.value)}
+            onChange={(e) => {
+              if (noteSaveError) setNoteSaveError(null);
+              setNoteText(e.target.value);
+            }}
             maxLength={NOTE_MAX_LENGTH + 20}
             rows={3}
             placeholder={'Např. „V březnu přijede instalatér 15.–16., buďte prosím doma."'}
             className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-200 focus:border-emerald-400 transition-colors"
           />
+          {noteSaveError ? (
+            <div className="error-message show" role="alert">{noteSaveError}</div>
+          ) : null}
         </div>
       </Modal>
     </div>

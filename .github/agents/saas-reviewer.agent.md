@@ -28,7 +28,7 @@ If something is mediocre, say so. If something is great, acknowledge it. Be hone
 **kdynachatu.cz** — a multi-tenant SaaS for managing shared family cabins, cottages, and weekend getaways. Features include reservations, shopping lists, notes/threads, photo gallery, diary, inventory, reconstruction tracking, and real-time chat.
 
 ### Tech Stack
-- **Frontend:** React 18 + TypeScript + Vite + Tailwind CSS + shadcn/ui (`frontend-v2/`)
+- **Frontend:** React 19 + TypeScript + Vite + Tailwind CSS + shadcn/ui (`frontend-v2/`)
 - **Backend:** Node.js + Express + TypeScript + Prisma ORM + PostgreSQL
 - **Infrastructure:** VPS (Wedos), PM2, GitHub Actions CI/CD
 

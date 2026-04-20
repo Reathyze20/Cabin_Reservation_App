@@ -2,7 +2,9 @@ import { useState, useEffect, useRef } from "react";
 import type { Reservation } from "@/api/reservations";
 import { useCreateReservation, useUpdateReservation, useDeleteReservation } from "../hooks/useReservations";
 import { showToast } from "@/lib/toast";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { Modal } from "@/components/shared/Modal";
+import { getNetworkAwareActionMessage } from "@/lib/networkError";
 
 interface Props {
   open: boolean;
@@ -26,7 +28,10 @@ export function BookingForm({ open, onClose, fromDate, toDate, existing, allRese
   const [soft, setSoft] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [backupWarning, setBackupWarning] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const fromRef = useRef<HTMLInputElement>(null);
 
@@ -52,6 +57,8 @@ export function BookingForm({ open, onClose, fromDate, toDate, existing, allRese
       setSoft(false);
     }
     setBackupWarning(false);
+    setSubmitError(null);
+    setDeleteError(null);
   }, [existing, fromDate, toDate, open]);
 
   // Check for overlapping non-backup reservations
@@ -78,19 +85,25 @@ export function BookingForm({ open, onClose, fromDate, toDate, existing, allRese
     const btn = (e.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
     if (btn) btn.disabled = true;
     setSubmitting(true);
+    setSubmitError(null);
     try {
       const payload = { from, to, purpose, notes, handoverNote: handover, soft };
       if (isEdit && existing) {
         await update.mutateAsync({ id: existing.id, payload });
-        showToast("Rezervace upravena.", "success");
         onClose();
       } else {
         const res = await create.mutateAsync(payload);
         onCreated?.(res.id);
         onClose();
       }
-    } catch {
-      showToast("Chyba při ukládání rezervace.", "error");
+    } catch (error) {
+      setSubmitError(
+        getNetworkAwareActionMessage(
+          error,
+          "Rezervaci se nepodařilo uložit. Zkuste to znovu.",
+          "Spojení vypadlo dřív, než se rezervace stihla uložit. Zkuste to znovu po obnovení připojení.",
+        ),
+      );
     } finally {
       setSubmitting(false);
       if (btn) btn.disabled = false;
@@ -101,12 +114,19 @@ export function BookingForm({ open, onClose, fromDate, toDate, existing, allRese
     if (!existing) return;
     if (deleting) return;
     setDeleting(true);
+    setDeleteError(null);
     try {
       await del.mutateAsync(existing.id);
-      showToast("Rezervace smazána.", "success");
+      setDeleteConfirmOpen(false);
       onClose();
-    } catch {
-      showToast("Chyba při mazání rezervace.", "error");
+    } catch (error) {
+      setDeleteError(
+        getNetworkAwareActionMessage(
+          error,
+          "Rezervaci se nepodařilo smazat. Zkuste to znovu.",
+          "Spojení vypadlo dřív, než se rezervace stihla smazat. Zkuste to znovu po obnovení připojení.",
+        ),
+      );
     } finally {
       setDeleting(false);
     }
@@ -124,11 +144,11 @@ export function BookingForm({ open, onClose, fromDate, toDate, existing, allRese
             <button
               type="button"
               className="btn-danger"
-              onClick={handleDelete}
+              onClick={() => setDeleteConfirmOpen(true)}
               disabled={deleting}
               style={{ marginRight: 'auto' }}
             >
-              {deleting ? "Mazám…" : "Smazat"}
+              Smazat
             </button>
           )}
           <button
@@ -168,7 +188,10 @@ export function BookingForm({ open, onClose, fromDate, toDate, existing, allRese
               type="date"
               className="form-control"
               value={from}
-              onChange={(e) => setFrom(e.target.value)}
+              onChange={(e) => {
+                if (submitError) setSubmitError(null);
+                setFrom(e.target.value);
+              }}
               required
             />
           </div>
@@ -180,7 +203,10 @@ export function BookingForm({ open, onClose, fromDate, toDate, existing, allRese
               type="date"
               className="form-control"
               value={to}
-              onChange={(e) => setTo(e.target.value)}
+              onChange={(e) => {
+                if (submitError) setSubmitError(null);
+                setTo(e.target.value);
+              }}
               required
             />
           </div>
@@ -192,7 +218,10 @@ export function BookingForm({ open, onClose, fromDate, toDate, existing, allRese
               type="text"
               className="form-control"
               value={purpose}
-              onChange={(e) => setPurpose(e.target.value)}
+              onChange={(e) => {
+                if (submitError) setSubmitError(null);
+                setPurpose(e.target.value);
+              }}
               placeholder="Víkend, Dovolená…"
               maxLength={200}
             />
@@ -207,7 +236,10 @@ export function BookingForm({ open, onClose, fromDate, toDate, existing, allRese
               className="form-control"
               rows={3}
               value={notes}
-              onChange={(e) => setNotes(e.target.value.slice(0, 1000))}
+              onChange={(e) => {
+                if (submitError) setSubmitError(null);
+                setNotes(e.target.value.slice(0, 1000));
+              }}
               placeholder="Interní poznámka…"
             />
           </div>
@@ -221,7 +253,10 @@ export function BookingForm({ open, onClose, fromDate, toDate, existing, allRese
               className="form-control"
               rows={3}
               value={handover}
-              onChange={(e) => setHandover(e.target.value.slice(0, 1000))}
+              onChange={(e) => {
+                if (submitError) setSubmitError(null);
+                setHandover(e.target.value.slice(0, 1000));
+              }}
               placeholder="Co necháváš dalším návštěvníkům…"
             />
           </div>
@@ -232,12 +267,32 @@ export function BookingForm({ open, onClose, fromDate, toDate, existing, allRese
                 id="soft-reservation-checkbox"
                 type="checkbox"
                 checked={soft}
-                onChange={(e) => setSoft(e.target.checked)}
+                onChange={(e) => {
+                  if (submitError) setSubmitError(null);
+                  setSoft(e.target.checked);
+                }}
               />{" "}
               Předběžná rezervace
             </label>
           </div>
+          {submitError ? (
+            <div className="error-message show" role="alert">{submitError}</div>
+          ) : null}
         </form>
+      <ConfirmDialog
+        isOpen={deleteConfirmOpen}
+        title="Smazat rezervaci"
+        message="Opravdu chcete smazat tuto rezervaci? Tato akce je nevratná."
+        confirmLabel="Smazat"
+        danger
+        loading={deleting}
+        errorMessage={deleteError}
+        onConfirm={() => void handleDelete()}
+        onCancel={() => {
+          setDeleteConfirmOpen(false);
+          setDeleteError(null);
+        }}
+      />
     </Modal>
   );
 }

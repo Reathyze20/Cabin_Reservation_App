@@ -28,7 +28,7 @@ Be **exhaustive but organized**. Miss nothing, but present it so anyone can navi
 **kdynachatu.cz** — a multi-tenant SaaS for managing shared family cabins, cottages, and weekend getaways (chaty, chalupy). Currently in single-tenant MVP phase, preparing for multi-tenant SaaS launch.
 
 ### Tech Stack
-- **Frontend v2:** React 18 + TypeScript + Vite + Tailwind CSS + shadcn/ui (`frontend-v2/`)
+- **Frontend v2:** React 19 + TypeScript + Vite + Tailwind CSS + shadcn/ui (`frontend-v2/`)
 - **Backend:** Node.js + Express + TypeScript + Prisma ORM + PostgreSQL
 - **Infrastructure:** VPS (Wedos), PM2, GitHub Actions CI/CD, Docker for local dev
 

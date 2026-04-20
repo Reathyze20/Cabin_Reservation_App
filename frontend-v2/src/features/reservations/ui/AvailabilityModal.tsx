@@ -7,6 +7,7 @@ import {
 } from "../hooks/useReservations";
 import { showToast } from "@/lib/toast";
 import { Modal } from "@/components/shared/Modal";
+import { getNetworkAwareActionMessage } from "@/lib/networkError";
 
 function formatDate(date: string): string {
   if (!date) return "";
@@ -28,6 +29,8 @@ export function AvailabilityModal({ open, onClose, fromDate, toDate, myAvailabil
   const [editId, setEditId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const create = useCreateAvailability();
   const update = useUpdateAvailability();
@@ -38,12 +41,16 @@ export function AvailabilityModal({ open, onClose, fromDate, toDate, myAvailabil
       setFrom(fromDate ?? "");
       setTo(toDate ?? "");
       setEditId(null);
+      setSubmitError(null);
+      setDeleteError(null);
     }
   }, [open, fromDate, toDate]);
 
   if (!open) return null;
 
   const startEdit = (a: UserAvailability) => {
+    setSubmitError(null);
+    setDeleteError(null);
     setEditId(a.id);
     setFrom(a.startDate);
     setTo(a.endDate);
@@ -53,25 +60,35 @@ export function AvailabilityModal({ open, onClose, fromDate, toDate, myAvailabil
     setEditId(null);
     setFrom("");
     setTo("");
+    setSubmitError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!from || !to) { showToast("Vyplňte datum od a do.", "error"); return; }
     setSubmitting(true);
+    setSubmitError(null);
     try {
       if (editId) {
         await update.mutateAsync({ id: editId, payload: { startDate: from, endDate: to } });
-        showToast("Dostupnost upravena.", "success");
         setEditId(null);
       } else {
         await create.mutateAsync({ startDate: from, endDate: to });
-        showToast("Dostupnost přidána.", "success");
       }
       setFrom("");
       setTo("");
-    } catch {
-      showToast("Chyba při ukládání dostupnosti.", "error");
+    } catch (error) {
+      setSubmitError(
+        getNetworkAwareActionMessage(
+          error,
+          editId
+            ? "Dostupnost se nepodařilo upravit. Zkuste to znovu."
+            : "Dostupnost se nepodařilo uložit. Zkuste to znovu.",
+          editId
+            ? "Spojení vypadlo dřív, než se dostupnost stihla upravit. Zkuste to znovu po obnovení připojení."
+            : "Spojení vypadlo dřív, než se dostupnost stihla uložit. Zkuste to znovu po obnovení připojení.",
+        ),
+      );
     } finally {
       setSubmitting(false);
     }
@@ -79,11 +96,17 @@ export function AvailabilityModal({ open, onClose, fromDate, toDate, myAvailabil
 
   const handleDelete = async (id: string) => {
     setDeletingId(id);
+    setDeleteError(null);
     try {
       await del.mutateAsync(id);
-      showToast("Dostupnost smazána.", "success");
-    } catch {
-      showToast("Chyba při mazání.", "error");
+    } catch (error) {
+      setDeleteError(
+        getNetworkAwareActionMessage(
+          error,
+          "Dostupnost se nepodařilo smazat. Zkuste to znovu.",
+          "Spojení vypadlo dřív, než se dostupnost stihla smazat. Zkuste to znovu po obnovení připojení.",
+        ),
+      );
     } finally {
       setDeletingId(null);
     }
@@ -115,7 +138,10 @@ export function AvailabilityModal({ open, onClose, fromDate, toDate, myAvailabil
               type="date"
               className="form-control"
               value={from}
-              onChange={(e) => setFrom(e.target.value)}
+              onChange={(e) => {
+                if (submitError) setSubmitError(null);
+                setFrom(e.target.value);
+              }}
               required
             />
           </div>
@@ -126,10 +152,16 @@ export function AvailabilityModal({ open, onClose, fromDate, toDate, myAvailabil
               type="date"
               className="form-control"
               value={to}
-              onChange={(e) => setTo(e.target.value)}
+              onChange={(e) => {
+                if (submitError) setSubmitError(null);
+                setTo(e.target.value);
+              }}
               required
             />
           </div>
+          {submitError ? (
+            <div className="error-message show" role="alert">{submitError}</div>
+          ) : null}
         </form>
 
         {myAvailabilities.length > 0 && (
@@ -161,6 +193,9 @@ export function AvailabilityModal({ open, onClose, fromDate, toDate, myAvailabil
                 </li>
               ))}
             </ul>
+            {deleteError ? (
+              <div className="error-message show" role="alert">{deleteError}</div>
+            ) : null}
           </div>
         )}
     </Modal>

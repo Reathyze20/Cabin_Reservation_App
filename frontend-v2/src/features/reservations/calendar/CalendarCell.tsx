@@ -26,6 +26,7 @@ interface CalendarCellProps {
   reservations: Reservation[];
   availabilities: UserAvailability[];
   currentUserId: string;
+  selectedDay?: string | null;
   rangeStart: string | null;
   rangeHoverDate: string | null;
   onCellClick: (dateStr: string, isOtherMonth: boolean) => void;
@@ -43,6 +44,7 @@ export function CalendarCell({
   reservations,
   availabilities,
   currentUserId: _currentUserId,
+  selectedDay,
   rangeStart,
   rangeHoverDate,
   onCellClick,
@@ -67,6 +69,7 @@ export function CalendarCell({
     !!rangeHoverDate &&
     dateStr === rangeHoverDate &&
     dateStr > rangeStart;
+  const isSelectedDay = selectedDay === dateStr;
 
   // ── Build className ───────────────────────────────────────────────
   const cls = [
@@ -75,6 +78,7 @@ export function CalendarCell({
     isOtherMonth ? styles.otherMonth : "",
     isToday ? styles.today : "",
     isPast ? styles.pastDate : "",
+    isSelectedDay ? styles.selectedDay : "",
     isRangeStart ? styles.rangeStart : "",
     isInRange ? styles.inRange : "",
     isRangeEnd ? styles.rangeEnd : "",
@@ -116,97 +120,100 @@ export function CalendarCell({
     <div
       className={cls}
       data-date={dateStr}
-      onClick={() => { onCellClick(dateStr, isOtherMonth); onDaySelect(dateStr); }}
+      onClick={() => { onCellClick(dateStr, isOtherMonth); }}
       onMouseEnter={() => { if (!isPast && rangeStart) onHover(dateStr); }}
     >
       <div className={`${styles.dayNum} ${isOtherMonth ? styles.otherMonthDayNum : ""} ${isPast ? styles.pastDateDayNum : ""}`}>
         {date.getDate()}
       </div>
 
-      {/* Reservation bars */}
-      {forDay.length > 0 && (
+      <div className={styles.calDayBody}>
+        {/* Reservation bars */}
         <div className={styles.calBars}>
-          {visible.map((r) => {
-            const c = r.userColor || "var(--text-muted)";
-            const rTs_s = new Date(r.from + "T00:00:00Z").getTime();
-            const rTs_e = new Date(r.to + "T00:00:00Z").getTime();
-            const isStart = ts === rTs_s;
-            const isEnd = ts === rTs_e;
-            const isSingleDay = isStart && isEnd;
-            const isMiddle = !isStart && !isEnd;
+          {forDay.length > 0 && (
+            <>
+              {visible.map((r, index) => {
+                const c = r.userColor || "var(--text-muted)";
+                const rTs_s = new Date(r.from + "T00:00:00Z").getTime();
+                const rTs_e = new Date(r.to + "T00:00:00Z").getTime();
+                const isStart = ts === rTs_s;
+                const isEnd = ts === rTs_e;
+                const isSingleDay = isStart && isEnd;
+                const isMiddle = !isStart && !isEnd;
+                const hasOverflowBadge = hiddenCount > 0 && index === visible.length - 1;
 
-            const barCls = [
-              styles.calBar,
-              r.status === "backup" ? styles.calBarBackup : "",
-              isSingleDay ? styles.calBarSingle : "",
-              !isSingleDay && isStart ? styles.calBarStart : "",
-              isMiddle ? styles.calBarMiddle : "",
-              !isSingleDay && isEnd ? styles.calBarEnd : "",
-              isOtherMonth ? styles.otherMonthBar : "",
-            ]
-              .filter(Boolean)
-              .join(" ");
+                const barCls = [
+                  styles.calBar,
+                  hasOverflowBadge ? styles.calBarWithOverflow : "",
+                  r.status === "backup" ? styles.calBarBackup : "",
+                  isSingleDay ? styles.calBarSingle : "",
+                  !isSingleDay && isStart ? styles.calBarStart : "",
+                  isMiddle ? styles.calBarMiddle : "",
+                  !isSingleDay && isEnd ? styles.calBarEnd : "",
+                  isOtherMonth ? styles.otherMonthBar : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ");
 
-            const barStyle: React.CSSProperties =
-              r.status === "soft"
-                ? {
-                    background: `repeating-linear-gradient(45deg, ${hexToRgba(r.userColor, 0.15)}, ${hexToRgba(r.userColor, 0.15)} 5px, rgba(255,255,255,0.7) 5px, rgba(255,255,255,0.7) 10px)`,
-                    borderColor: c,
-                    border: `1px solid ${c}`,
-                  }
-                : { backgroundColor: hexToRgba(r.userColor, 0.3) };
+                const barStyle: React.CSSProperties =
+                  r.status === "soft"
+                    ? {
+                        background: `repeating-linear-gradient(45deg, ${hexToRgba(r.userColor, 0.15)}, ${hexToRgba(r.userColor, 0.15)} 5px, rgba(255,255,255,0.7) 5px, rgba(255,255,255,0.7) 10px)`,
+                        borderColor: c,
+                        border: `1px solid ${c}`,
+                      }
+                    : { backgroundColor: hexToRgba(r.userColor, 0.3) };
 
-            // Only show username on the start segment (or single-day)
-            const showLabel = isSingleDay || isStart;
+                // Only show username on the start segment (or single-day)
+                const showLabel = isSingleDay || isStart;
 
-            return (
-              <div
-                key={r.id}
-                className={barCls}
-                style={barStyle}
-                title={`${r.username} (${r.purpose})`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onShowDetail(r);
-                }}
-              >
-                {showLabel ? r.username : "\u00A0"}
-              </div>
-            );
-          })}
-
-          {hiddenCount > 0 && (
-            <div
-              className={styles.calBarMore}
-              title={forDay.slice(maxVisible).map((r) => `${r.username} (${r.purpose})`).join(", ")}
-              onClick={(e) => {
-                e.stopPropagation();
-                onDaySelect(dateStr);
-              }}
-            >
-              +{hiddenCount}
-            </div>
+                return (
+                  <div
+                    key={r.id}
+                    className={barCls}
+                    style={barStyle}
+                    title={`${r.username} (${r.purpose})`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onShowDetail(r);
+                    }}
+                  >
+                    <span className={styles.calBarLabel}>{showLabel ? r.username : "\u00A0"}</span>
+                    {hasOverflowBadge ? (
+                      <button
+                        type="button"
+                        className={styles.calBarOverflowBadge}
+                        title={forDay.slice(maxVisible).map((item) => `${item.username} (${item.purpose})`).join(", ")}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDaySelect(dateStr);
+                        }}
+                      >
+                        +{hiddenCount}
+                      </button>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </>
           )}
         </div>
-      )}
 
-      {/* Availability bars/icons */}
-      {availForDay.length > 0 && (
         <div
-          className="absolute bottom-1 right-2 left-2 flex flex-wrap gap-1 pointer-events-none justify-end"
-          title={`Mají dovolenou: ${availForDay.map((a) => a.username).join(", ")}`}
+          className={styles.calAvailDots}
+          title={availForDay.length > 0 ? `Mají dovolenou: ${availForDay.map((a) => a.username).join(", ")}` : undefined}
         >
           {availForDay.map((a) => (
             <div
               key={a.id}
-              className="flex items-center justify-center w-5 h-5 rounded-full border border-white/50 shadow-sm text-xs"
+              className={styles.calAvailBadge}
               style={{ backgroundColor: hexToRgba(a.userColor || "#cbd5e1", 0.9) }}
             >
-              <span>{a.userAnimalIcon || "•"}</span>
+              <span className={styles.calAvailCount}>{a.userAnimalIcon || "•"}</span>
             </div>
           ))}
         </div>
-      )}
+      </div>
     </div>
   );
 }

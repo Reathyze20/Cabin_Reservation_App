@@ -93,6 +93,8 @@ model User {
   isSuperAdmin      Boolean  @default(false) @map("is_super_admin")
   isBanned          Boolean  @default(false) @map("is_banned")
   verificationToken String?  @map("verification_token")
+  passwordResetToken String?  @map("password_reset_token")
+  passwordResetExpiresAt DateTime? @map("password_reset_expires_at")
   role              String   @default("user") // "admin" | "user" | "guest"
   createdAt         DateTime @default(now()) @map("created_at")
 
@@ -407,7 +409,7 @@ model ReconstructionItem {
   description     String    @db.Text
   link            String?
   cost            Decimal?  @db.Decimal(10, 2)
-  status          String    @default("pending") // "pending" | "approved" | "done"
+  status          String    @default("pending") // "pending" | "contacted" | "approved" | "rejected" | "done"
   thumbnail       String?
   tag             String?
   specialization  String?

@@ -45,6 +45,24 @@ export function useUpdateUser() {
   })
 }
 
+export function useRemoveUserFromCabin() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, deleteData = false }: { id: string; deleteData?: boolean }) =>
+      adminApi.removeUserFromCabin(id, deleteData),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: USERS_QK })
+      qc.invalidateQueries({ queryKey: ['reservations'] })
+      qc.invalidateQueries({ queryKey: ['shopping'] })
+      qc.invalidateQueries({ queryKey: ['notes'] })
+      qc.invalidateQueries({ queryKey: ['diary'] })
+      qc.invalidateQueries({ queryKey: ['gallery'] })
+      qc.invalidateQueries({ queryKey: SYSTEM_QK })
+    },
+    onError: defaultOnError('Nepodařilo se odebrat uživatele z chaty.'),
+  })
+}
+
 export function useDeleteUser() {
   const qc = useQueryClient()
   return useMutation({
@@ -106,6 +124,13 @@ export function useCreateInvite() {
     mutationFn: adminApi.createInvite,
     onSuccess: () => qc.invalidateQueries({ queryKey: INVITES_QK }),
     onError: defaultOnError('Nepodařilo se vytvořit pozvánku.'),
+  })
+}
+
+export function useSendInviteEmail() {
+  return useMutation({
+    mutationFn: ({ id, email }: { id: string; email: string }) => adminApi.sendInviteEmail(id, email),
+    onError: defaultOnError('Nepodařilo se odeslat pozvánku e-mailem.'),
   })
 }
 

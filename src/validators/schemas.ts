@@ -33,6 +33,22 @@ export const registerSchema = z.object({
   color: z.string().regex(/^#[0-9A-F]{6}$/i, "Neplatný formát barvy").optional(),
 });
 
+export const forgotPasswordSchema = z.object({
+  identifier: z.string()
+    .trim()
+    .min(2, "Zadejte e-mail nebo uživatelské jméno")
+    .max(255, "Zadaná hodnota je příliš dlouhá"),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string()
+    .trim()
+    .min(20, "Resetovací token je neplatný"),
+  password: z.string()
+    .min(8, "Heslo musí mít alespoň 8 znaků")
+    .max(100, "Maximální délka je 100 znaků"),
+});
+
 // Reservation validators
 export const createReservationSchema = z.object({
   from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Neplatný formát data"),
@@ -151,6 +167,14 @@ export const createDiaryEntrySchema = z.object({
 });
 
 // Reconstruction validators
+const reconstructionStatusSchema = z.enum([
+  "pending",
+  "contacted",
+  "approved",
+  "rejected",
+  "done",
+]);
+
 export const createReconstructionItemSchema = z.object({
   category: z.enum(["idea", "company", "task"], {
     error: "Kategorie musí být idea, company nebo task",
@@ -160,12 +184,12 @@ export const createReconstructionItemSchema = z.object({
   link: z.string().url("Neplatný formát URL").max(1000, "Maximální délka je 1000 znaků").optional().or(z.literal("")),
   thumbnail: z.string().max(1000, "Maximální délka je 1000 znaků").optional(),
   cost: z.number().positive().max(999999999, "Maximální hodnota je 999 999 999").optional(),
-  status: z.enum(["pending", "approved", "done"]).optional(),
+  status: reconstructionStatusSchema.optional(),
   sourceMessageId: z.string().uuid().optional(),
 });
 
 export const updateReconstructionStatusSchema = z.object({
-  status: z.enum(["pending", "approved", "done"]),
+  status: reconstructionStatusSchema,
 });
 
 // User management validators
@@ -246,7 +270,7 @@ export const updateReconstructionItemSchema = z.object({
   link: z.string().url("Neplatný formát URL").max(1000).optional().or(z.literal("")).or(z.literal(null)),
   thumbnail: z.string().max(1000).optional().nullable(),
   cost: z.coerce.number().positive().max(999999999).optional().nullable(),
-  status: z.enum(["pending", "approved", "done"]).optional(),
+  status: reconstructionStatusSchema.optional(),
   tag: z.string().max(50).optional().nullable(),
   specialization: z.string().max(100).optional().nullable(),
   email: z.string().email().max(255).optional().or(z.literal("")).or(z.literal(null)),
@@ -292,7 +316,7 @@ export const createNoteThreadSchema = z.object({
 // Users — admin create
 export const createUserSchema = z.object({
   username: z.string().trim().min(2, "Jméno musí mít alespoň 2 znaky").max(50, "Maximální délka je 50 znaků"),
-  password: z.string().min(6, "Heslo musí mít alespoň 6 znaků").max(100),
+  password: z.string().min(8, "Heslo musí mít alespoň 8 znaků").max(100),
   role: z.enum(["admin", "user", "guest"]).optional().default("user"),
 });
 
@@ -306,13 +330,13 @@ export const updateProfileSchema = z.object({
 // Users — change own password
 export const changeMyPasswordSchema = z.object({
   oldPassword: z.string().min(1, "Staré heslo je povinné"),
-  newPassword: z.string().min(6, "Nové heslo musí mít alespoň 6 znaků").max(100),
+  newPassword: z.string().min(8, "Nové heslo musí mít alespoň 8 znaků").max(100),
 });
 
 // Users — admin update user
 export const adminUpdateUserSchema = z.object({
   role: z.enum(["admin", "user", "guest"]).optional(),
-  password: z.string().min(6, "Heslo musí mít alespoň 6 znaků").max(100).optional(),
+  password: z.string().min(8, "Heslo musí mít alespoň 8 znaků").max(100).optional(),
 });
 
 // Auth — verify email
@@ -326,6 +350,10 @@ export const createInviteSchema = z.object({
   role: z.enum(["admin", "user", "guest"]).default("user"),
   maxUses: z.number().int().min(1).max(100).nullable().optional(),
   expiresInDays: z.number().int().min(1).max(365).default(7),
+});
+
+export const sendInviteEmailSchema = z.object({
+  email: z.string().trim().email("Neplatná e-mailová adresa").max(255, "E-mail je příliš dlouhý"),
 });
 
 // Invites — accept

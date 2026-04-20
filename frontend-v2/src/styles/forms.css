@@ -151,6 +151,13 @@ select:disabled {
   pointer-events: none;
 }
 
+@media (max-width: 768px) {
+  .color-picker-swatches .color-swatch {
+    width: 44px;
+    height: 44px;
+  }
+}
+
 .input-danger {
   border: 2px solid var(--color-accent-light);
   color: var(--color-danger-text);

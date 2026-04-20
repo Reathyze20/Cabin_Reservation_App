@@ -631,11 +631,13 @@
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0 2px;
+  padding: 0 8px;
   font-size: 0.85rem;
   display: flex;
   align-items: center;
   justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
   opacity: 0.6;
   transition: opacity var(--transition-fast), transform var(--transition-fast);
   line-height: 1;
@@ -830,10 +832,10 @@
 
 /* Zelené odesílací tlačítko (Uvnitř pilulky) */
 .send-message-btn {
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
-  min-height: 36px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
   border-radius: 50%;
   background-color: var(--color-primary, #3f7b63);
   color: #ffffff;
@@ -871,8 +873,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   transition: background-color var(--transition-fast), color var(--transition-fast);
 }
@@ -1158,9 +1160,9 @@
   .msg-action-btn {
     opacity: 0.5;
     font-size: 0.95rem;
-    padding: 2px 4px;
-    min-width: 32px;
-    min-height: 32px;
+    padding: 0 8px;
+    min-width: 44px;
+    min-height: 44px;
   }
 }
 
@@ -1333,14 +1335,14 @@
 /* ── Chevron trigger for context menu ─ vertically centered, left side of bubble ── */
 .message-action-trigger {
   position: absolute;
-  left: -28px;
+  left: -34px;
   top: 50%;
   transform: translateY(-50%);
   background: none;
   border: none;
   border-radius: 50%;
-  width: 22px;
-  height: 22px;
+  width: 44px;
+  height: 44px;
   font-size: 0;
   line-height: 1;
   color: rgba(0, 0, 0, 0.3);
@@ -1361,7 +1363,7 @@
 
 /* Mine messages: left side, light icon */
 .message-mine .message-action-trigger {
-  left: -28px;
+  left: -34px;
   right: auto;
   color: rgba(0, 0, 0, 0.3);
 }
@@ -1372,7 +1374,7 @@
 
 /* Other messages: left side */
 .message-other .message-action-trigger {
-  left: -28px;
+  left: -34px;
   right: auto;
   color: rgba(0, 0, 0, 0.3);
 }
@@ -1389,7 +1391,7 @@
 /* Mobile: always visible (slightly transparent) */
 @media (max-width: 768px) {
   .message-action-trigger {
-    opacity: 0.6;
+    opacity: 0.72;
   }
 }
 
@@ -1739,6 +1741,34 @@
 
   .reply-preview {
     padding: 6px 10px;
+  }
+
+  .message-edit-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .message-edit-actions .btn-ghost-secondary,
+  .message-edit-save {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  .message-edit-actions .btn-ghost-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+  }
+
+  .message-edit-save {
+    padding: 10px 14px !important;
+    font-size: 0.9rem !important;
+    border-radius: 10px !important;
+    min-height: 44px !important;
   }
 }
 

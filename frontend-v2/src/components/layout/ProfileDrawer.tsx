@@ -5,6 +5,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import apiClient from '@/api/client'
+import { PromptDialog } from '@/components/shared/PromptDialog'
 import { useAuth } from '@/context/AuthContext'
 import { showToast } from '@/lib/toast'
 import { AVATARS } from '@/lib/avatars'
@@ -56,7 +57,6 @@ export function ProfileDrawer({ isOpen, onClose }: ProfileDrawerProps) {
 
   // ─── Delete account state ────────────────────────────────────────────────────
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const deletePasswordRef = useRef<HTMLInputElement>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
 
   // ─── Zavřít klávesou Escape ─────────────────────────────────────────────────
@@ -80,6 +80,21 @@ export function ProfileDrawer({ isOpen, onClose }: ProfileDrawerProps) {
       setSelectedAnimal(profileData.animalIcon ?? '')
     }
   }, [profileData])
+
+  useEffect(() => {
+    if (isOpen) return
+
+    setActiveTab('personal')
+    setEmail(profileData?.email ?? '')
+    setEmailError(false)
+    setEmailMessage('')
+    setSelectedColor(profileData?.color ?? '#8BB88B')
+    setSelectedAnimal(profileData?.animalIcon ?? '')
+    setSecurityMessage('')
+    setSecurityError(false)
+    setShowDeleteConfirm(false)
+    setDeleteLoading(false)
+  }, [isOpen, profileData])
 
   // ─── Auto-save color / animal ───────────────────────────────────────────────
   const patchMutation = useMutation({
@@ -184,9 +199,7 @@ export function ProfileDrawer({ isOpen, onClose }: ProfileDrawerProps) {
   }
 
   // ─── Smazat účet (GDPR) ────────────────────────────────────────────────────
-  async function handleDeleteAccount(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    const password = deletePasswordRef.current?.value
+  async function handleDeleteAccount(password: string) {
     if (!password) return
 
     setDeleteLoading(true)
@@ -339,11 +352,11 @@ export function ProfileDrawer({ isOpen, onClose }: ProfileDrawerProps) {
                 </div>
                 <div className="form-group">
                   <label htmlFor="profile-new-password">Nové heslo:</label>
-                  <input type="password" id="profile-new-password" name="newPassword" className="form-control" minLength={6} maxLength={100} required ref={newPasswordRef} />
+                  <input type="password" id="profile-new-password" name="newPassword" className="form-control" minLength={8} maxLength={100} required ref={newPasswordRef} />
                 </div>
                 <div className="form-group">
                   <label htmlFor="profile-new-password-confirm">Potvrdit nové heslo:</label>
-                  <input type="password" id="profile-new-password-confirm" name="newPasswordConfirm" className="form-control" minLength={6} maxLength={100} required ref={newPasswordConfirmRef} />
+                  <input type="password" id="profile-new-password-confirm" name="newPasswordConfirm" className="form-control" minLength={8} maxLength={100} required ref={newPasswordConfirmRef} />
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
                   <button type="submit" className="button-primary" style={{ width: '100%' }}>Změnit heslo</button>
@@ -376,58 +389,30 @@ export function ProfileDrawer({ isOpen, onClose }: ProfileDrawerProps) {
                 Exportovat moje data (JSON)
               </button>
 
-              {!showDeleteConfirm ? (
-                <button
-                  type="button"
-                  className="button-danger"
-                  style={{ width: '100%' }}
-                  onClick={() => setShowDeleteConfirm(true)}
-                >
-                  Smazat můj účet
-                </button>
-              ) : (
-                <form onSubmit={handleDeleteAccount} style={{ marginTop: '0.5rem' }}>
-                  <div style={{
-                    background: 'var(--bg-danger-light, #fef2f2)',
-                    border: '1px solid var(--color-danger, #ef4444)',
-                    borderRadius: 'var(--radius-lg, 12px)',
-                    padding: '1rem',
-                  }}>
-                    <p style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-danger)', margin: '0 0 0.75rem' }}>
-                      Tato akce je nevratná. Všechna vaše data budou smazána.
-                    </p>
-                    <div className="form-group" style={{ marginBottom: '0.75rem' }}>
-                      <label htmlFor="delete-password" style={{ fontSize: '0.85rem' }}>Potvrďte heslem:</label>
-                      <input
-                        type="password"
-                        id="delete-password"
-                        className="form-control"
-                        required
-                        ref={deletePasswordRef}
-                        autoComplete="current-password"
-                      />
-                    </div>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <button
-                        type="button"
-                        className="button-secondary"
-                        style={{ flex: 1 }}
-                        onClick={() => setShowDeleteConfirm(false)}
-                      >
-                        Zrušit
-                      </button>
-                      <button
-                        type="submit"
-                        className="button-danger"
-                        style={{ flex: 1 }}
-                        disabled={deleteLoading}
-                      >
-                        {deleteLoading ? 'Mažu…' : 'Nenávratně smazat'}
-                      </button>
-                    </div>
-                  </div>
-                </form>
-              )}
+              <button
+                type="button"
+                className="button-danger"
+                style={{ width: '100%' }}
+                onClick={() => setShowDeleteConfirm(true)}
+              >
+                Smazat můj účet
+              </button>
+
+              <PromptDialog
+                isOpen={showDeleteConfirm}
+                title="Smazat můj účet"
+                description="Tato akce je nevratná. Všechna vaše data budou smazána."
+                label="Potvrďte heslem"
+                inputType="password"
+                autoComplete="current-password"
+                submitLabel="Nenávratně smazat"
+                loadingLabel="Mažu…"
+                danger
+                loading={deleteLoading}
+                trimValue={false}
+                onSubmit={handleDeleteAccount}
+                onCancel={() => setShowDeleteConfirm(false)}
+              />
             </div>
           </div>
         </div>

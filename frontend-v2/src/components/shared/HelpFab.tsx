@@ -2,9 +2,10 @@
  * components/shared/HelpFab.tsx
  * Překlad z #fab-help + #help-modal-overlay z index.html + initHelpSystem() z main.ts
  */
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { useLocation } from 'react-router-dom'
+import { Modal } from './Modal'
 
 // ─── Help obsah jako JSX ───────────────────────────────────────────────────────
 const helpDictionary: Record<string, ReactNode> = {
@@ -86,11 +87,59 @@ const helpDictionary: Record<string, ReactNode> = {
   ),
   admin: (
     <>
-      <h3>Administrace</h3>
-      <p>Správa uživatelů a systémové nastavení. Pouze pro administrátory.</p>
+      <h3>Administrativa</h3>
+      <p>Kompaktní administrace s horním menu pro členy, pozvánky a nastavení chaty. Pouze pro administrátory.</p>
       <ul>
-        <li><strong>Uživatelé</strong> — přehled registrovaných účtů, jejich rolí a stavu.</li>
-        <li><strong>Správa rolí</strong> — změna role uživatele (admin / člen).</li>
+        <li><strong>Členové a role</strong> — přehled účtů, oprávnění a lokálních přístupů.</li>
+        <li><strong>Pozvánky</strong> — invite linky, e-mailové pozvánky a archiv starších vstupů.</li>
+        <li><strong>Nastavení chaty</strong> — společná data, moduly, pravidla a odjezdový checklist.</li>
+        <li><strong>Horní menu</strong> — rychlé přepnutí bez skrolování mezi hlavními částmi správy.</li>
+      </ul>
+    </>
+  ),
+  'admin/invites': (
+    <>
+      <h3>Pozvánky</h3>
+      <p>Správa všech vstupů do chaty na jednom místě. Tady vytváříte nové odkazy, sdílíte je a uklízíte archiv.</p>
+      <ul>
+        <li><strong>Nová pozvánka</strong> — nastavíte roli, platnost a počet použití.</li>
+        <li><strong>Text zprávy</strong> — jedním klikem zkopírujete krátký text pro WhatsApp nebo SMS.</li>
+        <li><strong>Archiv</strong> — staré nebo vyčerpané pozvánky zůstávají dole, aby nepřekážely aktivním vstupům.</li>
+      </ul>
+    </>
+  ),
+  'admin/cabin': (
+    <>
+      <h3>Nastavení chaty</h3>
+      <p>Tahle část je teď součástí administrace chaty. Ovlivňuje všechny členy i moduly aplikace.</p>
+      <ul>
+        <li><strong>Základní údaje</strong> — název chaty, lokalita a další sdílené informace.</li>
+        <li><strong>Zapnuté moduly</strong> — určují, které části aplikace budou v navigaci vidět.</li>
+        <li><strong>Počasí a upozornění</strong> — ovlivňují dashboard a mrazové notifikace.</li>
+        <li><strong>Napojené menu</strong> — ze správy se přepnete rovnou na členy, pozvánky nebo samostatnou diagnostiku.</li>
+      </ul>
+    </>
+  ),
+  'admin/diagnostics': (
+    <>
+      <h3>Diagnostika</h3>
+      <p>Samostatná provozní stránka pro systémové logy, support kódy a rychlé dohledání incidentů.</p>
+      <ul>
+        <li><strong>Systémové logy</strong> — filtrujte podle Request ID, textu, modulu nebo HTTP statusu.</li>
+        <li><strong>Stav aplikace</strong> — rychlý snapshot počtu uživatelů, rezervací, fotek a zpráv.</li>
+        <li><strong>Support workflow</strong> — panel připomíná, jak z chybového kódu najít konkrétní request.</li>
+      </ul>
+    </>
+  ),
+  'cabin-settings': (
+    <>
+      <h3>Nastavení chaty</h3>
+      <p>Tahle část je teď součástí administrace chaty. Ovlivňuje všechny členy i moduly aplikace.</p>
+      <ul>
+        <li><strong>Základní údaje</strong> — název chaty, lokalita a další sdílené informace.</li>
+        <li><strong>Zapnuté moduly</strong> — určují, které části aplikace budou v navigaci vidět.</li>
+        <li><strong>Počasí a upozornění</strong> — ovlivňují dashboard a mrazové notifikace.</li>
+        <li><strong>Napojené menu</strong> — ze správy se přepnete rovnou na členy, pozvánky nebo samostatnou diagnostiku.</li>
       </ul>
     </>
   ),
@@ -115,15 +164,8 @@ export function HelpFab() {
   const [isOpen, setIsOpen] = useState(false)
   const location = useLocation()
 
-  // Klávesa Escape zavře modal
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setIsOpen(false) }
-    document.addEventListener('keydown', handler)
-    return () => document.removeEventListener('keydown', handler)
-  }, [])
-
   // help obsah dle aktuální routy
-  const routeKey = location.pathname.replace('/', '') || 'dashboard'
+  const routeKey = location.pathname.replace(/^\//, '') || 'dashboard'
   const helpContent = helpDictionary[routeKey] ?? helpDictionary.default
 
   return (
@@ -132,6 +174,7 @@ export function HelpFab() {
         id="fab-help"
         className="fab-help"
         title="Potřebujete poradit?"
+        aria-label="Potřebujete poradit?"
         onClick={() => setIsOpen(true)}
       >
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -141,29 +184,16 @@ export function HelpFab() {
         </svg>
       </button>
 
-      <div
-        id="help-modal-overlay"
-        className="help-modal-overlay"
-        style={{ display: isOpen ? 'flex' : 'none' }}
-        onClick={(e) => { if (e.target === e.currentTarget) setIsOpen(false) }}
+      <Modal
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        title="Nápověda k této stránce"
+        maxWidth="max-w-xl"
       >
-        <div className="help-modal-card">
-          <div className="help-modal-header">
-            <h2>Nápověda k této stránce</h2>
-            <button
-              id="close-help-modal"
-              className="help-modal-close"
-              title="Zavřít"
-              onClick={() => setIsOpen(false)}
-            >
-              &times;
-            </button>
-          </div>
-          <div id="help-modal-content" className="help-modal-body">
-            {helpContent}
-          </div>
+        <div id="help-modal-content" className="help-modal-body">
+          {helpContent}
         </div>
-      </div>
+      </Modal>
     </>
   )
 }

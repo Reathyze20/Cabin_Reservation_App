@@ -13,11 +13,13 @@
  *   />
  */
 import { Modal } from './Modal'
+import type { ReactNode } from 'react'
 
 interface ConfirmDialogProps {
   isOpen: boolean
   title: string
   message: string
+  errorMessage?: ReactNode
   confirmLabel?: string
   cancelLabel?: string
   /** Red confirm button style */
@@ -32,6 +34,7 @@ export function ConfirmDialog({
   isOpen,
   title,
   message,
+  errorMessage,
   confirmLabel = 'Potvrdit',
   cancelLabel = 'Zrušit',
   danger = false,
@@ -46,7 +49,7 @@ export function ConfirmDialog({
       title={title}
       maxWidth="max-w-sm"
       footer={
-        <>
+        <div className="modal-dialog-actions">
           <button
             type="button"
             className="btn-secondary"
@@ -63,10 +66,15 @@ export function ConfirmDialog({
           >
             {loading ? '…' : confirmLabel}
           </button>
-        </>
+        </div>
       }
     >
       <p style={{ color: 'var(--text-main)', lineHeight: 1.5 }}>{message}</p>
+      {errorMessage ? (
+        <div className="error-message show" role="alert" style={{ marginTop: '12px' }}>
+          {errorMessage}
+        </div>
+      ) : null}
     </Modal>
   )
 }

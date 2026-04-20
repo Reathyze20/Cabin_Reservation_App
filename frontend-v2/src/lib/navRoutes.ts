@@ -3,7 +3,7 @@
  * Definuje navigační položky pro TopBar a MobileNav.
  */
 import type { LucideIcon } from 'lucide-react'
-import { Home, CalendarDays, MessageCircle, ShoppingCart, Images, BookOpen, Hammer, Settings, SlidersHorizontal } from 'lucide-react'
+import { Home, CalendarDays, MessageCircle, ShoppingCart, Images, BookOpen, Hammer, Settings, Shield } from 'lucide-react'
 
 export interface NavRoute {
   path: string
@@ -14,6 +14,8 @@ export interface NavRoute {
   featureKey?: string
   /** Pokud true, viditelná jen pro role=admin */
   adminOnly?: boolean
+  /** Pokud true, viditelná jen pro Super Admina */
+  superAdminOnly?: boolean
   /** Zobrazovat i v mobile bottom nav */
   mobileNav?: boolean
 }
@@ -26,8 +28,8 @@ export const NAV_ROUTES: NavRoute[] = [
   { path: '/gallery',        label: 'Galerie',         icon: Images,             featureKey: 'gallery' },
   { path: '/diary',          label: 'Deník',           icon: BookOpen,           featureKey: 'diary',        mobileNav: true },
   { path: '/reconstruction', label: 'Rekonstrukce',    icon: Hammer,             featureKey: 'reconstruction' },
-  { path: '/admin',          label: 'Admin',           icon: Settings,           adminOnly: true },
-  { path: '/cabin-settings', label: 'Nastavení chaty', icon: SlidersHorizontal,  adminOnly: true },
+  { path: '/admin',          label: 'Administrativa',  icon: Settings,           adminOnly: true },
+  { path: '/superadmin',     label: 'Backoffice',      icon: Shield,             superAdminOnly: true },
 ]
 
 /** Jen routy pro mobile bottom nav */

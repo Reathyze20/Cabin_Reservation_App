@@ -1,0 +1,57 @@
+name: AI Governance
+
+on:
+  pull_request:
+    paths:
+      - '.github/**'
+      - '.agents/**'
+      - 'memories/**'
+      - 'docs/AI-INFRASTRUCTURE*.md'
+      - 'src/scripts/validateAiAssets.ts'
+      - 'src/scripts/aiGovernanceHook.ts'
+      - 'src/scripts/reportAiGovernance.ts'
+      - 'package.json'
+  push:
+    branches: [ main ]
+    paths:
+      - '.github/**'
+      - '.agents/**'
+      - 'memories/**'
+      - 'docs/AI-INFRASTRUCTURE*.md'
+      - 'src/scripts/validateAiAssets.ts'
+      - 'src/scripts/aiGovernanceHook.ts'
+      - 'src/scripts/reportAiGovernance.ts'
+      - 'package.json'
+
+permissions:
+  contents: read
+
+jobs:
+  validate-ai-assets:
+    name: Validate AI Assets
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate AI governance layer
+        run: npm run validate:ai
+
+      - name: Generate AI governance report
+        run: npm run report:ai > ai-governance-report.txt
+
+      - name: Upload AI governance report
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-governance-report
+          path: ai-governance-report.txt

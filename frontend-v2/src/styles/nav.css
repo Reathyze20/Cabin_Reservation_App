@@ -354,8 +354,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   border: 1px solid var(--color-border-light, #e5e7eb);
   background: var(--color-bg-alt, #f3f4f6);
   border-radius: 50%;
@@ -383,8 +383,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
 }
 
 /* ============================================================================

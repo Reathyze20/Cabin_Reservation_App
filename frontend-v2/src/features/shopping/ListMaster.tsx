@@ -70,9 +70,9 @@ export function ListMaster({
                 <span className={`master-item-badge${allDone ? ' badge-done' : ''}`}>
                   {done}/{total}
                 </span>
-                <div className="master-item-actions flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200" onClick={e => e.stopPropagation()}>
+                <div className="master-item-actions" onClick={e => e.stopPropagation()}>
                   <button
-                    className="master-action-btn btn-share-list"
+                    className="master-action-btn master-action-share btn-share-list"
                     title="Sdílet do nástěnky"
                     aria-label="Sdílet do nástěnky"
                     onClick={() => onShare(list)}

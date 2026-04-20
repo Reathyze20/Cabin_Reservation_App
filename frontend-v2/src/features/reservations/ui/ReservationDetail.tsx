@@ -1,11 +1,14 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import apiClient from "@/api/client";
 import type { Reservation } from "@/api/reservations";
 import { CheckoutSection } from "./CheckoutSection";
 import { useAuth } from "@/context/AuthContext";
 import { AnimalAvatar } from "@/components/shared/AnimalAvatar";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { escapeHtml } from "@/lib/utils";
+import { getNetworkAwareActionMessage } from "@/lib/networkError";
+import { showToast } from "@/lib/toast";
 import styles from "../Reservations.module.css";
 
 const MONTH_NAMES_GEN = [
@@ -25,7 +28,7 @@ interface Props {
   reservation: Reservation;
   onBack: () => void;
   onEdit: (r: Reservation) => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: string) => Promise<void> | void;
   onAssign: (id: string) => void;
 }
 
@@ -36,13 +39,10 @@ export function ReservationDetail({ reservation: r, onBack, onEdit, onDelete, on
   const canEdit = isMine || isAdmin;
   const c = r.userColor || "var(--text-muted)";
 
-  // Ethical friction: two-phase delete
-  const [deleteConfirm, setDeleteConfirm] = useState(false);
-  const deleteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => { if (deleteTimerRef.current) clearTimeout(deleteTimerRef.current) }
-  }, []);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteSubmitting, setDeleteSubmitting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [watchSubmitting, setWatchSubmitting] = useState(false);
 
   // Night count for timeline
   const nightCount = r.from && r.to
@@ -64,18 +64,41 @@ export function ReservationDetail({ reservation: r, onBack, onEdit, onDelete, on
   });
 
   const handleWatchToggle = async (watching: boolean) => {
-    const method = watching ? "delete" : "post";
-    await apiClient[method](`/reservations/${r.id}/watch`);
-    await refetchWatch();
+    setWatchSubmitting(true);
+    try {
+      const method = watching ? "delete" : "post";
+      await apiClient[method](`/reservations/${r.id}/watch`);
+      await refetchWatch();
+    } catch (error) {
+      showToast(
+        getNetworkAwareActionMessage(
+          error,
+          "Nepodařilo se změnit hlídání termínu.",
+          "Spojení vypadlo dřív, než se hlídání termínu stihlo změnit. Zkuste to znovu po obnovení připojení.",
+        ),
+        "error",
+      );
+    } finally {
+      setWatchSubmitting(false);
+    }
   };
 
-  const handleDeleteClick = () => {
-    if (!deleteConfirm) {
-      setDeleteConfirm(true);
-      deleteTimerRef.current = setTimeout(() => setDeleteConfirm(false), 4000);
-    } else {
-      onDelete(r.id);
-      setDeleteConfirm(false);
+  const handleConfirmedDelete = async () => {
+    setDeleteSubmitting(true);
+    setDeleteError(null);
+    try {
+      await onDelete(r.id);
+      setDeleteConfirmOpen(false);
+    } catch (error) {
+      setDeleteError(
+        getNetworkAwareActionMessage(
+          error,
+          "Rezervaci se nepodařilo smazat. Zkuste to znovu.",
+          "Spojení vypadlo dřív, než se rezervace stihla smazat. Zkuste to znovu po obnovení připojení.",
+        ),
+      );
+    } finally {
+      setDeleteSubmitting(false);
     }
   };
 
@@ -157,21 +180,21 @@ export function ReservationDetail({ reservation: r, onBack, onEdit, onDelete, on
           </button>
           {canEdit && (
             <button
-              className={deleteConfirm ? styles.deleteConfirmBtn : styles.btnGhostDanger}
-              onClick={handleDeleteClick}
+              className={styles.btnGhostDanger}
+              onClick={() => setDeleteConfirmOpen(true)}
             >
-              {deleteConfirm ? "Opravdu smazat?" : "Smazat"}
+              Smazat
             </button>
           )}
         </div>
         <div className={styles.actionRight}>
           {!isMine && (
             watchData?.watching ? (
-              <button className={styles.btnOutline} onClick={() => handleWatchToggle(true)}>
+              <button className={styles.btnOutline} onClick={() => void handleWatchToggle(true)} disabled={watchSubmitting}>
                 Zrušit
               </button>
             ) : (
-              <button className={styles.btnOutline} title="Dostaneš zprávu, pokud bude termín uvolněn" onClick={() => handleWatchToggle(false)}>
+              <button className={styles.btnOutline} title="Dostaneš zprávu, pokud bude termín uvolněn" onClick={() => void handleWatchToggle(false)} disabled={watchSubmitting}>
                 Hlídat
               </button>
             )
@@ -188,6 +211,21 @@ export function ReservationDetail({ reservation: r, onBack, onEdit, onDelete, on
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={deleteConfirmOpen}
+        title="Smazat rezervaci"
+        message="Opravdu chcete smazat tuto rezervaci? Tato akce je nevratná."
+        confirmLabel="Smazat"
+        danger
+        loading={deleteSubmitting}
+        errorMessage={deleteError}
+        onConfirm={() => void handleConfirmedDelete()}
+        onCancel={() => {
+          setDeleteConfirmOpen(false);
+          setDeleteError(null);
+        }}
+      />
     </div>
   );
 }

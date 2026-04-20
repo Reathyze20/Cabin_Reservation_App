@@ -1,0 +1,27 @@
+{
+  "skill_name": "saas-playbook",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Udelej checklist co jeste chybi k family-ready spusteni aplikace pro jednu rodinu a serad to podle priority.",
+      "expected_output": "Prakticky checklist s prioritou, dopadem a operational focus, ne jen obecna roadmapa.",
+      "files": [],
+      "expectations": [
+        "Output rozlisuje kriticke blokery od pozdejsich veci.",
+        "Output obsahuje operational a launch-readiness pohled.",
+        "Output navrhuje konkretni poradi prace."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Navrhni pricing a launch readiness audit pro kdynachatu.cz se zamerenim na bootstrap one-man team realitu.",
+      "expected_output": "SaaS orientovana analyza respektujici cesky trh, mobilni uzivatele a budget constraints.",
+      "files": [],
+      "expectations": [
+        "Output zohledni price sensitivity a family use case.",
+        "Output neignoruje monitoring, onboarding a retention.",
+        "Output pracuje s prioritizaci podle business impactu."
+      ]
+    }
+  ]
+}

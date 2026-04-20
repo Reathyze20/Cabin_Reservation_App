@@ -294,7 +294,14 @@ router.post("/create", protect, validate(createCabinSchema), async (req: Request
       const updatedUser = await tx.user.update({
         where: { id: req.user!.userId },
         data: { cabinId: cabin.id, role: "admin" },
-        select: { id: true, username: true, role: true, animalIcon: true, cabinId: true },
+        select: {
+          id: true,
+          username: true,
+          role: true,
+          animalIcon: true,
+          cabinId: true,
+          isSuperAdmin: true,
+        },
       });
       return { cabin, updatedUser };
     });
@@ -313,6 +320,7 @@ router.post("/create", protect, validate(createCabinSchema), async (req: Request
         username: updatedUser.username,
         role: updatedUser.role,
         cabinId: updatedUser.cabinId,
+        isSuperAdmin: updatedUser.isSuperAdmin,
       },
       JWT_SECRET,
       { expiresIn: "30d" }
@@ -326,6 +334,7 @@ router.post("/create", protect, validate(createCabinSchema), async (req: Request
       username: updatedUser.username,
       role: updatedUser.role,
       animalIcon: updatedUser.animalIcon,
+      isSuperAdmin: updatedUser.isSuperAdmin,
     });
   } catch (error) {
     logger.error("CABIN", "Failed to create cabin via onboarding", { error: String(error) });

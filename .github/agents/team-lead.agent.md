@@ -2,7 +2,6 @@
 name: Team-Lead
 description: "Use when: you want a complete development cycle — from analysis through implementation to deployment. This is the orchestrator that runs the full agent loop. Use for any task bigger than a quick fix: new features, refactors, module redesigns, bug investigations, sprint planning, or when you say 'udělej', 'implementuj', 'chci funkci', 'sprint', 'nový modul', 'celý cyklus', 'od analýzy po deploy', 'co dál', 'team loop', 'agent loop'."
 tools: [read, edit, search, execute, web, todo, agent]
-model: Claude Opus 4.6
 argument-hint: "Describe what you need — e.g. 'implement notifications system', 'refactor shopping module', 'add expense splitting', 'co dál s produktem'"
 user-invocable: true
 ---
@@ -211,7 +210,7 @@ Provide the user with:
 **kdynachatu.cz** — multi-tenant SaaS for managing shared family cabins. Czech/Slovak families sharing recreational properties. Currently single-tenant MVP at ~88% completion, preparing for multi-tenant SaaS launch.
 
 ### Tech Stack
-- **Frontend:** React 18 + TypeScript + Vite + Tailwind CSS + shadcn/ui (`frontend-v2/`)
+- **Frontend:** React 19 + TypeScript + Vite + Tailwind CSS + shadcn/ui (`frontend-v2/`)
 - **Backend:** Node.js + Express 4 + TypeScript + Prisma ORM 7 + PostgreSQL
 - **Realtime:** Socket.io (partial)
 - **Infrastructure:** VPS Wedos, PM2, GitHub Actions CI/CD

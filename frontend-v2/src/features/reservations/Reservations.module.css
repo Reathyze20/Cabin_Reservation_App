@@ -87,6 +87,12 @@
   flex-wrap: wrap;
 }
 
+.calendarGridScroller {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
 /* ── Stat Badges ───────────────────────────────────────────────────── */
 
 .statBadge {
@@ -176,7 +182,9 @@
   transition: background var(--transition-fast);
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .calDay:nth-child(7n) {
@@ -185,6 +193,21 @@
 
 .calDay:hover {
   background: var(--bg-app);
+}
+
+.selectedDay::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border: 2px solid rgba(63, 123, 99, 0.55);
+  border-radius: calc(var(--radius-md) - 2px);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.selectedDay .dayNum {
+  color: var(--brand-primary-hover);
+  font-weight: 700;
 }
 
 .weekend {
@@ -218,26 +241,36 @@
 .today .dayNum {
   background: var(--brand-primary);
   color: var(--text-on-primary) !important;
-  border-radius: 50%;
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto var(--space-xs) auto;
   border: none;
   box-shadow: none;
   line-height: 1;
 }
 
 .dayNum {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   font-size: var(--font-size-sm);
   font-weight: 600;
   color: var(--text-main);
-  margin-bottom: var(--space-xs);
+  margin: 0 auto;
   position: relative;
   z-index: 2;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.calDayBody {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex: 1;
+  min-height: 0;
+  gap: 4px;
+  overflow: hidden;
 }
 
 /* ── Range Selection (phantom ribbon via ::before) ─────────────────── */
@@ -305,20 +338,20 @@
   display: flex;
   flex-direction: column;
   gap: 1px;
-  flex: 1;
-  min-height: 0;
-  overflow: visible;
+  flex: 0 0 34px;
+  min-height: 34px;
+  max-height: 34px;
+  overflow: hidden;
   position: relative;
   z-index: 2;
 }
 
 /* Base bar style (always applied) */
 .calBar {
+  display: flex;
+  align-items: center;
   font-size: var(--font-size-xs);
   padding: 2px var(--space-sm);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   font-weight: 500;
   margin-top: 2px;
   margin-bottom: 2px;
@@ -327,11 +360,50 @@
   color: var(--text-main) !important;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   cursor: pointer;
+  overflow: visible;
 
   /* Default: no rounding, no horizontal margin (middle segment) */
   border-radius: 0;
   margin-left: 0;
   margin-right: 0;
+}
+
+.calBarLabel {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.calBarWithOverflow {
+  padding-right: 28px;
+}
+
+.calBarOverflowBadge {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  border-radius: 999px;
+  min-width: 20px;
+  height: 16px;
+  padding: 0 5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--text-main);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.calBarOverflowBadge:hover {
+  background: rgba(255, 255, 255, 0.96);
 }
 
 /* 1. Single-day reservation — fully rounded, spaced from cell edges */
@@ -395,13 +467,19 @@
 
 .calAvailDots {
   display: flex;
-  gap: 2px;
+  flex-wrap: wrap;
+  gap: 4px;
   align-items: center;
-  justify-content: center;
-  margin-top: auto;
+  justify-content: flex-end;
+  flex: 0 0 18px;
   padding-top: 2px;
   position: relative;
   z-index: 2;
+  align-self: stretch;
+  min-height: 18px;
+  max-height: 18px;
+  pointer-events: none;
+  overflow: hidden;
 }
 
 .calAvailDot {
@@ -409,6 +487,26 @@
   height: 6px;
   border-radius: var(--radius-full);
   flex-shrink: 0;
+}
+
+.calAvailBadge {
+  width: 18px;
+  height: 18px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.14);
+}
+
+.calAvailCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  font-size: 0.72rem;
 }
 
 /* ── Range Hint ────────────────────────────────────────────────────── */
@@ -718,8 +816,8 @@ button.btnReset {
 .monthNavArrow {
   all: unset;
   cursor: pointer;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -832,8 +930,8 @@ button.btnReset {
 .dayFilterChipClose {
   all: unset;
   cursor: pointer;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1502,15 +1600,28 @@ button.btnReset {
     flex-direction: column-reverse;
     gap: var(--space-sm);
   }
+
+  .actionBar button {
+    min-height: 44px;
+    padding: 10px 14px;
+  }
+
   .actionRight {
     width: 100%;
   }
+
   .actionRight button {
     flex: 1;
   }
+
   .actionLeft {
     width: 100%;
+    gap: var(--space-sm);
     justify-content: space-between;
+  }
+
+  .actionLeft button {
+    flex: 1;
   }
 }
 
@@ -1983,7 +2094,7 @@ button.btnReset {
     justify-content: flex-start !important;
     grid-template-columns: unset !important;
     height: auto !important;
-    min-height: 100vh;
+    min-height: 0;
     width: 100%;
     max-width: 100vw;
     overflow-x: hidden;
@@ -2028,6 +2139,7 @@ button.btnReset {
     overflow-x: hidden !important;
     min-height: auto !important;
     flex: none;
+    -webkit-overflow-scrolling: touch;
   }
 
   /* ── Calendar header: centered row layout ────────────────────── */
@@ -2053,10 +2165,10 @@ button.btnReset {
   }
 
   .iconButton {
-    width: 36px;
-    height: 36px;
-    min-width: 36px;
-    min-height: 36px;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
     font-size: 0.85rem;
   }
 
@@ -2065,7 +2177,24 @@ button.btnReset {
     width: 100%;
     justify-content: center;
     gap: 6px;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
+  }
+
+  .monthNavArrow {
+    width: 44px;
+    height: 44px;
+    font-size: 1.35rem;
+  }
+
+  .monthNavLabel {
+    min-height: 44px;
+    padding: 8px 14px;
+  }
+
+  .dayFilterChipClose {
+    width: 36px;
+    height: 36px;
+    font-size: 1.1rem;
   }
 
   .statBadge {
@@ -2075,14 +2204,20 @@ button.btnReset {
     border-radius: 999px;
   }
 
-  /* ── Calendar grid: full width, no horizontal scroll ─────────── */
+  /* ── Calendar grid: fit viewport, no horizontal scrolling ───── */
+  .calendarGridScroller {
+    overflow: visible;
+    padding-bottom: 0;
+  }
+
   .calendarGrid {
-    overflow-x: hidden;
-    overflow-y: visible;
+    overflow: visible;
+    width: 100%;
     max-width: 100%;
+    min-width: 0;
     min-height: auto !important;
-    flex: none !important;
-    flex-grow: 0 !important;
+    flex: 1 1 auto !important;
+    flex-grow: 1 !important;
     height: fit-content !important;
     border-radius: 12px;
     border: 1px solid rgba(0, 0, 0, 0.06);
@@ -2090,56 +2225,123 @@ button.btnReset {
 
   .calDays,
   .calDaysSelecting {
-    min-width: 0 !important;
+    width: 100%;
+    min-width: 0;
     grid-template-columns: repeat(7, 1fr);
     grid-template-rows: repeat(6, auto) !important;
-    flex: none !important;
+    flex: 1 1 auto !important;
     overflow: visible !important;
   }
 
   /* ── Weekday headers ─────────────────────────────────────────── */
   .calWeekdays {
+    width: 100%;
+    min-width: 0;
     grid-template-columns: repeat(7, 1fr);
   }
 
   .calWeekday {
-    padding: 6px 0;
-    font-size: 0.65rem;
+    padding: 6px 0 5px;
+    font-size: 0.62rem;
     font-weight: 600;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.01em;
   }
 
-  /* ── Day cells: taller for touch, better spacing ─────────────── */
+  /* ── Day cells: compact but touch-friendly ───────────────────── */
   .calDay {
-    padding: 4px 2px;
-    min-height: 52px;
-    gap: 1px;
+    padding: 4px 1px 3px;
+    min-height: clamp(64px, 18vw, 82px);
+    gap: 3px;
   }
 
   .dayNum {
-    font-size: 0.8rem;
-    font-weight: 600;
-    margin-bottom: 2px;
+    width: 24px;
+    height: 24px;
+    font-size: 0.74rem;
+    font-weight: 700;
   }
 
   .today .dayNum {
-    width: 26px;
-    height: 26px;
-    font-size: 0.8rem;
+    font-size: 0.74rem;
   }
 
-  /* ── Reservation bars: bolder, more readable ─────────────────── */
+  .calDayBody {
+    gap: 3px;
+  }
+
+  .selectedDay::after {
+    inset: 2px;
+    border-width: 1.5px;
+  }
+
+  /* ── Reservation bars: compact overview, details stay in list ── */
+  .calBars {
+    gap: 2px;
+    flex-basis: 22px;
+    min-height: 22px;
+    max-height: 22px;
+    overflow: visible;
+  }
+
   .calBar {
-    font-size: 0.6rem;
-    padding: 2px 3px;
+    min-height: 14px;
+    padding: 0 3px;
+    font-size: 0;
     font-weight: 600;
-    margin-top: 1px;
-    margin-bottom: 1px;
-    line-height: 1.3;
+    margin-top: 0;
+    margin-bottom: 0;
+    line-height: 1;
+  }
+
+  .calBarWithOverflow {
+    padding-right: 0;
+  }
+
+  .calBarOverflowBadge {
+    left: 0;
+    right: 0;
+    width: 100%;
+    min-width: 0;
+    height: 22px;
+    padding: 0 6px;
+    font-size: 0.56rem;
+    justify-content: center;
+  }
+
+  .calBarOverflowBadge::before {
+    content: "";
+    position: absolute;
+    inset: -8px 0;
+  }
+
+  .rangeHintCancel {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .calBarMore {
     font-size: 0.6rem;
+  }
+
+  .calAvailDots {
+    gap: 3px;
+    padding-top: 2px;
+    flex-basis: 14px;
+    min-height: 14px;
+    max-height: 14px;
+  }
+
+  .calAvailBadge {
+    width: 14px;
+    height: 14px;
+    border-width: 1px;
+  }
+
+  .calAvailCount {
+    font-size: 0.58rem;
   }
 
   /* ── Panel actions: stack vertically ─────────────────────────── */
@@ -2169,10 +2371,6 @@ button.btnReset {
 
   .rangeHint {
     width: 100%;
-  }
-
-  .rangeHintHidden {
-    display: none !important;
   }
 
   /* ── FAB button: above mobile nav ────────────────────────────── */
@@ -2210,27 +2408,56 @@ button.btnReset {
   }
 
   .calDay {
-    min-height: 46px;
+    min-height: 58px;
     padding: 3px 1px;
   }
 
   .dayNum {
-    font-size: 0.72rem;
+    width: 22px;
+    height: 22px;
+    font-size: 0.68rem;
   }
 
   .calBar {
-    font-size: 0.55rem;
-    padding: 1px 2px;
+    min-height: 8px;
+  }
+
+  .calBars {
+    flex-basis: 20px;
+    min-height: 20px;
+    max-height: 20px;
+  }
+
+  .calBarWithOverflow {
+    padding-right: 0;
+  }
+
+  .calBarOverflowBadge {
+    left: 0;
+    right: 0;
+    width: 100%;
+    min-width: 0;
+    height: 20px;
+    padding: 0 5px;
+    font-size: 0.5rem;
+    justify-content: center;
   }
 
   .calWeekday {
-    font-size: 0.6rem;
+    font-size: 0.56rem;
     padding: 5px 0;
   }
 
+  .calAvailBadge {
+    width: 12px;
+    height: 12px;
+  }
+
+  .calAvailCount {
+    font-size: 0.5rem;
+  }
+
   .today .dayNum {
-    width: 22px;
-    height: 22px;
     font-size: 0.72rem;
   }
 }

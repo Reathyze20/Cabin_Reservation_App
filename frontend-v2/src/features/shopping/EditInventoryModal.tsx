@@ -8,6 +8,7 @@ import { useAuth } from '@/context/AuthContext'
 import { Modal } from '@/components/shared/Modal'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { CATEGORY_ORDER, CATEGORY_LABELS } from './constants'
+import { getNetworkAwareActionMessage } from '@/lib/networkError'
 
 interface Props {
   item: InventoryItem
@@ -27,6 +28,8 @@ export function EditInventoryModal({ item, onClose }: Props) {
   const nameRef = useRef<HTMLInputElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   useEffect(() => {
     nameRef.current?.focus()
@@ -35,25 +38,44 @@ export function EditInventoryModal({ item, onClose }: Props) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!name.trim()) return
+    setSubmitError(null)
     try {
       await updateItem.mutateAsync({
         id: item.id,
         data: { name: name.trim(), category, status, location: location.trim() || undefined, isEssential },
       })
       onClose()
-    } catch { /* onError in hook */ }
+    } catch (error) {
+      setSubmitError(
+        getNetworkAwareActionMessage(
+          error,
+          'Zásobu se nepodařilo uložit. Zkuste to znovu.',
+          'Spojení vypadlo dřív, než se zásoba stihla uložit. Zkuste to znovu po obnovení připojení.',
+        ),
+      )
+    }
   }
 
   function handleDelete() {
+    setDeleteError(null)
     setShowDeleteConfirm(true)
   }
 
   async function confirmDelete() {
+    setDeleteError(null)
     try {
       await deleteItem.mutateAsync(item.id)
       setShowDeleteConfirm(false)
       onClose()
-    } catch { /* onError in hook */ }
+    } catch (error) {
+      setDeleteError(
+        getNetworkAwareActionMessage(
+          error,
+          'Zásobu se nepodařilo smazat. Zkuste to znovu.',
+          'Spojení vypadlo dřív, než se zásoba stihla smazat. Zkuste to znovu po obnovení připojení.',
+        ),
+      )
+    }
   }
 
   return (
@@ -101,7 +123,10 @@ export function EditInventoryModal({ item, onClose }: Props) {
               className="form-input"
               type="text"
               value={name}
-              onChange={e => setName(e.target.value)}
+              onChange={e => {
+                if (submitError) setSubmitError(null)
+                setName(e.target.value)
+              }}
               maxLength={100}
               required
             />
@@ -113,7 +138,10 @@ export function EditInventoryModal({ item, onClose }: Props) {
               className="form-input"
               type="text"
               value={location}
-              onChange={e => setLocation(e.target.value)}
+              onChange={e => {
+                if (submitError) setSubmitError(null)
+                setLocation(e.target.value)
+              }}
               placeholder="např. spíž, sklep…"
               maxLength={100}
             />
@@ -124,7 +152,10 @@ export function EditInventoryModal({ item, onClose }: Props) {
               id="inv-edit-status"
               className="form-input"
               value={status}
-              onChange={e => setStatus(e.target.value as InventoryItem['status'])}
+              onChange={e => {
+                if (submitError) setSubmitError(null)
+                setStatus(e.target.value as InventoryItem['status'])
+              }}
             >
               <option value="OK">Dostatek</option>
               <option value="LOW">Málo</option>
@@ -137,7 +168,10 @@ export function EditInventoryModal({ item, onClose }: Props) {
               id="inv-edit-category"
               className="form-input"
               value={category}
-              onChange={e => setCategory(e.target.value)}
+              onChange={e => {
+                if (submitError) setSubmitError(null)
+                setCategory(e.target.value)
+              }}
             >
               {CATEGORY_ORDER.map(cat => (
                 <option key={cat} value={cat}>{CATEGORY_LABELS[cat]}</option>
@@ -151,7 +185,10 @@ export function EditInventoryModal({ item, onClose }: Props) {
                 type="checkbox"
                 className="essential-toggle-checkbox"
                 checked={isEssential}
-                onChange={e => setIsEssential(e.target.checked)}
+                onChange={e => {
+                  if (submitError) setSubmitError(null)
+                  setIsEssential(e.target.checked)
+                }}
               />
               <div className="essential-toggle-text">
                 <label htmlFor="inv-edit-essential" className="essential-toggle-title">Základní zásoba</label>
@@ -159,6 +196,9 @@ export function EditInventoryModal({ item, onClose }: Props) {
               </div>
             </div>
           )}
+          {submitError ? (
+            <div className="error-message show" role="alert">{submitError}</div>
+          ) : null}
         </div>
       </form>
     </Modal>
@@ -169,8 +209,12 @@ export function EditInventoryModal({ item, onClose }: Props) {
       confirmLabel="Smazat"
       danger
       loading={deleteItem.isPending}
+      errorMessage={deleteError}
       onConfirm={confirmDelete}
-      onCancel={() => setShowDeleteConfirm(false)}
+      onCancel={() => {
+        setShowDeleteConfirm(false)
+        setDeleteError(null)
+      }}
     />
     </>
   )

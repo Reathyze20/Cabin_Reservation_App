@@ -5,8 +5,13 @@
  */
 import { useEffect, useState } from 'react'
 import { useSearchParams, Link } from 'react-router-dom'
+import { apiClient } from '@/api/client'
 
 type VerifyState = 'loading' | 'success' | 'error' | 'no-token'
+
+interface VerifyTokenResponse {
+  message?: string
+}
 
 export function VerifyEmailPage() {
   const [searchParams] = useSearchParams()
@@ -21,23 +26,18 @@ export function VerifyEmailPage() {
 
     async function verify() {
       try {
-        const res = await fetch(`/api/verify-token?token=${encodeURIComponent(token!)}`, {
+        const { data } = await apiClient.get<VerifyTokenResponse>('/verify-token', {
+          params: { token },
           signal: controller.signal,
         })
-        const data = await res.json()
-
-        if (!res.ok) {
-          setState('error')
-          setMessage(data.message || 'Ověření selhalo.')
-          return
-        }
 
         setState('success')
         setMessage(data.message || 'Účet byl úspěšně ověřen!')
       } catch (err) {
         if ((err as Error).name === 'AbortError') return
+        const data = (err as { response?: { data?: VerifyTokenResponse } }).response?.data
         setState('error')
-        setMessage('Chyba sítě při ověřování.')
+        setMessage(data?.message || 'Chyba sítě při ověřování.')
       }
     }
 

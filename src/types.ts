@@ -4,6 +4,7 @@ export interface JwtPayload {
   username: string;
   role: string;
   cabinId: string | null;
+  isSuperAdmin?: boolean;
 }
 
 export interface User {

@@ -6,6 +6,7 @@ import apiClient from "@/api/client";
 import { showToast } from "@/lib/toast";
 import { useAuth } from "@/context/AuthContext";
 import { Modal } from "@/components/shared/Modal";
+import { getNetworkAwareActionMessage } from "@/lib/networkError";
 
 function formatHandoverDate(iso: string): string {
   const date = new Date(iso);
@@ -24,6 +25,7 @@ export function HandoverNote({ note, author, updatedAt, onNoteUpdate }: Props) {
   const navigate = useNavigate();
   const [modalOpen, setModalOpen] = useState(false);
   const [draftText, setDraftText] = useState(note?.trim() ?? "");
+  const [saveError, setSaveError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const isGuest = user?.role === "guest";
 
@@ -42,20 +44,31 @@ export function HandoverNote({ note, author, updatedAt, onNoteUpdate }: Props) {
       onNoteUpdate(data.pinnedHandoverNote, data.handoverNoteAuthor, data.handoverNoteUpdatedAt);
       showToast("Vzkaz uložen", "success");
       setModalOpen(false);
+      setSaveError(null);
     },
-    onError: () => {
-      showToast("Nepodařilo se uložit vzkaz", "error");
+    onError: (error) => {
+      setSaveError(
+        getNetworkAwareActionMessage(
+          error,
+          "Vzkaz se nepodařilo uložit. Zkuste to znovu.",
+          "Spojení vypadlo dřív, než se vzkaz stihl uložit. Zkuste to znovu po obnovení připojení.",
+        ),
+      );
     },
   });
 
   const openModal = () => {
     setDraftText(note?.trim() ?? "");
+    setSaveError(null);
     setModalOpen(true);
     // Focus textarea after render
     setTimeout(() => textareaRef.current?.focus(), 50);
   };
 
-  const closeModal = () => setModalOpen(false);
+  const closeModal = () => {
+    setModalOpen(false);
+    setSaveError(null);
+  };
 
   const noteText = note?.trim() ?? "";
 
@@ -107,7 +120,10 @@ export function HandoverNote({ note, author, updatedAt, onNoteUpdate }: Props) {
             <button
               className="button-primary"
               disabled={saveMutation.isPending}
-              onClick={() => saveMutation.mutate(draftText)}
+              onClick={() => {
+                setSaveError(null);
+                saveMutation.mutate(draftText);
+              }}
             >
               Uložit vzkaz
             </button>
@@ -124,11 +140,17 @@ export function HandoverNote({ note, author, updatedAt, onNoteUpdate }: Props) {
           placeholder="Napište vzkaz…"
           rows={5}
           value={draftText}
-          onChange={(e) => setDraftText(e.target.value)}
+          onChange={(e) => {
+            if (saveError) setSaveError(null);
+            setDraftText(e.target.value);
+          }}
         />
         <div className="handover-char-counter">
           <span>{draftText.length}</span>/300
         </div>
+        {saveError ? (
+          <div className="error-message show" role="alert">{saveError}</div>
+        ) : null}
       </Modal>
     </>
   );

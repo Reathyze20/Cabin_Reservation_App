@@ -25,7 +25,7 @@ You are NOT a code-first developer who adds styling later. You are a **design-fi
 **kdynachatu.cz** — a multi-tenant SaaS for managing shared family cabins. Target audience: Czech families (30-60 years old), non-technical, mobile-first, who want a beautiful, simple tool for their weekend getaway.
 
 ### Tech Stack (non-negotiable)
-- **React 18** + TypeScript strict
+- **React 19** + TypeScript strict
 - **Tailwind CSS 4** + shadcn/ui (Radix UI)
 - **Framer Motion 12** for animations
 - **Lucide React** for icons

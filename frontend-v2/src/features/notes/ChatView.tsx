@@ -7,6 +7,7 @@ import { showToast } from "@/lib/toast";
 import { useAuth } from "@/context/AuthContext";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { AnimalAvatar } from "@/components/shared/AnimalAvatar";
+import { getNetworkAwareActionMessage } from "@/lib/networkError";
 
 interface UserMap {
   [username: string]: { color?: string; animalIcon?: string | null };
@@ -49,6 +50,7 @@ export function ChatView({
 
   // ── Delete confirmation ─────────────────────────────────────────
   const [deleteNoteId, setDeleteNoteId] = useState<string | null>(null);
+  const [deleteNoteError, setDeleteNoteError] = useState<string | null>(null);
 
   // ── Context menu state ─────────────────────────────────────────
   const [contextNote, setContextNote] = useState<Note | null>(null);
@@ -57,6 +59,7 @@ export function ChatView({
   // ── Edit mode ──────────────────────────────────────────────────
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [editText, setEditText] = useState("");
+  const [editError, setEditError] = useState<string | null>(null);
   const editTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   // ── Filters ─────────────────────────────────────────────────────
@@ -170,6 +173,7 @@ export function ChatView({
 
   const handleEdit = useCallback(() => {
     if (contextNote) {
+      setEditError(null);
       setEditingNote(contextNote);
       setEditText(contextNote.message);
     }
@@ -192,7 +196,10 @@ export function ChatView({
   }, [toggleReaction, activeThreadId]);
 
   const handleContextDelete = useCallback(() => {
-    if (contextNote) setDeleteNoteId(contextNote.id);
+    if (contextNote) {
+      setDeleteNoteError(null);
+      setDeleteNoteId(contextNote.id);
+    }
   }, [contextNote]);
 
   const handleContextShopping = useCallback(() => {
@@ -205,17 +212,25 @@ export function ChatView({
 
   const confirmDeleteNote = async () => {
     if (!deleteNoteId) return;
+    setDeleteNoteError(null);
     try {
       await deleteNote.mutateAsync({ id: deleteNoteId, threadId: activeThreadId });
-    } catch {
-      showToast("Zprávu se nepodařilo smazat.", "error");
+      setDeleteNoteId(null);
+    } catch (error) {
+      setDeleteNoteError(
+        getNetworkAwareActionMessage(
+          error,
+          "Zprávu se nepodařilo smazat. Zkuste to znovu.",
+          "Spojení vypadlo dřív, než se zpráva stihla smazat. Zkuste to znovu po obnovení připojení.",
+        ),
+      );
     }
-    setDeleteNoteId(null);
   };
 
   // ── Edit handlers ─────────────────────────────────────────────
   const handleEditSave = async () => {
     if (!editingNote || !editText.trim()) return;
+    setEditError(null);
     try {
       await editNote.mutateAsync({
         id: editingNote.id,
@@ -224,14 +239,21 @@ export function ChatView({
       });
       setEditingNote(null);
       setEditText("");
-    } catch {
-      // Error toast handled in hook
+    } catch (error) {
+      setEditError(
+        getNetworkAwareActionMessage(
+          error,
+          "Zprávu se nepodařilo upravit. Zkuste to znovu.",
+          "Spojení vypadlo dřív, než se zpráva stihla upravit. Zkuste to znovu po obnovení připojení.",
+        ),
+      );
     }
   };
 
   const handleEditCancel = () => {
     setEditingNote(null);
     setEditText("");
+    setEditError(null);
   };
 
   const handleEditKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -460,7 +482,10 @@ export function ChatView({
                           ref={editTextareaRef}
                           className="message-edit-textarea"
                           value={editText}
-                          onChange={(e) => setEditText(e.target.value)}
+                          onChange={(e) => {
+                            if (editError) setEditError(null);
+                            setEditText(e.target.value);
+                          }}
                           onKeyDown={handleEditKeyDown}
                           maxLength={2000}
                         />
@@ -479,6 +504,9 @@ export function ChatView({
                             {editNote.isPending ? "…" : "Uložit"}
                           </button>
                         </div>
+                        {editError ? (
+                          <div className="error-message show" role="alert">{editError}</div>
+                        ) : null}
                       </div>
                     </div>
                   </div>
@@ -537,8 +565,12 @@ export function ChatView({
         confirmLabel="Smazat"
         danger
         loading={deleteNote.isPending}
+        errorMessage={deleteNoteError}
         onConfirm={confirmDeleteNote}
-        onCancel={() => setDeleteNoteId(null)}
+        onCancel={() => {
+          setDeleteNoteId(null);
+          setDeleteNoteError(null);
+        }}
       />
     </div>
   );

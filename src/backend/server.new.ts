@@ -33,6 +33,7 @@ import dashboardRoutes from "./routes/dashboard";
 import noteThreadsRoutes from "./routes/noteThreads";
 import shoppingListsRoutes from "./routes/shoppingLists";
 import adminRoutes from "./routes/admin";
+import superadminRoutes from "./routes/superadmin";
 import inventoryRoutes from "./routes/inventory";
 import workspaceRoutes from "./routes/workspace";
 import invitesRoutes from "./routes/invites";
@@ -101,7 +102,7 @@ app.use((req, res, next) => {
     return originalJson.call(this, body);
   };
 
-  requestContext.run({ requestId, userId: (req as any).user?.id }, () => {
+  requestContext.run({ requestId }, () => {
     next();
   });
 });
@@ -165,9 +166,12 @@ app.get("/api/health", async (req, res) => {
   }
 });
 
-// Auth routes (rate limiter only on login/register)
+// Auth routes (rate limiter on public auth/recovery endpoints)
 app.use("/api/login", authLimiter);
 app.use("/api/register", authLimiter);
+app.use("/api/forgot-password", authLimiter);
+app.use("/api/reset-password", authLimiter);
+app.use("/api/reset-password-token", authLimiter);
 app.use("/api", authRoutes);
 
 // API routes
@@ -187,6 +191,7 @@ app.use("/api/diary", diaryRoutes);
 app.use("/api/reconstruction", reconstructionRoutes);
 app.use("/api/logs", logsRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/superadmin", superadminRoutes);
 app.use("/api/cabin", cabinRoutes);
 app.use("/api/wallpapers", wallpapersRoutes);
 app.use("/api/invites/accept", authLimiter); // Rate limit invite accept (public)
@@ -207,16 +212,63 @@ if (isProd) {
 //                          ERROR HANDLING
 // ============================================================================
 
-process.on("SIGINT", async () => {
-  logger.info("Gracefully shutting down (SIGINT)...");
-  await prisma.$disconnect();
-  process.exit(0);
+let isShuttingDown = false;
+
+async function shutdownServer(reason: string, exitCode: number, error?: unknown): Promise<void> {
+  if (isShuttingDown) return;
+  isShuttingDown = true;
+
+  if (error) {
+    logger.error("PROCESS", `Fatal process event: ${reason}`, {
+      error: String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+  } else {
+    logger.info("PROCESS", `Gracefully shutting down (${reason})...`);
+  }
+
+  try {
+    if (server.listening) {
+      await new Promise<void>((resolve, reject) => {
+        server.close((closeError) => {
+          if (closeError) {
+            reject(closeError);
+            return;
+          }
+          resolve();
+        });
+      });
+    }
+  } catch (closeError) {
+    logger.error("PROCESS", "Failed to close HTTP server cleanly", { error: String(closeError) });
+  }
+
+  try {
+    await prisma.$disconnect();
+  } catch (disconnectError) {
+    logger.error("PROCESS", "Failed to disconnect Prisma during shutdown", { error: String(disconnectError) });
+  }
+
+  process.exit(exitCode);
+}
+
+process.on("SIGINT", () => {
+  void shutdownServer("SIGINT", 0);
 });
 
-process.on("SIGTERM", async () => {
-  logger.info("Gracefully shutting down (SIGTERM)...");
-  await prisma.$disconnect();
-  process.exit(0);
+process.on("SIGTERM", () => {
+  void shutdownServer("SIGTERM", 0);
+});
+
+process.on("unhandledRejection", (reason) => {
+  logger.error("PROCESS", "Unhandled promise rejection", {
+    error: reason instanceof Error ? reason.message : String(reason),
+    stack: reason instanceof Error ? reason.stack : undefined,
+  });
+});
+
+process.on("uncaughtException", (error) => {
+  void shutdownServer("UNCAUGHT_EXCEPTION", 1, error);
 });
 
 // ============================================================================
@@ -224,8 +276,10 @@ process.on("SIGTERM", async () => {
 // ============================================================================
 
 server.listen(PORT, () => {
-  logger.info(`Backend server naslouchá na http://localhost:${PORT}`);
-  logger.info(`Health check: http://localhost:${PORT}/api/health`);
+  logger.info("SERVER", "Backend server naslouchá", {
+    port: PORT,
+    healthUrl: `http://localhost:${PORT}/api/health`,
+  });
 
   // ── Cron Jobs ──────────────────────────────────────────────────────────
   // Frost alert check — every day at 12:00 (noon)

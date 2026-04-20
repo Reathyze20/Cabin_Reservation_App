@@ -3,6 +3,9 @@
  * Překlad: #register-section z index.html + bindRegisterForm() z main.ts
  */
 import { useEffect, useRef, useState } from 'react'
+import axios from 'axios'
+import { useNavigate } from 'react-router-dom'
+import { apiClient } from '@/api/client'
 import { showToast } from '@/lib/toast'
 import { Eye, EyeOff } from 'lucide-react'
 
@@ -18,22 +21,38 @@ interface RegisterFormProps {
   onShowVerify: (username: string, prefillCode?: string) => void
 }
 
+interface RegisterResponse {
+  message?: string
+  error?: string
+  requiresVerification?: boolean
+  testToken?: string
+  testCode?: string
+}
+
 /** Validates weather location against Open-Meteo geocoding API */
 async function validateWeatherLocation(location: string): Promise<boolean> {
   if (!location) return true
   try {
-    const res = await fetch(
-      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1&language=cs&format=json`,
+    const { data } = await axios.get<{ results?: unknown[] }>(
+      'https://geocoding-api.open-meteo.com/v1/search',
+      {
+        params: {
+          name: location,
+          count: 1,
+          language: 'cs',
+          format: 'json',
+        },
+      },
     )
-    if (!res.ok) return true
-    const data = await res.json()
-    return data.results && data.results.length > 0
+
+    return Array.isArray(data.results) && data.results.length > 0
   } catch {
     return true // Let it pass on network error
   }
 }
 
 export function RegisterForm({ onShowLogin, onShowVerify }: RegisterFormProps) {
+  const navigate = useNavigate()
   const [selectedColor, setSelectedColor] = useState('#5d9b62')
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' | 'warning'; testCode?: string } | null>(null)
   const [loading, setLoading] = useState(false)
@@ -83,27 +102,20 @@ export function RegisterForm({ onShowLogin, onShowVerify }: RegisterFormProps) {
     }
 
     try {
-      const res = await fetch('/api/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cabinName, weatherLocation, username, password, color: selectedColor, email }),
+      const { data } = await apiClient.post<RegisterResponse>('/register', {
+        cabinName,
+        weatherLocation,
+        username,
+        password,
+        color: selectedColor,
+        email,
       })
-      const data = await res.json()
-
-      if (!res.ok) {
-        showMsg(data.message || data.error || 'Chyba registrace', 'error')
-        showToast(data.message || data.error || 'Chyba registrace', 'error')
-        return
-      }
 
       // Token-based flow: e-mail pro aktivaci byl odeslán
       if (data.requiresVerification) {
         if (data.testToken) {
           showToast('E-mail se nepodařilo odeslat. Otevírám nouzový aktivační odkaz.', 'info')
-          setTimeout(() => {
-            // Přesměrování na verify stránku s tokenem — v React routeru
-            window.location.href = `/verify?token=${data.testToken}`
-          }, 1500)
+          timerRef.current = setTimeout(() => navigate(`/verify?token=${data.testToken}`, { replace: true }), 1500)
           return
         }
         // Standardní flow — e-mail odeslán
@@ -131,8 +143,11 @@ export function RegisterForm({ onShowLogin, onShowVerify }: RegisterFormProps) {
         showMsg('Registrace úspěšná, přihlaste se.', 'success')
         timerRef.current = setTimeout(onShowLogin, 1500)
       }
-    } catch {
-      showMsg('Chyba sítě', 'error')
+    } catch (err: unknown) {
+      const data = (err as { response?: { data?: RegisterResponse } }).response?.data
+      const msg = data?.message || data?.error || 'Chyba sítě'
+      showMsg(msg, 'error')
+      if (data) showToast(msg, 'error')
     } finally {
       setLoading(false)
     }
@@ -144,14 +159,14 @@ export function RegisterForm({ onShowLogin, onShowVerify }: RegisterFormProps) {
       <div id="register-section" className="login-container card">
         <div style={{ textAlign: 'center', padding: '40px 24px' }}>
           <div style={{ fontSize: '48px', marginBottom: '16px', color: 'var(--color-primary)' }}>✉</div>
-          <h2 style={{ margin: '0 0 12px', color: 'var(--color-text, #e5e7eb)' }}>Zkontrolujte svůj e-mail</h2>
-          <p style={{ color: 'var(--color-text-light, #9ca3af)', lineHeight: 1.6, margin: '0 0 24px' }}>
+          <h2 style={{ margin: '0 0 12px', color: 'var(--text-main, #1a2721)' }}>Zkontrolujte svůj e-mail</h2>
+          <p style={{ color: 'var(--text-muted, #6b7280)', lineHeight: 1.6, margin: '0 0 24px' }}>
             Děkujeme za registraci!<br />
             Poslali jsme vám e-mail s odkazem pro aktivaci účtu na adresu <strong>{emailSent}</strong>.
           </p>
           <a
             href="#"
-            style={{ color: 'var(--color-primary)', textDecoration: 'underline', cursor: 'pointer' }}
+            style={{ color: 'var(--brand-primary, #3f7b63)', textDecoration: 'underline', cursor: 'pointer' }}
             onClick={(e) => { e.preventDefault(); onShowLogin() }}
           >
             ← Vrátit se na přihlášení
@@ -216,14 +231,16 @@ export function RegisterForm({ onShowLogin, onShowVerify }: RegisterFormProps) {
               id="register-password" name="password" maxLength={100}
               autoComplete="new-password" required minLength={8} ref={passwordRef}
             />
-            <span
+            <button
+              type="button"
               className="toggle-password"
               id="toggle-password-register"
-              style={{ cursor: 'pointer' }}
+              aria-label={showPassword ? 'Skrýt heslo' : 'Zobrazit heslo'}
+              aria-pressed={showPassword}
               onClick={() => setShowPassword((v) => !v)}
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-            </span>
+            </button>
           </div>
         </div>
 

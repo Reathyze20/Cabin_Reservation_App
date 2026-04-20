@@ -16,13 +16,13 @@ interface CabinData {
 }
 
 export function useCabinFeatures() {
-  const { isLoggedIn } = useAuth()
+  const { isLoggedIn, activeCabinId } = useAuth()
 
   return useQuery({
-    queryKey: ['cabin'],
+    queryKey: ['cabin', activeCabinId],
     queryFn: () => apiClient.get<CabinData>('/cabin').then((r) => r.data),
     staleTime: 60_000,
-    enabled: isLoggedIn,
+    enabled: isLoggedIn && !!activeCabinId,
   })
 }
 

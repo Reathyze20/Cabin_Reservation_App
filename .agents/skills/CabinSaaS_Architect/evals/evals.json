@@ -1,0 +1,27 @@
+{
+  "skill_name": "CabinSaaS_Architect",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Navrhni a implementacne rozepis premium React komponentu pro dashboard rezervaci ve frontend-v2 vcetne TanStack Query, empty state, loading state a mobile chovani.",
+      "expected_output": "Repo-specific frontend navrh respektujici React 19, frontend-v2 structure, TanStack Query a mobilni UX.",
+      "files": [],
+      "expectations": [
+        "Output odkazuje na frontend-v2, ne na legacy pages router.",
+        "Output pouziva TanStack Query a Axios patterns.",
+        "Output resi loading, empty a error state."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Zhodnot a navrhni refaktor prihlasovaciho flow v React frontend-v2 vcetne forgot password a mobile UX detailu.",
+      "expected_output": "Frontend architektonicky a UX konzistentni navrh pro auth flow v aktualnim stacku.",
+      "files": [],
+      "expectations": [
+        "Output nepopisuje Vanilla TS frontend.",
+        "Output pracuje s komponentami, hooky a route table v React appce.",
+        "Output zohledni path-based routing a offline/mobile constraints."
+      ]
+    }
+  ]
+}

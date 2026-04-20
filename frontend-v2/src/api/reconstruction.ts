@@ -7,7 +7,10 @@ import apiClient from './client'
 
 export type RecCategory = 'idea' | 'company' | 'task'
 
+export type IdeaStatus = 'pending' | 'approved'
 export type CompanyStatus = 'pending' | 'contacted' | 'approved' | 'rejected'
+export type TaskStatus = 'pending' | 'done'
+export type RecStatus = IdeaStatus | CompanyStatus | TaskStatus
 
 export interface RecItem {
   id: string
@@ -20,7 +23,7 @@ export interface RecItem {
   // company fields
   phone?: string | null
   email?: string | null
-  status?: CompanyStatus | 'done' | null
+  status?: RecStatus | null
   // task fields
   deadline?: string | null
   cost?: number | null
@@ -38,7 +41,7 @@ export interface RecItemCreate {
   cost?: number | null
   phone?: string
   email?: string
-  status?: string
+  status?: RecStatus
   deadline?: string
 }
 
@@ -54,7 +57,7 @@ export const reconstructionApi = {
   update: (id: string, data: Partial<RecItemCreate>) =>
     apiClient.put<RecItem>(`/reconstruction/${id}`, data).then((r) => r.data),
 
-  updateStatus: (id: string, status: string) =>
+  updateStatus: (id: string, status: RecStatus) =>
     apiClient.patch<RecItem>(`/reconstruction/${id}/status`, { status }).then((r) => r.data),
 
   delete: (id: string) =>

@@ -339,14 +339,24 @@
 
 .toggle-password {
   position: absolute;
-  right: 10px;
+  right: 4px;
   top: 50%;
   transform: translateY(-50%);
-  cursor: pointer;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
   color: var(--color-text-muted);
+  cursor: pointer;
 }
 
 .toggle-password:hover {
+  background: var(--color-bg-hover, #f1f5f9);
   color: var(--color-text);
 }
 
@@ -363,11 +373,28 @@
   font-size: var(--font-size-sm);
   color: var(--color-text-light);
   user-select: none;
+  min-height: 44px;
+  padding: 4px 0;
 }
 
 .remember-me-label input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   accent-color: var(--color-primary);
   cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .login-container input:not([type="checkbox"]):not([type="hidden"]),
+  .register-container input:not([type="checkbox"]):not([type="hidden"]),
+  .login-container select,
+  .register-container select {
+    min-height: 44px;
+    font-size: 16px;
+    padding: 11px 12px;
+  }
+
+  .input-eye-wrapper input {
+    padding-right: 52px;
+  }
 }

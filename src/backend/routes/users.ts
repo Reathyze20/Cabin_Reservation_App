@@ -24,6 +24,8 @@ router.get("/", protect, requireCabin, async (req: Request, res: Response) => {
         animalIcon: true,
         email: true,
         createdAt: true,
+        isVerified: true,
+        isBanned: true,
         _count: {
           select: {
             reservations: true,
@@ -62,7 +64,7 @@ router.post("/", protect, requireCabin, validate(createUserSchema), async (req: 
       data: {
         username,
         passwordHash,
-        role: role || "member",
+        role: role || "user",
         color: randomColor,
         cabinId: req.user!.cabinId,
       },
@@ -143,7 +145,11 @@ router.patch("/me/password", protect, validate(changeMyPasswordSchema), async (r
 
     await prisma.user.update({
       where: { id: req.user.userId },
-      data: { passwordHash: await bcrypt.hash(newPassword, 10) }
+      data: {
+        passwordHash: await bcrypt.hash(newPassword, 10),
+        passwordResetToken: null,
+        passwordResetExpiresAt: null,
+      }
     });
 
     res.json({ message: "Heslo úspěšně změněno." });
@@ -223,7 +229,11 @@ router.put("/:id/password", protect, requireCabin, validate(changePasswordSchema
 
     await prisma.user.update({
       where: { id },
-      data: { passwordHash: await bcrypt.hash(password, 10) },
+      data: {
+        passwordHash: await bcrypt.hash(password, 10),
+        passwordResetToken: null,
+        passwordResetExpiresAt: null,
+      },
     });
     res.status(200).json({ message: "Heslo změněno." });
   } catch (error) {
@@ -252,8 +262,10 @@ router.patch("/:id", protect, requireCabin, validate(adminUpdateUserSchema), asy
 
     const data: any = {};
     if (role) data.role = role;
-    if (password && password.length >= 6) {
+    if (password && password.length >= 8) {
       data.passwordHash = await bcrypt.hash(password, 10);
+      data.passwordResetToken = null;
+      data.passwordResetExpiresAt = null;
     }
 
     await prisma.user.update({
@@ -396,23 +408,23 @@ router.get("/me/export", protect, async (req: Request, res: Response) => {
       }),
       prisma.noteThread.findMany({
         where: { createdById: userId },
-        select: { id: true, title: true, createdAt: true },
+        select: { id: true, name: true, createdAt: true },
       }),
       prisma.note.findMany({
         where: { userId },
-        select: { id: true, content: true, createdAt: true },
+        select: { id: true, message: true, createdAt: true },
       }),
       prisma.diaryEntry.findMany({
         where: { authorId: userId },
-        select: { id: true, title: true, content: true, date: true, createdAt: true },
+        select: { id: true, content: true, entryDate: true, createdAt: true },
       }),
       prisma.galleryPhoto.findMany({
         where: { uploadedById: userId },
-        select: { id: true, filename: true, description: true, createdAt: true },
+        select: { id: true, src: true, description: true, createdAt: true },
       }),
       prisma.shoppingListItem.findMany({
         where: { addedById: userId },
-        select: { id: true, name: true, quantity: true, unit: true, createdAt: true },
+        select: { id: true, name: true, status: true, price: true, createdAt: true },
       }),
       prisma.reconstructionItem.findMany({
         where: { createdById: userId },
@@ -420,7 +432,7 @@ router.get("/me/export", protect, async (req: Request, res: Response) => {
       }),
       prisma.userAvailability.findMany({
         where: { userId },
-        select: { id: true, dateFrom: true, dateTo: true, status: true },
+        select: { id: true, startDate: true, endDate: true, createdAt: true },
       }),
     ]);
 

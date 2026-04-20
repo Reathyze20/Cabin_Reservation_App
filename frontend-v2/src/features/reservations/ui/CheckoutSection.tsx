@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import apiClient from "@/api/client";
 import type { Reservation, CheckoutStatus } from "@/api/reservations";
 import { useCheckoutReservation } from "../hooks/useReservations";
-import { showToast } from "@/lib/toast";
+import { getNetworkAwareActionMessage, getNetworkAwareLoadMessage } from "@/lib/networkError";
 import styles from "../Reservations.module.css";
 
 /** Returns true if reservation is active or was active in the last ~day */
@@ -29,27 +29,78 @@ export function CheckoutSection({ reservation }: Props) {
   const [checked, setChecked] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(false);
   const [completedStatus, setCompletedStatus] = useState<CheckoutStatus | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     if (!eligible) return;
+    setLoadError(null);
+    setSubmitError(null);
     if (reservation.isCheckoutCompleted) {
+      setLoading(true);
+      setTasks([]);
       apiClient
         .get<CheckoutStatus>(`/reservations/${reservation.id}/checkout`)
         .then((res) => setCompletedStatus(res.data))
-        .catch(() => {});
+        .catch((error) => {
+          setCompletedStatus(null);
+          setLoadError(
+            getNetworkAwareLoadMessage(
+              error,
+              "Nepodařilo se načíst stav potvrzeného odjezdu. Zkuste to znovu.",
+            ),
+          );
+        })
+        .finally(() => setLoading(false));
     } else {
+      setCompletedStatus(null);
       setLoading(true);
       apiClient
         .get<{ checkoutTasks?: string[] }>("/cabin")
         .then((res) => {
           setTasks(res.data.checkoutTasks ?? []);
-          setLoading(false);
         })
-        .catch(() => setLoading(false));
+        .catch((error) => {
+          setTasks([]);
+          setLoadError(
+            getNetworkAwareLoadMessage(
+              error,
+              "Nepodařilo se načíst výjezdový protokol. Zkuste to znovu.",
+            ),
+          );
+        })
+        .finally(() => setLoading(false));
     }
-  }, [eligible, reservation.id, reservation.isCheckoutCompleted]);
+  }, [eligible, reservation.id, reservation.isCheckoutCompleted, reloadKey]);
 
   if (!eligible) return null;
+
+  if (loading) {
+    return (
+      <div className={styles.checkoutSection}>
+        <div className="spinner" />
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className={styles.checkoutSection}>
+        <div className={styles.emptyTasksBox}>
+          <div>{loadError}</div>
+          <button
+            type="button"
+            className="button-secondary"
+            style={{ marginTop: '12px' }}
+            onClick={() => setReloadKey((value) => value + 1)}
+          >
+            Zkusit znovu
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // --- Completed state ---
   if (reservation.isCheckoutCompleted && completedStatus) {
@@ -95,11 +146,17 @@ export function CheckoutSection({ reservation }: Props) {
 
   const handleConfirm = async () => {
     if (!allChecked) return;
+    setSubmitError(null);
     try {
       await checkout.mutateAsync(reservation.id);
-      showToast("Odjezd potvrzen!", "success");
-    } catch {
-      showToast("Chyba při potvrzení odjezdu.", "error");
+    } catch (error) {
+      setSubmitError(
+        getNetworkAwareActionMessage(
+          error,
+          "Odjezd se nepodařilo potvrdit. Zkuste to znovu.",
+          "Spojení vypadlo dřív, než se odjezd stihl potvrdit. Zkuste to znovu po obnovení připojení.",
+        ),
+      );
     }
   };
 
@@ -107,38 +164,40 @@ export function CheckoutSection({ reservation }: Props) {
     <div className={styles.checkoutSection}>
       <div>
         <h4 className={styles.checkoutTitle}>Výjezdový protokol</h4>
-        {loading ? (
-          <div className="spinner" />
-        ) : (
-          <>
-            <p className={styles.checkoutProgress}>
-              Splněno <span className={styles.checkoutProgressBold}>{checked.size}</span> z{" "}
-              <span className={styles.checkoutProgressBold}>{tasks.length}</span> úkolů
-            </p>
-            <div className={styles.checkoutTasksList}>
-              {tasks.map((task, i) => (
-                <label key={i} className={styles.checkoutTaskItem}>
-                  <input
-                    type="checkbox"
-                    checked={checked.has(i)}
-                    onChange={() => toggle(i)}
-                  />
-                  <span>{task}</span>
-                </label>
-              ))}
-            </div>
-            <button
-              className={styles.checkoutConfirmBtn}
-              disabled={!allChecked || checkout.isPending}
-              onClick={handleConfirm}
-            >
-              {checkout.isPending ? "Ukládám…" : "Potvrdit odjezd"}
-            </button>
-            {!allChecked && tasks.length > 0 && (
-              <p className={styles.checkoutHint}>Potvrď všechny úkoly pro odeslání.</p>
-            )}
-          </>
-        )}
+        <>
+          <p className={styles.checkoutProgress}>
+            Splněno <span className={styles.checkoutProgressBold}>{checked.size}</span> z{" "}
+            <span className={styles.checkoutProgressBold}>{tasks.length}</span> úkolů
+          </p>
+          <div className={styles.checkoutTasksList}>
+            {tasks.map((task, i) => (
+              <label key={i} className={styles.checkoutTaskItem}>
+                <input
+                  type="checkbox"
+                  checked={checked.has(i)}
+                  onChange={() => {
+                    if (submitError) setSubmitError(null);
+                    toggle(i);
+                  }}
+                />
+                <span>{task}</span>
+              </label>
+            ))}
+          </div>
+          <button
+            className={styles.checkoutConfirmBtn}
+            disabled={!allChecked || checkout.isPending}
+            onClick={handleConfirm}
+          >
+            {checkout.isPending ? "Ukládám…" : "Potvrdit odjezd"}
+          </button>
+          {!allChecked && tasks.length > 0 && (
+            <p className={styles.checkoutHint}>Potvrď všechny úkoly pro odeslání.</p>
+          )}
+          {submitError ? (
+            <div className="error-message show" role="alert">{submitError}</div>
+          ) : null}
+        </>
       </div>
     </div>
   );

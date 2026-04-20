@@ -4,13 +4,13 @@
 import { Router, Request, Response } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { JWT_SECRET } from "../../config/config";
+import { FRONTEND_URL, JWT_SECRET } from "../../config/config";
 import prisma from "../../utils/prisma";
 import logger from "../../utils/logger";
 import { protect } from "../../middleware/authMiddleware";
 import { requireCabin } from "../../middleware/cabinMiddleware";
 import { validate } from "../../validators/validate";
-import { createInviteSchema, acceptInviteSchema } from "../../validators/schemas";
+import { createInviteSchema, acceptInviteSchema, sendInviteEmailSchema } from "../../validators/schemas";
 import { sendEmail } from "../../utils/email";
 
 const router = Router();
@@ -31,6 +31,14 @@ function randomColor(): string {
 const AVATAR_IDS = ["liska", "vlk", "jelen", "rys", "veverka", "kralik", "jezek", "pes", "krava", "ovce", "kun", "slepice", "zaba", "had", "lev", "tygr", "slon", "panda", "koala", "klokan", "zebra", "zirafa", "surikata"];
 function randomAnimal(): string {
   return AVATAR_IDS[Math.floor(Math.random() * AVATAR_IDS.length)];
+}
+
+function getFrontendBaseUrl(): string {
+  return FRONTEND_URL.endsWith("/") ? FRONTEND_URL.slice(0, -1) : FRONTEND_URL;
+}
+
+function buildInviteUrl(token: string): string {
+  return `${getFrontendBaseUrl()}/invite/${token}`;
 }
 
 // ============================================================================
@@ -62,6 +70,7 @@ router.post("/", protect, requireCabin, validate(createInviteSchema), async (req
         usedCount: true,
         expiresAt: true,
         createdAt: true,
+        cabin: { select: { name: true } },
       },
     });
 
@@ -73,7 +82,16 @@ router.post("/", protect, requireCabin, validate(createInviteSchema), async (req
       expiresAt: invite.expiresAt.toISOString(),
     });
 
-    res.status(201).json(invite);
+    res.status(201).json({
+      id: invite.id,
+      token: invite.token,
+      role: invite.role,
+      maxUses: invite.maxUses,
+      usedCount: invite.usedCount,
+      expiresAt: invite.expiresAt,
+      createdAt: invite.createdAt,
+      cabinName: invite.cabin.name,
+    });
   } catch (error) {
     logger.error("INVITES", "Failed to create invite link", { error: String(error) });
     res.status(500).json({ message: "Interní chyba serveru" });
@@ -99,11 +117,22 @@ router.get("/", protect, requireCabin, async (req: Request, res: Response) => {
         expiresAt: true,
         createdAt: true,
         createdBy: { select: { username: true } },
+        cabin: { select: { name: true } },
       },
       orderBy: { createdAt: "desc" },
     });
 
-    res.json(invites);
+    res.json(invites.map((invite) => ({
+      id: invite.id,
+      token: invite.token,
+      role: invite.role,
+      maxUses: invite.maxUses,
+      usedCount: invite.usedCount,
+      expiresAt: invite.expiresAt,
+      createdAt: invite.createdAt,
+      createdBy: invite.createdBy,
+      cabinName: invite.cabin.name,
+    })));
   } catch (error) {
     logger.error("INVITES", "Failed to list invite links", { error: String(error) });
     res.status(500).json({ message: "Interní chyba serveru" });
@@ -260,6 +289,7 @@ router.post("/accept/:token", validate(acceptInviteSchema), async (req: Request,
         username: newUser.username,
         role: newUser.role,
         cabinId: newUser.cabinId,
+        isSuperAdmin: newUser.isSuperAdmin,
       },
       JWT_SECRET,
       { expiresIn: "30d" },
@@ -283,6 +313,7 @@ router.post("/accept/:token", validate(acceptInviteSchema), async (req: Request,
       animalIcon: newUser.animalIcon,
       cabinId: newUser.cabinId,
       cabinName: invite.cabin.name,
+      isSuperAdmin: newUser.isSuperAdmin,
     });
   } catch (error) {
     logger.error("INVITES", "Failed to accept invite", { error: String(error) });
@@ -293,15 +324,12 @@ router.post("/accept/:token", validate(acceptInviteSchema), async (req: Request,
 // ============================================================================
 //  POST /api/invites/:id/send-email — Send invite via email (admin only)
 // ============================================================================
-router.post("/:id/send-email", protect, requireCabin, async (req: Request, res: Response) => {
+router.post("/:id/send-email", protect, requireCabin, validate(sendInviteEmailSchema), async (req: Request, res: Response) => {
   try {
     if (!req.user) return res.status(401).json({ message: "Neautorizováno" });
     if (req.user.role !== "admin") return res.status(403).json({ message: "Pouze admin." });
 
     const { email } = req.body;
-    if (!email || typeof email !== "string" || !email.includes("@")) {
-      return res.status(400).json({ message: "Neplatná e-mailová adresa." });
-    }
 
     const invite = await prisma.inviteLink.findFirst({
       where: { id: req.params.id, cabinId: req.user.cabinId! },
@@ -317,9 +345,11 @@ router.post("/:id/send-email", protect, requireCabin, async (req: Request, res: 
       return res.status(410).json({ message: "Platnost pozvánky vypršela." });
     }
 
-    // Construct invite URL (use origin from request or fallback)
-    const origin = req.headers.origin || `${req.protocol}://${req.headers.host}`;
-    const inviteUrl = `${origin}/invite/${invite.token}`;
+    if (invite.maxUses !== null && invite.usedCount >= invite.maxUses) {
+      return res.status(410).json({ message: "Pozvánka už byla přijata a nelze ji znovu odeslat." });
+    }
+
+    const inviteUrl = buildInviteUrl(invite.token);
 
     await sendEmail({
       to: email.trim(),

@@ -8,6 +8,8 @@ import { useAuth } from '@/context/AuthContext'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
 import { useCabinSettings, useUpdateCabinSettings } from './hooks/useCabinSettings'
 import { showToast } from '@/lib/toast'
+import { FeatureErrorFallback } from '@/components/shared/FeatureErrorFallback'
+import { getNetworkAwareActionMessage } from '@/lib/networkError'
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
@@ -30,6 +32,13 @@ const AVAILABLE_FEATURES = [
 ]
 
 type TabId = 'tab-basic' | 'tab-operations' | 'tab-modules'
+
+interface CabinSettingsPanelProps {
+  title?: string
+  subtitle?: string
+  showBackButton?: boolean
+  onBack?: () => void
+}
 
 // ─── ChecklistEditor ──────────────────────────────────────────────────────────
 
@@ -134,13 +143,22 @@ function CharCounter({ value, max }: { value: string; max: number }) {
   )
 }
 
-// ─── CabinSettingsPage ────────────────────────────────────────────────────────
+// ─── CabinSettingsPanel ───────────────────────────────────────────────────────
 
-export function CabinSettingsPage() {
-  useDocumentTitle('Nastavení chaty');
+export function CabinSettingsPanel({
+  title = 'Nastavení chaty',
+  subtitle = 'Přizpůsobte si svou chatu podle sebe',
+  showBackButton = false,
+  onBack,
+}: CabinSettingsPanelProps) {
   const { isAdmin } = useAuth()
-  const navigate = useNavigate()
-  const { data: settings, isLoading, isError } = useCabinSettings()
+  const {
+    data: settings,
+    isLoading,
+    isError,
+    error: settingsError,
+    refetch: refetchSettings,
+  } = useCabinSettings()
   const updateSettings = useUpdateCabinSettings()
 
   const [activeTab, setActiveTab] = useState<TabId>('tab-basic')
@@ -156,6 +174,7 @@ export function CabinSettingsPage() {
   const [features, setFeatures] = useState<Record<string, boolean>>({})
 
   const [saveSuccess, setSaveSuccess] = useState(false)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Populate form when data loads
@@ -171,6 +190,11 @@ export function CabinSettingsPage() {
     setFeatures(settings.features ?? {})
   }, [settings])
 
+  const clearSaveFeedback = useCallback(() => {
+    if (saveError) setSaveError(null)
+    if (saveSuccess) setSaveSuccess(false)
+  }, [saveError, saveSuccess])
+
   const doSave = useCallback(() => {
     if (name.trim().length < 2) {
       showToast('Název chaty musí mít alespoň 2 znaky.', 'error')
@@ -178,6 +202,9 @@ export function CabinSettingsPage() {
     }
 
     const cleanChecklist = checklist.map((s) => s.trim()).filter((s) => s.length > 0)
+
+    setSaveError(null)
+    setSaveSuccess(false)
 
     updateSettings.mutate(
       {
@@ -192,12 +219,21 @@ export function CabinSettingsPage() {
       },
       {
         onSuccess: () => {
+          setSaveError(null)
           showToast('Nastavení uloženo', 'success')
           setSaveSuccess(true)
           if (successTimerRef.current) clearTimeout(successTimerRef.current)
           successTimerRef.current = setTimeout(() => setSaveSuccess(false), 2500)
         },
-        onError: () => showToast('Nepodařilo se uložit nastavení.', 'error'),
+        onError: (error) => {
+          setSaveError(
+            getNetworkAwareActionMessage(
+              error,
+              'Nastavení chaty se nepodařilo uložit. Zkuste to znovu.',
+              'Spojení vypadlo dřív, než se nastavení chaty stihlo uložit. Zkuste to znovu po obnovení připojení.',
+            ),
+          )
+        },
       },
     )
   }, [name, description, welcomeMessage, weatherLocation, rules, isWinterized, checklist, features, updateSettings])
@@ -244,16 +280,18 @@ export function CabinSettingsPage() {
         {/* ── Header ── */}
         <div className="cs-header">
           <div className="cs-header-left">
-            <button
-              className="cabin-settings-back"
-              title="Zpět na admin"
-              onClick={() => navigate('/admin')}
-            >
-              ←
-            </button>
+            {showBackButton ? (
+              <button
+                className="cabin-settings-back"
+                title="Zpět na správu chaty"
+                onClick={onBack}
+              >
+                ←
+              </button>
+            ) : null}
             <div>
-              <h1 className="cs-title">Nastavení chaty</h1>
-              <p className="cs-subtitle">Přizpůsobte si svou chatu podle sebe</p>
+              <h1 className="cs-title">{title}</h1>
+              <p className="cs-subtitle">{subtitle}</p>
             </div>
           </div>
           <button
@@ -265,6 +303,9 @@ export function CabinSettingsPage() {
             {saveBtnText}
           </button>
         </div>
+        {saveError ? (
+          <div className="error-message show" role="alert">{saveError}</div>
+        ) : null}
 
         {/* ── Tabs ── */}
         <div className="cs-tabs">
@@ -288,12 +329,15 @@ export function CabinSettingsPage() {
               <p>Načítám nastavení…</p>
             </div>
           ) : isError ? (
-            <div className="cabin-settings-loading" style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-              <img src="/icons/empty_shelf.svg" alt="" aria-hidden="true" style={{ maxHeight: 96, width: 'auto', opacity: 0.65 }} />
-              <p style={{ margin: '0.5rem 0 0', fontWeight: 600 }}>Nepodařilo se načíst nastavení</p>
-            </div>
+            <FeatureErrorFallback
+              error={settingsError instanceof Error ? settingsError : new Error('Nepodařilo se načíst nastavení chaty')}
+              resetErrorBoundary={() => {
+                void refetchSettings()
+              }}
+              title="Nastavení chaty se nepodařilo načíst"
+            />
           ) : (
-            <form id="cs-form" className="cabin-settings-form" noValidate onSubmit={handleSubmit}>
+            <form id="cs-form" className="cabin-settings-form" noValidate onSubmit={handleSubmit} onChangeCapture={clearSaveFeedback}>
               {/* Tab 1: Basic */}
               <div className={`cs-tab-pane${activeTab === 'tab-basic' ? ' active' : ''}`} id="tab-basic">
                 <section className="cs-section">
@@ -394,7 +438,13 @@ export function CabinSettingsPage() {
                     <h2>Odjezdový checklist</h2>
                     <p>Co zkontrolovat před uzamčením chaty</p>
                   </div>
-                  <ChecklistEditor items={checklist} onChange={setChecklist} />
+                  <ChecklistEditor
+                    items={checklist}
+                    onChange={(items) => {
+                      clearSaveFeedback()
+                      setChecklist(items)
+                    }}
+                  />
                 </section>
 
                 <section className="cs-section">
@@ -424,13 +474,37 @@ export function CabinSettingsPage() {
                     <h2>Aktivní moduly</h2>
                     <p>Zapněte nebo vypněte funkce podle potřeb vaší rodiny</p>
                   </div>
-                  <FeatureToggles features={features} onChange={setFeatures} />
+                  <FeatureToggles
+                    features={features}
+                    onChange={(nextFeatures) => {
+                      clearSaveFeedback()
+                      setFeatures(nextFeatures)
+                    }}
+                  />
                 </section>
               </div>
             </form>
           )}
         </div>
 
+      </div>
+    </div>
+  )
+}
+
+// ─── CabinSettingsPage ────────────────────────────────────────────────────────
+
+export function CabinSettingsPage() {
+  useDocumentTitle('Správa chaty')
+  const navigate = useNavigate()
+
+  return (
+    <div className="main-content-settings">
+      <div className="page-card settings-page-card">
+        <CabinSettingsPanel
+          showBackButton={true}
+          onBack={() => navigate('/admin')}
+        />
       </div>
     </div>
   )

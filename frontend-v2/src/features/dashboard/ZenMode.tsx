@@ -5,6 +5,7 @@ import apiClient from '@/api/client';
 import { showToast } from '@/lib/toast';
 import { useAuth } from '@/context/AuthContext';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
+import { getNetworkAwareActionMessage, getNetworkAwareLoadMessage } from '@/lib/networkError';
 import './ZenMode.css';
 
 interface Wallpaper {
@@ -16,16 +17,23 @@ export function ZenMode() {
     const [isZenMode, setIsZenMode] = useState(false);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [deleteWallpaperConfirmOpen, setDeleteWallpaperConfirmOpen] = useState(false);
+    const [uploadError, setUploadError] = useState<string | null>(null);
+    const [deleteError, setDeleteError] = useState<string | null>(null);
 
     const { user } = useAuth();
     const queryClient = useQueryClient();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const trackRef = useRef<HTMLDivElement>(null);
 
-    const { data: wallpapers = [] } = useQuery<Wallpaper[]>({
+    const {
+        data: wallpapers = [],
+        isError: wallpapersFailed,
+        error: wallpapersError,
+        refetch: refetchWallpapers,
+    } = useQuery<Wallpaper[]>({
         queryKey: ['wallpapers'],
         queryFn: async () => {
-            const res = await apiClient.get('/wallpapers');
+            const res = await apiClient.get<Wallpaper[]>('/wallpapers');
             return res.data;
         },
     });
@@ -41,11 +49,17 @@ export function ZenMode() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['wallpapers'] });
+            setUploadError(null);
             showToast('Tapeta nahrána', 'success');
         },
-        onError: (err: unknown) => {
-            const axiosErr = err as { response?: { data?: { message?: string } } };
-            showToast(axiosErr.response?.data?.message || 'Chyba při nahrávání tapety', 'error');
+        onError: (error) => {
+            setUploadError(
+                getNetworkAwareActionMessage(
+                    error,
+                    'Tapetu se nepodařilo nahrát. Zkuste to znovu.',
+                    'Spojení vypadlo dřív, než se tapeta stihla nahrát. Zkuste to znovu po obnovení připojení.',
+                ),
+            );
         },
     });
 
@@ -55,8 +69,19 @@ export function ZenMode() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['wallpapers'] });
+            setDeleteError(null);
+            setDeleteWallpaperConfirmOpen(false);
             showToast('Tapeta smazána', 'success');
             setCurrentIndex((prev) => Math.max(0, prev - 1));
+        },
+        onError: (error) => {
+            setDeleteError(
+                getNetworkAwareActionMessage(
+                    error,
+                    'Tapetu se nepodařilo smazat. Zkuste to znovu.',
+                    'Spojení vypadlo dřív, než se tapeta stihla smazat. Zkuste to znovu po obnovení připojení.',
+                ),
+            );
         },
     });
 
@@ -101,6 +126,7 @@ export function ZenMode() {
             showToast('Soubor je příliš velký (max 20MB)', 'error');
             return;
         }
+        setUploadError(null);
         uploadMutation.mutate(file);
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
@@ -178,6 +204,9 @@ export function ZenMode() {
     const safeIndex = Math.min(currentIndex, items.length - 1);
     const activeItem = items[safeIndex];
     const canSetBg = activeItem && activeItem.id !== 'default' && activeItem.id !== 'default1' && activeItem.id !== 'default2';
+    const loadError = wallpapersFailed
+        ? getNetworkAwareLoadMessage(wallpapersError, 'Vlastní tapety se nepodařilo načíst. Zkuste to znovu.')
+        : null;
 
     const overlay = (
         <div className="zen-overlay" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
@@ -219,7 +248,10 @@ export function ZenMode() {
                             <button
                                 className="btn-action danger"
                                 id="btn-delete"
-                                onClick={() => setDeleteWallpaperConfirmOpen(true)}
+                                onClick={() => {
+                                    setDeleteError(null);
+                                    setDeleteWallpaperConfirmOpen(true);
+                                }}
                                 disabled={deleteMutation.isPending}
                                 title="Smazat tapetu"
                             >
@@ -285,6 +317,48 @@ export function ZenMode() {
                 </div>
             </div>
 
+            {(loadError || uploadError || deleteError) && (
+                <div
+                    style={{
+                        position: 'absolute',
+                        top: 84,
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        zIndex: 1000,
+                        width: 'min(560px, calc(100vw - 32px))',
+                        padding: '10px 14px',
+                        borderRadius: 16,
+                        background: 'rgba(17, 24, 39, 0.82)',
+                        border: '1px solid rgba(248, 113, 113, 0.38)',
+                        color: '#fecaca',
+                        fontSize: '0.88rem',
+                        lineHeight: 1.5,
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        alignItems: 'flex-start',
+                        justifyContent: 'space-between',
+                        gap: 12,
+                    }}
+                    role="alert"
+                >
+                    <span style={{ flex: '1 1 240px', minWidth: 0 }}>
+                        {uploadError ?? deleteError ?? loadError}
+                    </span>
+                    {loadError && !uploadError && !deleteError ? (
+                        <button
+                            type="button"
+                            className="button-secondary"
+                            style={{ flex: '0 0 auto', minHeight: 44 }}
+                            onClick={() => {
+                                void refetchWallpapers();
+                            }}
+                        >
+                            Zkusit znovu
+                        </button>
+                    ) : null}
+                </div>
+            )}
+
             {uploadMutation.isPending && (
                 <div style={{ position: 'absolute', top: 20, background: 'rgba(0,0,0,0.6)', color: 'white', padding: '8px 16px', borderRadius: 20, zIndex: 1000 }}>
                     Nahrávám...
@@ -301,11 +375,16 @@ export function ZenMode() {
                 message="Opravdu chcete smazat tuto tapetu?"
                 confirmLabel="Smazat"
                 danger
+                loading={deleteMutation.isPending}
+                errorMessage={deleteError}
                 onConfirm={() => {
-                    setDeleteWallpaperConfirmOpen(false);
+                    if (!activeItem || activeItem.id === 'default') return;
                     deleteMutation.mutate(activeItem.id);
                 }}
-                onCancel={() => setDeleteWallpaperConfirmOpen(false)}
+                onCancel={() => {
+                    setDeleteWallpaperConfirmOpen(false);
+                    setDeleteError(null);
+                }}
             />
             {createPortal(toggleBtn, document.body)}
             {isZenMode && createPortal(overlay, document.body)}

@@ -8,7 +8,7 @@ import { useAuth } from '@/context/AuthContext'
 import { showToast } from '@/lib/toast'
 import { NAV_ROUTES } from '@/lib/navRoutes'
 import { useCabinFeatures, isFeatureEnabled } from '@/hooks/useCabinFeatures'
-import { Settings, Users } from 'lucide-react'
+import { ScrollText, Settings, Shield } from 'lucide-react'
 import { AnimalAvatar } from '@/components/shared/AnimalAvatar'
 
 interface TopBarProps {
@@ -16,7 +16,7 @@ interface TopBarProps {
 }
 
 export function TopBar({ onOpenProfileDrawer }: TopBarProps) {
-  const { user, isAdmin, logout } = useAuth()
+  const { user, isAdmin, isSuperAdmin, logout } = useAuth()
   const { data: cabin } = useCabinFeatures()
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -40,19 +40,21 @@ export function TopBar({ onOpenProfileDrawer }: TopBarProps) {
 
   // Viditelné nav položky dle feature flags a role
   const visibleRoutes = NAV_ROUTES.filter((r) => {
+    if (!user?.cabinId && isSuperAdmin && !r.superAdminOnly) return false
     if (r.adminOnly) return isAdmin
+    if (r.superAdminOnly) return isSuperAdmin
     if (r.featureKey) return isFeatureEnabled(cabin?.features, r.featureKey)
     return true
   })
-  // Admin/cabin-settings se zobrazují v dropdownu, ne v hlavní nav
-  const mainNavRoutes = visibleRoutes.filter((r) => !r.adminOnly)
+  // Admin obrazovky se zobrazují v dropdownu, ne v hlavní nav
+  const mainNavRoutes = visibleRoutes.filter((r) => !r.adminOnly && !r.superAdminOnly)
 
   const username = user?.username ?? 'Uživatel'
 
   return (
     <div className="top-bar">
       <div className="nav-left-group">
-        <Link to="/dashboard" className="brand-logo-lockup">
+        <Link to={user?.isSuperAdmin && !user?.cabinId ? '/superadmin' : '/dashboard'} className="brand-logo-lockup">
           <img src="/logo-icon.svg" alt="kdynachatu.cz" className="nav-logo-icon" />
         </Link>
 
@@ -103,27 +105,41 @@ export function TopBar({ onOpenProfileDrawer }: TopBarProps) {
             Osobní profil
           </button>
 
-          {isAdmin && (
+          {(isAdmin || isSuperAdmin) && (
             <>
               <div id="nav-admin-separator" className="nav-dropdown-separator"></div>
-              <Link
-                to="/cabin-settings"
-                id="nav-admin-settings"
-                className="nav-dropdown-item"
-                onClick={() => setDropdownOpen(false)}
-              >
-                <Settings size={16} style={{ marginRight: '8px', verticalAlign: 'text-bottom' }} />
-                Nastavení chaty
-              </Link>
-              <Link
-                to="/admin"
-                id="nav-admin-members"
-                className="nav-dropdown-item"
-                onClick={() => setDropdownOpen(false)}
-              >
-                <Users size={16} style={{ marginRight: '8px', verticalAlign: 'text-bottom' }} />
-                Přehled členů
-              </Link>
+              {isSuperAdmin && (
+                <Link
+                  to="/superadmin"
+                  className="nav-dropdown-item"
+                  onClick={() => setDropdownOpen(false)}
+                >
+                  <Shield size={16} style={{ marginRight: '8px', verticalAlign: 'text-bottom' }} />
+                  Backoffice
+                </Link>
+              )}
+              {isAdmin && (
+                <>
+                  <Link
+                    to="/admin"
+                    id="nav-admin-management"
+                    className="nav-dropdown-item"
+                    onClick={() => setDropdownOpen(false)}
+                  >
+                    <Settings size={16} style={{ marginRight: '8px', verticalAlign: 'text-bottom' }} />
+                    Administrativa
+                  </Link>
+                  <Link
+                    to="/admin/diagnostics"
+                    id="nav-admin-debug"
+                    className="nav-dropdown-item"
+                    onClick={() => setDropdownOpen(false)}
+                  >
+                    <ScrollText size={16} style={{ marginRight: '8px', verticalAlign: 'text-bottom' }} />
+                    Diagnostika
+                  </Link>
+                </>
+              )}
             </>
           )}
 

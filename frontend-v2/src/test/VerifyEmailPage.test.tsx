@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
+import { apiClient } from '@/api/client'
 import { VerifyEmailPage } from '@/features/auth/VerifyEmailPage'
 
 function renderWithRouter(initialEntry: string) {
@@ -22,19 +23,15 @@ describe('VerifyEmailPage', () => {
   })
 
   it('shows loading state when token is present', () => {
-    // Mock fetch to never resolve
-    vi.spyOn(globalThis, 'fetch').mockReturnValue(new Promise(() => {}))
+    vi.spyOn(apiClient, 'get').mockReturnValue(new Promise(() => {}) as ReturnType<typeof apiClient.get>)
     renderWithRouter('/verify?token=abc123')
     expect(screen.getByText('Ověřuji váš účet…')).toBeInTheDocument()
   })
 
   it('shows success on valid token', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({ message: 'Účet byl úspěšně aktivován!' }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      }),
-    )
+    vi.spyOn(apiClient, 'get').mockResolvedValue({
+      data: { message: 'Účet byl úspěšně aktivován!' },
+    } as Awaited<ReturnType<typeof apiClient.get>>)
 
     renderWithRouter('/verify?token=valid-token')
 
@@ -44,12 +41,11 @@ describe('VerifyEmailPage', () => {
   })
 
   it('shows error on invalid token', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({ message: 'Neplatný token.' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      }),
-    )
+    vi.spyOn(apiClient, 'get').mockRejectedValue({
+      response: {
+        data: { message: 'Neplatný token.' },
+      },
+    })
 
     renderWithRouter('/verify?token=bad-token')
 

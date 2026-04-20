@@ -1,0 +1,27 @@
+{
+  "skill_name": "skill-creator",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Pomoz mi vytvorit novy skill pro backend security review vcetne trigger description a eval promptu.",
+      "expected_output": "Skill creation workflow s dotazy na scope, draftem SKILL.md a eval scaffoldem.",
+      "files": [],
+      "expectations": [
+        "Output nepreskakuje discovery a trigger design.",
+        "Output navrhuje realisticke eval prompty.",
+        "Output premysli o iteraci a benchmarkingu, ne jen o prvnim draftu."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Zhodnot existujici skill, navrhni jak zlepsit trigger accuracy a jak ho benchmarkovat proti predchozi verzi.",
+      "expected_output": "Proces pro improvement loop, benchmark, assertions a review viewer.",
+      "files": [],
+      "expectations": [
+        "Output zahrnuje baseline vs improved comparison logiku.",
+        "Output resi assertions nebo expectations schema.",
+        "Output zohledni qualitative i quantitative evaluation."
+      ]
+    }
+  ]
+}

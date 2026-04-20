@@ -2,9 +2,10 @@
  * GlobalFallback.tsx — Fullscreen chybová stránka pro root ErrorBoundary.
  * Zobrazí se pouze při pádu celého stromu (White Screen of Death).
  */
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import type { FallbackProps } from 'react-error-boundary'
 import { reportError } from '@/lib/errorReporting'
+import { extractSupportErrorDetails } from '@/lib/errorDetails'
 
 const GLOBAL_ERROR_QUIPS = [
   'Celá aplikace odešla. To se jen tak nevidí.',
@@ -17,18 +18,29 @@ const GLOBAL_ERROR_QUIPS = [
 
 type ErrorWithMessage = { message?: string; stack?: string }
 
+function pickStableQuip(seed: string, quips: string[]): string {
+  let hash = 0
+  for (let index = 0; index < seed.length; index += 1) {
+    hash = (hash * 31 + seed.charCodeAt(index)) >>> 0
+  }
+  return quips[hash % quips.length]
+}
+
 export function GlobalFallback({ error, resetErrorBoundary }: FallbackProps) {
-  const err = error as ErrorWithMessage;
-  const quipRef = useRef(GLOBAL_ERROR_QUIPS[Math.floor(Math.random() * GLOBAL_ERROR_QUIPS.length)])
-  const quip = quipRef.current
+  const err = error as ErrorWithMessage
+  const quip = pickStableQuip(err?.message ?? 'GlobalFallback', GLOBAL_ERROR_QUIPS)
+  const supportDetails = extractSupportErrorDetails(error)
 
   useEffect(() => {
     reportError({
       message: err?.message ?? 'Unknown error',
       stack: err?.stack,
       component: 'GlobalFallback',
+      requestId: supportDetails.requestId,
+      errorId: supportDetails.errorId,
+      path: window.location.pathname,
     }, false) // use anon endpoint — auth may be broken
-  }, [err])
+  }, [err, supportDetails.errorId, supportDetails.requestId])
   return (
     <div
       style={{
@@ -69,6 +81,12 @@ export function GlobalFallback({ error, resetErrorBoundary }: FallbackProps) {
         <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--color-text-muted, #666)', fontStyle: 'italic', opacity: 0.75 }}>
           {quip}
         </p>
+
+        {supportDetails.supportCode && (
+          <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--color-text, #1a1a1a)' }}>
+            Kód chyby pro podporu: <strong>{supportDetails.supportCode}</strong>
+          </p>
+        )}
 
         {/* Dev-only: zobraz technický detail chyby */}
         {import.meta.env.DEV && err?.message && (

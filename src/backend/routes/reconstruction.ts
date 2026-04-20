@@ -2,11 +2,54 @@ import { Router, Request, Response } from "express";
 import { protect } from "../../middleware/authMiddleware";
 import { requireCabin } from "../../middleware/cabinMiddleware";
 import { validate } from "../../validators/validate";
-import { createReconstructionItemSchema, updateReconstructionItemSchema } from "../../validators/schemas";
+import {
+  createReconstructionItemSchema,
+  updateReconstructionItemSchema,
+  updateReconstructionStatusSchema,
+} from "../../validators/schemas";
 import prisma from "../../utils/prisma";
 import logger from "../../utils/logger";
 
 const router = Router();
+const COMPANY_STATUSES = new Set(["pending", "contacted", "approved", "rejected"]);
+const TASK_STATUSES = new Set(["pending", "done"]);
+const IDEA_STATUSES = new Set(["pending", "approved"]);
+
+function isValidStatusForCategory(category: string, status?: string): boolean {
+  if (!status) {
+    return true;
+  }
+
+  if (category === "company") {
+    return COMPANY_STATUSES.has(status);
+  }
+
+  if (category === "task") {
+    return TASK_STATUSES.has(status);
+  }
+
+  if (category === "idea") {
+    return IDEA_STATUSES.has(status);
+  }
+
+  return false;
+}
+
+function getInvalidStatusMessage(category: string): string {
+  if (category === "company") {
+    return "Neplatný stav firmy.";
+  }
+
+  if (category === "task") {
+    return "Neplatný stav úkolu.";
+  }
+
+  if (category === "idea") {
+    return "Neplatný stav nápadu.";
+  }
+
+  return "Neplatný stav.";
+}
 
 // ============================================================================
 //                      GET ALL RECONSTRUCTION ITEMS
@@ -69,6 +112,10 @@ router.post("/", protect, requireCabin, validate(createReconstructionItemSchema)
   const { category, title, description, link, cost, status, thumbnail, tag, specialization, email, phone, deadline, sourceMessageId } = req.body;
 
   try {
+    if (!isValidStatusForCategory(category, status)) {
+      return res.status(400).json({ message: getInvalidStatusMessage(category) });
+    }
+
     const newItem = await prisma.reconstructionItem.create({
       data: {
         category,
@@ -134,6 +181,10 @@ router.put("/:id", protect, requireCabin, validate(updateReconstructionItemSchem
     });
     if (!existing) {
       return res.status(404).json({ message: "Položka nenalezena." });
+    }
+
+    if (!isValidStatusForCategory(category, status)) {
+      return res.status(400).json({ message: getInvalidStatusMessage(category) });
     }
 
     const updatedItem = await prisma.reconstructionItem.update({
@@ -314,9 +365,9 @@ router.patch("/:id/vote", protect, requireCabin, async (req: Request, res: Respo
 });
 
 // ============================================================================
-//                         UPDATE STATUS (tasks only)
+//                         UPDATE STATUS
 // ============================================================================
-router.patch("/:id/status", protect, requireCabin, async (req: Request, res: Response) => {
+router.patch("/:id/status", protect, requireCabin, validate(updateReconstructionStatusSchema), async (req: Request, res: Response) => {
   const { id } = req.params;
   const { status } = req.body;
 
@@ -329,8 +380,8 @@ router.patch("/:id/status", protect, requireCabin, async (req: Request, res: Res
       return res.status(404).json({ message: "Nenalezeno." });
     }
 
-    if (item.category !== "task") {
-      return res.status(400).json({ message: "Nelze měnit status u této kategorie." });
+    if (!isValidStatusForCategory(item.category, status)) {
+      return res.status(400).json({ message: getInvalidStatusMessage(item.category) });
     }
 
     const updated = await prisma.reconstructionItem.update({

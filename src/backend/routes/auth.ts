@@ -5,12 +5,19 @@ import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../../config/config";
 import prisma from "../../utils/prisma";
 import logger from "../../utils/logger";
-import { sendVerificationEmailWithPIN, sendVerificationEmailWithToken } from "../../utils/email";
+import { sendPasswordResetEmail, sendVerificationEmailWithPIN, sendVerificationEmailWithToken } from "../../utils/email";
 import { validate } from "../../validators/validate";
-import { loginSchema, registerSchema, verifyEmailSchema } from "../../validators/schemas";
+import { forgotPasswordSchema, loginSchema, registerSchema, resetPasswordSchema, verifyEmailSchema } from "../../validators/schemas";
 import { protect } from "../../middleware/authMiddleware";
 
 const router = Router();
+
+const PASSWORD_RESET_EXPIRY_MS = 2 * 60 * 60 * 1000;
+const PASSWORD_RESET_GENERIC_MESSAGE = "Pokud účet existuje a má nastavený e-mail pro obnovu hesla, poslali jsme vám odkaz pro nastavení nového hesla.";
+
+function hashToken(token: string): string {
+  return crypto.createHash("sha256").update(token).digest("hex");
+}
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -70,6 +77,17 @@ router.post("/login", validate(loginSchema), async (req: Request, res: Response)
       return res.status(401).json({ message: "Nesprávné heslo." });
     }
 
+    if (user.isBanned) {
+      logger.warn("AUTH", "Blocked login attempt for banned user", {
+        userId: user.id,
+        username: user.username,
+      });
+      return res.status(403).json({
+        message: "Tento účet byl zablokován. Kontaktujte administrátora.",
+        code: "ACCOUNT_BANNED",
+      });
+    }
+
     // ── Token-based verification check (new SaaS flow) ──────────────────
     if (!user.isVerified && user.role !== "admin") {
       // If user still has a verificationToken, they used the new flow
@@ -103,7 +121,13 @@ router.post("/login", validate(loginSchema), async (req: Request, res: Response)
     }
 
     const token = jwt.sign(
-      { userId: user.id, username: user.username, role: user.role, cabinId: user.cabinId },
+      {
+        userId: user.id,
+        username: user.username,
+        role: user.role,
+        cabinId: user.cabinId,
+        isSuperAdmin: user.isSuperAdmin,
+      },
       JWT_SECRET,
       { expiresIn: "30d" }
     );
@@ -116,6 +140,7 @@ router.post("/login", validate(loginSchema), async (req: Request, res: Response)
       color: user.color,
       animalIcon: user.animalIcon,
       cabinId: user.cabinId,
+      isSuperAdmin: user.isSuperAdmin,
     });
   } catch (error) {
     logger.error("AUTH", "Login error", { error: String(error), stack: (error as Error).stack });
@@ -255,6 +280,139 @@ router.post("/register", async (req: Request, res: Response) => {
 });
 
 // ============================================================================
+//                       FORGOT PASSWORD
+// ============================================================================
+router.post("/forgot-password", validate(forgotPasswordSchema), async (req: Request, res: Response) => {
+  const { identifier } = req.body;
+
+  try {
+    const normalizedIdentifier = identifier.trim();
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: { equals: normalizedIdentifier, mode: "insensitive" } },
+          { username: { equals: normalizedIdentifier, mode: "insensitive" } },
+        ],
+      },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        isBanned: true,
+      },
+    });
+
+    if (!user) {
+      return res.json({ message: PASSWORD_RESET_GENERIC_MESSAGE });
+    }
+
+    if (user.isBanned) {
+      logger.warn("AUTH", "Password reset requested for banned user", { userId: user.id });
+      return res.json({ message: PASSWORD_RESET_GENERIC_MESSAGE });
+    }
+
+    if (!user.email) {
+      logger.warn("AUTH", "Password reset requested for user without email", { userId: user.id, username: user.username });
+      return res.json({ message: PASSWORD_RESET_GENERIC_MESSAGE });
+    }
+
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    const passwordResetToken = hashToken(rawToken);
+    const passwordResetExpiresAt = new Date(Date.now() + PASSWORD_RESET_EXPIRY_MS);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordResetToken,
+        passwordResetExpiresAt,
+      },
+    });
+
+    try {
+      await sendPasswordResetEmail(user.email, rawToken);
+      logger.info("AUTH", "Password reset email queued", { userId: user.id });
+    } catch (emailError) {
+      logger.error("AUTH", "Failed to send password reset email", { userId: user.id, error: String(emailError) });
+    }
+
+    return res.json({ message: PASSWORD_RESET_GENERIC_MESSAGE });
+  } catch (error) {
+    logger.error("AUTH", "Forgot password error", { error: String(error) });
+    return res.status(500).json({ message: "Chyba serveru." });
+  }
+});
+
+// ============================================================================
+//                       VALIDATE RESET TOKEN
+// ============================================================================
+router.get("/reset-password-token", async (req: Request, res: Response) => {
+  const { token } = req.query;
+
+  if (!token || typeof token !== "string") {
+    return res.status(400).json({ message: "Chybí resetovací token." });
+  }
+
+  try {
+    const user = await prisma.user.findFirst({
+      where: {
+        passwordResetToken: hashToken(token),
+        passwordResetExpiresAt: { gt: new Date() },
+      },
+      select: { id: true },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Resetovací odkaz je neplatný nebo již vypršel." });
+    }
+
+    return res.json({ message: "Resetovací odkaz je platný." });
+  } catch (error) {
+    logger.error("AUTH", "Validate reset token error", { error: String(error) });
+    return res.status(500).json({ message: "Chyba serveru při ověřování odkazu." });
+  }
+});
+
+// ============================================================================
+//                       RESET PASSWORD
+// ============================================================================
+router.post("/reset-password", validate(resetPasswordSchema), async (req: Request, res: Response) => {
+  const { token, password } = req.body;
+
+  try {
+    const user = await prisma.user.findFirst({
+      where: {
+        passwordResetToken: hashToken(token),
+        passwordResetExpiresAt: { gt: new Date() },
+      },
+      select: {
+        id: true,
+        username: true,
+      },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Resetovací odkaz je neplatný nebo již vypršel." });
+    }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash: await bcrypt.hash(password, 10),
+        passwordResetToken: null,
+        passwordResetExpiresAt: null,
+      },
+    });
+
+    logger.info("AUTH", "Password reset completed", { userId: user.id, username: user.username });
+
+    return res.json({ message: "Heslo bylo úspěšně změněno. Nyní se můžete přihlásit." });
+  } catch (error) {
+    logger.error("AUTH", "Reset password error", { error: String(error) });
+    return res.status(500).json({ message: "Chyba serveru." });
+  }
+});
+
+// ============================================================================
 //                       VERIFY EMAIL (token-based — new SaaS flow)
 // ============================================================================
 router.get("/verify-token", async (req: Request, res: Response) => {
@@ -363,13 +521,20 @@ router.get("/refresh-token", protect, async (req: Request, res: Response) => {
         cabinId: true,
         animalIcon: true,
         color: true,
+        isSuperAdmin: true,
       },
     });
 
     if (!user) return res.status(404).json({ message: "Uživatel nenalezen." });
 
     const token = jwt.sign(
-      { userId: user.id, username: user.username, role: user.role, cabinId: user.cabinId },
+      {
+        userId: user.id,
+        username: user.username,
+        role: user.role,
+        cabinId: user.cabinId,
+        isSuperAdmin: user.isSuperAdmin,
+      },
       JWT_SECRET,
       { expiresIn: "30d" }
     );
@@ -384,6 +549,7 @@ router.get("/refresh-token", protect, async (req: Request, res: Response) => {
       role: user.role,
       animalIcon: user.animalIcon,
       cabinId: user.cabinId,
+      isSuperAdmin: user.isSuperAdmin,
     });
   } catch (error) {
     logger.error("AUTH", "Refresh token error", { error: String(error) });

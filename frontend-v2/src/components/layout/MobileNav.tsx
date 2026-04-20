@@ -6,9 +6,13 @@
 import { NavLink } from 'react-router-dom'
 import { MOBILE_NAV_ROUTES } from '@/lib/navRoutes'
 import { useCabinFeatures, isFeatureEnabled } from '@/hooks/useCabinFeatures'
+import { useAuth } from '@/context/AuthContext'
 
 export function MobileNav() {
+  const { user } = useAuth()
   const { data: cabin } = useCabinFeatures()
+
+  if (!user?.cabinId) return null
 
   const visibleRoutes = MOBILE_NAV_ROUTES.filter((r) => {
     if (r.featureKey) return isFeatureEnabled(cabin?.features, r.featureKey)

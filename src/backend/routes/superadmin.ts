@@ -160,13 +160,39 @@ router.patch("/users/:id/ban", protect, requireSuperAdmin, async (req: Request, 
   }
 });
 
-// ─── GET /api/superadmin/logs ────────────────────────────────────────────────
-// Vrátí posledních 100 systémových logů
-router.get("/logs", protect, requireSuperAdmin, async (req: Request, res: Response) => {
-  // The systemLog model has been removed from Prisma schema.
-  const logs: any[] = [];
+// ─── GET /api/superadmin/logs/files ──────────────────────────────────────────
+router.get("/logs/files", protect, requireSuperAdmin, async (_req: Request, res: Response) => {
+  try {
+    res.json({ files: logger.listLogFiles() });
+  } catch (error) {
+    logger.error("SUPERADMIN", "Failed to list log files", { error: String(error) });
+    res.status(500).json({ message: "Chyba při načítání seznamu logů" });
+  }
+});
 
-  res.json(logs);
+// ─── GET /api/superadmin/logs ────────────────────────────────────────────────
+router.get("/logs", protect, requireSuperAdmin, async (req: Request, res: Response) => {
+  try {
+    const { date, lines, level, userId, module: mod, source } = req.query;
+
+    const logs = logger.readLogs({
+      date: date as string | undefined,
+      lines: lines ? parseInt(lines as string, 10) : 200,
+      level: level as string | undefined,
+      userId: userId as string | undefined,
+      module: mod as string | undefined,
+      source: source as string | undefined,
+    });
+
+    res.json({
+      date: date ?? new Date().toISOString().split("T")[0],
+      count: logs.length,
+      logs,
+    });
+  } catch (error) {
+    logger.error("SUPERADMIN", "Failed to fetch logs", { error: String(error) });
+    res.status(500).json({ message: "Chyba při načítání logů" });
+  }
 });
 
 export default router;

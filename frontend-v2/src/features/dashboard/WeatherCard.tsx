@@ -80,7 +80,7 @@ export function WeatherCard({ weather }: Props) {
           <p className="empty-text" style={{ marginTop: "12px", marginBottom: "12px" }}>
             Pro zobrazení počasí si v nastavení vyplňte přibližnou lokalitu.
           </p>
-          <button className="empty-cta" onClick={() => navigate("/cabin-settings")}>
+          <button className="empty-cta" onClick={() => navigate("/admin/cabin") }>
             Přejít do nastavení
           </button>
         </div>
@@ -101,7 +101,7 @@ export function WeatherCard({ weather }: Props) {
           >
             Lokalita nenalezena. Zkuste v nastavení zadat větší nejbližší město nebo PSČ.
           </p>
-          <button className="empty-cta" onClick={() => navigate("/cabin-settings")}>
+          <button className="empty-cta" onClick={() => navigate("/admin/cabin") }>
             Upravit lokalitu
           </button>
         </div>
@@ -168,17 +168,13 @@ export function WeatherCard({ weather }: Props) {
                   {weather.sunsetTime}
                 </span>
               )}
+              {weather.uvIndex >= 3 && (
+                <span className={`weather-sun-uv ${uvLabel(weather.uvIndex).className}`}>
+                  <Sun size={13} />
+                  <span>UV {uvLabel(weather.uvIndex).text} <strong>{Math.round(weather.uvIndex)}</strong></span>
+                </span>
+              )}
               {(() => { const dl = dayLength(weather.sunriseTime, weather.sunsetTime); return dl ? <span className="weather-day-length">{dl}</span> : null; })()}
-            </div>
-          )}
-
-          {/* UV chip — only when notable (≥3) */}
-          {weather.uvIndex >= 3 && (
-            <div className="weather-chips">
-              <div className={`weather-chip weather-chip-uv ${uvLabel(weather.uvIndex).className}`}>
-                <Sun size={13} />
-                <span>UV {uvLabel(weather.uvIndex).text} <strong>{Math.round(weather.uvIndex)}</strong></span>
-              </div>
             </div>
           )}
 

@@ -27,7 +27,7 @@ The user has RS and relies on this app for financial independence. **Downtime is
 | **Reverse Proxy** | Nginx |
 | **CI/CD** | GitHub Actions → SSH deploy |
 | **Local Dev** | Docker Compose |
-| **Bundler** | Vite 6.x (frontend) |
+| **Bundler** | Vite 7 (frontend) |
 
 ---
 

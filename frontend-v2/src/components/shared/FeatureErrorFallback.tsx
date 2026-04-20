@@ -3,9 +3,10 @@
  * Vykreslí se uvnitř glass-card widgetu místo spadlé komponenty.
  * Zbytek stránky funguje normálně.
  */
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import type { FallbackProps } from 'react-error-boundary'
 import { reportError } from '@/lib/errorReporting'
+import { extractSupportErrorDetails } from '@/lib/errorDetails'
 
 const FEATURE_ERROR_QUIPS = [
   'Tahle část si vzala neplánovanou dovolenou.',
@@ -19,6 +20,14 @@ const FEATURE_ERROR_QUIPS = [
 
 type ErrorWithMessage = { message?: string; stack?: string }
 
+function pickStableQuip(seed: string, quips: string[]): string {
+  let hash = 0
+  for (let index = 0; index < seed.length; index += 1) {
+    hash = (hash * 31 + seed.charCodeAt(index)) >>> 0
+  }
+  return quips[hash % quips.length]
+}
+
 interface FeatureErrorFallbackProps extends FallbackProps {
   /** Volitelný přepis titulku (default: "Komponentu se nepodařilo načíst") */
   title?: string
@@ -29,17 +38,20 @@ export function FeatureErrorFallback({
   resetErrorBoundary,
   title,
 }: FeatureErrorFallbackProps) {
-  const err = error as ErrorWithMessage;
-  const quipRef = useRef(FEATURE_ERROR_QUIPS[Math.floor(Math.random() * FEATURE_ERROR_QUIPS.length)])
-  const quip = quipRef.current
+  const err = error as ErrorWithMessage
+  const quip = pickStableQuip(`${title ?? 'FeatureErrorFallback'}|${err?.message ?? 'unknown'}`, FEATURE_ERROR_QUIPS)
+  const supportDetails = extractSupportErrorDetails(error)
 
   useEffect(() => {
     reportError({
       message: err?.message ?? 'Unknown error',
       stack: err?.stack,
       component: title ?? 'FeatureErrorFallback',
+      requestId: supportDetails.requestId,
+      errorId: supportDetails.errorId,
+      path: window.location.pathname,
     })
-  }, [err, title])
+  }, [err, supportDetails.errorId, supportDetails.requestId, title])
   return (
     <div className="glass-card" style={{ minHeight: 120 }}>
       <div
@@ -66,6 +78,11 @@ export function FeatureErrorFallback({
         <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--color-text-muted, #666)', fontStyle: 'italic' }}>
           {quip}
         </p>
+        {supportDetails.supportCode && (
+          <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--color-text, #1a1a1a)' }}>
+            Kód chyby: <strong>{supportDetails.supportCode}</strong>
+          </p>
+        )}
         {import.meta.env.DEV && err?.message && (
           <p
             style={{

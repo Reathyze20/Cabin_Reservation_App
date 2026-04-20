@@ -21,6 +21,7 @@ export interface AuthUser {
   role: 'admin' | 'user' | 'guest'
   animalIcon: string | null
   cabinId: string | null
+  isSuperAdmin: boolean
 }
 
 export interface SetAuthPayload {
@@ -30,6 +31,7 @@ export interface SetAuthPayload {
   role: string
   animalIcon?: string | null
   cabinId?: string | null
+  isSuperAdmin?: boolean
   remember?: boolean
 }
 
@@ -39,6 +41,7 @@ interface AuthContextValue {
   isLoggedIn: boolean
   isAdmin: boolean
   isGuest: boolean
+  isSuperAdmin: boolean
   /** Currently active cabin ID (derived from JWT cabinId, persisted in localStorage). */
   activeCabinId: string | null
   /** Switch active cabin — flushes React Query cache. For future multi-cabin support. */
@@ -61,6 +64,7 @@ function readStoredUser(): { user: AuthUser | null; token: string | null } {
   const role = getAuthItem('role')
   const animalIcon = getAuthItem('animalIcon')
   const cabinId = getAuthItem('cabinId')
+  const isSuperAdmin = getAuthItem('isSuperAdmin') === 'true'
 
   if (!token || !userId || !username || !role) return { user: null, token: null }
 
@@ -72,6 +76,7 @@ function readStoredUser(): { user: AuthUser | null; token: string | null } {
       role: role as AuthUser['role'],
       animalIcon,
       cabinId,
+      isSuperAdmin,
     },
   }
 }
@@ -94,19 +99,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Handle session expiry fired by axios interceptor
   useEffect(() => {
-    const onExpired = () => {
+    const resetAuthState = () => {
       setUser(null)
       setToken(null)
+      setActiveCabinId(null)
       navigate('/', { replace: true })
     }
-    window.addEventListener('auth:expired', onExpired)
-    return () => window.removeEventListener('auth:expired', onExpired)
+
+    window.addEventListener('auth:expired', resetAuthState)
+    window.addEventListener('auth:blocked', resetAuthState)
+
+    return () => {
+      window.removeEventListener('auth:expired', resetAuthState)
+      window.removeEventListener('auth:blocked', resetAuthState)
+    }
   }, [navigate])
 
   const login = useCallback((payload: SetAuthPayload) => {
     const store = payload.remember ? localStorage : sessionStorage
     const otherStore = payload.remember ? sessionStorage : localStorage
-    ;['authToken', 'username', 'userId', 'role', 'animalIcon', 'cabinId'].forEach((k) =>
+    ;['authToken', 'username', 'userId', 'role', 'animalIcon', 'cabinId', 'isSuperAdmin'].forEach((k) =>
       otherStore.removeItem(k),
     )
 
@@ -114,6 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     store.setItem('username', payload.username)
     store.setItem('userId', payload.userId)
     store.setItem('role', payload.role)
+    store.setItem('isSuperAdmin', payload.isSuperAdmin ? 'true' : 'false')
     if (payload.animalIcon) store.setItem('animalIcon', payload.animalIcon)
     if (payload.cabinId) store.setItem('cabinId', payload.cabinId)
 
@@ -134,12 +147,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       role: payload.role as AuthUser['role'],
       animalIcon: payload.animalIcon ?? null,
       cabinId: payload.cabinId ?? null,
+      isSuperAdmin: payload.isSuperAdmin === true,
     })
   }, [])
 
   const logout = useCallback(() => {
     const savedTheme = localStorage.getItem('theme')
-    ;['authToken', 'username', 'userId', 'role', 'animalIcon', 'cabinId', 'activeCabinId'].forEach(
+    ;['authToken', 'username', 'userId', 'role', 'animalIcon', 'cabinId', 'activeCabinId', 'isSuperAdmin'].forEach(
       (k) => {
         localStorage.removeItem(k)
         sessionStorage.removeItem(k)
@@ -180,6 +194,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoggedIn: !!user,
         isAdmin: user?.role === 'admin',
         isGuest: user?.role === 'guest',
+        isSuperAdmin: user?.isSuperAdmin === true,
         activeCabinId,
         updateActiveCabin,
         login,

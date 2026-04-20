@@ -3,6 +3,7 @@ import apiClient from "@/api/client";
 import { useResolveNote } from "./hooks/useNotes";
 import { showToast } from "@/lib/toast";
 import { Modal } from "@/components/shared/Modal";
+import { getNetworkAwareActionMessage } from "@/lib/networkError";
 
 interface Props {
   open: boolean;
@@ -28,6 +29,7 @@ export function CreateRepairDialog({ open, noteId, messageText, onClose }: Props
   const [category, setCategory] = useState<Category>("task");
   const [title, setTitle] = useState(truncateForItem(messageText));
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const resolve = useResolveNote();
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -35,6 +37,7 @@ export function CreateRepairDialog({ open, noteId, messageText, onClose }: Props
     if (open) {
       setTitle(truncateForItem(messageText));
       setCategory("task");
+      setSubmitError(null);
     }
   }, [open, messageText]);
 
@@ -52,6 +55,7 @@ export function CreateRepairDialog({ open, noteId, messageText, onClose }: Props
     const t = title.trim();
     if (!t) return;
     setSubmitting(true);
+    setSubmitError(null);
     try {
       await apiClient.post("/reconstruction", {
         category,
@@ -59,11 +63,19 @@ export function CreateRepairDialog({ open, noteId, messageText, onClose }: Props
         description: messageText,
         sourceMessageId: noteId,
       });
-      await resolve.mutateAsync(noteId);
+      void resolve.mutateAsync(noteId).catch(() => {
+        showToast("Úkol byl vytvořen, ale zprávu se nepodařilo označit jako vyřešenou.", "info");
+      });
       showToast("Úkol vytvořen v rekonstrukcích", "success");
       onClose();
-    } catch {
-      showToast("Nepodařilo se vytvořit úkol.", "error");
+    } catch (error) {
+      setSubmitError(
+        getNetworkAwareActionMessage(
+          error,
+          "Úkol se nepodařilo vytvořit. Zkuste to znovu.",
+          "Spojení vypadlo dřív, než se úkol stihl vytvořit. Zkuste to znovu po obnovení připojení.",
+        ),
+      );
     } finally {
       setSubmitting(false);
     }
@@ -101,7 +113,10 @@ export function CreateRepairDialog({ open, noteId, messageText, onClose }: Props
               <select
                 className="form-input"
                 value={category}
-                onChange={(e) => setCategory(e.target.value as Category)}
+                onChange={(e) => {
+                  if (submitError) setSubmitError(null);
+                  setCategory(e.target.value as Category);
+                }}
               >
                 <option value="task">Úkol</option>
                 <option value="idea">Nápad</option>
@@ -115,10 +130,16 @@ export function CreateRepairDialog({ open, noteId, messageText, onClose }: Props
                 type="text"
                 className="form-input"
                 value={title}
-                onChange={(e) => setTitle(e.target.value)}
+                onChange={(e) => {
+                  if (submitError) setSubmitError(null);
+                  setTitle(e.target.value);
+                }}
                 required
               />
             </div>
+            {submitError ? (
+              <div className="error-message show" role="alert">{submitError}</div>
+            ) : null}
       </form>
     </Modal>
   );

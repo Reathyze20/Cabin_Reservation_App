@@ -17,17 +17,25 @@ import { PhotoGrid, PhotoGridSkeleton } from './PhotoGrid'
 import { Lightbox } from './Lightbox'
 import { UploadModal } from './UploadModal'
 import { showToast } from '@/lib/toast'
-import { Modal } from '@/components/shared/Modal'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
+import { PromptDialog } from '@/components/shared/PromptDialog'
 import { useAuth } from '@/context/AuthContext'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
+import { FeatureErrorFallback } from '@/components/shared/FeatureErrorFallback'
+import { getNetworkAwareActionMessage } from '@/lib/networkError'
 
 type View = 'folders' | 'photos'
 
 export function GalleryPage() {
   useDocumentTitle('Galerie')
   const { isGuest } = useAuth()
-  const { data: folders = [], isLoading: foldersLoading } = useGalleryFolders()
+  const {
+    data: folders = [],
+    isLoading: foldersLoading,
+    isError: foldersFailed,
+    error: foldersError,
+    refetch: refetchFolders,
+  } = useGalleryFolders()
 
   // ── View state ──────────────────────────────────────────────────────────────
   const [view, setView] = useState<View>('folders')
@@ -39,7 +47,13 @@ export function GalleryPage() {
   const [sortValue, setSortValue] = useState('date-desc')
 
   // ── Photo state ─────────────────────────────────────────────────────────────
-  const { data: photos = [], isLoading: photosLoading } = useGalleryPhotos(currentFolderId)
+  const {
+    data: photos = [],
+    isLoading: photosLoading,
+    isError: photosFailed,
+    error: photosError,
+    refetch: refetchPhotos,
+  } = useGalleryPhotos(currentFolderId)
   const [isSelectionMode, setIsSelectionMode] = useState(false)
   const [selectedPhotos, setSelectedPhotos] = useState<Set<string>>(new Set())
 
@@ -48,13 +62,15 @@ export function GalleryPage() {
 
   // ── Modals ───────────────────────────────────────────────────────────────────
   const [showCreateModal, setShowCreateModal] = useState(false)
-  const [createFolderName, setCreateFolderName] = useState('')
   const [showRenameModal, setShowRenameModal] = useState(false)
   const [renameFolderId, setRenameFolderId] = useState<string | null>(null)
-  const [renameFolderValue, setRenameFolderValue] = useState('')
   const [deleteFolderId, setDeleteFolderId] = useState<string | null>(null)
   const [showUploadModal, setShowUploadModal] = useState(false)
   const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false)
+  const [createFolderError, setCreateFolderError] = useState<string | null>(null)
+  const [renameFolderError, setRenameFolderError] = useState<string | null>(null)
+  const [deleteFolderError, setDeleteFolderError] = useState<string | null>(null)
+  const [bulkDeleteError, setBulkDeleteError] = useState<string | null>(null)
 
   // ── Mutations ────────────────────────────────────────────────────────────────
   const createFolder = useCreateFolder()
@@ -97,62 +113,106 @@ export function GalleryPage() {
 
   function handleDeleteSelected() {
     if (!selectedPhotos.size) return
+    setBulkDeleteError(null)
     setBulkDeleteConfirmOpen(true)
   }
 
   async function handleConfirmedDeleteSelected() {
-    setBulkDeleteConfirmOpen(false)
+    setBulkDeleteError(null)
     try {
       await deletePhotos.mutateAsync([...selectedPhotos])
       showToast('Fotky smazány.', 'success')
       setSelectedPhotos(new Set())
       setIsSelectionMode(false)
-    } catch { /* onError in hook */ }
+      setBulkDeleteConfirmOpen(false)
+    } catch (error) {
+      setBulkDeleteError(
+        getNetworkAwareActionMessage(
+          error,
+          'Vybrané fotky se nepodařilo smazat. Zkuste to znovu.',
+          'Spojení vypadlo dřív, než se fotky stihly smazat. Zkuste to znovu po obnovení připojení.',
+        ),
+      )
+    }
   }
 
-  async function handleCreateFolder(e: React.FormEvent) {
-    e.preventDefault()
-    const name = createFolderName.trim()
-    if (!name) return
+  async function handleCreateFolder(name: string) {
+    const cleanName = name.trim()
+    if (!cleanName) return
+    if (cleanName.length > 100) {
+      showToast('Název alba je příliš dlouhý (max 100 znaků).', 'error')
+      return
+    }
+    setCreateFolderError(null)
     try {
-      await createFolder.mutateAsync(name)
+      await createFolder.mutateAsync(cleanName)
       showToast('Album vytvořeno.', 'success')
-      setCreateFolderName('')
       setShowCreateModal(false)
-    } catch { /* onError in hook */ }
+    } catch (error) {
+      setCreateFolderError(
+        getNetworkAwareActionMessage(
+          error,
+          'Album se nepodařilo vytvořit. Zkuste to znovu.',
+          'Spojení vypadlo dřív, než se album stihlo vytvořit. Zkuste to znovu po obnovení připojení.',
+        ),
+      )
+    }
   }
 
   function openRenameModal(id: string) {
     const f = folders.find(x => x.id === id)
     if (!f) return
+    setRenameFolderError(null)
     setRenameFolderId(id)
-    setRenameFolderValue(f.name)
     setShowRenameModal(true)
   }
 
-  async function handleRename(e: React.FormEvent) {
-    e.preventDefault()
-    const name = renameFolderValue.trim()
-    if (!name || !renameFolderId) return
+  async function handleRename(name: string) {
+    const cleanName = name.trim()
+    if (!cleanName || !renameFolderId) return
+    if (cleanName.length > 100) {
+      showToast('Název alba je příliš dlouhý (max 100 znaků).', 'error')
+      return
+    }
+    if (!name) return
+    setRenameFolderError(null)
     try {
-      await renameFolder.mutateAsync({ id: renameFolderId, name })
+      await renameFolder.mutateAsync({ id: renameFolderId, name: cleanName })
       showToast('Přejmenováno.', 'success')
       setRenameFolderId(null)
       setShowRenameModal(false)
-    } catch { /* onError in hook */ }
+    } catch (error) {
+      setRenameFolderError(
+        getNetworkAwareActionMessage(
+          error,
+          'Album se nepodařilo přejmenovat. Zkuste to znovu.',
+          'Spojení vypadlo dřív, než se album stihlo přejmenovat. Zkuste to znovu po obnovení připojení.',
+        ),
+      )
+    }
   }
 
   function openDeleteConfirm(id: string) {
+    setDeleteFolderError(null)
     setDeleteFolderId(id)
   }
 
   async function handleConfirmedDeleteFolder() {
     if (!deleteFolderId) return
+    setDeleteFolderError(null)
     try {
       await deleteFolder.mutateAsync(deleteFolderId)
       showToast('Album smazáno.', 'success')
       setDeleteFolderId(null)
-    } catch { /* onError in hook */ }
+    } catch (error) {
+      setDeleteFolderError(
+        getNetworkAwareActionMessage(
+          error,
+          'Album se nepodařilo smazat. Zkuste to znovu.',
+          'Spojení vypadlo dřív, než se album stihlo smazat. Zkuste to znovu po obnovení připojení.',
+        ),
+      )
+    }
   }
 
   return (
@@ -170,6 +230,14 @@ export function GalleryPage() {
             >
               {foldersLoading ? (
                 <FolderGridSkeleton />
+              ) : foldersFailed ? (
+                <FeatureErrorFallback
+                  error={foldersError as Error}
+                  resetErrorBoundary={() => {
+                    void refetchFolders()
+                  }}
+                  title="Alba se nepodařilo načíst"
+                />
               ) : (
                 <FolderGrid
                   folders={folders}
@@ -177,7 +245,7 @@ export function GalleryPage() {
                   sortValue={sortValue}
                   isGuest={isGuest}
                   onSelect={openFolder}
-                  onNewFolder={() => { setCreateFolderName(''); setShowCreateModal(true) }}
+                  onNewFolder={() => setShowCreateModal(true)}
                   onRename={openRenameModal}
                   onDelete={openDeleteConfirm}
                   onSearchChange={setSearchQuery}
@@ -196,6 +264,14 @@ export function GalleryPage() {
             >
               {photosLoading ? (
                 <PhotoGridSkeleton />
+              ) : photosFailed ? (
+                <FeatureErrorFallback
+                  error={photosError as Error}
+                  resetErrorBoundary={() => {
+                    void refetchPhotos()
+                  }}
+                  title="Fotky se nepodařilo načíst"
+                />
               ) : (
                 <PhotoGrid
                   photos={photos}
@@ -218,68 +294,38 @@ export function GalleryPage() {
         </AnimatePresence>
       </div>
 
-      {/* ── Create folder modal ────────────────────────────────────────────── */}
-      <Modal
+      <PromptDialog
         isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
         title="Nové album"
-        maxWidth="max-w-sm"
-        footer={
-          <button type="submit" form="create-folder-form" className="btn-primary" disabled={createFolder.isPending}>
-            {createFolder.isPending ? 'Vytvářím…' : 'Vytvořit'}
-          </button>
-        }
-      >
-        <form id="create-folder-form" onSubmit={handleCreateFolder}>
-          <div className="form-group">
-            <label htmlFor="folder-name-input" style={{ display: 'block', marginBottom: 6, fontWeight: 500, color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-              Název alba
-            </label>
-            <input
-              id="folder-name-input"
-              type="text"
-              className="input-field"
-              placeholder="např. Léto 2026"
-              value={createFolderName}
-              onChange={e => setCreateFolderName(e.target.value)}
-              required
-              autoFocus
-              maxLength={100}
-            />
-          </div>
-        </form>
-      </Modal>
+        label="Název alba"
+        placeholder="Např. Léto 2026"
+        maxLength={100}
+        submitLabel="Vytvořit"
+        loading={createFolder.isPending}
+        errorMessage={createFolderError}
+        onSubmit={handleCreateFolder}
+        onCancel={() => {
+          setShowCreateModal(false)
+          setCreateFolderError(null)
+        }}
+      />
 
-      {/* ── Rename folder modal ────────────────────────────────────────────── */}
-      <Modal
+      <PromptDialog
         isOpen={showRenameModal}
-        onClose={() => setShowRenameModal(false)}
         title="Přejmenovat album"
-        maxWidth="max-w-sm"
-        footer={
-          <button type="submit" form="rename-folder-form" className="btn-primary" disabled={renameFolder.isPending}>
-            {renameFolder.isPending ? 'Ukládám…' : 'Přejmenovat'}
-          </button>
-        }
-      >
-        <form id="rename-folder-form" onSubmit={handleRename}>
-          <div className="form-group">
-            <label htmlFor="rename-input" style={{ display: 'block', marginBottom: 6, fontWeight: 500, color: 'var(--text-muted)', fontSize: '0.875rem' }}>
-              Nový název
-            </label>
-            <input
-              id="rename-input"
-              type="text"
-              className="input-field"
-              value={renameFolderValue}
-              onChange={e => setRenameFolderValue(e.target.value)}
-              required
-              autoFocus
-              maxLength={100}
-            />
-          </div>
-        </form>
-      </Modal>
+        label="Nový název"
+        initialValue={folders.find((folder) => folder.id === renameFolderId)?.name ?? ''}
+        maxLength={100}
+        submitLabel="Přejmenovat"
+        loading={renameFolder.isPending}
+        errorMessage={renameFolderError}
+        onSubmit={handleRename}
+        onCancel={() => {
+          setRenameFolderId(null)
+          setShowRenameModal(false)
+          setRenameFolderError(null)
+        }}
+      />
 
       {/* ── Delete folder confirm ──────────────────────────────────────────── */}
       <ConfirmDialog
@@ -289,8 +335,12 @@ export function GalleryPage() {
         confirmLabel="Smazat album"
         danger
         loading={deleteFolder.isPending}
+        errorMessage={deleteFolderError}
         onConfirm={handleConfirmedDeleteFolder}
-        onCancel={() => setDeleteFolderId(null)}
+        onCancel={() => {
+          setDeleteFolderId(null)
+          setDeleteFolderError(null)
+        }}
       />
 
       {/* ── Upload modal ───────────────────────────────────────────────────── */}
@@ -318,8 +368,13 @@ export function GalleryPage() {
         message={`Opravdu chcete smazat ${selectedPhotos.size} vybraných fotek? Tuto akci nelze vrátit.`}
         confirmLabel="Smazat"
         danger
+        loading={deletePhotos.isPending}
+        errorMessage={bulkDeleteError}
         onConfirm={handleConfirmedDeleteSelected}
-        onCancel={() => setBulkDeleteConfirmOpen(false)}
+        onCancel={() => {
+          setBulkDeleteConfirmOpen(false)
+          setBulkDeleteError(null)
+        }}
       />
     </div>
   )

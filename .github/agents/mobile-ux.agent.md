@@ -27,7 +27,7 @@ You evaluate every screen as if:
 **kdynachatu.cz** — a multi-tenant SaaS for managing shared cabins. Users check reservations, shopping lists, notes, photos, and inventory — **mostly from their phone while at or heading to the cabin**.
 
 ### Tech Stack
-- **Frontend:** React 18 + TypeScript + Vite + Tailwind CSS + shadcn/ui (`frontend-v2/`)
+- **Frontend:** React 19 + TypeScript + Vite + Tailwind CSS + shadcn/ui (`frontend-v2/`)
 - **Styling:** Mix of legacy CSS files (`frontend-v2/src/styles/*.css`) + Tailwind utilities
 - **CSS Variables:** Defined in `frontend-v2/src/styles/variables.css`
 - **Navigation:** Bottom tab bar on mobile (`nav.css`), sidebar on desktop

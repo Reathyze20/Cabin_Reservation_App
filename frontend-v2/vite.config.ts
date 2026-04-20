@@ -61,6 +61,66 @@ export default defineConfig({
     outDir: '../dist/frontend',
     emptyOutDir: true,
     sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) {
+            return
+          }
+
+          if (
+            id.includes('/react/') ||
+            id.includes('/react-dom/') ||
+            id.includes('/react-router') ||
+            id.includes('/react-error-boundary/') ||
+            id.includes('/scheduler/')
+          ) {
+            return 'vendor-react'
+          }
+
+          if (id.includes('/@tanstack/react-query/') || id.includes('/axios/')) {
+            return 'vendor-data'
+          }
+
+          if (
+            id.includes('/react-hook-form/') ||
+            id.includes('/@hookform/') ||
+            id.includes('/zod/')
+          ) {
+            return 'vendor-forms'
+          }
+
+          if (
+            id.includes('/framer-motion/') ||
+            id.includes('/lucide-react/') ||
+            id.includes('/sonner/') ||
+            id.includes('/@radix-ui/')
+          ) {
+            return 'vendor-ui'
+          }
+
+          if (
+            id.includes('/socket.io-client/') ||
+            id.includes('/engine.io-client/') ||
+            id.includes('/socket.io-parser/')
+          ) {
+            return 'vendor-realtime'
+          }
+
+          if (
+            id.includes('/date-fns/') ||
+            id.includes('/clsx/') ||
+            id.includes('/class-variance-authority/') ||
+            id.includes('/tailwind-merge/') ||
+            id.includes('/next-themes/')
+          ) {
+            return 'vendor-utils'
+          }
+
+          return 'vendor-misc'
+        },
+      },
+    },
   },
   resolve: {
     alias: {

@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 
 const isDev  = process.env.NODE_ENV !== 'production';
 const isTest = process.env.NODE_ENV === 'test';
+const release = process.env.APP_RELEASE ?? process.env.GITHUB_SHA ?? process.env.npm_package_version ?? 'local';
 
 const level = isTest ? 'silent' : isDev ? 'debug' : 'info';
 
@@ -40,7 +41,13 @@ const baseLogger = pino(
     mixin() {
       const ctx = requestContext.getStore();
       return ctx
-        ? { requestId: ctx.requestId, ...(ctx.userId ? { actorId: ctx.userId } : {}) }
+        ? {
+            requestId: ctx.requestId,
+            ...(ctx.userId ? { actorId: ctx.userId } : {}),
+            ...(ctx.cabinId ? { cabinId: ctx.cabinId } : {}),
+            ...(ctx.username ? { actorUsername: ctx.username } : {}),
+            ...(ctx.role ? { actorRole: ctx.role } : {}),
+          }
         : {};
     },
     redact: {
@@ -54,6 +61,7 @@ const baseLogger = pino(
     base: {
       app: 'chata-trebenice',
       env: process.env.NODE_ENV ?? 'development',
+      release,
       pid: process.pid,
     },
     timestamp: pino.stdTimeFunctions.isoTime,
@@ -79,6 +87,10 @@ export interface LogFields {
   username?:   string;    // Přezdívka uživatele
   source?:     'backend' | 'frontend';
   requestId?:  string;
+  cabinId?:    string | null;
+  actorUsername?: string;
+  actorRole?:  string;
+  errorId?:    string;
   [key: string]: unknown;
 }
 
@@ -135,6 +147,9 @@ function makeRecord(
 ): Record<string, unknown> {
   const ctx = requestContext.getStore();
   return {
+    app:       'chata-trebenice',
+    env:       process.env.NODE_ENV ?? 'development',
+    release,
     time:      new Date().toISOString(),
     level:     lvl,
     msg:       message,
@@ -204,9 +219,19 @@ export const logger = {
   },
 
   /** Frontend zachycené chyby (přes POST /api/logs/client) */
-  frontend(msg: string, fields: LogFields): void {
-    const rec = makeRecord('error', msg, { ...fields, source: 'frontend' });
-    baseLogger.error(rec, msg);
+  frontend(msg: string, fields: LogFields & { level?: 'info' | 'warn' | 'error' }): void {
+    const frontendLevel = fields.level === 'warn' || fields.level === 'info' ? fields.level : 'error';
+    const { level: _ignoredLevel, ...restFields } = fields;
+    const rec = makeRecord(frontendLevel, msg, { ...restFields, source: 'frontend' });
+
+    if (frontendLevel === 'warn') {
+      baseLogger.warn(rec, msg);
+    } else if (frontendLevel === 'info') {
+      baseLogger.info(rec, msg);
+    } else {
+      baseLogger.error(rec, msg);
+    }
+
     appendToLogFile(rec);
   },
 
@@ -229,6 +254,10 @@ export const logger = {
     userId?: string;
     module?: string;
     source?: string;
+    requestId?: string;
+    path?: string;
+    status?: number;
+    search?: string;
   }): Record<string, unknown>[] {
     try {
       const date    = options.date ?? new Date().toISOString().split('T')[0];
@@ -265,9 +294,23 @@ export const logger = {
       if (options.source) {
         parsed = parsed.filter(r => r['source'] === options.source);
       }
+      if (options.requestId) {
+        parsed = parsed.filter(r => String(r['requestId'] ?? '') === options.requestId);
+      }
+      if (options.path) {
+        const requestedPath = options.path.toLowerCase();
+        parsed = parsed.filter(r => String(r['path'] ?? '').toLowerCase().includes(requestedPath));
+      }
+      if (typeof options.status === 'number') {
+        parsed = parsed.filter(r => Number(r['status']) === options.status);
+      }
+      if (options.search) {
+        const needle = options.search.toLowerCase();
+        parsed = parsed.filter(r => JSON.stringify(r).toLowerCase().includes(needle));
+      }
 
-      const limit = options.lines ?? 200;
-      return parsed.slice(-limit);
+      const limit = Math.min(options.lines ?? 200, 500);
+      return parsed.slice(-limit).reverse();
     } catch { return []; }
   },
 };

@@ -1,0 +1,27 @@
+{
+  "skill_name": "frontend-design",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Navrhni vyrazny, zapamatovatelny vizual pro landing page kdynachatu.cz, ktery nebude vypadat generic a bude pusobit duveryhodne pro rodiny 30-60.",
+      "expected_output": "Silny vizualni smer s konkretnimi rozhodnutimi o typografii, barvach, kompozici a interakcich.",
+      "files": [],
+      "expectations": [
+        "Output zvoli jasny esteticky smer.",
+        "Output se vyhyba generic purple-on-white AI estetice.",
+        "Output zahrnuje konkretni motion a visual detail decisions."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Vymysli premium redesign admin dashboard card komponent tak, aby pusobily jako placeny SaaS produkt a fungovaly na mobilu i desktopu.",
+      "expected_output": "Konkretni design direction s vysokou urovni polish a responsivni logikou.",
+      "files": [],
+      "expectations": [
+        "Output resi mobile i desktop layout.",
+        "Output pracuje s netrivialni typografii nebo kompozici.",
+        "Output obsahuje konkretni guidance pro hierarchy a visual polish."
+      ]
+    }
+  ]
+}

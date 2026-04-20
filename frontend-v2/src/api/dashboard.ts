@@ -55,6 +55,16 @@ export interface DashboardReservationsData {
   };
 }
 
+export interface DashboardActivationData {
+  shouldShow: boolean;
+  membersCount: number;
+  activeInviteCount: number;
+  reservationsCount: number;
+  shoppingListsCount: number;
+  completedCount: number;
+  totalCount: number;
+}
+
 export interface DashboardShoppingData {
   pendingShoppingItems: PendingShoppingItem[];
   totalPendingShoppingCount: number;

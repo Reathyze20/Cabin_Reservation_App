@@ -4,4 +4,5 @@
 /data/*.json
 /data/logs
 /data/uploads
+/data/backups
 /src/generated

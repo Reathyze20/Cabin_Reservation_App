@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
 import apiClient from "@/api/client";
 import { showToast } from "@/lib/toast";
 import type {
@@ -214,10 +215,19 @@ export const MONTHLY_NOTE_KEY = (year: number, month: number) =>
 export function useMonthlyNote(year: number, month: number) {
   return useQuery<MonthlyNote | null>({
     queryKey: MONTHLY_NOTE_KEY(year, month),
-    queryFn: () =>
-      apiClient.get<MonthlyNote>(`/reservations/monthly-note`, { params: { year, month: month + 1 } })
-        .then((r) => r.data)
-        .catch(() => null),
+    queryFn: async () => {
+      try {
+        const response = await apiClient.get<MonthlyNote>(`/reservations/monthly-note`, {
+          params: { year, month: month + 1 },
+        });
+        return response.data;
+      } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 404) {
+          return null;
+        }
+        throw error;
+      }
+    },
     staleTime: 60_000,
   });
 }

@@ -115,13 +115,14 @@ export const sendVerificationEmailWithPIN = async (email: string, code: string):
 
 export const sendVerificationEmailWithToken = async (email: string, token: string): Promise<void> => {
   ensureEmailTransport("Verification token");
+  const frontendBaseUrl = FRONTEND_URL.endsWith("/") ? FRONTEND_URL.slice(0, -1) : FRONTEND_URL;
   if (!transporter) {
     logger.warn("EMAIL", `[SIMULATION] Verification token email for ${email} — token: ${token}`);
-    logger.info("EMAIL", `Verify URL (no SMTP): ${FRONTEND_URL}/#/verify?token=${token}`);
+    logger.info("EMAIL", `Verify URL (no SMTP): ${frontendBaseUrl}/verify?token=${token}`);
     return;
   }
 
-  const verifyUrl = `${FRONTEND_URL}/#/verify?token=${token}`;
+  const verifyUrl = `${frontendBaseUrl}/verify?token=${token}`;
 
   try {
     const htmlContent = `
@@ -189,6 +190,84 @@ export const sendVerificationEmailWithToken = async (email: string, token: strin
     logger.info("EMAIL", `Verification token email sent to ${email}`, { messageId: info.messageId });
   } catch (error) {
     logger.error("EMAIL", `Failed to send verification token email to ${email}`, { error: String(error) });
+    throw error;
+  }
+};
+
+export const sendPasswordResetEmail = async (email: string, token: string): Promise<void> => {
+  ensureEmailTransport("Password reset");
+  const frontendBaseUrl = FRONTEND_URL.endsWith("/") ? FRONTEND_URL.slice(0, -1) : FRONTEND_URL;
+  const resetUrl = `${frontendBaseUrl}/reset-password?token=${token}`;
+
+  if (!transporter) {
+    logger.warn("EMAIL", `[SIMULATION] Password reset email for ${email}`);
+    logger.info("EMAIL", `Password reset URL (no SMTP): ${resetUrl}`);
+    return;
+  }
+
+  try {
+    const htmlContent = `
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', Arial, sans-serif;">
+  <div style="background-color: #f3f4f6; padding: 40px 20px;">
+    <div style="max-width: 500px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);">
+      <div style="text-align: center; padding: 32px 32px 16px 32px;">
+        <h1 style="margin: 0; color: #111827; font-size: 24px; font-weight: 600;">KdyNaChatu.cz</h1>
+      </div>
+
+      <div style="padding: 0 32px 32px 32px;">
+        <p style="color: #374151; font-size: 16px; line-height: 1.5; margin: 0 0 16px 0;">
+          Dobrý den,
+        </p>
+        <p style="color: #374151; font-size: 16px; line-height: 1.5; margin: 0 0 24px 0;">
+          Obdrželi jsme žádost o nastavení nového hesla k vašemu účtu v aplikaci <strong style="color: #111827;">KdyNaChatu.cz</strong>.
+        </p>
+
+        <div style="text-align: center; margin: 24px 0;">
+          <a href="${resetUrl}"
+             style="background-color: #5d9b62; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; display: inline-block; font-weight: 600; font-size: 16px;">
+            Nastavit nové heslo
+          </a>
+        </div>
+
+        <p style="color: #6b7280; font-size: 14px; line-height: 1.5; margin: 24px 0 8px 0;">
+          Pokud tlačítko nefunguje, zkopírujte tento odkaz do prohlížeče:
+        </p>
+        <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 12px; margin-top: 8px;">
+          <a href="${resetUrl}" style="color: #5d9b62; font-size: 13px; word-break: break-all; text-decoration: none;">${resetUrl}</a>
+        </div>
+
+        <p style="color: #9ca3af; font-size: 13px; line-height: 1.4; margin: 20px 0 0 0;">
+          Odkaz je platný 2 hodiny a lze jej použít pouze jednou. Pokud jste o změnu hesla nežádali, tento e-mail ignorujte.
+        </p>
+      </div>
+    </div>
+
+    <div style="text-align: center; font-size: 12px; color: #9ca3af; margin-top: 16px; padding: 0 20px;">
+      <p style="margin: 0;">KdyNaChatu.cz — Správa rekreačních objektů pro rodiny a party</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+    const textContent = `Dobrý den,\n\nObdrželi jsme žádost o nastavení nového hesla k vašemu účtu v aplikaci KdyNaChatu.cz. Pokračujte zde:\n${resetUrl}\n\nOdkaz je platný 2 hodiny a lze jej použít pouze jednou. Pokud jste o změnu hesla nežádali, tento e-mail ignorujte.`;
+
+    const info = await transporter.sendMail({
+      from: EMAIL_FROM,
+      to: email,
+      subject: "Obnova hesla — KdyNaChatu.cz",
+      text: textContent,
+      html: htmlContent,
+    });
+
+    logger.info("EMAIL", `Password reset email sent to ${email}`, { messageId: info.messageId });
+  } catch (error) {
+    logger.error("EMAIL", `Failed to send password reset email to ${email}`, { error: String(error) });
     throw error;
   }
 };

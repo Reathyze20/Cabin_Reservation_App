@@ -19,6 +19,9 @@ import { NotebookModal } from './NotebookModal'
 import { showToast } from '@/lib/toast'
 import { useAuth } from '@/context/AuthContext'
 import { Modal } from '@/components/shared/Modal'
+import { PromptDialog } from '@/components/shared/PromptDialog'
+import { FeatureErrorFallback } from '@/components/shared/FeatureErrorFallback'
+import { getNetworkAwareActionMessage } from '@/lib/networkError'
 
 type View = 'folders' | 'entries'
 
@@ -41,11 +44,23 @@ export function DiaryPage() {
   useDocumentTitle('Deník');
   const { user } = useAuth()
 
-  const { data: folders = [], isLoading: foldersLoading, isError: foldersError } = useDiaryFolders()
+  const {
+    data: folders = [],
+    isLoading: foldersLoading,
+    isError: foldersFailed,
+    error: foldersError,
+    refetch: refetchFolders,
+  } = useDiaryFolders()
   const [view, setView] = useState<View>('folders')
   const [currentFolder, setCurrentFolder] = useState<DiaryFolder | null>(null)
 
-  const { data: entries = [], isLoading: entriesLoading } = useDiaryEntries(currentFolder?.id ?? null)
+  const {
+    data: entries = [],
+    isLoading: entriesLoading,
+    isError: entriesFailed,
+    error: entriesError,
+    refetch: refetchEntries,
+  } = useDiaryEntries(currentFolder?.id ?? null)
 
   // ── Notebook ──────────────────────────────────────────────────────────────
   const [notebookState, setNotebookState] = useState<NotebookState | null>(null)
@@ -58,13 +73,12 @@ export function DiaryPage() {
   const [createTag, setCreateTag] = useState('')
   const [createFromReservation, setCreateFromReservation] = useState('')
 
-  const [showRenameModal, setShowRenameModal] = useState(false)
   const [renameTarget, setRenameTarget] = useState<DiaryFolder | null>(null)
-  const [renameValue, setRenameValue] = useState('')
 
-  const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<DiaryFolder | null>(null)
-  const [deleteConfirm, setDeleteConfirm] = useState('')
+  const [createError, setCreateError] = useState<string | null>(null)
+  const [renameError, setRenameError] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   // ── Mutations ─────────────────────────────────────────────────────────────
   const createFolder = useCreateDiaryFolder()
@@ -134,6 +148,7 @@ export function DiaryPage() {
 
   function openCreateModal() {
     setCreateName(''); setCreateStartDate(''); setCreateEndDate(''); setCreateTag(''); setCreateFromReservation('')
+    setCreateError(null)
     setShowCreateModal(true)
   }
 
@@ -152,53 +167,71 @@ export function DiaryPage() {
     e.preventDefault()
     const name = createName.trim()
     if (!name) return
+    setCreateError(null)
     try {
       await createFolder.mutateAsync({ name, startDate: createStartDate || '', endDate: createEndDate || '', activityTag: createTag || null })
       showToast('Pobyt vytvořen.', 'success')
       setShowCreateModal(false)
-    } catch { /* onError in hook */ }
+    } catch (error) {
+      setCreateError(
+        getNetworkAwareActionMessage(
+          error,
+          'Pobyt se nepodařilo vytvořit. Zkuste to znovu.',
+          'Spojení vypadlo dřív, než se pobyt stihl vytvořit. Zkuste to znovu po obnovení připojení.',
+        ),
+      )
+    }
   }
 
   // ── Rename ──────────────────────────────────────────────────────────────────
 
   function openRenameModal(folder: DiaryFolder) {
+    setRenameError(null)
     setRenameTarget(folder)
-    setRenameValue(folder.name)
-    setShowRenameModal(true)
   }
 
-  async function handleRename(e: React.FormEvent) {
-    e.preventDefault()
-    if (!renameTarget) return
+  async function handleRename(name: string) {
+    const cleanName = name.trim()
+    if (!renameTarget || !cleanName) return
+    setRenameError(null)
     try {
-      await renameFolder.mutateAsync({ id: renameTarget.id, name: renameValue.trim() })
+      await renameFolder.mutateAsync({ id: renameTarget.id, name: cleanName })
       showToast('Přejmenováno.', 'success')
-      setShowRenameModal(false)
       setRenameTarget(null)
-    } catch { /* onError in hook */ }
+    } catch (error) {
+      setRenameError(
+        getNetworkAwareActionMessage(
+          error,
+          'Pobyt se nepodařilo přejmenovat. Zkuste to znovu.',
+          'Spojení vypadlo dřív, než se pobyt stihl přejmenovat. Zkuste to znovu po obnovení připojení.',
+        ),
+      )
+    }
   }
 
   // ── Delete ──────────────────────────────────────────────────────────────────
 
   function openDeleteModal(folder: DiaryFolder) {
+    setDeleteError(null)
     setDeleteTarget(folder)
-    setDeleteConfirm('')
-    setShowDeleteModal(true)
   }
 
-  async function handleDelete(e: React.FormEvent) {
-    e.preventDefault()
-    if (deleteConfirm.trim() !== 'SMAZAT') {
-      showToast("Napište 'SMAZAT' pro potvrzení.", 'error')
-      return
-    }
+  async function handleDelete() {
     if (!deleteTarget) return
+    setDeleteError(null)
     try {
       await deleteFolder.mutateAsync(deleteTarget.id)
       showToast('Pobyt smazán.', 'success')
-      setShowDeleteModal(false)
       setDeleteTarget(null)
-    } catch { /* onError in hook */ }
+    } catch (error) {
+      setDeleteError(
+        getNetworkAwareActionMessage(
+          error,
+          'Pobyt se nepodařilo smazat. Zkuste to znovu.',
+          'Spojení vypadlo dřív, než se pobyt stihl smazat. Zkuste to znovu po obnovení připojení.',
+        ),
+      )
+    }
   }
 
   return (
@@ -217,11 +250,14 @@ export function DiaryPage() {
                 </div>
               ))}
             </div>
-          ) : foldersError ? (
-            <div className="spinner-container" style={{ textAlign: 'center', padding: '2rem', flexDirection: 'column', gap: '0.5rem' }}>
-              <img src="/icons/empty_shelf.svg" alt="" aria-hidden="true" style={{ maxHeight: 96, width: 'auto', opacity: 0.65 }} />
-              <p style={{ margin: '0.5rem 0 0', fontWeight: 600 }}>Nepodařilo se načíst pobyty</p>
-            </div>
+          ) : foldersFailed ? (
+            <FeatureErrorFallback
+              error={foldersError as Error}
+              resetErrorBoundary={() => {
+                void refetchFolders()
+              }}
+              title="Pobyty se nepodařilo načíst"
+            />
           ) : (
             <DiaryFolders
               folders={folders}
@@ -244,6 +280,14 @@ export function DiaryPage() {
             </div>
             {entriesLoading ? (
               <div className="spinner-container"><div className="spinner" /></div>
+            ) : entriesFailed ? (
+              <FeatureErrorFallback
+                error={entriesError as Error}
+                resetErrorBoundary={() => {
+                  void refetchEntries()
+                }}
+                title="Zápisky se nepodařilo načíst"
+              />
             ) : (
               <DiaryCalendar
                 folder={currentFolder}
@@ -260,7 +304,10 @@ export function DiaryPage() {
       {showCreateModal && (
         <Modal
           isOpen={true}
-          onClose={() => setShowCreateModal(false)}
+          onClose={() => {
+            setShowCreateModal(false)
+            setCreateError(null)
+          }}
           title="Nový pobyt"
           maxWidth="max-w-md"
           footer={
@@ -299,48 +346,47 @@ export function DiaryPage() {
                 {ACTIVITY_TAG_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </div>
+            {createError ? (
+              <div className="error-message show" role="alert">{createError}</div>
+            ) : null}
           </form>
         </Modal>
       )}
 
       {/* ── Rename folder modal ─────────────────────────────────────────── */}
-      {showRenameModal && (
-        <Modal
-          isOpen={true}
-          onClose={() => setShowRenameModal(false)}
-          title="Přejmenovat pobyt"
-          maxWidth="max-w-sm"
-          footer={
-            <button type="submit" form="rename-diary-form" className="button-primary" disabled={renameFolder.isPending}>Přejmenovat</button>
-          }
-        >
-          <form id="rename-diary-form" onSubmit={handleRename}>
-            <div className="form-group">
-              <input type="text" value={renameValue} onChange={e => setRenameValue(e.target.value)} required autoFocus maxLength={100} />
-            </div>
-          </form>
-        </Modal>
-      )}
+      <PromptDialog
+        isOpen={renameTarget !== null}
+        title="Přejmenovat pobyt"
+        label="Nový název pobytu"
+        initialValue={renameTarget?.name ?? ''}
+        maxLength={100}
+        submitLabel="Přejmenovat"
+        loading={renameFolder.isPending}
+        errorMessage={renameError}
+        onSubmit={handleRename}
+        onCancel={() => {
+          setRenameTarget(null)
+          setRenameError(null)
+        }}
+      />
 
-      {/* ── Delete folder modal ─────────────────────────────────────────── */}
-      {showDeleteModal && (
-        <Modal
-          isOpen={true}
-          onClose={() => setShowDeleteModal(false)}
-          title="Smazat pobyt"
-          maxWidth="max-w-sm"
-          footer={
-            <button type="submit" form="delete-diary-form" className="button-danger" disabled={deleteFolder.isPending}>Smazat</button>
-          }
-        >
-          <p>Smaže se celý pobyt včetně zápisků. Napište <strong>SMAZAT</strong>:</p>
-          <form id="delete-diary-form" onSubmit={handleDelete}>
-            <div className="form-group">
-              <input type="text" value={deleteConfirm} onChange={e => setDeleteConfirm(e.target.value)} required autoFocus />
-            </div>
-          </form>
-        </Modal>
-      )}
+      <PromptDialog
+        isOpen={deleteTarget !== null}
+        title="Smazat pobyt"
+        description={<>Smaže se celý pobyt včetně zápisků. Pro potvrzení napište <strong>SMAZAT</strong>.</>}
+        label="Potvrzovací text"
+        placeholder="SMAZAT"
+        submitLabel="Smazat"
+        danger
+        loading={deleteFolder.isPending}
+        errorMessage={deleteError}
+        canSubmit={(value) => value.trim() === 'SMAZAT'}
+        onSubmit={() => void handleDelete()}
+        onCancel={() => {
+          setDeleteTarget(null)
+          setDeleteError(null)
+        }}
+      />
 
       {/* ── Notebook modal ───────────────────────────────────────────────── */}
       {notebookState && currentFolder && (

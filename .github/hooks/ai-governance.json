@@ -1,0 +1,28 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "npx tsx src/scripts/aiGovernanceHook.ts",
+        "windows": "npx.cmd tsx src/scripts/aiGovernanceHook.ts",
+        "timeout": 10
+      }
+    ],
+    "PreToolUse": [
+      {
+        "type": "command",
+        "command": "npx tsx src/scripts/aiGovernanceHook.ts",
+        "windows": "npx.cmd tsx src/scripts/aiGovernanceHook.ts",
+        "timeout": 10
+      }
+    ],
+    "PostToolUse": [
+      {
+        "type": "command",
+        "command": "npx tsx src/scripts/aiGovernanceHook.ts",
+        "windows": "npx.cmd tsx src/scripts/aiGovernanceHook.ts",
+        "timeout": 10
+      }
+    ]
+  }
+}

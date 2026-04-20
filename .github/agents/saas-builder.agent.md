@@ -84,7 +84,7 @@ When building frontend code → load the `CabinSaaS_Architect` skill.
 
 ## Tech Stack Context
 
-- **Frontend:** React 18 + TypeScript + Vite + Tailwind CSS + shadcn/ui (in `frontend-v2/`)
+- **Frontend:** React 19 + TypeScript + Vite + Tailwind CSS + shadcn/ui (in `frontend-v2/`)
 - **Backend:** Node.js + Express + TypeScript + Prisma ORM + PostgreSQL
 - **Infrastructure:** VPS (Wedos), PM2, GitHub Actions CI/CD, Docker for local dev
 

@@ -21,6 +21,8 @@ import { showToast } from "@/lib/toast";
 import apiClient from "@/api/client";
 import { PromptDialog } from "@/components/shared/PromptDialog";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { FeatureErrorFallback } from "@/components/shared/FeatureErrorFallback";
+import { getNetworkAwareActionMessage } from "@/lib/networkError";
 
 interface Users {
   username: string;
@@ -30,13 +32,28 @@ interface Users {
 
 export function NotesPage() {
   useDocumentTitle('Chat');
-  const { data: threads = [], isLoading: threadsLoading } = useThreads();
+  const {
+    data: threads = [],
+    isLoading: threadsLoading,
+    isError: threadsFailed,
+    error: threadsError,
+    refetch: refetchThreads,
+  } = useThreads();
   const createThread = useCreateThread();
   const deleteThread = useDeleteThread();
   const markRead = useMarkThreadRead();
 
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
-  const { data: threadNotes, isLoading: notesLoading, hasMore, isFetchingMore, fetchMore } = useThreadNotes(activeThreadId);
+  const {
+    data: threadNotes,
+    isLoading: notesLoading,
+    isError: notesFailed,
+    error: notesError,
+    hasMore,
+    isFetchingMore,
+    fetchMore,
+    refetch: refetchNotes,
+  } = useThreadNotes(activeThreadId);
   const [searchQuery, setSearchQuery] = useState("");
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [mobileShowChat, setMobileShowChat] = useState(false);
@@ -47,6 +64,15 @@ export function NotesPage() {
   const [showNewThreadPrompt, setShowNewThreadPrompt] = useState(false);
   const [replyToNote, setReplyToNote] = useState<Note | null>(null);
   const [showDeleteThread, setShowDeleteThread] = useState(false);
+  const [newThreadError, setNewThreadError] = useState<string | null>(null);
+  const [deleteThreadError, setDeleteThreadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    document.body.classList.add('page-notes')
+    return () => {
+      document.body.classList.remove('page-notes')
+    }
+  }, [])
 
   // User color/icon map — cachováno React Query (30 min), ne useEffect bez cache
   const { data: rawUsers = [] } = useQuery<Users[]>({
@@ -90,6 +116,7 @@ export function NotesPage() {
   };
 
   const handleCreateThread = async () => {
+    setNewThreadError(null);
     setShowNewThreadPrompt(true);
   };
 
@@ -98,26 +125,43 @@ export function NotesPage() {
       showToast("Název tématu je příliš dlouhý (max 100 znaků).", "error");
       return;
     }
+    setNewThreadError(null);
     try {
       const res = await createThread.mutateAsync({ name });
       setActiveThreadId(res.id);
       if (isMobile) setMobileShowChat(true);
       setShowNewThreadPrompt(false);
-    } catch {
-      showToast("Nepodařilo se vytvořit téma.", "error");
+    } catch (error) {
+      setNewThreadError(
+        getNetworkAwareActionMessage(
+          error,
+          "Téma se nepodařilo vytvořit. Zkuste to znovu.",
+          "Spojení vypadlo dřív, než se téma stihlo vytvořit. Zkuste to znovu po obnovení připojení.",
+        ),
+      );
     }
   };
 
-  const handleDeleteThread = () => setShowDeleteThread(true);
+  const handleDeleteThread = () => {
+    setDeleteThreadError(null);
+    setShowDeleteThread(true);
+  };
   const confirmDeleteThread = async () => {
     if (!activeThreadId) return;
+    setDeleteThreadError(null);
     try {
       await deleteThread.mutateAsync(activeThreadId);
       setActiveThreadId(null);
       setShowDeleteThread(false);
       showToast("Téma bylo smazáno.", "success");
-    } catch {
-      showToast("Nepodařilo se smazat téma.", "error");
+    } catch (error) {
+      setDeleteThreadError(
+        getNetworkAwareActionMessage(
+          error,
+          "Téma se nepodařilo smazat. Zkuste to znovu.",
+          "Spojení vypadlo dřív, než se téma stihlo smazat. Zkuste to znovu po obnovení připojení.",
+        ),
+      );
     }
   };
 
@@ -147,6 +191,16 @@ export function NotesPage() {
                     </div>
                   </div>
                 ))}
+              </aside>
+            ) : threadsFailed ? (
+              <aside className="notes-sidebar">
+                <FeatureErrorFallback
+                  error={threadsError as Error}
+                  resetErrorBoundary={() => {
+                    void refetchThreads();
+                  }}
+                  title="Témata se nepodařilo načíst"
+                />
               </aside>
             ) : (
               <ThreadList
@@ -189,6 +243,16 @@ export function NotesPage() {
                       {i % 2 === 0 && <div className="skeleton skeleton-avatar-sm" style={{ marginLeft: 8, flexShrink: 0 }}></div>}
                     </div>
                   ))}
+                </div>
+              ) : notesFailed ? (
+                <div className="notes-messages" style={{ padding: '1rem' }}>
+                  <FeatureErrorFallback
+                    error={notesError as Error}
+                    resetErrorBoundary={() => {
+                      void refetchNotes();
+                    }}
+                    title="Zprávy se nepodařilo načíst"
+                  />
                 </div>
               ) : (
                 <ChatView
@@ -236,8 +300,12 @@ export function NotesPage() {
         maxLength={100}
         submitLabel="Vytvořit"
         loading={createThread.isPending}
+        errorMessage={newThreadError}
         onSubmit={handleCreateThreadSubmit}
-        onCancel={() => setShowNewThreadPrompt(false)}
+        onCancel={() => {
+          setShowNewThreadPrompt(false);
+          setNewThreadError(null);
+        }}
       />
       <ConfirmDialog
         isOpen={showDeleteThread}
@@ -246,8 +314,12 @@ export function NotesPage() {
         confirmLabel="Smazat"
         danger
         loading={deleteThread.isPending}
+        errorMessage={deleteThreadError}
         onConfirm={confirmDeleteThread}
-        onCancel={() => setShowDeleteThread(false)}
+        onCancel={() => {
+          setShowDeleteThread(false);
+          setDeleteThreadError(null);
+        }}
       />
     </>
   );

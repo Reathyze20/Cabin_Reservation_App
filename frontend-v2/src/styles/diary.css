@@ -284,8 +284,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 28px;
-  min-height: 28px;
+  min-width: 36px;
+  min-height: 36px;
 }
 
 .folder-card-hover-actions .edit-folder-btn:hover {
@@ -436,8 +436,8 @@
 .notebook-nav-btn {
   background: rgba(255, 255, 255, 0.9);
   border: none;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -609,8 +609,10 @@
   cursor: pointer;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
-  padding: 6px 16px;
+  min-height: 44px;
+  padding: 10px 16px;
   border-radius: var(--radius-md);
   transition: all var(--transition-fast);
 }
@@ -638,11 +640,13 @@
   border: 1px dashed var(--brand-primary);
   color: var(--brand-primary);
   font-weight: 600;
-  padding: 6px 16px;
+  min-height: 44px;
+  padding: 10px 16px;
   border-radius: var(--radius-md);
   cursor: pointer;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   font-size: var(--font-size-sm);
   transition: all var(--transition-fast);
@@ -699,10 +703,10 @@
   background-color: var(--status-error);
   color: white;
   border-radius: 50%;
-  width: 22px;
-  height: 22px;
+  width: 28px;
+  height: 28px;
   text-align: center;
-  line-height: 20px;
+  line-height: 24px;
   cursor: pointer;
   font-size: 13px;
   font-weight: bold;
@@ -802,9 +806,36 @@
     font-size: 1.05rem;
   }
 
+  .notebook-footer {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: var(--space-sm);
+  }
+
+  .notebook-btn-save,
+  .notebook-btn-delete,
+  .notebook-btn-attach {
+    width: 100%;
+  }
+
+  .notebook-btn-attach {
+    margin-right: 0;
+  }
+
+  .folder-card-hover-actions .icon-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
   .attachment-thumbnail {
     width: 80px !important;
     height: 80px !important;
+  }
+
+  .attachment-remove-btn {
+    width: 36px;
+    height: 36px;
+    line-height: 32px;
   }
 }
 

@@ -14,6 +14,8 @@ import { BulkAddToCartModal } from './BulkAddToCartModal'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { showToast } from '@/lib/toast'
 import { CATEGORY_ORDER, CATEGORY_LABELS } from './constants'
+import { ShoppingErrorState } from './ShoppingErrorState'
+import { getNetworkAwareActionMessage } from '@/lib/networkError'
 
 type FilterKey = 'all' | 'missing' | typeof CATEGORY_ORDER[number]
 
@@ -22,7 +24,13 @@ interface Props {
 }
 
 export function PantryView({ onBack }: Props) {
-  const { data: inventory = [], isLoading, isError } = useInventory()
+  const {
+    data: inventory = [],
+    isLoading,
+    isError,
+    error: inventoryError,
+    refetch: refetchInventory,
+  } = useInventory()
   const createItem = useCreateInventoryItem()
   const deleteItem = useDeleteInventoryItem()
   const { user } = useAuth()
@@ -41,6 +49,8 @@ export function PantryView({ onBack }: Props) {
   const [newLocation, setNewLocation] = useState('')
   const [newEssential, setNewEssential] = useState(false)
   const [activeFilter, setActiveFilter] = useState<FilterKey>('all')
+  const [addItemError, setAddItemError] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   // Computed: count missing (EMPTY only — LOW = málo, ne chybí) and per-category counts
   const missingCount = useMemo(() => inventory.filter(i => i.status === 'EMPTY').length, [inventory])
@@ -81,6 +91,7 @@ export function PantryView({ onBack }: Props) {
       showToast('Název zásoby je příliš dlouhý (max 100 znaků).', 'error')
       return
     }
+    setAddItemError(null)
     try {
       await createItem.mutateAsync({
         name,
@@ -93,7 +104,15 @@ export function PantryView({ onBack }: Props) {
       setNewLocation('')
       setNewEssential(false)
       setNewStatus('OK')
-    } catch { /* onError in hook */ }
+    } catch (error) {
+      setAddItemError(
+        getNetworkAwareActionMessage(
+          error,
+          'Zásobu se nepodařilo přidat. Zkuste to znovu.',
+          'Spojení vypadlo dřív, než se zásoba stihla přidat. Zkuste to znovu po obnovení připojení.',
+        ),
+      )
+    }
   }
 
   // Skupiny dle kategorie (from filteredInventory)
@@ -212,7 +231,10 @@ export function PantryView({ onBack }: Props) {
                 type="text"
                 placeholder="např. Sůl, Káva"
                 value={newName}
-                onChange={e => setNewName(e.target.value)}
+                onChange={e => {
+                  if (addItemError) setAddItemError(null)
+                  setNewName(e.target.value)
+                }}
                 maxLength={100}
                 autoComplete="off"
                 required
@@ -227,7 +249,10 @@ export function PantryView({ onBack }: Props) {
                 type="text"
                 placeholder="Kumbál, Police..."
                 value={newLocation}
-                onChange={e => setNewLocation(e.target.value)}
+                onChange={e => {
+                  if (addItemError) setAddItemError(null)
+                  setNewLocation(e.target.value)
+                }}
                 maxLength={100}
                 autoComplete="off"
                 className="detail-form-input"
@@ -239,7 +264,10 @@ export function PantryView({ onBack }: Props) {
               <label className="detail-form-label">Kategorie</label>
               <select
                 value={newCategory}
-                onChange={e => setNewCategory(e.target.value as typeof CATEGORY_ORDER[number])}
+                onChange={e => {
+                  if (addItemError) setAddItemError(null)
+                  setNewCategory(e.target.value as typeof CATEGORY_ORDER[number])
+                }}
                 className="detail-form-input"
               >
                 {CATEGORY_ORDER.map(cat => (
@@ -253,7 +281,10 @@ export function PantryView({ onBack }: Props) {
               <label className="detail-form-label">Stav</label>
               <select
                 value={newStatus}
-                onChange={e => setNewStatus(e.target.value as InventoryItem['status'])}
+                onChange={e => {
+                  if (addItemError) setAddItemError(null)
+                  setNewStatus(e.target.value as InventoryItem['status'])
+                }}
                 className="detail-form-input"
               >
                 <option value="OK">Dostatek</option>
@@ -273,6 +304,9 @@ export function PantryView({ onBack }: Props) {
               </button>
             </div>
           </form>
+          {addItemError ? (
+            <div className="error-message show" role="alert">{addItemError}</div>
+          ) : null}
         </div>
             </div>{/* end pantry-add-form-collapse */}
           </div>
@@ -286,7 +320,13 @@ export function PantryView({ onBack }: Props) {
               <div className="spinner" />
             </div>
           ) : isError ? (
-            <p style={{ color: 'var(--status-error)', padding: '16px 0' }}>Chyba při načítání zásob.</p>
+            <ShoppingErrorState
+              title="Zásoby se nepodařilo načíst"
+              error={inventoryError}
+              onRetry={() => {
+                void refetchInventory()
+              }}
+            />
           ) : inventory.length === 0 ? (
             <div className="detail-empty-state">
               <img src="/icons/empty_basket.svg" alt="" aria-hidden="true" style={{ maxHeight: 80, width: 'auto', opacity: 0.65, marginBottom: '0.5rem' }} />
@@ -320,7 +360,10 @@ export function PantryView({ onBack }: Props) {
                           item={item}
                           onEdit={setEditItem}
                           onAddToCart={setCartItem}
-                          onDelete={setDeleteTarget}
+                          onDelete={(target) => {
+                            setDeleteError(null)
+                            setDeleteTarget(target)
+                          }}
                         />
                       ))}
                     </div>
@@ -362,12 +405,25 @@ export function PantryView({ onBack }: Props) {
         loading={deleteItem.isPending}
         onConfirm={async () => {
           if (!deleteTarget) return
+          setDeleteError(null)
           try {
             await deleteItem.mutateAsync(deleteTarget.id)
             setDeleteTarget(null)
-          } catch { /* onError in hook */ }
+          } catch (error) {
+            setDeleteError(
+              getNetworkAwareActionMessage(
+                error,
+                'Zásobu se nepodařilo smazat. Zkuste to znovu.',
+                'Spojení vypadlo dřív, než se zásoba stihla smazat. Zkuste to znovu po obnovení připojení.',
+              ),
+            )
+          }
         }}
-        onCancel={() => setDeleteTarget(null)}
+        errorMessage={deleteError}
+        onCancel={() => {
+          setDeleteTarget(null)
+          setDeleteError(null)
+        }}
       />
     </div>
     </section>

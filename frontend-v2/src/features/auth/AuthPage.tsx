@@ -4,11 +4,12 @@
  * Překlad: app-wrapper div s #login-section, #register-section, #verify-section + bindLinks() z main.ts.
  */
 import { useState } from 'react'
+import { ForgotPasswordForm } from './ForgotPasswordForm'
 import { LoginForm } from './LoginForm'
 import { RegisterForm } from './RegisterForm'
 import { VerifyForm } from './VerifyForm'
 
-type AuthView = 'login' | 'register' | 'verify'
+type AuthView = 'login' | 'register' | 'verify' | 'forgot'
 
 interface VerifyState {
   username: string
@@ -28,6 +29,7 @@ export function AuthPage() {
     <div className="app-wrapper">
       {view === 'login' && (
         <LoginForm
+          onShowForgotPassword={() => setView('forgot')}
           onShowRegister={() => setView('register')}
           onShowVerify={showVerify}
         />
@@ -44,6 +46,9 @@ export function AuthPage() {
           prefillCode={verifyState.prefillCode}
           onShowLogin={() => setView('login')}
         />
+      )}
+      {view === 'forgot' && (
+        <ForgotPasswordForm onShowLogin={() => setView('login')} />
       )}
     </div>
   )

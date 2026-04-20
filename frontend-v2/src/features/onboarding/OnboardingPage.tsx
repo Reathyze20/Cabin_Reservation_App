@@ -16,6 +16,7 @@ interface CreateCabinResponse {
   username: string
   role: string
   animalIcon: string | null
+  isSuperAdmin?: boolean
 }
 
 interface RefreshTokenResponse {
@@ -25,6 +26,7 @@ interface RefreshTokenResponse {
   username: string
   role: string
   animalIcon: string | null
+  isSuperAdmin?: boolean
 }
 
 export default function OnboardingPage() {
@@ -43,12 +45,6 @@ export default function OnboardingPage() {
         const res = await apiClient.get<RefreshTokenResponse>('/auth/refresh-token')
         if (cancelled) return
         
-        // Debug logging for mobile troubleshooting
-        console.log('[Onboarding] refresh-token response:', {
-          hasCabinId: !!res.data.cabinId,
-          username: res.data.username,
-        })
-        
         if (res.data.cabinId) {
           login({
             token: res.data.token,
@@ -57,15 +53,15 @@ export default function OnboardingPage() {
             role: res.data.role,
             animalIcon: res.data.animalIcon,
             cabinId: res.data.cabinId,
+            isSuperAdmin: res.data.isSuperAdmin,
             remember: !!localStorage.getItem('authToken'),
           })
           showToast('Přesměrování na dashboard...', 'info')
           navigate('/dashboard', { replace: true })
           return
         }
-      } catch (err) {
-        // Log error for debugging
-        console.error('[Onboarding] refresh-token error:', err)
+      } catch (error) {
+        void error
       } finally {
         if (!cancelled) setChecking(false)
       }
@@ -93,6 +89,7 @@ export default function OnboardingPage() {
         role: data.role,
         animalIcon: data.animalIcon,
         cabinId: data.cabinId,
+        isSuperAdmin: data.isSuperAdmin,
         remember: !!localStorage.getItem('authToken'),
       })
       showToast('Chata byla uspesne vytvorena!', 'success')

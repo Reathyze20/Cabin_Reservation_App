@@ -1,5 +1,5 @@
 /**
- * PromptDialog.tsx — Reusable text-input dialog (replaces window.prompt)
+ * PromptDialog.tsx — Reusable single-input dialog (replaces window.prompt)
  *
  * Usage:
  *   <PromptDialog
@@ -12,18 +12,27 @@
  *     onCancel={() => setShowPrompt(false)}
  *   />
  */
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useId, type HTMLInputTypeAttribute, type ReactNode } from 'react'
 import { Modal } from './Modal'
 
 interface PromptDialogProps {
   isOpen: boolean
   title: string
+  description?: ReactNode
+  errorMessage?: ReactNode
   label?: string
+  initialValue?: string
   placeholder?: string
   maxLength?: number
+  inputType?: HTMLInputTypeAttribute
+  autoComplete?: string
   submitLabel?: string
   cancelLabel?: string
+  danger?: boolean
   loading?: boolean
+  loadingLabel?: string
+  trimValue?: boolean
+  canSubmit?: (value: string) => boolean
   onSubmit: (value: string) => void
   onCancel: () => void
 }
@@ -31,25 +40,38 @@ interface PromptDialogProps {
 export function PromptDialog({
   isOpen,
   title,
+  description,
+  errorMessage,
   label,
+  initialValue = '',
   placeholder,
   maxLength,
+  inputType = 'text',
+  autoComplete,
   submitLabel = 'Vytvořit',
   cancelLabel = 'Zrušit',
+  danger = false,
   loading = false,
+  loadingLabel = '…',
+  trimValue = true,
+  canSubmit,
   onSubmit,
   onCancel,
 }: PromptDialogProps) {
   const [value, setValue] = useState('')
+  const inputId = useId()
+  const descriptionId = useId()
+  const normalizedValue = trimValue ? value.trim() : value
+  const canSubmitValue = canSubmit ? canSubmit(value) : Boolean(normalizedValue)
 
   useEffect(() => {
-    if (isOpen) setValue('')
-  }, [isOpen])
+    if (isOpen) setValue(initialValue)
+  }, [initialValue, isOpen])
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!value.trim()) return
-    onSubmit(value.trim())
+    if (!canSubmitValue) return
+    onSubmit(normalizedValue)
   }
 
   return (
@@ -59,7 +81,7 @@ export function PromptDialog({
       title={title}
       maxWidth="max-w-sm"
       footer={
-        <>
+        <div className="modal-dialog-actions">
           <button
             type="button"
             className="btn-secondary"
@@ -71,29 +93,45 @@ export function PromptDialog({
           <button
             type="submit"
             form="prompt-dialog-form"
-            className="btn-primary"
-            disabled={loading || !value.trim()}
+            className={danger ? 'btn-danger' : 'btn-primary'}
+            disabled={loading || !canSubmitValue}
           >
-            {loading ? '…' : submitLabel}
+            {loading ? loadingLabel : submitLabel}
           </button>
-        </>
+        </div>
       }
     >
       <form id="prompt-dialog-form" onSubmit={handleSubmit}>
+        {description && (
+          <div id={descriptionId} style={{ marginBottom: '12px', color: 'var(--text-main)', lineHeight: 1.5 }}>
+            {description}
+          </div>
+        )}
         {label && (
-          <label style={{ display: 'block', marginBottom: '6px', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-muted)' }}>
+          <label
+            htmlFor={inputId}
+            style={{ display: 'block', marginBottom: '6px', fontSize: '0.875rem', fontWeight: 500, color: 'var(--text-muted)' }}
+          >
             {label}
           </label>
         )}
         <input
-          type="text"
+          id={inputId}
+          type={inputType}
           className="form-input"
           value={value}
           onChange={e => setValue(e.target.value)}
           placeholder={placeholder}
           maxLength={maxLength}
+          autoComplete={autoComplete}
+          aria-describedby={description ? descriptionId : undefined}
           autoFocus
         />
+        {errorMessage ? (
+          <div className="error-message show" role="alert">
+            {errorMessage}
+          </div>
+        ) : null}
       </form>
     </Modal>
   )

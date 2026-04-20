@@ -61,7 +61,7 @@ export function ReservationsPage() {
   const { user } = useAuth();
   const cal = useCalendar();
 
-  const { data, isLoading } = useReservationsData();
+  const { data, isLoading, isError, error, refetch } = useReservationsData();
   const del = useDeleteReservation();
 
   const allReservations: Reservation[] = data?.reservations ?? [];
@@ -75,7 +75,7 @@ export function ReservationsPage() {
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
   const handleDaySelect = (dateStr: string) => {
-    setSelectedDay((prev) => prev === dateStr ? null : dateStr);
+    setSelectedDay(dateStr);
     setSelectedReservation(null);
   };
 
@@ -172,13 +172,8 @@ export function ReservationsPage() {
 
   // Delete reservation (called from detail — ethical friction is handled there)
   const handleDelete = async (id: string) => {
-    try {
-      await del.mutateAsync(id);
-      showToast("Rezervace smazána.", "success");
-      setSelectedReservation(null);
-    } catch {
-      showToast("Chyba při mazání rezervace.", "error");
-    }
+    await del.mutateAsync(id);
+    setSelectedReservation(null);
   };
 
   // Assign from detail/list
@@ -189,6 +184,18 @@ export function ReservationsPage() {
   // ── Skeleton while loading ────────────────────────────────────────────
   if (isLoading) {
     return <ReservationsSkeleton />;
+  }
+
+  if (isError) {
+    return (
+      <FeatureErrorFallback
+        error={error as Error}
+        resetErrorBoundary={() => {
+          void refetch();
+        }}
+        title="Rezervace se nepodařilo načíst"
+      />
+    );
   }
 
   // ── Filtered list for right panel ─────────────────────────────────────
@@ -220,6 +227,7 @@ export function ReservationsPage() {
           reservations={allReservations}
           availabilities={allAvailabilities}
           currentUserId={user?.userId ?? ""}
+          selectedDay={selectedDay}
           rangeStart={cal.rangeStart}
           onGoToPrev={cal.goToPrev}
           onGoToNext={cal.goToNext}

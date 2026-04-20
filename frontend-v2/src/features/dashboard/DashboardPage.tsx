@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+import { useAuth } from "@/context/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { ErrorBoundary } from "react-error-boundary";
 import apiClient from "@/api/client";
 import { fetchWeather } from "@/api/dashboard";
-import type { CabinSettings, DashboardReservationsData, DashboardShoppingData, DashboardNotesData, DashboardReconstructionData } from "@/api/dashboard";
-import { DashboardReservationsSchema, DashboardShoppingSchema, DashboardNotesSchema, DashboardReconstructionSchema } from "@/api/schemas";
+import type { CabinSettings, DashboardActivationData, DashboardReservationsData, DashboardShoppingData, DashboardNotesData, DashboardReconstructionData } from "@/api/dashboard";
+import { DashboardActivationSchema, DashboardReservationsSchema, DashboardShoppingSchema, DashboardNotesSchema, DashboardReconstructionSchema } from "@/api/schemas";
 import { WeatherCard } from "./WeatherCard";
 import { ActiveReservation } from "./ActiveReservation";
+import { AdminActivationChecklist } from "./AdminActivationChecklist";
 import { ShoppingWidget } from "./ShoppingWidget";
 import { HandoverNote } from "./HandoverNote";
 import { EssentialWarning } from "./EssentialWarning";
@@ -135,6 +137,35 @@ export function ReconstructionSkeleton() {
   );
 }
 
+export function ActivationChecklistSkeleton() {
+  return (
+    <div className="glass-card dashboard-activation-card">
+      <div className="card-body-full dashboard-activation-content">
+        <div className="dashboard-activation-head">
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
+            <div className="skeleton skeleton-text" style={{ width: 140, height: 14 }} />
+            <div className="skeleton skeleton-text" style={{ width: "48%", height: 22 }} />
+            <div className="skeleton skeleton-text long" style={{ height: 13 }} />
+          </div>
+          <div className="skeleton" style={{ width: 84, height: 64, borderRadius: 16, flexShrink: 0 }} />
+        </div>
+
+        {[0, 1, 2].map((index) => (
+          <div key={index} className="dashboard-activation-step">
+            <div className="skeleton" style={{ width: 40, height: 40, borderRadius: 12, flexShrink: 0 }} />
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
+              <div className="skeleton skeleton-text" style={{ width: 160, height: 14 }} />
+              <div className="skeleton skeleton-text long" style={{ height: 12 }} />
+              <div className="skeleton skeleton-text" style={{ width: 120, height: 12 }} />
+            </div>
+            <div className="skeleton skeleton-btn" style={{ width: 132 }} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── Animation variants ───────────────────────────────────────────────
 
 const gridVariants = {
@@ -157,6 +188,7 @@ const cardVariants = {
 
 export function DashboardPage() {
   useDocumentTitle('Přehled');
+  const { isAdmin } = useAuth();
   const [handoverNote, setHandoverNote] = useState<string | null>(null);
   const [handoverNoteAuthor, setHandoverNoteAuthor] = useState<string | null>(null);
   const [handoverNoteUpdatedAt, setHandoverNoteUpdatedAt] = useState<string | null>(null);
@@ -177,6 +209,17 @@ export function DashboardPage() {
     },
     refetchInterval: 5 * 60 * 1000,
     staleTime: 30_000,
+  });
+
+  const activationQuery = useQuery<DashboardActivationData>({
+    queryKey: ["dashboard", "activation"],
+    queryFn: async () => {
+      const { data } = await apiClient.get<DashboardActivationData>("/dashboard/activation");
+      return DashboardActivationSchema.parse(data) as DashboardActivationData;
+    },
+    enabled: isAdmin,
+    staleTime: 5_000,
+    refetchOnMount: "always",
   });
 
   const shoppingQuery = useQuery<DashboardShoppingData>({
@@ -264,6 +307,22 @@ export function DashboardPage() {
           onRefresh={() => reservationsQuery.refetch()}
         />
       )}
+
+      {isAdmin && (activationQuery.isLoading ? (
+        <motion.div variants={cardVariants}>
+          <ActivationChecklistSkeleton />
+        </motion.div>
+      ) : activationQuery.isError ? (
+        <motion.div variants={cardVariants}>
+          <ErrorBoundary FallbackComponent={(props) => <FeatureErrorFallback {...props} title="Checklist správce se nepodařilo načíst" />}>
+            <FeatureErrorFallback error={activationQuery.error as Error} resetErrorBoundary={() => activationQuery.refetch()} />
+          </ErrorBoundary>
+        </motion.div>
+      ) : activationQuery.data?.shouldShow ? (
+        <motion.div variants={cardVariants}>
+          <AdminActivationChecklist data={activationQuery.data} />
+        </motion.div>
+      ) : null)}
 
       {/* Main grid */}
       <motion.div

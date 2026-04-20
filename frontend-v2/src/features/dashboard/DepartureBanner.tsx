@@ -5,6 +5,7 @@ import apiClient from "@/api/client";
 import { showToast } from "@/lib/toast";
 import { Modal } from "@/components/shared/Modal";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { getNetworkAwareActionMessage } from "@/lib/networkError";
 
 const BANNER_KEY = "departure_dismissed_date";
 const DEFAULT_CHECKLIST = [
@@ -38,6 +39,7 @@ export function DepartureBanner({ departureChecklist, onRefresh }: Props) {
   const [checkedItems, setCheckedItems] = useState<boolean[]>([]);
   const [departureNote, setDepartureNote] = useState("");
   const [incompleteConfirmOpen, setIncompleteConfirmOpen] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const checklistItems =
     departureChecklist && departureChecklist.length > 0 ? departureChecklist : DEFAULT_CHECKLIST;
@@ -57,12 +59,19 @@ export function DepartureBanner({ departureChecklist, onRefresh }: Props) {
       dismissToday();
       setDismissed(true);
       setModalOpen(false);
+      setSubmitError(null);
       showToast("Odjezdový protokol byl uložen.", "success");
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
       onRefresh();
     },
-    onError: () => {
-      showToast("Nepodařilo se uložit odjezdový protokol.", "error");
+    onError: (error) => {
+      setSubmitError(
+        getNetworkAwareActionMessage(
+          error,
+          "Odjezdový protokol se nepodařilo uložit. Zkuste to znovu.",
+          "Spojení vypadlo dřív, než se odjezdový protokol stihl uložit. Zkuste to znovu po obnovení připojení.",
+        ),
+      );
     },
   });
 
@@ -71,12 +80,17 @@ export function DepartureBanner({ departureChecklist, onRefresh }: Props) {
   const openModal = () => {
     setCheckedItems(new Array(checklistItems.length).fill(false));
     setDepartureNote("");
+    setSubmitError(null);
     setModalOpen(true);
   };
 
-  const closeModal = () => setModalOpen(false);
+  const closeModal = () => {
+    setModalOpen(false);
+    setSubmitError(null);
+  };
 
   const handleSubmit = () => {
+    setSubmitError(null);
     const allChecked = checkedItems.every(Boolean);
     if (!allChecked) {
       setIncompleteConfirmOpen(true);
@@ -87,10 +101,12 @@ export function DepartureBanner({ departureChecklist, onRefresh }: Props) {
 
   const handleConfirmedSubmit = () => {
     setIncompleteConfirmOpen(false);
+    setSubmitError(null);
     submitMutation.mutate();
   };
 
   const toggleItem = (i: number) => {
+    if (submitError) setSubmitError(null);
     setCheckedItems((prev) => {
       const next = [...prev];
       next[i] = !next[i];
@@ -160,9 +176,15 @@ export function DepartureBanner({ departureChecklist, onRefresh }: Props) {
             rows={3}
             placeholder="Např.: Vše ok, dřevo je připravené pod plachtou..."
             value={departureNote}
-            onChange={(e) => setDepartureNote(e.target.value)}
+            onChange={(e) => {
+              if (submitError) setSubmitError(null);
+              setDepartureNote(e.target.value);
+            }}
           />
         </div>
+        {submitError ? (
+          <div className="error-message show" role="alert">{submitError}</div>
+        ) : null}
       </Modal>
       <div style={{ display: "none" }} onClick={() => navigate("/reservations")} />
     </>

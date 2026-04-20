@@ -4,8 +4,8 @@
  * Wrapper pro všechny přihlášené stránky: offline banner, header, nav, page outlet, mobile nav.
  */
 import { useState } from 'react'
-import { useLocation, Outlet } from 'react-router-dom'
-import { AnimatePresence, motion } from 'framer-motion'
+import { useLocation, useOutlet } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { useAuth } from '@/context/AuthContext'
 import { TopBar } from './TopBar'
 import { MobileHeader } from './MobileHeader'
@@ -28,6 +28,7 @@ const pageTransition = {
 export function AppShell() {
   const { user } = useAuth()
   const location = useLocation()
+  const outlet = useOutlet()
   const [profileDrawerOpen, setProfileDrawerOpen] = useState(false)
 
   const animalIcon = user?.animalIcon ?? null
@@ -52,19 +53,16 @@ export function AppShell() {
 
         {/* Page content with route transitions */}
         <main id="page-container">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={location.pathname}
-              variants={pageVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              transition={pageTransition}
-              style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, minHeight: 0 }}
-            >
-              <Outlet />
-            </motion.div>
-          </AnimatePresence>
+          <motion.div
+            key={location.pathname}
+            variants={pageVariants}
+            initial="initial"
+            animate="animate"
+            transition={pageTransition}
+            style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, minHeight: 0, height: '100%' }}
+          >
+            {outlet}
+          </motion.div>
         </main>
 
         {/* Mobile bottom navigation */}

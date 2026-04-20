@@ -1,6 +1,9 @@
-# KDY NA CHATU - Frontend Rules
-- **Stack:** React 18, Vite, TypeScript (strict), Tailwind CSS, shadcn/ui.
-- **State & Data:** Always use TanStack (React) Query for data fetching and mutations. Use optimistic updates for UX. Axios is the client.
-- **Styling constraints:** Do not use `gap` or `margin` that touch screen edges. Use `rounded-2xl` and `bg-white/95 shadow-xl` for main windows over the app background. Avoid aggressive, dark blocks unless specified.
-- **Forms:** Prefer functional forms with standard `onSubmit` prevented defaults. Validate incoming payloads with Zod where necessary.
-- **No external CSS:** We rely heavily on legacy CSS modules (`.css`) from Vanilla for exact layout mapping. Append to Tailwind ONLY for structural outer-wraps. DO NOT break `id=` or `.class-names`.
+# KDY NA CHATU - Canonical Repo Guardrails
+
+- Canonical stack facts live in `memories/repo/stack-facts.md`. If other docs disagree, prefer that file.
+- Current frontend stack: React 19, Vite 7, TypeScript strict, React Router DOM 7, TanStack Query 5, Axios, Tailwind CSS 4, shadcn/ui.
+- Current backend stack: Node.js 20+, Express 4, Prisma 7, PostgreSQL, JWT auth, Zod validation.
+- Tenant scoping uses `cabinId`, never `workspaceId`.
+- For `frontend-v2/` implementation work, always prefer `.agents/skills/CabinSaaS_Architect/SKILL.md`.
+- For AI customization work in `.github/`, `.agents/`, `memories/` or `docs/AI-INFRASTRUCTURE*`, always consult `docs/AI-INFRASTRUCTURE-REGISTRY.md` and run `npm run validate:ai` after edits.
+- Do not introduce new active AI assets that describe the app as Vanilla TS, hash-based router, or `workspaceId` based.

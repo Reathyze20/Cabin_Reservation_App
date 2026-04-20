@@ -17,6 +17,33 @@
   overflow: hidden;
 }
 
+.shopping-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.shopping-modal-form label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.shopping-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.shopping-modal-actions .button-primary,
+.shopping-modal-actions .button-secondary {
+  width: auto;
+  min-width: 120px;
+  min-height: 44px;
+}
+
 /* ─── Mode Switcher (iOS pill toggle) ──────────────────────────────────────────── */
 
 /* ─── Full-width switcher bar (above layout, always centered on card) ───────── */
@@ -287,9 +314,11 @@
 .master-item-actions {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   flex-shrink: 0;
   margin-left: auto;
+  opacity: 1;
+  transition: opacity 0.15s ease;
 }
 
 .master-action-btn {
@@ -300,11 +329,12 @@
   height: 28px;
   border: none;
   border-radius: 6px;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(0, 0, 0, 0.06);
   color: var(--color-text-muted);
   cursor: pointer;
   padding: 0;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
   flex-shrink: 0;
 }
 
@@ -313,19 +343,59 @@
   color: var(--color-text);
 }
 
+.master-action-share {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: rgba(59, 130, 246, 0.14);
+  color: #1d4ed8;
+}
+
+.master-action-share:hover {
+  background: rgba(59, 130, 246, 0.16);
+  border-color: rgba(59, 130, 246, 0.22);
+  color: #1e40af;
+}
+
+.master-action-delete {
+  background: var(--raw-danger-light, #fee2e2);
+  border-color: rgba(220, 38, 38, 0.15);
+  color: var(--raw-danger-dark, #991b1c);
+}
+
 .master-action-delete:hover {
-  background: var(--color-danger-bg, #fef2f2);
-  color: var(--color-danger, #dc2626);
+  background: #fecaca;
+  border-color: rgba(220, 38, 38, 0.22);
+  color: #7f1d1d;
+}
+
+.master-action-archive {
+  background: var(--raw-success-light, #dcfce7);
+  border-color: rgba(22, 163, 74, 0.15);
+  color: #166534;
 }
 
 .master-action-archive:hover {
-  background: var(--color-success-bg, #ecfdf5);
-  color: var(--color-success-text, #059669);
+  background: #bbf7d0;
+  border-color: rgba(22, 163, 74, 0.22);
+  color: #14532d;
 }
 
 .master-action-btn svg {
   width: 14px;
   height: 14px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .master-item-actions {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .master-item:hover .master-item-actions,
+  .master-item:focus-within .master-item-actions,
+  .master-item.is-active .master-item-actions {
+    opacity: 1;
+    pointer-events: auto;
+  }
 }
 
 .master-item-badge {
@@ -391,6 +461,66 @@
 
 .error-text {
   padding: 16px;
+}
+
+.shopping-panel-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+.shopping-panel-error--master {
+  min-height: 240px;
+  padding: 32px 16px;
+}
+
+.shopping-panel-error--detail {
+  padding: 48px 16px;
+}
+
+.shopping-panel-error--modal {
+  padding: 8px 0 4px;
+}
+
+.shopping-panel-error-illustration {
+  display: block;
+  width: auto;
+  max-height: 76px;
+  opacity: 0.72;
+}
+
+.shopping-panel-error-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.shopping-panel-error-text {
+  margin: 0;
+  max-width: 28rem;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: var(--color-text-light);
+}
+
+.shopping-panel-error-action {
+  width: auto;
+  margin-top: 2px;
+}
+
+.shopping-inline-error {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--status-error-light);
+  color: var(--status-error-dark);
+  font-size: 0.84rem;
+  line-height: 1.45;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -839,8 +969,8 @@
 /* ── Add-form submit button (used in ListDetail + PantryView) ────────── */
 
 .add-form-submit-btn {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   background-color: var(--brand-primary);
   color: var(--text-on-primary);
   font-size: 1.3rem;
@@ -1891,7 +2021,8 @@
   .shopping-page {
     border-radius: 0;
     box-shadow: none;
-    min-height: calc(100dvh - 64px - 76px - env(safe-area-inset-bottom, 0px));
+    flex: 1 1 auto;
+    min-height: 0;
   }
 
   /* Mode switcher — smaller on mobile */
@@ -1922,6 +2053,15 @@
 
   .shopping-switcher-bar--desktop {
     display: none;
+  }
+
+  .shopping-modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .shopping-modal-actions .button-primary,
+  .shopping-modal-actions .button-secondary {
+    width: 100%;
   }
 
   /* Master: full width, no fixed width */
@@ -1986,14 +2126,14 @@
   }
 
   .master-action-btn {
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
   }
 
   .master-action-btn svg {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
   }
 
   /* Empty state: compact */
@@ -2037,7 +2177,7 @@
   .detail-item {
     padding: 8px 12px;
     gap: 10px;
-    min-height: 40px;
+    min-height: 44px;
   }
 
   .detail-item-name {
@@ -2047,14 +2187,15 @@
 
   /* Inline form: smaller button to match compact header */
   .detail-inline-form .add-form-submit-btn {
-    width: 36px;
-    height: 36px;
-    font-size: 1.1rem;
+    width: 44px;
+    height: 44px;
+    font-size: 1.2rem;
   }
 
   .detail-inline-form .detail-form-input {
     padding: 8px 12px;
-    font-size: 0.88rem;
+    min-height: 44px;
+    font-size: 16px;
   }
 
   .detail-header-row {
@@ -2073,15 +2214,24 @@
   /* Actions always visible on mobile (no hover) */
   .detail-item-actions {
     opacity: 1;
-    gap: 4px;
+    gap: 6px;
   }
 
   .detail-item .btn-action {
-    min-width: 32px;
-    min-height: 32px;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 8px;
+    border-radius: 10px;
   }
 
   .detail-item .btn-delete-item {
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     color: var(--color-text-muted);
     opacity: 0.6;
   }

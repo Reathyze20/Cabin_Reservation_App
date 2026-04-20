@@ -1,5 +1,8 @@
 # 📚 kdynachatu.cz — Kompletní Knowledge Base
 
+> NOTE: This file is an extended analysis document, not the shortest canonical source of truth.
+> Canonical short facts now live in `memories/repo/stack-facts.md` and AI asset inventory lives in `memories/repo/ai-infrastructure-map.md`.
+
 > **Generováno:** 2026-04-05  
 > **Verze aplikace:** 1.0.0 (single-tenant MVP → multi-tenant SaaS přechod)  
 > **Stav:** Migrace z Vanilla TS → React 18 — frontend-v2 aktivní

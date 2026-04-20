@@ -35,7 +35,7 @@ You are NOT a developer. You don't write code. You produce **crystal-clear speci
 
 ### Current State
 - **Single-tenant MVP** running for one cabin (Chata Třebenice)
-- **Frontend:** React 18 + TypeScript + Vite + Tailwind CSS + shadcn/ui (`frontend-v2/`)
+- **Frontend:** React 19 + TypeScript + Vite + Tailwind CSS + shadcn/ui (`frontend-v2/`)
 - **Backend:** Node.js + Express + Prisma ORM + PostgreSQL
 - **Users:** Family members sharing one cabin (3-10 people per cabin)
 - **Core features:** Reservations, shopping lists, notes/chat, gallery, diary, handover notes, weather dashboard

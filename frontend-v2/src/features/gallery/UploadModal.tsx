@@ -7,6 +7,7 @@ import { showToast } from '@/lib/toast'
 import { formatCount, pluralize } from '@/lib/utils'
 import { Modal } from '@/components/shared/Modal'
 import { Upload, ImagePlus, X } from 'lucide-react'
+import { getNetworkAwareActionMessage } from '@/lib/networkError'
 
 interface Props {
   folderId: string
@@ -22,6 +23,7 @@ function formatSize(bytes: number): string {
 export function UploadModal({ folderId, onClose }: Props) {
   const [files, setFiles] = useState<File[]>([])
   const [isDragging, setIsDragging] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const upload = useUploadPhotos(folderId)
 
@@ -44,6 +46,7 @@ export function UploadModal({ folderId, onClose }: Props) {
       showToast('Povoleny jsou pouze obrázky.', 'error')
       return
     }
+    setSubmitError(null)
     setFiles(prev => [...prev, ...incoming])
   }
 
@@ -60,12 +63,21 @@ export function UploadModal({ folderId, onClose }: Props) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!files.length) return
+    setSubmitError(null)
     try {
       await upload.mutateAsync(files)
       const verb = pluralize(files.length, 'Nahrána', 'Nahrány', 'Nahráno')
       showToast(`${verb} ${formatCount(files.length, 'fotka', 'fotky', 'fotek')}.`, 'success')
       onClose()
-    } catch { /* onError in hook */ }
+    } catch (error) {
+      setSubmitError(
+        getNetworkAwareActionMessage(
+          error,
+          'Fotky se nepodařilo nahrát. Zkuste to znovu.',
+          'Spojení vypadlo dřív, než se fotky stihly nahrát. Zkuste to znovu po obnovení připojení.',
+        ),
+      )
+    }
   }
 
   const totalSize = files.reduce((sum, f) => sum + f.size, 0)
@@ -149,6 +161,9 @@ export function UploadModal({ folderId, onClose }: Props) {
             <div className="upload-progress-bar__fill" />
           </div>
         )}
+        {submitError ? (
+          <div className="error-message show" role="alert">{submitError}</div>
+        ) : null}
       </form>
     </Modal>
   )

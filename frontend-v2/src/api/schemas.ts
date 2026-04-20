@@ -74,6 +74,16 @@ export const DashboardReservationsSchema = z.object({
   }).optional().default({ myNightsThisYear: 0, totalStaysThisMonth: 0 }),
 })
 
+export const DashboardActivationSchema = z.object({
+  shouldShow: z.boolean(),
+  membersCount: z.number(),
+  activeInviteCount: z.number(),
+  reservationsCount: z.number(),
+  shoppingListsCount: z.number(),
+  completedCount: z.number(),
+  totalCount: z.number(),
+})
+
 export const DashboardShoppingSchema = z.object({
   pendingShoppingItems: z.array(PendingShoppingItemSchema),
   totalPendingShoppingCount: z.number(),
@@ -94,6 +104,7 @@ export const DashboardNotesSchema = z.object({
 })
 
 export type DashboardReservationsFromSchema = z.infer<typeof DashboardReservationsSchema>
+export type DashboardActivationFromSchema = z.infer<typeof DashboardActivationSchema>
 export type DashboardShoppingFromSchema = z.infer<typeof DashboardShoppingSchema>
 export type DashboardNotesFromSchema = z.infer<typeof DashboardNotesSchema>
 

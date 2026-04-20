@@ -225,6 +225,68 @@ router.get("/shopping", protect, requireCabin, async (req: Request, res: Respons
   }
 });
 
+// 3. Activation Route — first admin checklist summary
+router.get("/activation", protect, requireCabin, async (req: Request, res: Response) => {
+  if (!req.user) {
+    return res.status(401).json({ message: "Neautorizováno" });
+  }
+
+  try {
+    if (req.user.role !== "admin") {
+      return res.json({
+        shouldShow: false,
+        membersCount: 0,
+        activeInviteCount: 0,
+        reservationsCount: 0,
+        shoppingListsCount: 0,
+        completedCount: 0,
+        totalCount: 3,
+      });
+    }
+
+    const cabinId = req.user.cabinId!;
+    const now = new Date();
+
+    const [membersCount, reservationsCount, shoppingListsCount, inviteCandidates] = await Promise.all([
+      prisma.user.count({
+        where: { cabinId, isBanned: false },
+      }),
+      prisma.reservation.count({
+        where: { cabinId },
+      }),
+      prisma.shoppingList.count({
+        where: { cabinId, isPantry: false },
+      }),
+      prisma.inviteLink.findMany({
+        where: {
+          cabinId,
+          expiresAt: { gt: now },
+        },
+        select: {
+          maxUses: true,
+          usedCount: true,
+        },
+      }),
+    ]);
+
+    const activeInviteCount = inviteCandidates.filter((invite) => invite.maxUses === null || invite.usedCount < invite.maxUses).length;
+    const completedCount = [membersCount > 1, reservationsCount > 0, shoppingListsCount > 0].filter(Boolean).length;
+
+    res.json({
+      shouldShow: completedCount < 3,
+      membersCount,
+      activeInviteCount,
+      reservationsCount,
+      shoppingListsCount,
+      completedCount,
+      totalCount: 3,
+    });
+  } catch (error) {
+    logger.error("DASHBOARD", "Get activation error", { error: String(error) });
+    res.status(500).json({ message: "Chyba při načítání prvních kroků pro správce." });
+  }
+});
+
 // 3. Notes / Handover Route
 router.get("/notes", protect, requireCabin, async (req: Request, res: Response) => {
   if (!req.user) {

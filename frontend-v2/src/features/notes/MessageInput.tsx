@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from "react";
 import { useSendNote } from "./hooks/useNotes";
-import { showToast } from "@/lib/toast";
 import type { Note } from "@/api/notes";
+import { getNetworkAwareActionMessage, isNetworkError } from "@/lib/networkError";
 
 const HANDOVER_ITEMS = [
   { key: "kamna", label: "Kamna: Popel vybrán, vyhasnuto" },
@@ -24,6 +24,7 @@ export function MessageInput({ activeThreadId, replyTo, onCancelReply }: Props) 
     Object.fromEntries(HANDOVER_ITEMS.map((i) => [i.key, true])),
   );
   const [handoverNote, setHandoverNote] = useState("");
+  const [sendError, setSendError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const sendNote = useSendNote();
 
@@ -40,6 +41,7 @@ export function MessageInput({ activeThreadId, replyTo, onCancelReply }: Props) 
   const handleSend = async () => {
     const msg = message.trim();
     if (!msg) return;
+    setSendError(null);
     try {
       await sendNote.mutateAsync({
         message: msg,
@@ -52,8 +54,15 @@ export function MessageInput({ activeThreadId, replyTo, onCancelReply }: Props) 
         textareaRef.current.style.height = "36px";
         textareaRef.current.style.overflowY = "hidden";
       }
-    } catch {
-      showToast("Zprávu se nepodařilo odeslat.", "error");
+    } catch (error) {
+      if (isNetworkError(error)) return;
+      setSendError(
+        getNetworkAwareActionMessage(
+          error,
+          "Zprávu se nepodařilo odeslat. Zkuste to znovu.",
+          "Spojení vypadlo dřív, než se zpráva stihla odeslat. Zkuste to znovu po obnovení připojení.",
+        ),
+      );
     }
   };
 
@@ -84,6 +93,7 @@ export function MessageInput({ activeThreadId, replyTo, onCancelReply }: Props) 
     const text = existing.length > 0
       ? existing + "\n\n" + lines.join("\n")
       : lines.join("\n");
+    setSendError(null);
     setMessage(text);
     setHandoverOpen(false);
     setHandoverNote("");
@@ -175,7 +185,10 @@ export function MessageInput({ activeThreadId, replyTo, onCancelReply }: Props) 
               placeholder="Poznámka (volitelná)..."
               autoComplete="off"
               value={handoverNote}
-              onChange={(e) => setHandoverNote(e.target.value)}
+              onChange={(e) => {
+                if (sendError) setSendError(null);
+                setHandoverNote(e.target.value);
+              }}
             />
           </div>
           <div className="handover-panel-footer">
@@ -244,6 +257,7 @@ export function MessageInput({ activeThreadId, replyTo, onCancelReply }: Props) 
             required
             value={message}
             onChange={(e) => {
+              if (sendError) setSendError(null);
               setMessage(e.target.value);
               autoResize();
             }}
@@ -268,6 +282,9 @@ export function MessageInput({ activeThreadId, replyTo, onCancelReply }: Props) 
           </button>
         </form>
       </div>
+      {sendError ? (
+        <div className="error-message show" role="alert">{sendError}</div>
+      ) : null}
     </div>
   );
 }

@@ -25,6 +25,7 @@ interface AcceptResponse {
   animalIcon: string;
   cabinId: string;
   cabinName: string;
+  isSuperAdmin?: boolean;
 }
 
 export function InvitePage() {
@@ -88,8 +89,8 @@ export function InvitePage() {
       });
       
       // Accept returns JWT directly — no separate login needed
-      const { token: authToken, username, userId, role, animalIcon, cabinId } = res.data;
-      login({ token: authToken, username, userId, role, animalIcon, cabinId, remember: true });
+      const { token: authToken, username, userId, role, animalIcon, cabinId, isSuperAdmin } = res.data;
+      login({ token: authToken, username, userId, role, animalIcon, cabinId, isSuperAdmin, remember: true });
       navigate('/dashboard');
     } catch (err: unknown) {
       const axiosMsg = (err as { response?: { data?: { message?: string } } }).response?.data?.message;
@@ -202,9 +203,9 @@ export function InvitePage() {
               <input 
                 type="password" 
                 required 
-                minLength={6}
+                minLength={8}
                 maxLength={100}
-                placeholder="Min. 6 znaků"
+                placeholder="Min. 8 znaků"
                 value={formData.password}
                 onChange={e => setFormData({ ...formData, password: e.target.value })}
               />

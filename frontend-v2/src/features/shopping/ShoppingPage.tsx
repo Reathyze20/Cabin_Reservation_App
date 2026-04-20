@@ -16,31 +16,45 @@ import { ListDetail } from './ListDetail'
 import { PantryView } from './PantryView'
 import { ShareListDialog } from './ShareListDialog'
 import { showToast } from '@/lib/toast'
-import { Modal } from '@/components/shared/Modal'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
+import { PromptDialog } from '@/components/shared/PromptDialog'
 import { useInventory } from './hooks/useInventory'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
+import {
+  ShoppingErrorState,
+  getShoppingActionErrorMessage,
+} from './ShoppingErrorState'
 
 type ActiveView = 'shopping' | 'pantry'
 
 export function ShoppingPage() {
   useDocumentTitle('Nákupy');
-  const { data: lists = [], isLoading, isError } = useShoppingLists()
-  const { data: inventory = [] } = useInventory()
+  const {
+    data: lists = [],
+    isLoading,
+    isError,
+    error: listsError,
+    refetch: refetchLists,
+  } = useShoppingLists()
+  const { data: inventory = [], isError: inventoryError } = useInventory()
   const createList = useCreateList()
   const deleteList = useDeleteList()
   const archiveList = useArchiveList()
 
-  const missingCount = inventory.filter(i => i.status === 'EMPTY').length
+  const missingCount = inventoryError
+    ? undefined
+    : inventory.filter(i => i.status === 'EMPTY').length
 
   const [activeView, setActiveView] = useState<ActiveView>('shopping')
   const [selectedListId, setSelectedListId] = useState<string | null>(null)
   const [mobileDetailOpen, setMobileDetailOpen] = useState(false)
   const [shareList, setShareList] = useState<ShoppingList | null>(null)
   const [showNewListModal, setShowNewListModal] = useState(false)
-  const [newListName, setNewListName] = useState('')
   const [deleteListId, setDeleteListId] = useState<string | null>(null)
   const [archiveListId, setArchiveListId] = useState<string | null>(null)
+  const [newListError, setNewListError] = useState<string | null>(null)
+  const [deleteListError, setDeleteListError] = useState<string | null>(null)
+  const [archiveListError, setArchiveListError] = useState<string | null>(null)
 
   // Auto-select first list on load
   useEffect(() => {
@@ -78,11 +92,13 @@ export function ShoppingPage() {
   }
 
   function handleDeleteList(id: string) {
+    setDeleteListError(null)
     setDeleteListId(id)
   }
 
   async function confirmDeleteList() {
     if (!deleteListId) return
+    setDeleteListError(null)
     try {
       await deleteList.mutateAsync(deleteListId)
       if (selectedListId === deleteListId) {
@@ -90,40 +106,65 @@ export function ShoppingPage() {
         setMobileDetailOpen(false)
       }
       showToast('Seznam smazán.', 'success')
-    } catch { /* onError in hook */ }
-    setDeleteListId(null)
+      setDeleteListId(null)
+    } catch (error) {
+      setDeleteListError(
+        getShoppingActionErrorMessage(
+          error,
+          'Seznam se nepodařilo smazat. Zkuste to znovu.',
+          'Spojení vypadlo dřív, než se seznam stihl smazat. Zkuste to znovu po obnovení připojení.',
+        ),
+      )
+    }
   }
 
   function handleArchiveList(id: string) {
+    setArchiveListError(null)
     setArchiveListId(id)
   }
 
   async function confirmArchiveList() {
     if (!archiveListId) return
+    setArchiveListError(null)
     try {
       await archiveList.mutateAsync(archiveListId)
       showToast('Seznam archivován.', 'success')
-    } catch { /* onError in hook */ }
-    setArchiveListId(null)
+      setArchiveListId(null)
+    } catch (error) {
+      setArchiveListError(
+        getShoppingActionErrorMessage(
+          error,
+          'Seznam se nepodařilo uzavřít. Zkuste to znovu.',
+          'Spojení vypadlo dřív, než se seznam stihl uzavřít. Zkuste to znovu po obnovení připojení.',
+        ),
+      )
+    }
   }
 
-  async function handleCreateList(e: React.FormEvent) {
-    e.preventDefault()
-    const name = newListName.trim()
-    if (!name) return
-    if (name.length > 100) {
+  async function handleCreateList(name: string) {
+    const cleanName = name.trim()
+    if (!cleanName) return
+    if (cleanName.length > 100) {
       showToast('Název seznamu je příliš dlouhý (max 100 znaků).', 'error')
       return
     }
+    setNewListError(null)
     try {
-      const created = await createList.mutateAsync(name)
-      setNewListName('')
+      const created = await createList.mutateAsync(cleanName)
       setShowNewListModal(false)
       showToast('Nákupní seznam vytvořen.', 'success')
       setSelectedListId(created.id)
       setActiveView('shopping')
       setMobileDetailOpen(true)
-    } catch { /* onError in hook */ }
+    } catch (error) {
+      setNewListError(
+        getShoppingActionErrorMessage(
+          error,
+          'Nový nákupní seznam se nepodařilo vytvořit. Zkuste to znovu.',
+          'Spojení vypadlo dřív, než se seznam stihl vytvořit. Zkuste to znovu po obnovení připojení.',
+        ),
+      )
+    }
   }
 
   return (
@@ -159,7 +200,14 @@ export function ShoppingPage() {
             </aside>
           ) : isError ? (
             <aside className="shopping-master" id="shopping-master">
-              <p className="error-text">Chyba načítání nákupních seznamů.</p>
+              <ShoppingErrorState
+                variant="master"
+                title="Seznamy se nepodařilo načíst"
+                error={listsError}
+                onRetry={() => {
+                  void refetchLists()
+                }}
+              />
             </aside>
           ) : (
             <ListMaster
@@ -194,38 +242,21 @@ export function ShoppingPage() {
         </div>
       </div>
 
-      {/* Modál nového seznamu */}
-      {showNewListModal && (
-        <Modal
-        isOpen={true}
-        onClose={() => setShowNewListModal(false)}
+      <PromptDialog
+        isOpen={showNewListModal}
         title="Nový nákupní seznam"
-        maxWidth="max-w-sm"
-        footer={
-          <button
-            type="submit"
-            form="new-list-form"
-            className="button-primary"
-            disabled={createList.isPending || !newListName.trim()}
-          >
-            Vytvořit
-          </button>
-        }
-      >
-        <form id="new-list-form" onSubmit={handleCreateList} noValidate>
-          <input
-            className="form-input"
-            type="text"
-            placeholder="Název seznamu…"
-            value={newListName}
-            onChange={e => setNewListName(e.target.value)}
-            maxLength={100}
-            required
-            autoFocus
-          />
-        </form>
-      </Modal>
-    )}
+        label="Název seznamu"
+        placeholder="Název seznamu…"
+        maxLength={100}
+        submitLabel="Vytvořit"
+        loading={createList.isPending}
+        errorMessage={newListError}
+        onSubmit={handleCreateList}
+        onCancel={() => {
+          setShowNewListModal(false)
+          setNewListError(null)
+        }}
+      />
 
       {/* Share dialog */}
       {shareList && (
@@ -244,8 +275,12 @@ export function ShoppingPage() {
         confirmLabel="Smazat"
         danger
         loading={deleteList.isPending}
+        errorMessage={deleteListError}
         onConfirm={confirmDeleteList}
-        onCancel={() => setDeleteListId(null)}
+        onCancel={() => {
+          setDeleteListId(null)
+          setDeleteListError(null)
+        }}
       />
 
       {/* Archive list confirmation */}
@@ -255,8 +290,12 @@ export function ShoppingPage() {
         message="Všechny položky jsou hotové. Chcete seznam uzavřít? Zmizí z přehledu."
         confirmLabel="Uzavřít"
         loading={archiveList.isPending}
+        errorMessage={archiveListError}
         onConfirm={confirmArchiveList}
-        onCancel={() => setArchiveListId(null)}
+        onCancel={() => {
+          setArchiveListId(null)
+          setArchiveListError(null)
+        }}
       />
     </div>
   )

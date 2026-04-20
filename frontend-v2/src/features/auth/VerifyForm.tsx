@@ -3,6 +3,11 @@
  * Překlad: #verify-section z index.html + bindVerifyForm() z main.ts
  */
 import { useEffect, useRef, useState } from 'react'
+import { apiClient } from '@/api/client'
+
+interface VerifyEmailResponse {
+  message?: string
+}
 
 interface VerifyFormProps {
   username: string
@@ -29,22 +34,13 @@ export function VerifyForm({ username, prefillCode = '', onShowLogin }: VerifyFo
     setMessage(null)
 
     try {
-      const res = await fetch('/api/verify-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, code }),
-      })
-      const data = await res.json()
+      const { data } = await apiClient.post<VerifyEmailResponse>('/verify-email', { username, code })
 
-      if (!res.ok) {
-        setMessage({ text: data.message || 'Nesprávný kód.', type: 'error' })
-        return
-      }
-
-      setMessage({ text: 'Ověření úspěšné, můžete se přihlásit.', type: 'success' })
+      setMessage({ text: data.message || 'Ověření úspěšné, můžete se přihlásit.', type: 'success' })
       timerRef.current = setTimeout(onShowLogin, 1500)
-    } catch {
-      setMessage({ text: 'Chyba sítě', type: 'error' })
+    } catch (err: unknown) {
+      const data = (err as { response?: { data?: VerifyEmailResponse } }).response?.data
+      setMessage({ text: data?.message || 'Chyba sítě', type: 'error' })
     } finally {
       setLoading(false)
     }

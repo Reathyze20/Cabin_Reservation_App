@@ -54,9 +54,12 @@ export function useThreadNotes(threadId: string | null) {
   return {
     data,
     isLoading: query.isLoading,
+    isError: query.isError,
+    error: query.error,
     hasMore: query.hasNextPage ?? false,
     isFetchingMore: query.isFetchingNextPage,
     fetchMore: query.fetchNextPage,
+    refetch: query.refetch,
   };
 }
 

@@ -12,6 +12,7 @@ import { useUpdatePhoto, useDeletePhoto } from './hooks/useGallery'
 import { useAuth } from '@/context/AuthContext'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { showToast } from '@/lib/toast'
+import { getNetworkAwareActionMessage } from '@/lib/networkError'
 
 const FOCUSABLE_SELECTOR = 'button:not([disabled]), a[href], input:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
@@ -27,6 +28,8 @@ export function Lightbox({ photos, initialIndex, folderId, onClose }: Props) {
   const [showDescForm, setShowDescForm] = useState(false)
   const [descValue, setDescValue] = useState('')
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [descError, setDescError] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
   const [controlsVisible, setControlsVisible] = useState(true)
   const descInputRef = useRef<HTMLInputElement>(null)
   const hideTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined)
@@ -68,6 +71,8 @@ export function Lightbox({ photos, initialIndex, folderId, onClose }: Props) {
   useEffect(() => {
     setShowDescForm(false)
     setDescValue(photo?.description ?? '')
+    setDescError(null)
+    setDeleteError(null)
   }, [photo?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -110,24 +115,42 @@ export function Lightbox({ photos, initialIndex, folderId, onClose }: Props) {
 
   async function handleSaveDesc() {
     if (!photo) return
+    setDescError(null)
     try {
       await updatePhoto.mutateAsync({ id: photo.id, description: descValue })
       showToast('Vzpomínka uložena.', 'success')
       setShowDescForm(false)
-    } catch { /* onError in hook */ }
+    } catch (error) {
+      setDescError(
+        getNetworkAwareActionMessage(
+          error,
+          'Vzpomínku se nepodařilo uložit. Zkuste to znovu.',
+          'Spojení vypadlo dřív, než se vzpomínka stihla uložit. Zkuste to znovu po obnovení připojení.',
+        ),
+      )
+    }
   }
 
   async function handleConfirmedDelete() {
     if (!photo) return
-    setDeleteConfirmOpen(false)
+    setDeleteError(null)
     try {
       await deletePhoto.mutateAsync(photo.id)
+      setDeleteConfirmOpen(false)
       if (photos.length <= 1) {
         onClose()
       } else if (index >= photos.length - 1) {
         setIndex(i => i - 1)
       }
-    } catch { /* onError in hook */ }
+    } catch (error) {
+      setDeleteError(
+        getNetworkAwareActionMessage(
+          error,
+          'Fotku se nepodařilo smazat. Zkuste to znovu.',
+          'Spojení vypadlo dřív, než se fotka stihla smazat. Zkuste to znovu po obnovení připojení.',
+        ),
+      )
+    }
   }
 
   // Touch swipe
@@ -182,7 +205,7 @@ export function Lightbox({ photos, initialIndex, folderId, onClose }: Props) {
                 {isOwnerOrAdmin && (
                   <button
                     className="lb-action-btn lb-action-btn--danger"
-                    onClick={e => { e.stopPropagation(); setDeleteConfirmOpen(true) }}
+                    onClick={e => { e.stopPropagation(); setDeleteError(null); setDeleteConfirmOpen(true) }}
                     disabled={deletePhoto.isPending}
                     title="Smazat"
                   >
@@ -259,7 +282,10 @@ export function Lightbox({ photos, initialIndex, folderId, onClose }: Props) {
                 className="lb-desc-input"
                 placeholder="Vaše vzpomínka…"
                 value={descValue}
-                onChange={e => setDescValue(e.target.value)}
+                onChange={e => {
+                  if (descError) setDescError(null)
+                  setDescValue(e.target.value)
+                }}
                 onKeyDown={e => { if (e.key === 'Enter') handleSaveDesc(); if (e.key === 'Escape') setShowDescForm(false) }}
                 maxLength={500}
               />
@@ -268,9 +294,30 @@ export function Lightbox({ photos, initialIndex, folderId, onClose }: Props) {
               </button>
             </div>
           ) : photo.description ? (
+            <>
+              {descError ? (
+                <div className="error-message show" role="alert">{descError}</div>
+              ) : null}
+              <motion.span
+                className="lb-description"
+                onClick={() => {
+                  setDescError(null)
+                  setShowDescForm(true)
+                }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+              >
+                {photo.description}
+              </motion.span>
+            </>
+          ) : photo.description ? (
             <motion.span
               className="lb-description"
-              onClick={() => setShowDescForm(true)}
+              onClick={() => {
+                setDescError(null)
+                setShowDescForm(true)
+              }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
@@ -278,11 +325,19 @@ export function Lightbox({ photos, initialIndex, folderId, onClose }: Props) {
               {photo.description}
             </motion.span>
           ) : (
-            <button className="lb-add-desc-btn" onClick={() => setShowDescForm(true)}>
-              <MessageSquarePlus size={14} />
-              Přidat vzpomínku
-            </button>
+            <>
+              {descError ? (
+                <div className="error-message show" role="alert">{descError}</div>
+              ) : null}
+              <button className="lb-add-desc-btn" onClick={() => { setDescError(null); setShowDescForm(true) }}>
+                <MessageSquarePlus size={14} />
+                Přidat vzpomínku
+              </button>
+            </>
           )}
+          {showDescForm && descError ? (
+            <div className="error-message show" role="alert">{descError}</div>
+          ) : null}
         </div>
       </div>
 
@@ -293,8 +348,12 @@ export function Lightbox({ photos, initialIndex, folderId, onClose }: Props) {
         confirmLabel="Smazat"
         danger
         loading={deletePhoto.isPending}
+        errorMessage={deleteError}
         onConfirm={handleConfirmedDelete}
-        onCancel={() => setDeleteConfirmOpen(false)}
+        onCancel={() => {
+          setDeleteConfirmOpen(false)
+          setDeleteError(null)
+        }}
       />
     </>,
     document.body
