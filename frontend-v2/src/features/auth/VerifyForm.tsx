@@ -50,7 +50,7 @@ export function VerifyForm({ username, prefillCode = '', onShowLogin }: VerifyFo
     <div id="verify-section" className="login-container card">
       <div className="auth-brand">
         <img src="/logo-icon.svg" alt="Logo" className="auth-logo-icon" />
-        <h1 className="auth-brand-text">kdynachatu.cz</h1>
+        <h1 className="auth-brand-text">Chatačeskéstředohoří</h1>
       </div>
       <h2 className="auth-subtitle" style={{ fontSize: '1.1rem', fontWeight: 600 }}>
         Ověření e-mailu

@@ -18,8 +18,8 @@ export function MobileHeader({ animalIcon, username, onOpenProfileDrawer }: Mobi
   return (
     <header className="mobile-header" id="mobile-header">
       <Link to="/dashboard" className="mobile-header-logo brand-logo-lockup">
-        <img src="/logo-icon.svg" alt="kdynachatu.cz" className="mobile-header-logo-img" />
-        <span className="mobile-header-logo-text">kdynachatu.cz</span>
+        <img src="/logo-icon.svg" alt="Chatačeskéstředohoří" className="mobile-header-logo-img" />
+        <span className="mobile-header-logo-text">Chatačeskéstředohoří</span>
       </Link>
       <button
         className="mobile-menu-trigger"

@@ -55,7 +55,7 @@ export function TopBar({ onOpenProfileDrawer }: TopBarProps) {
     <div className="top-bar">
       <div className="nav-left-group">
         <Link to={user?.isSuperAdmin && !user?.cabinId ? '/superadmin' : '/dashboard'} className="brand-logo-lockup">
-          <img src="/logo-icon.svg" alt="kdynachatu.cz" className="nav-logo-icon" />
+          <img src="/logo-icon.svg" alt="Chatačeskéstředohoří" className="nav-logo-icon" />
         </Link>
 
         <nav id="app-nav" className="app-nav">

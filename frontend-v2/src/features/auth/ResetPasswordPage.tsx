@@ -110,7 +110,7 @@ export function ResetPasswordPage() {
         <div style={{ marginBottom: '1.5rem' }}>
           <img src="/logo-icon.svg" alt="Logo" style={{ width: 48, height: 48 }} />
           <h1 style={{ fontSize: '1.25rem', fontWeight: 700, marginTop: '0.5rem' }}>
-            kdynachatu.cz
+            Chatačeskéstředohoří
           </h1>
         </div>
 

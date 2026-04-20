@@ -146,7 +146,7 @@ const helpDictionary: Record<string, ReactNode> = {
   default: (
     <>
       <h3>Nápověda</h3>
-      <p>Vítejte v aplikaci <strong>kdynachatu.cz</strong> — rodinné aplikaci pro správu chaty.</p>
+      <p>Vítejte v aplikaci <strong>Chatačeskéstředohoří</strong> — rodinné aplikaci pro správu chaty.</p>
       <ul>
         <li><strong>Přehled</strong> — souhrn dění na chatě</li>
         <li><strong>Rezervace</strong> — správa pobytů</li>

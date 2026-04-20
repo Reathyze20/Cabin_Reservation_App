@@ -140,7 +140,7 @@ function buildInviteShareText(invite: Invite): string {
       ? 'Pozvánka je na jedno použití.'
       : `Pozvánku lze použít ${invite.maxUses}×.`
 
-  return `Ahoj, zvu tě do chaty „${invite.cabinName}“ v aplikaci KdyNaChatu. Připoj se přes tento odkaz: ${buildInviteUrl(invite.token)} Role po přijetí: ${roleLabel}. Platnost do ${formatDateLabel(invite.expiresAt)}. ${usageHint}`
+  return `Ahoj, zvu tě do chaty „${invite.cabinName}“ v aplikaci Chatačeskéstředohoří. Připoj se přes tento odkaz: ${buildInviteUrl(invite.token)} Role po přijetí: ${roleLabel}. Platnost do ${formatDateLabel(invite.expiresAt)}. ${usageHint}`
 }
 
 function isAdminWorkspace(value: string | null): value is AdminWorkspace {

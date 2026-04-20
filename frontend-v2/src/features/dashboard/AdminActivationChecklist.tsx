@@ -8,6 +8,7 @@ interface Props {
 
 interface ActivationStep {
   id: "invite" | "reservation" | "shopping";
+  label: string;
   title: string;
   description: string;
   detail: string;
@@ -24,6 +25,7 @@ export function AdminActivationChecklist({ data }: Props) {
   const steps: ActivationStep[] = [
     {
       id: "invite",
+      label: "Pozvánky",
       title: "Pozvěte prvního člena rodiny",
       description: "Pošlete první pozvánku, ať v aplikaci nejste sami a může začít společné plánování.",
       detail: additionalMembersCount > 0
@@ -38,6 +40,7 @@ export function AdminActivationChecklist({ data }: Props) {
     },
     {
       id: "reservation",
+      label: "Rezervace",
       title: "Vytvořte první rezervaci",
       description: "Naplánujte první termín, aby bylo hned jasné, kdy se chata poprvé používá.",
       detail: data.reservationsCount > 0
@@ -50,6 +53,7 @@ export function AdminActivationChecklist({ data }: Props) {
     },
     {
       id: "shopping",
+      label: "Nákupy",
       title: "Založte první nákupní seznam",
       description: "Připravte první sdílený seznam, ať rodina nemusí řešit zásoby po telefonu.",
       detail: data.shoppingListsCount > 0
@@ -62,57 +66,66 @@ export function AdminActivationChecklist({ data }: Props) {
     },
   ];
 
+  const pendingSteps = steps.filter((step) => !step.done);
+  const nextStep = pendingSteps[0] ?? null;
+  const title = pendingSteps.length === 0
+    ? "První rodinné spuštění je hotové."
+    : pendingSteps.length === 1
+      ? "Zbývá už jen poslední krok pro běžný provoz."
+      : `Pro běžný provoz ještě zbývá dokončit ${pendingSteps.length} kroky.`;
+  const lead = pendingSteps.length === 0
+    ? "Všechno důležité je nastavené a dashboard může zůstat čistě přehledový."
+    : `Na později nic nehoří, ale doporučujeme ještě dokončit: ${pendingSteps.map((step) => step.title).join(", ")}.`;
+
   return (
-    <div className="glass-card dashboard-activation-card" id="dashboard-activation-checklist">
-      <div className="card-body-full dashboard-activation-content">
-        <div className="dashboard-activation-head">
-          <div className="dashboard-activation-copy">
-            <span className="dashboard-card-header-title">První kroky pro správce</span>
-            <h2 className="dashboard-activation-title">Připravte aplikaci pro první společné používání.</h2>
-            <p className="dashboard-activation-lead">
-              Jakmile dokončíte tyto tři kroky, nová chata bude připravená pro běžný rodinný provoz.
-            </p>
-          </div>
+    <div className="glass-card dashboard-activation-inline-card" id="dashboard-activation-checklist">
+      <div className="card-body-full dashboard-activation-inline-content">
+        <div className="dashboard-activation-inline-main">
+          <div className="dashboard-activation-inline-copy">
+            <div className="dashboard-activation-inline-head">
+              <div className="dashboard-activation-inline-text">
+                <span className="dashboard-card-header-title">Poznámka pro správce</span>
+                <h2 className="dashboard-activation-inline-title">{title}</h2>
+              </div>
 
-          <div className="dashboard-activation-progress" aria-label={`Hotovo ${data.completedCount} z ${data.totalCount} kroků`}>
-            <strong>{data.completedCount}/{data.totalCount}</strong>
-            <span>hotovo</span>
-          </div>
-        </div>
+              <div className="dashboard-activation-progress" aria-label={`Hotovo ${data.completedCount} z ${data.totalCount} kroků`}>
+                <strong>{data.completedCount}/{data.totalCount}</strong>
+                <span>hotovo</span>
+              </div>
+            </div>
 
-        <div className="dashboard-activation-steps">
-          {steps.map((step) => {
-            const Icon = step.icon;
+            <p className="dashboard-activation-inline-lead">{lead}</p>
 
-            return (
-              <section key={step.id} className={`dashboard-activation-step ${step.done ? "is-done" : ""}`}>
-                <div className="dashboard-activation-step-marker" aria-hidden="true">
-                  {step.done ? <CheckCircle2 size={20} /> : <Icon size={20} />}
-                </div>
+            <div className="dashboard-activation-inline-tags">
+              {steps.map((step) => {
+                const Icon = step.icon;
 
-                <div className="dashboard-activation-step-copy">
-                  <div className="dashboard-activation-step-top">
-                    <h3>{step.title}</h3>
-                    <span className={`dashboard-activation-step-status ${step.done ? "is-done" : "is-pending"}`}>
-                      {step.done ? "Hotovo" : "Čeká"}
+                return (
+                  <span
+                    key={step.id}
+                    className={`dashboard-activation-inline-tag ${step.done ? "is-done" : "is-pending"}`}
+                    title={step.done ? step.detail : `${step.description} ${step.detail}`}
+                  >
+                    <span className="dashboard-activation-inline-tag-icon" aria-hidden="true">
+                      {step.done ? <CheckCircle2 size={14} /> : <Icon size={14} />}
                     </span>
-                  </div>
+                    <span>{step.label}</span>
+                  </span>
+                );
+              })}
+            </div>
+          </div>
 
-                  <p className="dashboard-activation-step-description">{step.description}</p>
-                  <p className="dashboard-activation-step-meta">{step.detail}</p>
-                </div>
-
-                <button
-                  type="button"
-                  className={`btn ${step.done ? "btn-secondary" : "btn-primary"}`}
-                  onClick={() => navigate(step.href)}
-                >
-                  <span>{step.ctaLabel}</span>
-                  <ArrowRight size={16} />
-                </button>
-              </section>
-            );
-          })}
+          {nextStep ? (
+            <button
+              type="button"
+              className="btn btn-secondary dashboard-activation-inline-action"
+              onClick={() => navigate(nextStep.href)}
+            >
+              <span>{nextStep.ctaLabel}</span>
+              <ArrowRight size={16} />
+            </button>
+          ) : null}
         </div>
       </div>
     </div>

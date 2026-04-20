@@ -26,6 +26,9 @@ const createTransporter = () => {
 };
 
 const transporter = createTransporter();
+const EMAIL_APP_NAME = "Chatačeskéstředohoří";
+const EMAIL_APP_FOOTER = `${EMAIL_APP_NAME} — Rodinná aplikace pro správu chaty`;
+const DEFAULT_EMAIL_FROM = `"${EMAIL_APP_NAME}" <noreply@chataceskestredohori.cz>`;
 
 function ensureEmailTransport(emailKind: string): void {
   if (transporter) {
@@ -60,7 +63,7 @@ export const sendVerificationEmailWithPIN = async (email: string, code: string):
     <div style="max-width: 500px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);">
       
       <div style="text-align: center; padding: 32px 32px 16px 32px;">
-        <h1 style="margin: 0; color: #111827; font-size: 24px; font-weight: 600;">KdyNaChatu.cz</h1>
+        <h1 style="margin: 0; color: #111827; font-size: 24px; font-weight: 600;">${EMAIL_APP_NAME}</h1>
       </div>
 
       <div style="padding: 0 32px 32px 32px;">
@@ -88,7 +91,7 @@ export const sendVerificationEmailWithPIN = async (email: string, code: string):
     </div>
 
     <div style="text-align: center; font-size: 12px; color: #9ca3af; margin-top: 16px; padding: 0 20px;">
-      <p style="margin: 0;">KdyNaChatu.cz — Správa rekreačních objektů pro rodiny a party</p>
+      <p style="margin: 0;">${EMAIL_APP_FOOTER}</p>
     </div>
   </div>
 </body>
@@ -99,7 +102,7 @@ export const sendVerificationEmailWithPIN = async (email: string, code: string):
     const info = await transporter.sendMail({
       from: EMAIL_FROM,
       to: email,
-      subject: "Ověření e-mailu — KdyNaChatu.cz",
+      subject: `Ověření e-mailu — ${EMAIL_APP_NAME}`,
       text: textContent,
       html: htmlContent,
     });
@@ -138,7 +141,7 @@ export const sendVerificationEmailWithToken = async (email: string, token: strin
     <div style="max-width: 500px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);">
       
       <div style="text-align: center; padding: 32px 32px 16px 32px;">
-        <h1 style="margin: 0; color: #111827; font-size: 24px; font-weight: 600;">KdyNaChatu.cz</h1>
+        <h1 style="margin: 0; color: #111827; font-size: 24px; font-weight: 600;">${EMAIL_APP_NAME}</h1>
       </div>
 
       <div style="padding: 0 32px 32px 32px;">
@@ -146,7 +149,7 @@ export const sendVerificationEmailWithToken = async (email: string, token: strin
           Dobrý den,
         </p>
         <p style="color: #374151; font-size: 16px; line-height: 1.5; margin: 0 0 24px 0;">
-          Děkujeme za registraci do aplikace <strong style="color: #111827;">KdyNaChatu.cz</strong>. 
+          Děkujeme za registraci do aplikace <strong style="color: #111827;">${EMAIL_APP_NAME}</strong>. 
           Pro aktivaci účtu prosím klikněte na tlačítko níže:
         </p>
 
@@ -171,18 +174,18 @@ export const sendVerificationEmailWithToken = async (email: string, token: strin
     </div>
 
     <div style="text-align: center; font-size: 12px; color: #9ca3af; margin-top: 16px; padding: 0 20px;">
-      <p style="margin: 0;">KdyNaChatu.cz — Správa rekreačních objektů pro rodiny a party</p>
+      <p style="margin: 0;">${EMAIL_APP_FOOTER}</p>
     </div>
   </div>
 </body>
 </html>`;
 
-    const textContent = `Dobrý den,\n\nPro aktivaci účtu v aplikaci KdyNaChatu.cz klikněte na tento odkaz:\n${verifyUrl}\n\nPokud jste o registraci nežádali, tento e-mail ignorujte.`;
+    const textContent = `Dobrý den,\n\nPro aktivaci účtu v aplikaci ${EMAIL_APP_NAME} klikněte na tento odkaz:\n${verifyUrl}\n\nPokud jste o registraci nežádali, tento e-mail ignorujte.`;
 
     const info = await transporter.sendMail({
       from: EMAIL_FROM,
       to: email,
-      subject: "Aktivace účtu — KdyNaChatu.cz",
+      subject: `Aktivace účtu — ${EMAIL_APP_NAME}`,
       text: textContent,
       html: htmlContent,
     });
@@ -217,7 +220,7 @@ export const sendPasswordResetEmail = async (email: string, token: string): Prom
   <div style="background-color: #f3f4f6; padding: 40px 20px;">
     <div style="max-width: 500px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);">
       <div style="text-align: center; padding: 32px 32px 16px 32px;">
-        <h1 style="margin: 0; color: #111827; font-size: 24px; font-weight: 600;">KdyNaChatu.cz</h1>
+        <h1 style="margin: 0; color: #111827; font-size: 24px; font-weight: 600;">${EMAIL_APP_NAME}</h1>
       </div>
 
       <div style="padding: 0 32px 32px 32px;">
@@ -225,7 +228,7 @@ export const sendPasswordResetEmail = async (email: string, token: string): Prom
           Dobrý den,
         </p>
         <p style="color: #374151; font-size: 16px; line-height: 1.5; margin: 0 0 24px 0;">
-          Obdrželi jsme žádost o nastavení nového hesla k vašemu účtu v aplikaci <strong style="color: #111827;">KdyNaChatu.cz</strong>.
+          Obdrželi jsme žádost o nastavení nového hesla k vašemu účtu v aplikaci <strong style="color: #111827;">${EMAIL_APP_NAME}</strong>.
         </p>
 
         <div style="text-align: center; margin: 24px 0;">
@@ -249,18 +252,18 @@ export const sendPasswordResetEmail = async (email: string, token: string): Prom
     </div>
 
     <div style="text-align: center; font-size: 12px; color: #9ca3af; margin-top: 16px; padding: 0 20px;">
-      <p style="margin: 0;">KdyNaChatu.cz — Správa rekreačních objektů pro rodiny a party</p>
+      <p style="margin: 0;">${EMAIL_APP_FOOTER}</p>
     </div>
   </div>
 </body>
 </html>`;
 
-    const textContent = `Dobrý den,\n\nObdrželi jsme žádost o nastavení nového hesla k vašemu účtu v aplikaci KdyNaChatu.cz. Pokračujte zde:\n${resetUrl}\n\nOdkaz je platný 2 hodiny a lze jej použít pouze jednou. Pokud jste o změnu hesla nežádali, tento e-mail ignorujte.`;
+    const textContent = `Dobrý den,\n\nObdrželi jsme žádost o nastavení nového hesla k vašemu účtu v aplikaci ${EMAIL_APP_NAME}. Pokračujte zde:\n${resetUrl}\n\nOdkaz je platný 2 hodiny a lze jej použít pouze jednou. Pokud jste o změnu hesla nežádali, tento e-mail ignorujte.`;
 
     const info = await transporter.sendMail({
       from: EMAIL_FROM,
       to: email,
-      subject: "Obnova hesla — KdyNaChatu.cz",
+      subject: `Obnova hesla — ${EMAIL_APP_NAME}`,
       text: textContent,
       html: htmlContent,
     });
@@ -339,7 +342,7 @@ export const sendFrostAlertEmail = async (
   </div>
 
   <div style="text-align: center; font-size: 12px; color: #9ca3af; margin-top: 16px; padding: 0 20px;">
-    <p style="margin: 0;">KdyNaChatu.cz — Správa rekreačních objektů pro rodiny a party</p>
+    <p style="margin: 0;">${EMAIL_APP_FOOTER}</p>
   </div>
 </body>
 </html>`;
@@ -350,7 +353,7 @@ export const sendFrostAlertEmail = async (
     `Nejnižší teplota: ${lowestTemp} °C\n` +
     `Dny s mrazem: ${frostDatesFormatted}\n\n` +
     `Pokud nemáte vypuštěnou vodu, zvažte opatření proti prasknutí trubek.\n\n` +
-    `— KdyNaChatu.cz`;
+    `— ${EMAIL_APP_NAME}`;
 
   try {
     const info = await transporter.sendMail({
@@ -385,7 +388,7 @@ export const sendEmail = async (opts: { to: string; subject: string; html: strin
 
   try {
     await transporter.sendMail({
-      from: EMAIL_FROM || "noreply@kdynachatu.cz",
+      from: EMAIL_FROM || DEFAULT_EMAIL_FROM,
       to: opts.to,
       subject: opts.subject,
       html: opts.html,

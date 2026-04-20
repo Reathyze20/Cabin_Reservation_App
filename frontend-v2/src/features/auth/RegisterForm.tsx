@@ -180,7 +180,7 @@ export function RegisterForm({ onShowLogin, onShowVerify }: RegisterFormProps) {
     <div id="register-section" className="login-container card">
       <div className="auth-brand">
         <img src="/logo-icon.svg" alt="Logo" className="auth-logo-icon" />
-        <h1 className="auth-brand-text">kdynachatu.cz</h1>
+        <h1 className="auth-brand-text">Chatačeskéstředohoří</h1>
       </div>
       <p className="auth-subtitle">Vytvořte prostor pro vaši chatu</p>
 

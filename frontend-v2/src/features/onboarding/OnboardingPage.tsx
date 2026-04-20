@@ -128,7 +128,7 @@ export default function OnboardingPage() {
       <div className="onboarding-card card">
         <div className="auth-brand">
           <img src="/logo-icon.svg" alt="Logo" className="auth-logo-icon" />
-          <h1 className="auth-brand-text">kdynachatu.cz</h1>
+          <h1 className="auth-brand-text">Chatačeskéstředohoří</h1>
         </div>
         <h2 className="onboarding-title">Vytvořte svůj prostor</h2>
         <p className="auth-subtitle">

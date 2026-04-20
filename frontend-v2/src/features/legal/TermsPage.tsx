@@ -17,7 +17,7 @@ export function TermsPage() {
         <section>
           <h2>1. Úvodní ustanovení</h2>
           <p>
-            Tyto obchodní podmínky upravují vztah mezi provozovatelem služby <strong>kdynachatu.cz</strong>
+            Tyto obchodní podmínky upravují vztah mezi provozovatelem služby <strong>Chatačeskéstředohoří</strong>
             (dále jen „Provozovatel") a uživatelem služby (dále jen „Uživatel").
           </p>
           <p>
@@ -28,7 +28,7 @@ export function TermsPage() {
         <section>
           <h2>2. Popis služby</h2>
           <p>
-            kdynachatu.cz je webová aplikace pro správu sdílených rekreačních objektů (chat, chalup).
+            Chatačeskéstředohoří je webová aplikace pro správu sdílených rekreačních objektů (chat, chalup).
             Služba umožňuje správu rezervací, nákupních seznamů, galerie, deníku pobytů,
             chatu mezi členy a plánování rekonstrukcí.
           </p>
@@ -88,7 +88,7 @@ export function TermsPage() {
           <h2>8. Cenové podmínky</h2>
           <p>
             Služba nabízí bezplatný i placené tarify. Aktuální ceník je uveden na stránce
-            <Link to="/"> kdynachatu.cz</Link>. Provozovatel si vyhrazuje právo změnit cenové podmínky
+            <Link to="/"> Chatačeskéstředohoří</Link>. Provozovatel si vyhrazuje právo změnit cenové podmínky
             s předchozím upozorněním stávajících uživatelů.
           </p>
         </section>
@@ -122,7 +122,7 @@ export function TermsPage() {
         <section>
           <h2>12. Kontakt</h2>
           <p>
-            V případě dotazů kontaktujte: <a href="mailto:info@kdynachatu.cz">info@kdynachatu.cz</a>.
+            V případě dotazů kontaktujte: <a href="mailto:noreply@chataceskestredohori.cz">noreply@chataceskestredohori.cz</a>.
           </p>
         </section>
 

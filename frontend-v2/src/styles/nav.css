@@ -343,11 +343,13 @@
 }
 
 .mobile-header-logo-text {
-  font-size: 1rem;
+  display: block;
+  max-width: 190px;
+  font-size: 0.85rem;
   font-weight: 700;
   color: var(--color-text, #111827);
   letter-spacing: -0.02em;
-  line-height: 1;
+  line-height: 1.05;
 }
 
 .mobile-menu-trigger {

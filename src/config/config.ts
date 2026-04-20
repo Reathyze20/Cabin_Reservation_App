@@ -38,7 +38,7 @@ export const SMTP_HOST = process.env.SMTP_HOST || "";
 export const SMTP_PORT = parseInt(process.env.SMTP_PORT || "587", 10);
 export const SMTP_USER = process.env.SMTP_USER || "";
 export const SMTP_PASS = process.env.SMTP_PASS || "";
-export const EMAIL_FROM = process.env.EMAIL_FROM || '"KdyNaChatu" <noreply@chataceskestredohori.cz>';
+export const EMAIL_FROM = process.env.EMAIL_FROM || '"Chatačeskéstředohoří" <noreply@chataceskestredohori.cz>';
 
 // Frontend URL (for verification links in emails)
 export const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";

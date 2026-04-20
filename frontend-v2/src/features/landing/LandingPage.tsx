@@ -99,8 +99,8 @@ export function LandingPage() {
       {/* ========== GLASS NAVIGATION ========== */}
       <nav className={`landing-nav${scrolled ? ' scrolled' : ''}`} id="landing-nav">
         <a href="/" className="landing-nav-logo" onClick={e => { e.preventDefault() }}>
-          <img src="/logo-icon.svg" alt="kdynachatu.cz" className="landing-nav-logo-img" />
-          <span className="landing-nav-logo-text">kdynachatu.cz</span>
+          <img src="/logo-icon.svg" alt="Chatačeskéstředohoří" className="landing-nav-logo-img" />
+          <span className="landing-nav-logo-text">Chatačeskéstředohoří</span>
         </a>
 
         <div className="landing-nav-links">
@@ -185,10 +185,10 @@ export function LandingPage() {
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                   <path d="M7 11V7a5 5 0 0 1 10 0v4" />
                 </svg>
-                kdynachatu.cz/dashboard
+                chataceskestredohori.cz/dashboard
               </span>
             </div>
-            <img src="/dashboard-mockup.jpg" alt="Náhled aplikace kdynachatu.cz — dashboard s rezervacemi, počasím a nákupy" className="mockup-image" loading="eager" />
+            <img src="/dashboard-mockup.jpg" alt="Náhled aplikace Chatačeskéstředohoří — dashboard s rezervacemi, počasím a nákupy" className="mockup-image" loading="eager" />
           </div>
         </div>
 
@@ -320,7 +320,7 @@ export function LandingPage() {
                 <p>
                   V rodině jsme ale neustále řešili, kdo na chatě je, jestli došel plyn nebo
                   kdo zrovna nakoupí. Tyhle zmatky měnily odpočinek ve stres. Proto jsem
-                  vytvořil <strong>kdynachatu.cz</strong>. Abychom se zbavili dohadování
+                  vytvořil <strong>Chatačeskéstředohoří</strong>. Abychom se zbavili dohadování
                   a vrátili se k tomu hlavnímu — radosti z přírody.
                 </p>
                 <p>Věřím, že to pomůže i vám.</p>
@@ -424,8 +424,8 @@ export function LandingPage() {
         <div className="footer-inner">
           <div className="footer-col footer-brand">
             <div className="footer-logo">
-              <img src="/logo-icon.svg" alt="kdynachatu.cz" width="28" height="28" />
-              <span>kdynachatu.cz</span>
+              <img src="/logo-icon.svg" alt="Chatačeskéstředohoří" width="28" height="28" />
+              <span>Chatačeskéstředohoří</span>
             </div>
             <p>Rodinná aplikace pro správu chaty a chalupy. Konečně pořádek bez hádek.</p>
           </div>
@@ -443,7 +443,7 @@ export function LandingPage() {
           </div>
         </div>
         <div className="footer-bottom">
-          <span>&copy; 2026 kdynachatu.cz — Všechna práva vyhrazena.</span>
+          <span>&copy; 2026 Chatačeskéstředohoří — Všechna práva vyhrazena.</span>
         </div>
       </footer>
     </>

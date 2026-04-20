@@ -48,7 +48,7 @@ export function ForgotPasswordForm({ onShowLogin }: ForgotPasswordFormProps) {
     <div id="forgot-password-section" className="login-container card">
       <div className="auth-brand">
         <img src="/logo-icon.svg" alt="Logo" className="auth-logo-icon" />
-        <h1 className="auth-brand-text">kdynachatu.cz</h1>
+        <h1 className="auth-brand-text">Chatačeskéstředohoří</h1>
       </div>
       <p className="auth-subtitle">Obnova hesla</p>
 

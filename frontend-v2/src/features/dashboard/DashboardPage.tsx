@@ -139,28 +139,28 @@ export function ReconstructionSkeleton() {
 
 export function ActivationChecklistSkeleton() {
   return (
-    <div className="glass-card dashboard-activation-card">
-      <div className="card-body-full dashboard-activation-content">
-        <div className="dashboard-activation-head">
-          <div style={{ display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
-            <div className="skeleton skeleton-text" style={{ width: 140, height: 14 }} />
-            <div className="skeleton skeleton-text" style={{ width: "48%", height: 22 }} />
-            <div className="skeleton skeleton-text long" style={{ height: 13 }} />
-          </div>
-          <div className="skeleton" style={{ width: 84, height: 64, borderRadius: 16, flexShrink: 0 }} />
-        </div>
-
-        {[0, 1, 2].map((index) => (
-          <div key={index} className="dashboard-activation-step">
-            <div className="skeleton" style={{ width: 40, height: 40, borderRadius: 12, flexShrink: 0 }} />
-            <div style={{ display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
-              <div className="skeleton skeleton-text" style={{ width: 160, height: 14 }} />
-              <div className="skeleton skeleton-text long" style={{ height: 12 }} />
-              <div className="skeleton skeleton-text" style={{ width: 120, height: 12 }} />
+    <div className="glass-card dashboard-activation-inline-card">
+      <div className="card-body-full dashboard-activation-inline-content">
+        <div className="dashboard-activation-inline-main">
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
+                <div className="skeleton skeleton-text" style={{ width: 120, height: 14 }} />
+                <div className="skeleton skeleton-text" style={{ width: "56%", height: 18 }} />
+              </div>
+              <div className="skeleton" style={{ width: 76, height: 56, borderRadius: 14, flexShrink: 0 }} />
             </div>
-            <div className="skeleton skeleton-btn" style={{ width: 132 }} />
+            <div className="skeleton skeleton-text long" style={{ height: 13 }} />
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {[0, 1, 2].map((index) => (
+                <div key={index} className="skeleton" style={{ width: 108, height: 30, borderRadius: 999 }} />
+              ))}
+            </div>
           </div>
-        ))}
+          <div style={{ display: "flex", alignItems: "center", flexShrink: 0 }}>
+            <div className="skeleton skeleton-btn" style={{ width: 154 }} />
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -308,22 +308,6 @@ export function DashboardPage() {
         />
       )}
 
-      {isAdmin && (activationQuery.isLoading ? (
-        <motion.div variants={cardVariants}>
-          <ActivationChecklistSkeleton />
-        </motion.div>
-      ) : activationQuery.isError ? (
-        <motion.div variants={cardVariants}>
-          <ErrorBoundary FallbackComponent={(props) => <FeatureErrorFallback {...props} title="Checklist správce se nepodařilo načíst" />}>
-            <FeatureErrorFallback error={activationQuery.error as Error} resetErrorBoundary={() => activationQuery.refetch()} />
-          </ErrorBoundary>
-        </motion.div>
-      ) : activationQuery.data?.shouldShow ? (
-        <motion.div variants={cardVariants}>
-          <AdminActivationChecklist data={activationQuery.data} />
-        </motion.div>
-      ) : null)}
-
       {/* Main grid */}
       <motion.div
         className="dashboard-grid"
@@ -337,7 +321,7 @@ export function DashboardPage() {
             <StatusCardSkeleton />
           ) : reservationsQuery.isError ? (
             <ErrorBoundary FallbackComponent={(props) => <FeatureErrorFallback {...props} title="Rezervace se nepodařilo načíst" />}>
-              <FeatureErrorFallback error={reservationsQuery.error as Error} resetErrorBoundary={() => reservationsQuery.refetch()} />
+              <FeatureErrorFallback title="Rezervace se nepodařilo načíst" error={reservationsQuery.error as Error} resetErrorBoundary={() => reservationsQuery.refetch()} />
             </ErrorBoundary>
           ) : reservationsQuery.data ? (
             <ActiveReservation data={reservationsQuery.data} cabinDepartureChecklist={departureChecklist} />
@@ -350,7 +334,7 @@ export function DashboardPage() {
             <WeatherSkeleton />
           ) : weatherQuery.isError ? (
             <ErrorBoundary FallbackComponent={(props) => <FeatureErrorFallback {...props} title="Počasí se nepodařilo načíst" />}>
-              <FeatureErrorFallback error={weatherQuery.error as Error} resetErrorBoundary={() => weatherQuery.refetch()} />
+              <FeatureErrorFallback title="Počasí se nepodařilo načíst" error={weatherQuery.error as Error} resetErrorBoundary={() => weatherQuery.refetch()} />
             </ErrorBoundary>
           ) : (
             <WeatherCard weather={weatherQuery.data ?? null} />
@@ -363,7 +347,7 @@ export function DashboardPage() {
             <ShoppingSkeleton />
           ) : shoppingQuery.isError ? (
             <ErrorBoundary FallbackComponent={(props) => <FeatureErrorFallback {...props} title="Nákupy se nepodařilo načíst" />}>
-              <FeatureErrorFallback error={shoppingQuery.error as Error} resetErrorBoundary={() => shoppingQuery.refetch()} />
+              <FeatureErrorFallback title="Nákupy se nepodařilo načíst" error={shoppingQuery.error as Error} resetErrorBoundary={() => shoppingQuery.refetch()} />
             </ErrorBoundary>
           ) : shoppingQuery.data ? (
             <ShoppingWidget
@@ -380,7 +364,7 @@ export function DashboardPage() {
             <HandoverNoteSkeleton />
           ) : notesQuery.isError ? (
             <ErrorBoundary FallbackComponent={(props) => <FeatureErrorFallback {...props} title="Nástěnku se nepodařilo načíst" />}>
-              <FeatureErrorFallback error={notesQuery.error as Error} resetErrorBoundary={() => notesQuery.refetch()} />
+              <FeatureErrorFallback title="Nástěnku se nepodařilo načíst" error={notesQuery.error as Error} resetErrorBoundary={() => notesQuery.refetch()} />
             </ErrorBoundary>
           ) : notesQuery.data ? (
             <HandoverNote
@@ -402,13 +386,25 @@ export function DashboardPage() {
             <ReconstructionSkeleton />
           ) : reconstructionQuery.isError ? (
             <ErrorBoundary FallbackComponent={(props) => <FeatureErrorFallback {...props} title="Údržbu se nepodařilo načíst" />}>
-              <FeatureErrorFallback error={reconstructionQuery.error as Error} resetErrorBoundary={() => reconstructionQuery.refetch()} />
+              <FeatureErrorFallback title="Údržbu se nepodařilo načíst" error={reconstructionQuery.error as Error} resetErrorBoundary={() => reconstructionQuery.refetch()} />
             </ErrorBoundary>
           ) : reconstructionQuery.data ? (
             <ReconstructionWidget data={reconstructionQuery.data} />
           ) : null}
         </motion.div>
       </motion.div>
+
+      {isAdmin && (activationQuery.isLoading ? (
+        <motion.div variants={cardVariants}>
+          <ActivationChecklistSkeleton />
+        </motion.div>
+      ) : activationQuery.isSuccess && activationQuery.data?.shouldShow ? (
+        <motion.div variants={cardVariants}>
+          <ErrorBoundary fallbackRender={() => null}>
+            <AdminActivationChecklist data={activationQuery.data} />
+          </ErrorBoundary>
+        </motion.div>
+      ) : null)}
     </div>
   );
 }
