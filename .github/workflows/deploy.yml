@@ -145,6 +145,9 @@ jobs:
           fi
 
           echo "=== Installing dependencies ==="
+          # Clean up old moved node_modules backups from previous deploys.
+          # These can silently fill the VPS disk over time.
+          rm -rf node_modules.old.* 2>/dev/null || true
           # Move old node_modules aside instead of deleting.
           # Previous manual/root installs can leave files we cannot remove.
           if [ -d "node_modules" ]; then
@@ -235,6 +238,7 @@ jobs:
           rm -rf dist.old.* 2>/dev/null || true
 
           echo "=== Installing frontend dependencies ==="
+          rm -rf frontend-v2/node_modules.old.* 2>/dev/null || true
           if [ -d "frontend-v2/node_modules" ]; then
             echo "Moving old frontend-v2/node_modules directory..."
             mv frontend-v2/node_modules frontend-v2/node_modules.old.$(date +%s)
