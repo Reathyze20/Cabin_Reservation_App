@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import fsSync from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
@@ -25,6 +26,11 @@ interface BackupMetadata {
   sourcePath?: string;
 }
 
+interface CommandSpec {
+  command: string;
+  args: string[];
+}
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const projectRoot = path.resolve(__dirname, "../..");
 
@@ -39,7 +45,13 @@ Environment variables:
   DATABASE_URL             required for db backup/restore
   UPLOADS_PATH             optional, defaults to data/uploads
   BACKUP_ROOT              optional, defaults to data/backups
-  BACKUP_RETENTION_DAYS    optional, defaults to 14`);
+  BACKUP_RETENTION_DAYS    optional, defaults to 14
+  PG_DUMP_COMMAND          optional, command override for pg_dump
+                           use a JSON array for wrapper commands, for example:
+                           ["docker","exec","-i","postgres-container","pg_dump"]
+  PG_RESTORE_COMMAND       optional, command override for pg_restore
+                           use a JSON array for wrapper commands, for example:
+                           ["docker","exec","-i","postgres-container","pg_restore"]`);
 }
 
 function getRequiredEnv(name: string): string {
@@ -99,12 +111,48 @@ async function ensureDirectory(dirPath: string): Promise<void> {
   await fs.mkdir(dirPath, { recursive: true });
 }
 
-async function ensureCommandAvailable(command: string): Promise<void> {
+function normalizeCommandSpec(specOrCommand: CommandSpec | string): CommandSpec {
+  if (typeof specOrCommand === "string") {
+    return { command: specOrCommand, args: [] };
+  }
+
+  return specOrCommand;
+}
+
+function getCommandSpec(envName: string, fallbackCommand: string): CommandSpec {
+  const raw = process.env[envName]?.trim();
+  if (!raw) {
+    return { command: fallbackCommand, args: [] };
+  }
+
+  if (raw.startsWith("[")) {
+    let parsed: unknown;
+
+    try {
+      parsed = JSON.parse(raw);
+    } catch (error) {
+      throw new Error(`${envName} must be valid JSON when using an array override: ${String(error)}`);
+    }
+
+    if (!Array.isArray(parsed) || parsed.length === 0 || parsed.some((item) => typeof item !== "string" || item.trim().length === 0)) {
+      throw new Error(`${envName} must be a non-empty JSON array of command segments.`);
+    }
+
+    const [command, ...args] = parsed;
+    return { command, args };
+  }
+
+  return { command: raw, args: [] };
+}
+
+async function ensureCommandAvailable(specOrCommand: CommandSpec | string): Promise<void> {
+  const spec = normalizeCommandSpec(specOrCommand);
+
   await new Promise<void>((resolve, reject) => {
-    const child = spawn(command, ["--version"], { stdio: "ignore" });
+    const child = spawn(spec.command, [...spec.args, "--version"], { stdio: "ignore" });
 
     child.on("error", () => {
-      reject(new Error(`Required command is not available: ${command}`));
+      reject(new Error(`Required command is not available: ${spec.command}`));
     });
 
     child.on("exit", (code) => {
@@ -112,7 +160,7 @@ async function ensureCommandAvailable(command: string): Promise<void> {
         resolve();
         return;
       }
-      reject(new Error(`Required command is not available: ${command}`));
+      reject(new Error(`Required command is not available: ${spec.command}`));
     });
   });
 }
@@ -135,6 +183,78 @@ async function runCommand(command: string, args: string[]): Promise<void> {
       }
 
       reject(new Error(`${command} failed with exit code ${code ?? "unknown"}`));
+    });
+  });
+}
+
+async function runCommandToFile(spec: CommandSpec, args: string[], outputFilePath: string): Promise<void> {
+  await new Promise<void>((resolve, reject) => {
+    const child = spawn(spec.command, [...spec.args, ...args], {
+      stdio: ["ignore", "pipe", "inherit"],
+      env: process.env,
+    });
+    const outputStream = fsSync.createWriteStream(outputFilePath, { flags: "w" });
+    let settled = false;
+
+    const fail = (error: unknown) => {
+      if (settled) return;
+      settled = true;
+      outputStream.destroy();
+      reject(error instanceof Error ? error : new Error(String(error)));
+    };
+
+    child.on("error", fail);
+    outputStream.on("error", fail);
+    child.stdout.on("error", fail);
+    child.stdout.pipe(outputStream);
+
+    child.on("exit", (code) => {
+      outputStream.end(() => {
+        if (settled) return;
+        if (code === 0) {
+          settled = true;
+          resolve();
+          return;
+        }
+
+        fail(new Error(`${spec.command} failed with exit code ${code ?? "unknown"}`));
+      });
+    });
+  });
+}
+
+async function runCommandFromFile(spec: CommandSpec, args: string[], inputFilePath: string): Promise<void> {
+  await new Promise<void>((resolve, reject) => {
+    const child = spawn(spec.command, [...spec.args, ...args], {
+      stdio: ["pipe", "inherit", "inherit"],
+      env: process.env,
+    });
+    const inputStream = fsSync.createReadStream(inputFilePath);
+    let settled = false;
+
+    const fail = (error: unknown) => {
+      if (settled) return;
+      settled = true;
+      inputStream.destroy();
+      child.stdin.destroy();
+      reject(error instanceof Error ? error : new Error(String(error)));
+    };
+
+    child.on("error", fail);
+    inputStream.on("error", fail);
+    child.stdin.on("error", fail);
+
+    inputStream.pipe(child.stdin);
+
+    child.on("exit", (code) => {
+      if (settled) return;
+      if (code === 0) {
+        settled = true;
+        resolve();
+        return;
+      }
+
+      fail(new Error(`${spec.command} failed with exit code ${code ?? "unknown"}`));
     });
   });
 }
@@ -172,7 +292,8 @@ async function pruneOldBackups(dirPath: string, retentionDays: number): Promise<
 }
 
 async function backupDatabase(): Promise<BackupResult> {
-  await ensureCommandAvailable("pg_dump");
+  const pgDumpCommand = getCommandSpec("PG_DUMP_COMMAND", "pg_dump");
+  await ensureCommandAvailable(pgDumpCommand);
 
   const databaseUrl = getRequiredEnv("DATABASE_URL");
   const retentionDays = getRetentionDays();
@@ -180,16 +301,19 @@ async function backupDatabase(): Promise<BackupResult> {
   const filePath = path.join(backupDir, `db_${getTimestamp()}.dump`);
 
   await ensureDirectory(backupDir);
-  await runCommand("pg_dump", [
-    "--dbname",
-    databaseUrl,
-    "--format=custom",
-    "--compress=9",
-    "--no-owner",
-    "--no-privileges",
-    "--file",
-    filePath,
-  ]);
+  try {
+    await runCommandToFile(pgDumpCommand, [
+      "--dbname",
+      databaseUrl,
+      "--format=custom",
+      "--compress=9",
+      "--no-owner",
+      "--no-privileges",
+    ], filePath);
+  } catch (error) {
+    await fs.rm(filePath, { force: true });
+    throw error;
+  }
 
   const metadataPath = await writeMetadata("db", filePath, retentionDays);
   await pruneOldBackups(backupDir, retentionDays);
@@ -246,11 +370,12 @@ async function restoreDatabase(archivePath: string, yes: boolean): Promise<void>
     throw new Error("Database restore is destructive. Re-run with --yes.");
   }
 
-  await ensureCommandAvailable("pg_restore");
+  const pgRestoreCommand = getCommandSpec("PG_RESTORE_COMMAND", "pg_restore");
+  await ensureCommandAvailable(pgRestoreCommand);
   await ensureExists(archivePath, "Database backup file");
 
   const databaseUrl = getRequiredEnv("DATABASE_URL");
-  await runCommand("pg_restore", [
+  await runCommandFromFile(pgRestoreCommand, [
     "--dbname",
     databaseUrl,
     "--clean",
@@ -258,8 +383,7 @@ async function restoreDatabase(archivePath: string, yes: boolean): Promise<void>
     "--no-owner",
     "--no-privileges",
     "--single-transaction",
-    archivePath,
-  ]);
+  ], archivePath);
 
   console.log(`Database restore completed from: ${archivePath}`);
 }

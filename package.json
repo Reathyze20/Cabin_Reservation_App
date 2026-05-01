@@ -22,6 +22,7 @@
     "backup:db": "tsx src/scripts/backupManager.ts backup db",
     "backup:uploads": "tsx src/scripts/backupManager.ts backup uploads",
     "backup:all": "tsx src/scripts/backupManager.ts backup all",
+    "backup:smoke": "tsx src/scripts/backupRestoreSmoke.ts",
     "docker:up": "docker compose up -d --build",
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f app",

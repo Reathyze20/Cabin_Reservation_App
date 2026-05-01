@@ -33,7 +33,25 @@ jobs:
           trap 'echo "=== DEPLOY FAILED — restarting app with previous build ==="; npx pm2 restart chata-app 2>/dev/null || npx pm2 start npm --name "chata-app" -- run start; npx pm2 save' ERR
 
           # Navigate to the app directory
-          cd ${{ secrets.SERVER_PATH }}
+          APP_PATH="${{ secrets.SERVER_PATH }}"
+          APP_USER="reathyze"
+          BACKUP_ROOT="/home/reathyze/backups/cabin"
+          BACKUP_RETENTION_DAYS="14"
+          BACKUP_CRON_SCHEDULE="0 3 * * *"
+
+          run_as_app() {
+            local user_script
+            user_script="$(mktemp)"
+            printf '%s\n' "$@" > "$user_script"
+            chmod 700 "$user_script"
+            chown "$APP_USER:$APP_USER" "$user_script"
+            su - "$APP_USER" -s /bin/bash -c "/bin/bash '$user_script'"
+            local status=$?
+            rm -f "$user_script"
+            return $status
+          }
+
+          cd "$APP_PATH"
 
           echo "=== Backing up data ==="
           # Clean up any previous failed backup
@@ -250,5 +268,57 @@ jobs:
           if [ "$SERVER_READY" -ne 1 ]; then
             echo "ERROR: /api/health did not return status ok in time"
             exit 1
+          fi
+
+          echo "=== Ensuring backup prerequisites ==="
+          for required_command in pg_dump pg_restore tar; do
+            if ! command -v "$required_command" >/dev/null 2>&1; then
+              echo "ERROR: missing required backup command: $required_command"
+              exit 1
+            fi
+          done
+
+          if ! run_as_app "export NVM_DIR=$NVM_DIR" ". $NVM_DIR/nvm.sh" "cd $APP_PATH" "command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1"; then
+            echo "ERROR: node/npm are not available for $APP_USER after sourcing NVM."
+            exit 1
+          fi
+
+          echo "=== Installing backup cron ==="
+          install -d -m 755 -o "$APP_USER" -g "$APP_USER" "$BACKUP_ROOT" "$BACKUP_ROOT/db" "$BACKUP_ROOT/uploads" "$APP_PATH/data/logs"
+
+          BACKUP_COMMAND_INNER=$(cat <<EOF
+          export NVM_DIR=$NVM_DIR; [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"; mkdir -p $BACKUP_ROOT $APP_PATH/data/logs; cd $APP_PATH; BACKUP_ROOT=$BACKUP_ROOT BACKUP_RETENTION_DAYS=$BACKUP_RETENTION_DAYS npm run backup:all >> $APP_PATH/data/logs/backup-cron.log 2>&1
+          EOF
+          )
+          printf -v BACKUP_COMMAND_QUOTED '%q' "$BACKUP_COMMAND_INNER"
+          BACKUP_CRON_LINE="$BACKUP_CRON_SCHEDULE /usr/bin/flock -n /tmp/cabin-backup.lock /bin/bash -lc $BACKUP_COMMAND_QUOTED"
+
+          existing_crontab="$(mktemp)"
+          updated_crontab="$(mktemp)"
+          crontab -u "$APP_USER" -l 2>/dev/null | grep -v 'cabin-backup.lock' > "$existing_crontab" || true
+          : > "$updated_crontab"
+
+          if ! grep -qxF 'SHELL=/bin/bash' "$existing_crontab"; then
+            echo 'SHELL=/bin/bash' >> "$updated_crontab"
+          fi
+
+          if ! grep -qxF 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin' "$existing_crontab"; then
+            echo 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin' >> "$updated_crontab"
+          fi
+
+          cat "$existing_crontab" >> "$updated_crontab"
+          echo "$BACKUP_CRON_LINE" >> "$updated_crontab"
+          awk 'NF && !seen[$0]++' "$updated_crontab" | crontab -u "$APP_USER" -
+          rm -f "$existing_crontab" "$updated_crontab"
+          crontab -u "$APP_USER" -l | grep 'cabin-backup.lock'
+
+          echo "=== Seeding first backup if missing ==="
+          latest_db_backup=$(find "$BACKUP_ROOT/db" -maxdepth 1 -type f -name '*.dump' -print -quit)
+          latest_uploads_backup=$(find "$BACKUP_ROOT/uploads" -maxdepth 1 -type f -name '*.tar.gz' -print -quit)
+
+          if [ -z "$latest_db_backup" ] || [ -z "$latest_uploads_backup" ]; then
+            run_as_app "export NVM_DIR=$NVM_DIR" ". $NVM_DIR/nvm.sh" "cd $APP_PATH" "BACKUP_ROOT=$BACKUP_ROOT BACKUP_RETENTION_DAYS=$BACKUP_RETENTION_DAYS npm run backup:all"
+          else
+            echo "Existing backup artifacts found. Skipping initial seed backup."
           fi
 

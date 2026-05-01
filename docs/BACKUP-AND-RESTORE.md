@@ -51,6 +51,8 @@ BACKUP_ROOT=/home/reathyze/backups/cabin
 - `UPLOADS_PATH` - volitelna, default `data/uploads`
 - `BACKUP_ROOT` - volitelna, default `data/backups`
 - `BACKUP_RETENTION_DAYS` - volitelna, default `14`
+- `PG_DUMP_COMMAND` - volitelna, override pro `pg_dump`; pro wrapper command pouzij JSON pole
+- `PG_RESTORE_COMMAND` - volitelna, override pro `pg_restore`; pro wrapper command pouzij JSON pole
 
 ## Spusteni backupu
 
@@ -71,6 +73,23 @@ npm run backup:uploads
 ```bash
 npm run backup:all
 ```
+
+### Opakovatelny smoke test backup + restore
+
+```bash
+npm run backup:smoke
+```
+
+Tenhle smoke test:
+
+- spusti disposable PostgreSQL 16 kontejner,
+- vytvori fixture data v DB i v `uploads`,
+- spusti skutecny `backupManager` pro `backup all`,
+- obnovi DB dump do druhe test DB,
+- obnovi uploads archiv do docasneho adresare,
+- porovna vysledky a skonci chybou pri jakemkoliv nesouladu.
+
+Na Windows je to zaroven hlavni zpusob, jak overit DB backup/restore bez lokalne nainstalovanych `pg_dump` a `pg_restore`.
 
 Po kazdem backupu vznikne:
 
@@ -124,7 +143,9 @@ Co ten cron dela:
 
 ### Manualni instalace cronu z lokalniho pocitace
 
-Po dalsim deployi muzes cron nainstalovat z Windows jednim prikazem:
+Produkci deploy ted cron automaticky obnovi pri kazdem uspesnem nasazeni a pokud v backup rootu nic neni, seedne i prvni backup.
+
+PowerShell helper zustava uzitecny pro rucni re-run nebo kdyz potrebujes operational opravu mimo standardni deploy:
 
 ```powershell
 .\manual-install-backup-cron.ps1

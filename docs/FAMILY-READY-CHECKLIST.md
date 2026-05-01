@@ -4,17 +4,24 @@ Prakticky odskrtavaci seznam pro dokonceni aplikace do stavu, kdy ji lze spolehl
 
 Navazuje na [FAMILY-READY-PLAN.md](FAMILY-READY-PLAN.md), ale je zamerne kratsi, operativni a orientovany na vykonani.
 
-## Aktualni stav k 2026-04-19
+Poznamka k odskrtavani:
 
-- ✅ V repo je hotovy zaklad pro backupy a restore: skripty, retence a runbook.
-- ✅ V repo je pripraveny i manualni PowerShell script pro instalaci backup cronu po deployi.
-- ✅ V repo je pripraveny operational balik pro monitoring minimum: PM2 log rotate installer, fast post-deploy smoke check a incident runbook.
-- ✅ V repo je hotovy password recovery flow a sjednocena minimalni delka hesla na 8 znaku.
+- `[x]` = potvrzeno v repu nebo v navazujici dokumentaci.
+- `[ ]` = chybi implementace, produkcni deploy nebo rucni E2E overeni.
+
+## Aktualni stav k 2026-05-01
+
+- ✅ V repo je hotovy zaklad pro backupy a restore: `backupManager`, retence, cron installer a runbook.
+- ✅ Backup a restore probehly uspesne i v docasnem test prostredi pres `npm run backup:smoke`.
+- ✅ V repo je pripraveny operational balik pro monitoring minimum: `/api/health`, PM2 log rotate installer, fast post-deploy smoke check a incident runbook.
+- ✅ V repo je hotovy password recovery flow v backendu i `frontend-v2`, vcetne rate limitu a reset odkazu.
 - ✅ V dashboardu je hotovy activation checklist pro prvniho admina s CTA na pozvanky, rezervace a nakupni seznam.
 - ✅ V admin rozhrani je hotove invite UX pro odeslani pozvanky e-mailem a zkopirovani hotove zpravy pro WhatsApp nebo SMS.
 - ✅ Auth enforcement je v repo dotazeny pro blokovane ucty: login i protected requesty se opiraji o aktualni stav uzivatele v DB a frontend umi blokovanou relaci okamzite shodit.
-- ⚠️ Chybi provozni dotazeni: deploy verze s backup managerem, cron na serveru, uptime monitory, PM2 log rotation na serveru, realny restore test a produkcni e-mail E2E overeni.
-- ❌ Dalsi doporuceny krok je dokoncit provozni cast backupu, potom produkcni e-mail flow, monitoring a rodinny rehearsal.
+- ⚠️ Zakladni rezervacni notifikace jsou jen parcialni: existuje watcher flow pro zruseni rezervace pres notes, ale ne cele minimum pro novou a upravenou rezervaci.
+- ⚠️ Frontend uz ma PWA plugin, offline banner a offline-aware mutation handling, ale stale chybi audit pravdivosti textu a realny offline rehearsal.
+- ⚠️ Pro rucni overeni uz existuji podklady: [SPRINT-0-SMOKE-TEST.md](SPRINT-0-SMOKE-TEST.md), [SPRINT-3-MOBILE-QA-CHECKLIST.md](SPRINT-3-MOBILE-QA-CHECKLIST.md), [OPERATIONS-RUNBOOK.md](OPERATIONS-RUNBOOK.md), ale produkcni E2E kroky zatim nejsou odskrtnute.
+- ❌ Nejblizsi prakticky sled zustava: produkcni backup + monitoring, produkcni e-mail E2E, potom rodinny rehearsal.
 
 ---
 
@@ -26,17 +33,20 @@ Navazuje na [FAMILY-READY-PLAN.md](FAMILY-READY-PLAN.md), ale je zamerne kratsi,
 - [x] Navrhnout backup strategii pro `data/uploads` a thumbnaily.
 - [ ] Nastavit automaticky denni backup databaze na serveru.
 - [ ] Nastavit automaticky denni backup uploadu na serveru.
-- [ ] Po dalsim deployi spustit `./manual-install-backup-cron.ps1` a overit prvni beh backupu.
+- [x] Pridat opakovatelny smoke test backup + restore v docasnem test prostredi.
+- [ ] Nasadit verzi s auto-install backup cronem a overit prvni seed backup.
 - [x] Nastavit retenci zaloh alespon na 7-30 dni.
 - [x] Zapsat kratky restore runbook do docs.
-- [ ] Otestovat obnovu DB ze zalohy do test prostredi.
-- [ ] Otestovat obnovu uploadu ze zalohy.
+- [x] Otestovat obnovu DB ze zalohy do test prostredi.
+- [x] Otestovat obnovu uploadu ze zalohy.
+
+Podklad: [BACKUP-AND-RESTORE.md](BACKUP-AND-RESTORE.md)
 
 Definition of done:
 
 - [ ] Existuje funkcni automaticky backup DB.
 - [ ] Existuje funkcni automaticky backup uploadu.
-- [ ] Obnova byla aspon jednou realne otestovana.
+- [x] Obnova byla aspon jednou realne otestovana.
 
 ### Produkcni e-mail flow
 
@@ -56,6 +66,7 @@ Definition of done:
 
 ### Monitoring a alerting minimum
 
+- [x] V repo existuje health endpoint, operational smoke helper a PM2 logrotate installer.
 - [ ] Zapnout uptime monitoring na hlavni web.
 - [ ] Zapnout uptime monitoring na API health endpoint.
 - [ ] Nastavit alert pri nedostupnosti.
@@ -65,6 +76,8 @@ Definition of done:
 - [x] Dopsat kratky post-deploy smoke check.
 - [x] Dopsat kratky incident postup: co zkontrolovat kdyz appka nejede.
 
+Podklad: [OPERATIONS-RUNBOOK.md](OPERATIONS-RUNBOOK.md)
+
 Definition of done:
 
 - [ ] O vypadku se dozvite automaticky.
@@ -72,6 +85,7 @@ Definition of done:
 
 ### Rodinny rehearsal
 
+- [x] Existuje manualni smoke-test a mobilni QA checklist jako podklad pro rehearsal.
 - [ ] Provest scenar admin + pozvany clen.
 - [ ] Otestovat flow na desktopu.
 - [ ] Otestovat flow na telefonu.
@@ -83,6 +97,8 @@ Definition of done:
 - [ ] Vytvorit zaznam v deniku nebo overit jeho zalozeni.
 - [ ] Vyzkouset admin akce pro clena rodiny.
 - [ ] Zapsat posledni nalezene chyby nebo potvrdit readiness.
+
+Podklady: [SPRINT-0-SMOKE-TEST.md](SPRINT-0-SMOKE-TEST.md) a [SPRINT-3-MOBILE-QA-CHECKLIST.md](SPRINT-3-MOBILE-QA-CHECKLIST.md)
 
 Definition of done:
 
@@ -134,6 +150,7 @@ Definition of done:
 
 ### Zakladni notifikace
 
+- [x] Existuje minimalni watcher notifikace pri zruseni rezervace pres notes.
 - [ ] Rozhodnout minimum notifikaci pro rodinu.
 - [ ] Pridat notifikaci pri nove rezervaci.
 - [ ] Pridat notifikaci pri zruseni nebo uprave rezervace.
@@ -157,6 +174,7 @@ Definition of done:
 
 ### Offline a PWA pravdivost
 
+- [x] Repo uz ma PWA plugin, offline banner a offline-aware toasty pro sitove chyby.
 - [ ] Projit texty a UX kolem offline stavu.
 - [ ] Odstranit zavadejici tvrzeni o automaticke synchronizaci tam, kde neni garantovana.
 - [ ] Rozhodnout minimum offline podpory pro klicove obrazovky.
@@ -169,12 +187,15 @@ Definition of done:
 
 ### Mobilni QA pass
 
+- [x] Existuje manualni mobile QA checklist pro nejrizikovejsi flow.
 - [ ] Otestovat rezervace na telefonu.
 - [ ] Otestovat shopping na telefonu.
 - [ ] Otestovat chat na telefonu.
 - [ ] Otestovat upload fotek na telefonu.
 - [ ] Otestovat admin a profile drawer na telefonu.
 - [ ] Zapsat drobne UX opravy do maleho backlogu.
+
+Podklad: [SPRINT-3-MOBILE-QA-CHECKLIST.md](SPRINT-3-MOBILE-QA-CHECKLIST.md)
 
 Definition of done:
 
@@ -232,7 +253,7 @@ Tuhle sekci muzes pouzit jako posledni stop-check pred ostrym nasazenim do rodin
 
 - [ ] Existuje funkcni backup DB.
 - [ ] Existuje funkcni backup uploadu.
-- [ ] Obnova ze zalohy byla realne otestovana.
+- [x] Obnova ze zalohy byla realne otestovana.
 - [ ] Registrace nebo invite flow projde bez manualni pomoci.
 - [ ] Verify e-mail funguje na produkcni domene.
 - [ ] Monitoring hlida web i API.
@@ -254,11 +275,11 @@ Tuhle sekci muzes pouzit jako posledni stop-check pred ostrym nasazenim do rodin
 - [ ] 2. Produkcni e-mail flow
 - [ ] 3. Monitoring a alerting minimum
 - [ ] 4. Rodinny rehearsal
-- [ ] 5. Password recovery
-- [ ] 6. Aktivace prvniho admina
-- [ ] 7. Invite UX
-- [ ] 8. Zakladni notifikace
-- [ ] 9. Auth enforcement cleanup
-- [ ] 10. Offline/PWA pravdivost
-- [ ] 11. Mobilni QA pass
+- [ ] 5. Password recovery (implementace hotova, chybi E2E)
+- [ ] 6. Aktivace prvniho admina (implementace hotova, chybi overeni po registraci)
+- [ ] 7. Invite UX (implementace hotova, chybi admin + invite E2E)
+- [ ] 8. Zakladni notifikace (zatim jen watcher notifikace pri zruseni)
+- [ ] 9. Auth enforcement cleanup (implementace hotova, chybi edge-case smoke)
+- [ ] 10. Offline/PWA pravdivost (infra v repo je, chybi audit textu a realny offline test)
+- [ ] 11. Mobilni QA pass (checklist je pripraven, chybi real device run)
 - [ ] 12. Realtime a testy
