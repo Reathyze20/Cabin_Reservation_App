@@ -11,6 +11,7 @@ import { showToast } from '@/lib/toast'
 import { AVATARS } from '@/lib/avatars'
 import { AnimalAvatar } from '@/components/shared/AnimalAvatar'
 import { useNavigate } from 'react-router-dom'
+import { ScrollText, Settings, Shield } from 'lucide-react'
 
 // ─── Konstanty ────────────────────────────────────────────────────────────────
 const SWATCH_COLORS = [
@@ -34,7 +35,7 @@ interface ProfileDrawerProps {
 }
 
 export function ProfileDrawer({ isOpen, onClose }: ProfileDrawerProps) {
-  const { updateAnimalIcon, logout } = useAuth()
+  const { updateAnimalIcon, logout, isAdmin, isSuperAdmin } = useAuth()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState<'personal' | 'security'>('personal')
@@ -216,6 +217,11 @@ export function ProfileDrawer({ isOpen, onClose }: ProfileDrawerProps) {
     }
   }
 
+  function handleNavigate(path: string) {
+    onClose()
+    navigate(path)
+  }
+
   if (!isOpen) return null
 
   return (
@@ -233,6 +239,46 @@ export function ProfileDrawer({ isOpen, onClose }: ProfileDrawerProps) {
         </div>
 
         <div className="drawer-body">
+          {(isAdmin || isSuperAdmin) && (
+            <div className="drawer-section">
+              <h3>Správa a diagnostika</h3>
+              <div className="drawer-quicklinks">
+                {isAdmin ? (
+                  <button
+                    type="button"
+                    className="button-secondary drawer-quicklink"
+                    onClick={() => handleNavigate('/admin')}
+                  >
+                    <Settings size={16} />
+                    <span>Administrativa</span>
+                  </button>
+                ) : null}
+
+                {isAdmin ? (
+                  <button
+                    type="button"
+                    className="button-secondary drawer-quicklink"
+                    onClick={() => handleNavigate('/admin/diagnostics#system-info')}
+                  >
+                    <ScrollText size={16} />
+                    <span>Statistiky a logy</span>
+                  </button>
+                ) : null}
+
+                {isSuperAdmin ? (
+                  <button
+                    type="button"
+                    className="button-secondary drawer-quicklink"
+                    onClick={() => handleNavigate('/superadmin')}
+                  >
+                    <Shield size={16} />
+                    <span>Backoffice</span>
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          )}
+
           {/* Segmented Control */}
           <div className="segmented-control">
             <button

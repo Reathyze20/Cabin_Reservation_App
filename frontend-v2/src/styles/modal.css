@@ -312,6 +312,21 @@
   color: var(--color-text-dark);
 }
 
+.drawer-quicklinks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.drawer-quicklink {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  min-height: 44px;
+}
+
 /* Avatar and Color grids */
 .swatch-grid {
   display: flex;

@@ -28,8 +28,21 @@ async function backfill() {
     where: { subdomain: DEFAULT_CABIN.subdomain },
   });
 
+  if (!cabin) {
+    cabin = await prisma.cabin.findFirst({
+      where: { name: DEFAULT_CABIN.name },
+      orderBy: { createdAt: "asc" },
+    });
+  }
+
   if (cabin) {
     console.log(`✓ Cabin "${cabin.name}" already exists (${cabin.id})`);
+
+    if (cabin.subdomain !== DEFAULT_CABIN.subdomain) {
+      console.log(
+        `ℹ Using existing cabin with different subdomain (${cabin.subdomain}) instead of creating a duplicate.`,
+      );
+    }
   } else {
     cabin = await prisma.cabin.create({
       data: {
