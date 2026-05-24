@@ -22,7 +22,7 @@
 | **Mobile Experience** | ✅ | Beta | Responsive layout, MobileNav, MobileHeader, PWA ready |
 | **Testing** | ❌ | Minimal | 1 test soubor (VerifyEmailPage.test.tsx), vitest nastaven |
 | **CI/CD & DevOps** | ✅ | Production | GitHub Actions → SSH → PM2, failsafe restart, Prisma migrate |
-| **Dokumentace** | ⚠️ | Minimal | README.md, MIGRATION_GUIDE.md, copilot instructions — chybí API docs |
+| **Dokumentace** | ⚠️ | Minimal | README.md, family-ready a operations docs, copilot instructions — chybi API docs |
 | **Bezpečnost** | ✅ | Beta | helmet, rate-limit, JWT, Zod validace, ownership checks, CORS |
 | **Výkon** | ✅ | Beta | compression, Promise.all(), lazy loading, image optimization (sharp) |
 

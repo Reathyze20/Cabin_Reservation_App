@@ -9,7 +9,7 @@ Poznamka k odskrtavani:
 - `[x]` = potvrzeno v repu nebo v navazujici dokumentaci.
 - `[ ]` = chybi implementace, produkcni deploy nebo rucni E2E overeni.
 
-## Aktualni stav k 2026-05-01
+## Aktualni stav k 2026-05-02
 
 - ✅ V repo je hotovy zaklad pro backupy a restore: `backupManager`, retence, cron installer a runbook.
 - ✅ Backup a restore probehly uspesne i v docasnem test prostredi pres `npm run backup:smoke`.
@@ -18,10 +18,11 @@ Poznamka k odskrtavani:
 - ✅ V dashboardu je hotovy activation checklist pro prvniho admina s CTA na pozvanky, rezervace a nakupni seznam.
 - ✅ V admin rozhrani je hotove invite UX pro odeslani pozvanky e-mailem a zkopirovani hotove zpravy pro WhatsApp nebo SMS.
 - ✅ Auth enforcement je v repo dotazeny pro blokovane ucty: login i protected requesty se opiraji o aktualni stav uzivatele v DB a frontend umi blokovanou relaci okamzite shodit.
+- ✅ Produkcni backup minimum je potvrzene: cron bezi, seed artefakty `.dump` a `.tar.gz` existuji a operations smoke je umi overit.
 - ⚠️ Zakladni rezervacni notifikace jsou jen parcialni: existuje watcher flow pro zruseni rezervace pres notes, ale ne cele minimum pro novou a upravenou rezervaci.
 - ⚠️ Frontend uz ma PWA plugin, offline banner a offline-aware mutation handling, ale stale chybi audit pravdivosti textu a realny offline rehearsal.
 - ⚠️ Pro rucni overeni uz existuji podklady: [SPRINT-0-SMOKE-TEST.md](SPRINT-0-SMOKE-TEST.md), [SPRINT-3-MOBILE-QA-CHECKLIST.md](SPRINT-3-MOBILE-QA-CHECKLIST.md), [OPERATIONS-RUNBOOK.md](OPERATIONS-RUNBOOK.md), ale produkcni E2E kroky zatim nejsou odskrtnute.
-- ❌ Nejblizsi prakticky sled zustava: produkcni backup + monitoring, produkcni e-mail E2E, potom rodinny rehearsal.
+- ❌ Nejblizsi prakticky sled zustava: externi monitoring/alerting, produkcni e-mail E2E, potom rodinny rehearsal.
 
 ---
 
@@ -31,21 +32,25 @@ Poznamka k odskrtavani:
 
 - [x] Navrhnout backup strategii pro PostgreSQL databazi.
 - [x] Navrhnout backup strategii pro `data/uploads` a thumbnaily.
-- [ ] Nastavit automaticky denni backup databaze na serveru.
-- [ ] Nastavit automaticky denni backup uploadu na serveru.
+- [x] Nastavit automaticky denni backup databaze na serveru.
+- [x] Nastavit automaticky denni backup uploadu na serveru.
 - [x] Pridat opakovatelny smoke test backup + restore v docasnem test prostredi.
-- [ ] Nasadit verzi s auto-install backup cronem a overit prvni seed backup.
+- [x] Nasadit verzi s auto-install backup cronem a overit prvni seed backup.
+- [x] Rozsirit operations smoke check o kontrolu pritomnosti produkcniho `.dump` a `.tar.gz` artefaktu.
 - [x] Nastavit retenci zaloh alespon na 7-30 dni.
 - [x] Zapsat kratky restore runbook do docs.
 - [x] Otestovat obnovu DB ze zalohy do test prostredi.
 - [x] Otestovat obnovu uploadu ze zalohy.
+- [ ] Otestovat obnovu primo z realneho produkcniho `.dump` a `.tar.gz` do test prostredi.
+- [ ] Rozhodnout dalsi vrstvu ochrany mimo jeden VPS stroj.
+- [ ] Dostat kontrolu stari nebo selhani backupu do alertingu.
 
 Podklad: [BACKUP-AND-RESTORE.md](BACKUP-AND-RESTORE.md)
 
 Definition of done:
 
-- [ ] Existuje funkcni automaticky backup DB.
-- [ ] Existuje funkcni automaticky backup uploadu.
+- [x] Existuje funkcni automaticky backup DB.
+- [x] Existuje funkcni automaticky backup uploadu.
 - [x] Obnova byla aspon jednou realne otestovana.
 
 ### Produkcni e-mail flow
@@ -70,9 +75,10 @@ Definition of done:
 - [ ] Zapnout uptime monitoring na hlavni web.
 - [ ] Zapnout uptime monitoring na API health endpoint.
 - [ ] Nastavit alert pri nedostupnosti.
-- [ ] Po dalsim deployi spustit `./manual-install-pm2-logrotate.ps1`.
-- [ ] Overit, ze PM2 logy nerostou bez omezeni.
-- [ ] Nastavit nebo potvrdit log rotation.
+- [x] Potvrdit, ze PM2 logrotate je na produkci aktivni.
+- [x] Potvrdit, ze operations smoke umi zkontrolovat PM2 log rotation i backup minimum.
+- [x] Nastavit nebo potvrdit log rotation.
+- [ ] Zapnout nebo potvrdit externi kontrolu stari backupu.
 - [x] Dopsat kratky post-deploy smoke check.
 - [x] Dopsat kratky incident postup: co zkontrolovat kdyz appka nejede.
 
@@ -251,8 +257,8 @@ Tyto body nejsou potreba pro jednu rodinu, ale jsou vhodne do dalsi etapy.
 
 Tuhle sekci muzes pouzit jako posledni stop-check pred ostrym nasazenim do rodiny.
 
-- [ ] Existuje funkcni backup DB.
-- [ ] Existuje funkcni backup uploadu.
+- [x] Existuje funkcni backup DB.
+- [x] Existuje funkcni backup uploadu.
 - [x] Obnova ze zalohy byla realne otestovana.
 - [ ] Registrace nebo invite flow projde bez manualni pomoci.
 - [ ] Verify e-mail funguje na produkcni domene.

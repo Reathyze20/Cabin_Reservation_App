@@ -141,6 +141,7 @@ export function SuperAdminPage() {
   const pendingCount = users.filter((user) => !user.isVerified && !user.isBanned).length
   const activeCount = users.filter((user) => user.isActive).length
   const hasFilters = normalizedSearch.length > 0 || roleFilter !== 'all' || statusFilter !== 'all'
+  const hasFallbackSecrets = Boolean(lastCreatedUser?.tempPassword && lastCreatedUser?.verificationToken)
 
   const roleFilters: Array<{ value: RoleFilter; label: string; count: number }> = [
     { value: 'all', label: 'Všechny role', count: users.length },
@@ -188,6 +189,7 @@ export function SuperAdminPage() {
         setCreateError(null)
         setLastCreatedUser(response)
         setShowSecrets(false)
+        setCopiedSecret(null)
         form.reset()
         showToast(response.message, response.verificationEmailSent ? 'success' : 'info')
       },
@@ -529,7 +531,7 @@ export function SuperAdminPage() {
                   <h2 className="admin-card-title">Poslední vytvořený účet</h2>
                 </div>
                 <p className="admin-card-description">
-                  Nouzové údaje používej jen tehdy, když se nepodaří doručit e-mail. Po úspěšném předání je dál nesdílej.
+                  Když onboarding e-mail odejde, zůstane tady jen shrnutí účtu. Nouzové údaje se ukážou jen při failu doručení nebo v prostředí bez SMTP.
                 </p>
               </div>
             </div>
@@ -542,35 +544,44 @@ export function SuperAdminPage() {
                   <span>{lastCreatedUser.user.email || 'Bez e-mailu'}</span>
                 </div>
 
-                <div className="superadmin-secret-actions">
-                  <button type="button" className="btn btn-secondary" onClick={showSecrets ? hideSecrets : revealSecretsTemporarily}>
-                    {showSecrets ? 'Skrýt citlivé údaje' : 'Zobrazit dočasně na 20 s'}
-                  </button>
-                  <p className="superadmin-secret-help">
-                    Citlivé údaje drž schované, dokud je opravdu nepotřebuješ předat.
-                  </p>
-                </div>
+                {hasFallbackSecrets ? (
+                  <>
+                    <div className="superadmin-secret-actions">
+                      <button type="button" className="btn btn-secondary" onClick={showSecrets ? hideSecrets : revealSecretsTemporarily}>
+                        {showSecrets ? 'Skrýt citlivé údaje' : 'Zobrazit dočasně na 20 s'}
+                      </button>
+                      <p className="superadmin-secret-help">
+                        Citlivé údaje drž schované, dokud je opravdu nepotřebuješ předat.
+                      </p>
+                    </div>
 
-                <div className="superadmin-secret-card">
-                  <span className="superadmin-secret-label">Dočasné heslo</span>
-                  <code>{showSecrets ? lastCreatedUser.tempPassword : 'Skryto. Nejprve použijte dočasné zobrazení.'}</code>
-                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => copySecret('password', lastCreatedUser.tempPassword)} disabled={!showSecrets}>
-                    {copiedSecret === 'password' ? <><Check size={14} /> Zkopírováno</> : <><Copy size={14} /> Kopírovat</>}
-                  </button>
-                </div>
+                    <div className="superadmin-secret-card">
+                      <span className="superadmin-secret-label">Dočasné heslo</span>
+                      <code>{showSecrets ? lastCreatedUser.tempPassword : 'Skryto. Nejprve použijte dočasné zobrazení.'}</code>
+                      <button type="button" className="btn btn-secondary btn-sm" onClick={() => copySecret('password', lastCreatedUser.tempPassword!)} disabled={!showSecrets}>
+                        {copiedSecret === 'password' ? <><Check size={14} /> Zkopírováno</> : <><Copy size={14} /> Kopírovat</>}
+                      </button>
+                    </div>
 
-                <div className="superadmin-secret-card">
-                  <span className="superadmin-secret-label">Fallback token</span>
-                  <code>{showSecrets ? lastCreatedUser.verificationToken : 'Skryto. Nejprve použijte dočasné zobrazení.'}</code>
-                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => copySecret('token', lastCreatedUser.verificationToken)} disabled={!showSecrets}>
-                    {copiedSecret === 'token' ? <><Check size={14} /> Zkopírováno</> : <><Copy size={14} /> Kopírovat</>}
-                  </button>
-                </div>
+                    <div className="superadmin-secret-card">
+                      <span className="superadmin-secret-label">Fallback token</span>
+                      <code>{showSecrets ? lastCreatedUser.verificationToken : 'Skryto. Nejprve použijte dočasné zobrazení.'}</code>
+                      <button type="button" className="btn btn-secondary btn-sm" onClick={() => copySecret('token', lastCreatedUser.verificationToken!)} disabled={!showSecrets}>
+                        {copiedSecret === 'token' ? <><Check size={14} /> Zkopírováno</> : <><Copy size={14} /> Kopírovat</>}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="admin-empty-state">
+                    <h3>Není potřeba nic předávat ručně</h3>
+                    <p>Onboarding e-mail obsahuje aktivační odkaz i dočasné heslo, takže nouzové údaje nebyly vráceny.</p>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="admin-empty-state">
                 <h3>Zatím není co předat</h3>
-                <p>Po vytvoření účtu se tady objeví dočasné heslo i fallback token.</p>
+                <p>Po vytvoření účtu se tady objeví shrnutí a případně nouzové údaje, když onboarding e-mail neodejde.</p>
               </div>
             )}
           </section>

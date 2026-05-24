@@ -3,6 +3,7 @@ param(
     [string]$ServerUser = "root",
     [string]$AppUser = "reathyze",
     [string]$AppPath = "/home/reathyze/chata",
+    [string]$BackupRoot = "/home/reathyze/backups/cabin",
     [string]$NvmDir = "/home/reathyze/.nvm",
     [string]$Pm2ProcessName = "chata-app",
     [string]$LocalHealthUrl = "http://localhost:3000/api/health",
@@ -24,6 +25,7 @@ function ConvertTo-BashSingleQuotedString {
 
 $bashAppUser = ConvertTo-BashSingleQuotedString -Value $AppUser
 $bashAppPath = ConvertTo-BashSingleQuotedString -Value $AppPath
+$bashBackupRoot = ConvertTo-BashSingleQuotedString -Value $BackupRoot
 $bashNvmDir = ConvertTo-BashSingleQuotedString -Value $NvmDir
 $bashPm2ProcessName = ConvertTo-BashSingleQuotedString -Value $Pm2ProcessName
 $bashLocalHealthUrl = ConvertTo-BashSingleQuotedString -Value $LocalHealthUrl
@@ -35,6 +37,7 @@ set -euo pipefail
 
 app_user=__APP_USER__
 app_path=__APP_PATH__
+backup_root=__BACKUP_ROOT__
 nvm_dir=__NVM_DIR__
 pm2_process_name=__PM2_PROCESS_NAME__
 local_health_url=__LOCAL_HEALTH_URL__
@@ -92,6 +95,15 @@ if [ "$require_operations_minimum" = "1" ]; then
         exit 1
     fi
     printf "%s\n" "$backup_cron"
+    echo "=== Backup artifacts ==="
+    db_backup=$(find "$backup_root/db" -maxdepth 1 -type f -name '*.dump' -printf '%T@ %p\n' 2>/dev/null | sort -nr | head -n 1 | cut -d' ' -f2- || true)
+    uploads_backup=$(find "$backup_root/uploads" -maxdepth 1 -type f -name '*.tar.gz' -printf '%T@ %p\n' 2>/dev/null | sort -nr | head -n 1 | cut -d' ' -f2- || true)
+    if [ -z "$db_backup" ] || [ -z "$uploads_backup" ]; then
+        echo "Backup artifacts are missing in $backup_root." >&2
+        exit 1
+    fi
+    printf "DB backup: %s\n" "$db_backup"
+    printf "Uploads backup: %s\n" "$uploads_backup"
     echo "=== PM2 log rotation ==="
     if [ ! -d "$module_dir" ]; then
         echo "pm2-logrotate is not installed." >&2
@@ -121,7 +133,7 @@ if [ -f "$pm2_error_log" ]; then
     tail -n 15 "$pm2_error_log"
 fi
 '@
-$remoteScript = $remoteScript.Replace('__APP_USER__', $bashAppUser).Replace('__APP_PATH__', $bashAppPath).Replace('__NVM_DIR__', $bashNvmDir).Replace('__PM2_PROCESS_NAME__', $bashPm2ProcessName).Replace('__LOCAL_HEALTH_URL__', $bashLocalHealthUrl).Replace('__LOCAL_WEB_URL__', $bashLocalWebUrl).Replace('__REQUIRE_OPERATIONS_MINIMUM__', $requireOperationsMinimumValue).Replace("`r`n", "`n")
+$remoteScript = $remoteScript.Replace('__APP_USER__', $bashAppUser).Replace('__APP_PATH__', $bashAppPath).Replace('__BACKUP_ROOT__', $bashBackupRoot).Replace('__NVM_DIR__', $bashNvmDir).Replace('__PM2_PROCESS_NAME__', $bashPm2ProcessName).Replace('__LOCAL_HEALTH_URL__', $bashLocalHealthUrl).Replace('__LOCAL_WEB_URL__', $bashLocalWebUrl).Replace('__REQUIRE_OPERATIONS_MINIMUM__', $requireOperationsMinimumValue).Replace("`r`n", "`n")
 $remoteScriptBase64 = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($remoteScript))
 
 Write-Host "Running server-side smoke checks on $ServerUser@$ServerHost..."

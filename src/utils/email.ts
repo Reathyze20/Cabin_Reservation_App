@@ -197,6 +197,109 @@ export const sendVerificationEmailWithToken = async (email: string, token: strin
   }
 };
 
+export const sendSuperadminOnboardingEmail = async (
+  email: string,
+  token: string,
+  tempPassword: string
+): Promise<{ delivered: boolean }> => {
+  ensureEmailTransport("Superadmin onboarding");
+  const frontendBaseUrl = FRONTEND_URL.endsWith("/") ? FRONTEND_URL.slice(0, -1) : FRONTEND_URL;
+  const verifyUrl = `${frontendBaseUrl}/verify?token=${token}`;
+
+  if (!transporter) {
+    logger.warn("EMAIL", `[SIMULATION] Superadmin onboarding email for ${email}`);
+    logger.info("EMAIL", `Superadmin onboarding verify URL (no SMTP): ${verifyUrl}`);
+    return { delivered: false };
+  }
+
+  try {
+    const htmlContent = `
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+<body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', Arial, sans-serif;">
+  <div style="background-color: #f3f4f6; padding: 40px 20px;">
+    <div style="max-width: 560px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);">
+      <div style="text-align: center; padding: 32px 32px 16px 32px;">
+        <h1 style="margin: 0; color: #111827; font-size: 24px; font-weight: 600;">${EMAIL_APP_NAME}</h1>
+      </div>
+
+      <div style="padding: 0 32px 32px 32px;">
+        <p style="color: #374151; font-size: 16px; line-height: 1.5; margin: 0 0 16px 0;">
+          Dobrý den,
+        </p>
+        <p style="color: #374151; font-size: 16px; line-height: 1.5; margin: 0 0 16px 0;">
+          Backoffice vám vytvořil účet v aplikaci <strong style="color: #111827;">${EMAIL_APP_NAME}</strong>.
+          Pro první přihlášení potřebujete aktivovat účet a použít dočasné heslo níže.
+        </p>
+
+        <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin: 20px 0;">
+          <p style="margin: 0 0 8px 0; color: #111827; font-weight: 600; font-size: 14px;">Dočasné heslo</p>
+          <code style="display: inline-block; background-color: #111827; color: #ffffff; padding: 10px 12px; border-radius: 6px; font-size: 16px; letter-spacing: 1px;">${tempPassword}</code>
+        </div>
+
+        <div style="text-align: center; margin: 24px 0;">
+          <a href="${verifyUrl}"
+             style="background-color: #5d9b62; color: #ffffff; text-decoration: none; padding: 14px 32px; border-radius: 6px; display: inline-block; font-weight: 600; font-size: 16px;">
+            Aktivovat účet
+          </a>
+        </div>
+
+        <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin: 20px 0;">
+          <p style="margin: 0 0 8px 0; color: #111827; font-weight: 600; font-size: 14px;">Jak pokračovat</p>
+          <ol style="margin: 0; padding-left: 20px; color: #374151; font-size: 14px; line-height: 1.7;">
+            <li>Klikněte na tlačítko pro aktivaci účtu.</li>
+            <li>Po ověření se přihlaste svým e-mailem nebo uživatelským jménem a dočasným heslem.</li>
+            <li>Po prvním přihlášení si heslo co nejdříve změňte.</li>
+          </ol>
+        </div>
+
+        <p style="color: #6b7280; font-size: 14px; line-height: 1.5; margin: 24px 0 8px 0;">
+          Pokud tlačítko nefunguje, zkopírujte tento odkaz do prohlížeče:
+        </p>
+        <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 12px; margin-top: 8px;">
+          <a href="${verifyUrl}" style="color: #5d9b62; font-size: 13px; word-break: break-all; text-decoration: none;">${verifyUrl}</a>
+        </div>
+
+        <p style="color: #9ca3af; font-size: 13px; line-height: 1.4; margin: 20px 0 0 0;">
+          Pokud jste o vytvoření účtu nežádali, tento e-mail prosím ignorujte.
+        </p>
+      </div>
+    </div>
+
+    <div style="text-align: center; font-size: 12px; color: #9ca3af; margin-top: 16px; padding: 0 20px;">
+      <p style="margin: 0;">${EMAIL_APP_FOOTER}</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+    const textContent =
+      `Dobrý den,\n\n` +
+      `Backoffice vám vytvořil účet v aplikaci ${EMAIL_APP_NAME}.\n\n` +
+      `Dočasné heslo: ${tempPassword}\n\n` +
+      `Nejprve aktivujte účet na odkazu:\n${verifyUrl}\n\n` +
+      `Poté se přihlaste svým e-mailem nebo uživatelským jménem a tímto dočasným heslem. Po prvním přihlášení si heslo změňte.`;
+
+    const info = await transporter.sendMail({
+      from: EMAIL_FROM,
+      to: email,
+      subject: `Aktivace účtu a dočasné heslo — ${EMAIL_APP_NAME}`,
+      text: textContent,
+      html: htmlContent,
+    });
+
+    logger.info("EMAIL", `Superadmin onboarding email sent to ${email}`, { messageId: info.messageId });
+    return { delivered: true };
+  } catch (error) {
+    logger.error("EMAIL", `Failed to send superadmin onboarding email to ${email}`, { error: String(error) });
+    throw error;
+  }
+};
+
 export const sendPasswordResetEmail = async (email: string, token: string): Promise<void> => {
   ensureEmailTransport("Password reset");
   const frontendBaseUrl = FRONTEND_URL.endsWith("/") ? FRONTEND_URL.slice(0, -1) : FRONTEND_URL;
@@ -381,6 +484,7 @@ export const sendVerificationEmail = sendVerificationEmailWithPIN;
 // ─── Generic send email ──────────────────────────────────────────────────────
 
 export const sendEmail = async (opts: { to: string; subject: string; html: string }): Promise<void> => {
+  ensureEmailTransport("Transactional");
   if (!transporter) {
     logger.warn("EMAIL", `[SIMULATION] Email to ${opts.to}: ${opts.subject}`);
     return;

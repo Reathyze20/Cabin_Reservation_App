@@ -7,18 +7,65 @@ Prakticky odskrtavaci seznam je v [FAMILY-READY-CHECKLIST.md](FAMILY-READY-CHECK
 Tento plan je zamerne odlisny od verejneho SaaS launch planu.
 Neresi hlavne monetizaci, SEO ani akvizici. Resi to, co je potreba, aby aplikace byla spolehliva, srozumitelna a bezpecna pro realne rodinne pouzivani.
 
+Aktualizace k 2026-05-02:
+
+- cast family-ready minima uz je hotova v repu,
+- cast puvodnich bodu uz neni vyvoj, ale produkcni overeni,
+- nejvetsi otevrene riziko uz neni chybejici modul, ale provozni jistota,
+- nejvetsi nove blockery jsou rozbita standardni deploy cesta na VPS, neuzavrene produkcni e-mail E2E vcetne superadmin onboarding cesty a chybejici externi alerting.
+
 ## 1. Vychozi stav
 
-Aktualni stav aplikace je silny v core funkcich:
+Aktualni stav aplikace je silny v core funkcich i v casti puvodne planovanych family-ready veci:
 
-- Rezervace jsou funkcne dostatecne hotove.
-- Nakupni seznamy a zasoby jsou pouzitelne.
-- Chat, galerie, denik a rekonstrukce uz nejsou hlavni brzda.
-- Admin a cabin settings jsou pouzitelne.
-- Mobilni shell a responzivni chovani uz nejsou jen prototyp.
+- Rezervace, nakupni seznamy, chat, galerie, denik a rekonstrukce jsou pouzitelne.
+- Admin, cabin settings a mobilni shell jsou pouzitelne.
+- V repu uz existuje backup manager, restore runbook a opakovatelny backup smoke test.
+- V repu uz existuje password recovery flow, activation checklist pro prvniho admina a invite UX.
+- Auth enforcement pro blokovane ucty je z velke casti dotazene.
+- Monitoring minimum ma health endpoint, operational smoke helper a PM2 logrotate setup.
 
 Hlavni mezery uz nejsou v tom, ze by chybel dalsi velky modul.
-Hlavni mezery jsou v provozni spolehlivosti, recovery flow a aktivaci rodiny.
+Hlavni mezery jsou v provozni spolehlivosti, produkcnim overeni, e-mail hardeningu, upozornenich na rezervace a pravdivem offline chovani.
+
+### Gap analyza k dnesku
+
+Pro dalsi rozhodovani je dobre oddelit ctyri ruzne typy zbyvajici prace. Jinak se snadno smicha skutecne chybejici implementace s vecmi, ktere uz v repu jsou a jen cekaji na realne overeni.
+
+#### Co chybi dodelat v kodu
+
+- rezervace dnes umi watcher notifikaci hlavne pri zruseni rezervace, ale chybi minimum pro novou a upravenou rezervaci,
+- realtime infrastruktura existuje, ale `useSocket` zatim neni napojeny do aktivnich obrazovek, takze uzivatelsky efekt realtime jeste neni hotovy,
+- self-service leave cabin je hotovy v backendu a API vrstve, ale ve frontend-v2 zatim chybi viditelny vstup pro bezneho uzivatele,
+- deploy workflow dnes pousti build, ale nepousti lint ani test preflight jako gate pred restartem produkce,
+- superadmin create-user flow stale vraci `tempPassword` a `verificationToken`, pokud selze e-mail, takze tato onboarding cesta jeste neni produkcne dojeta.
+
+#### Co chybi doresit v provozu
+
+- opravit standardni git/deploy auth na VPS, aby produkce znovu bezela pres bezny deploy a ne pres rucni `scp` hotfixy,
+- realne otestovat obnovu z produkcni DB a uploads zalohy,
+- pridat externi uptime monitoring a alerting pro web, health endpoint a stari backupu,
+- rozhodnout, kam pujde off-site kopie zaloh, aby vse nezustalo jen na jednom VPS.
+
+#### Co chybi overit realnym provozem
+
+- verify e-mail, invite e-mail a reset hesla je potreba projet end-to-end na produkci po poslednim hardeningu,
+- onboarding prvniho admina a onboarding dalsiho clena rodiny je potreba overit bez manualni pomoci developera,
+- mobilni QA je potreba projet na 1-2 realnych telefonech, ne jen v DevTools,
+- je potreba jeden cely rodinny rehearsal, ktery potvrdi desktop + mobil + role flow v jednom scenari.
+
+#### Co je hlavne polish a pravdivost UX
+
+- offline banner a cast toastu dnes slibuji automatickou synchronizaci, ale pro vetsinu akci zatim neexistuje spolehliva persistovana queue,
+- wording v activation, invite a admin flow je potreba doladit az podle realne rodinne zkusenosti,
+- po prvnim realnem provozu bude potreba zapsat maly backlog drobnych mobilnich a admin UX chyb misto dalsich velkych refaktoru.
+
+Z pohledu priority to znamena:
+
+1. Nejdriv provozni jistota: deploy, backup restore, monitoring.
+2. Hned potom produkcni onboarding jistota: verify, invite, reset, superadmin create-user.
+3. Pak skutecne chybejici produktove minimum: rezervacni notifikace a pravdive offline chovani.
+4. Az potom realtime a dalsi self-service polish.
 
 ## 2. Cile tohoto planu
 
@@ -28,7 +75,8 @@ Po dokonceni fazi 0 a 1 musi platit:
 - ztrata dat neni realisticky pravdepodobna,
 - pri problemu vite rychle, ze aplikace nefunguje,
 - appka je bezpecna pro bezne rodinne pouzivani,
-- admin umi zvladnout bezne provozni situace bez zasahu do databaze nebo serveru.
+- admin umi zvladnout bezne provozni situace bez zasahu do databaze nebo serveru,
+- bezny deploy je opet opakovatelny a nestoji na manualnim kopirovani souboru.
 
 ## 3. Priority framework
 
@@ -38,88 +86,155 @@ Kazdou dalsi praci priorizovat podle teto logiky:
 2. Zablokuje to rodinu pri beznem pouzivani?
 3. Zvysi to pocet situaci, kdy musite delat manualni support?
 4. Zvysi to jistotu po deployi?
-5. Je to jen polish nebo future SaaS potreba?
+5. Je to skutecna implementace, nebo uz jen produkcni overeni?
+6. Je to jen polish nebo future SaaS potreba?
 
 ## 4. Faze 0 - Kriticke blokery
 
 Tyto body doporucuji udelat pred tim, nez aplikaci pustite rodine naplno.
 
-### 4.1 Backup databaze a uploadu
+### 4.1 Deploy cesta a produkcni operace
+
+Proc:
+Standardni deploy retezec musi byt spolehlivy. Pokud produkce nejde aktualizovat bez manualniho `scp`, roste riziko driftu a chyb po kazde dalsi zmene.
+
+Co je uz hotove:
+
+- GitHub Actions deploy workflow existuje.
+- Produkcni app umi build, restart PM2 a operational smoke check.
+- Manualni hotfix deploy pres `scp` + `npm run build` + `pm2 restart` je overeny jako nouzovy fallback.
+
+Co jeste chybi:
+
+- opravit produkcni `origin`, ktery dnes pouziva expirovany GitHub HTTPS token,
+- zvolit bezpecnou standardni cestu: SSH deploy key nebo novy spravne spravovany token,
+- po oprave srovnat server na stejny commit jako repo,
+- overit, ze bezny deploy z `main` znovu funguje bez manualniho zasahu.
+
+Definition of done:
+
+- bezny produkcni deploy funguje znovu standardni cestou,
+- server bezi na stejnem commitu jako repo,
+- dalsi zmeny neni potreba nasazovat rucne pres kopirovani souboru.
+
+Odhad: S
+Riziko bez toho: Kriticke
+
+### 4.2 Backup databaze a uploadu
 
 Proc:
 Nejvetsi realne riziko neni chyba v UI, ale ztrata rezervaci, deniku a fotek.
 
-Co chybi:
+Co je uz hotove:
 
-- automaticky denni backup databaze,
-- automaticky backup uploadu a thumbnailu,
-- overeny restore postup,
-- retence zaloznih souboru.
+- v repu existuje backup manager pro DB i uploads,
+- existuje retence backupu a restore runbook,
+- existuje opakovatelny `npm run backup:smoke`,
+- produkcni smoke helper umi overit pritomnost backup cronu,
+- backup cron je na produkci nainstalovany,
+- na produkci uz existuje prvni realny DB dump i uploads archiv.
+
+Co jeste chybi:
+
+- jednou obnovit realny produkcni `.dump` a `.tar.gz` do test prostredi,
+- pridat dalsi vrstvu ochrany mimo jeden VPS stroj, idealne off-site kopii,
+- doplnit kontrolu stari nebo neuspechu produkcnich backupu do monitoringu.
 
 Definition of done:
 
-- bezi denni backup DB,
-- bezi denni backup uploads,
-- zalohy se uchovavaji alespon 7-30 dni,
-- mate jednoduchy restore runbook,
-- jednou je otestovany restore do test prostredi.
+- existuje realny produkcni DB backup,
+- existuje realny produkcni uploads backup,
+- obnova z produkcni zalohy byla aspon jednou realne otestovana,
+- zalohy nejsou jen na stejnem VPS bez dalsiho planu.
 
 Odhad: M
 Riziko bez toho: Kriticke
 
-### 4.2 Produkcni e-mail flow
+### 4.3 Produkcni e-mail flow
 
 Proc:
-Registrace, verifikace a pozvanky stoji na mailu. Pokud mail realne nedorazuje, onboarding rodiny se rozbije.
+Registrace, verifikace, reset hesla a pozvanky stoji na mailu. Pokud mail realne nedorazuje nebo backend v produkci predstira uspech, onboarding rodiny se rozbije.
 
-Co chybi:
+Co je uz hotove:
+
+- verify e-mail flow existuje,
+- password reset flow existuje,
+- invite e-mail flow existuje,
+- frontend ma stranky pro verify, invite i reset hesla,
+- bezny auth flow uz v produkci nevraci `testCode` ani `testToken`,
+- registrace se v produkci rollbackne, pokud selze odeslani verifikacniho mailu,
+- genericke transactional maily se v produkci nesmi tise simulovat bez SMTP,
+- startup v produkci validuje smysluplny `FRONTEND_URL`.
+
+Co jeste chybi:
 
 - potvrdit realne SMTP nastaveni v produkci,
-- otestovat verify mail, invite mail a fallback scenare,
-- potvrdit spravne URL v emailech.
+- potvrdit `EMAIL_FROM` a skutecne doruceni linku na produkcni domene,
+- otestovat verify mail, invite mail, reset hesla a scenar mail nedorazil,
+- srovnat `POST /api/superadmin/users`, ktery dnes pri selhani mailu jeste vraci `tempPassword` a `verificationToken`,
+- dopsat kratky operacni postup co delat, kdyz SMTP nebo doruceni selze.
 
 Definition of done:
 
 - registrace posle verifikacni mail,
 - verifikacni link otevre spravnou produkcni routu,
 - admin vytvori pozvanku a clovek ji prijme bez manualni pomoci,
-- existuje kratky postup co delat, kdyz mail nedorazi.
+- forgot password flow funguje end-to-end,
+- superadmin onboarding cesta nevraci produkcni fallback secret data,
+- existuje kratky postup co delat, kdyz mail nedorazi,
+- produkce nepredstira uspesne odeslani, kdyz SMTP realne nefunguje.
 
 Odhad: S
 Riziko bez toho: Vysoke
 
-### 4.3 Monitoring a alerting minimum
+### 4.4 Monitoring a alerting minimum
 
 Proc:
 Health endpoint a lokalni logy nestaci. Kdyz appka spadne, potrebujete to vedet driv nez rodina.
 
-Co chybi:
+Co je uz hotove:
 
-- uptime monitoring,
-- zakladni alert pri nedostupnosti,
-- dohled nad diskem a log rotation,
-- jednoducha kontrola po deployi.
+- existuje `/api/health`,
+- existuje post-deploy smoke check,
+- existuje incident runbook,
+- PM2 logrotate je na produkci nainstalovany.
+
+Co jeste chybi:
+
+- zapnout externi uptime monitoring na hlavni web,
+- zapnout externi uptime monitoring na API health endpoint,
+- nastavit alert pri nedostupnosti,
+- doplnit kontrolu backup stari nebo selhani,
+- jednou realne overit, ze alert opravdu dorazi.
 
 Definition of done:
 
 - bezi uptime monitoring na web a health endpoint,
 - pri vypadku prijde alert,
 - logy se nerostou bez limitu,
-- po deployi mate kratky smoke check.
+- po deployi mate kratky smoke check,
+- vime, ze se dozvime i o problemu s backupy.
 
 Odhad: S
 Riziko bez toho: Vysoke
 
-### 4.4 Rodinny end-to-end rehearsal
+### 4.5 Rodinny end-to-end rehearsal
 
 Proc:
-Pred ostrym pouzivanim potrebujete overit cely realny tok, ne jen build bez chyb.
+Pred ostrym pouzivanim potrebujete overit cely realny tok, ne jen build bez chyb a jednotlive manualni spot-checky.
 
-Co chybi:
+Co je uz hotove:
+
+- existuje smoke-test podklad pro desktop,
+- existuje mobile QA checklist,
+- produkcni mobilni pristup k admin nastrojum uz byl dotazen.
+
+Co jeste chybi:
 
 - jeden rucni dry run s realnymi rolemi,
 - overeni desktop + mobil,
-- zapis, co presne je hotovo a co jeste zlobilo.
+- zapis, co presne je hotovo a co jeste zlobilo,
+- potvrzeni, ze onboarding clena rodiny projde bez telefonicke podpory.
 
 Definition of done:
 
@@ -133,39 +248,51 @@ Riziko bez toho: Vysoke
 
 ## 5. Faze 1 - Nutne pred ostrym rodinnym provozem
 
-Tyto body uz nejsou tak kriticke jako zalohy, ale bez nich bude provoz zbytecne krehky nebo bude casto potrebovat vas rucni support.
+Tyto body uz nejsou tak kriticke jako backup, deploy a e-mail, ale bez nich bude provoz zbytecne krehky nebo bude casto potrebovat rucni support.
 
 ### 5.1 Password recovery
 
 Proc:
-Prihlaseny uzivatel si umi zmenit heslo, ale zapomenute heslo nema pohodlny self-service flow.
+Prihlaseny uzivatel si umi zmenit heslo, ale family-ready minimum neni splnene, dokud neni potvrzeny realny self-service reset v produkcnim toku.
 
-Doporuceny vystup:
+Co je uz hotove:
 
-- forgot password flow pres e-mail,
-- reset hesla pres secure token,
-- fallback admin postup do doby, nez bude flow hotovy.
+- forgot password flow pres e-mail existuje,
+- reset hesla pres token existuje,
+- expirace tokenu a zakladni UX existuji.
+
+Co jeste chybi:
+
+- otestovat uspesny reset hesla na produkci,
+- otestovat expirovany nebo neplatny token,
+- doplnit fallback admin postup do docs, pokud ho budete chtit drzet i po spusteni.
 
 Definition of done:
 
 - uzivatel na loginu vidi Zapomenute heslo,
 - prijde reset mail,
 - po resetu se umi normalne prihlasit,
-- expirace tokenu a friendly chybove stavy jsou osetrene.
+- expirace tokenu a friendly chybove stavy jsou overene v praxi.
 
-Odhad: M
+Odhad: XS-S
 Riziko bez toho: Vysoke
 
 ### 5.2 Realny activation flow pro prvniho admina
 
 Proc:
-Technicky onboarding existuje, ale chybi rodinny activation flow, ktery noveho admina povede k tomu, co ma udelat jako prvni.
+Technicky onboarding i checklist existuji, ale skutecny family-ready vystup je az potvrzeny prvni-admin flow bez vaseho doprovodu.
 
-Doporuceny vystup:
+Co je uz hotove:
 
-- uvodni checklist na dashboardu pro novou chatu,
-- CTA: pozvat rodinu, vytvorit prvni rezervaci, zalozit prvni shopping list,
-- skryti checklistu po dokonceni.
+- uvodni checklist na dashboardu existuje,
+- CTA pro pozvani rodiny, prvni rezervaci a prvni shopping list existuji,
+- skryvani checklistu je implementovane.
+
+Co jeste chybi:
+
+- otestovat flow prvniho admina po registraci,
+- projit wording a pripadne odstranit mista, kde by admin jeste tapal,
+- zapsat drobne friction body z realneho rehearsal.
 
 Definition of done:
 
@@ -173,19 +300,25 @@ Definition of done:
 - behem par minut umi dostat do appky dalsiho clena,
 - prvni tyden pouzivani nevyzaduje vysvetlovani po telefonu.
 
-Odhad: M
+Odhad: XS-S
 Riziko bez toho: Stredni
 
 ### 5.3 Invite UX bez zbytecne rucniho kopirovani
 
 Proc:
-Pro rodinu je zbytecne tvrde chtit po adminovi, aby si vsechno kopiroval rucne. Invite flow ma byt co nejbliz bezne komunikaci.
+Invite UX je implementovane, ale family-ready minimum neni splnene, dokud neni potvrzeny realny admin flow po zpevneni e-mailove vrstvy.
 
-Doporuceny vystup:
+Co je uz hotove:
 
-- tlacitko odeslat pozvanku e-mailem,
-- tlacitko zkopirovat kratky text pro WhatsApp nebo SMS,
-- jasny stav pozvanky: aktivni, prijata, expirovana.
+- tlacitko odeslat pozvanku e-mailem existuje,
+- tlacitko zkopirovat kratky text pro WhatsApp nebo SMS existuje,
+- stavy pozvanek jsou v UI.
+
+Co jeste chybi:
+
+- overit admin flow bez manualniho skladani zprav,
+- potvrdit, ze stav pozvanky se meni korektne po prijeti,
+- pripadne upravit texty podle realne rodinne zkusenosti.
 
 Definition of done:
 
@@ -193,25 +326,33 @@ Definition of done:
 - nemusi manualne skladat zpravu,
 - v seznamu vidi, co uz bylo prijato a co ne.
 
-Odhad: S
+Odhad: XS-S
 Riziko bez toho: Stredni
 
 ### 5.4 Zakladni notifikace na zmeny
 
 Proc:
-Jadro aplikace uz funguje, ale zmeny jsou casto tiche. Rodina potrebuje vedet aspon o rezervacich a dulezitych provoznich zmenach.
+Jadro aplikace uz funguje, ale zmeny jsou casto tiche. Tady uz nejde jen o E2E overeni, ale o skutecne chybejici implementaci minima.
 
-Doporuceny vystup:
+Co je uz hotove:
 
-- e-mail pri nove rezervaci,
-- e-mail pri zruseni nebo uprave dulezite rezervace,
-- pripadne jednoduche in-app oznaceni novinek.
+- existuje parcialni watcher flow pri zruseni rezervace,
+- notes kanal umi poslouzit jako cast notifikacni logiky.
+
+Co jeste chybi:
+
+- rozhodnout minimum notifikaci pro rodinu,
+- pridat upozorneni pri nove rezervaci,
+- pridat upozorneni pri zmene rezervace,
+- sjednotit zruseni rezervace do stejneho minima,
+- overit ceske texty a omezit hluk tak, aby notifikace nebyly otravne.
 
 Definition of done:
 
 - nova rezervace neni ticha udalost,
-- rodina se o ni dozvi bez nutnosti otevrit appku kazdou hodinu,
-- notifikace jsou srozumitelne a cesky napsane.
+- uprava dulezite rezervace neni ticha udalost,
+- zruseni rezervace neni ticha udalost,
+- rodina se o zmenach dozvi bez nutnosti otevrit appku kazdou hodinu.
 
 Odhad: M
 Riziko bez toho: Stredni az vysoke
@@ -219,14 +360,19 @@ Riziko bez toho: Stredni az vysoke
 ### 5.5 Auth konzistence a account enforcement
 
 Proc:
-Kdyz uz existuji stavy uctu jako ban nebo verify, musi byt vynucovane konzistentne na vsech relevantnich mistech.
+Vetsina enforcementu uz existuje, ale family-ready jistota je az po overeni edge cases v realnem toku.
 
-Doporuceny vystup:
+Co je uz hotove:
 
-- banned user nesmi projit login flow,
-- banned middleware je realne zapojeny,
-- heslova pravidla jsou sjednocena,
-- auth edge cases jsou osetrene konzistentne.
+- banned user neprojde login flow,
+- protected requesty se opiraji o aktualni stav uzivatele,
+- heslova pravidla jsou z velke casti sjednocena.
+
+Co jeste chybi:
+
+- E2E overit verify, login, logout a edge case scenare,
+- potvrdit konzistenci mezi beznym auth flow, invite flow a superadmin onboarding flow,
+- pripadne dorezit posledni nekonzistence nalezene pri rehearsal.
 
 Definition of done:
 
@@ -234,7 +380,7 @@ Definition of done:
 - neexistuje rozdil mezi tim, co UI tvrdi a co server opravdu pusti,
 - auth validation pravidla jsou stejna v registraci, zmene hesla i resetu.
 
-Odhad: S
+Odhad: XS-S
 Riziko bez toho: Stredni
 
 ### 5.6 Offline/PWA pravdivost a minimalni odolnost
@@ -242,15 +388,22 @@ Riziko bez toho: Stredni
 Proc:
 Na chate casto neni signal. Soucasna app ma zaklady PWA, ale neni dobre slibovat chovani, ktere neni skutecne garantovane.
 
-Doporuceny vystup:
+Co je uz hotove:
+
+- existuje PWA plugin,
+- existuje offline banner,
+- existuje zakladni offline-aware chovani pro network chyby.
+
+Co jeste chybi:
 
 - upravit texty tam, kde dnes slibuji automatickou synchronizaci bez jistoty,
-- zachovat offline cteni aspon pro klicove obrazovky,
-- pokud mozno pridat jednoduchou queue pro vybrane akce.
+- rozhodnout minimum offline podpory pro klicove obrazovky,
+- pokud bude davat smysl, pridat jednoduchou queue pro vybrane akce,
+- otestovat vypnuti site a navrat site na realnem telefonu.
 
 Definition of done:
 
-- appka nelze uzivatele misti zavadejicimi texty,
+- appka neklame uzivatele zavadejicimi texty,
 - pri slabsim pripojeni je porad citelna a rozumna,
 - po obnoveni site je jasne, co se povedlo a co ne.
 
@@ -262,7 +415,13 @@ Riziko bez toho: Stredni az vysoke
 Proc:
 Rodina bude appku casto pouzivat z telefonu. DevTools nestaci.
 
-Doporuceny vystup:
+Co je uz hotove:
+
+- mobilni shell je pouzitelny,
+- admin/statistiky jsou pristupne i na mobilu,
+- existuje mobile QA checklist.
+
+Co jeste chybi:
 
 - rucni test na 1-2 realnych telefonech,
 - overit rezervace, chat, fotky, shopping, profile drawer a admin,
@@ -302,7 +461,7 @@ Jakmile rodina zacne appku pouzivat, prijde potreba drobnych uprav bez zasahu de
 
 Doporuceny vystup:
 
-- leave cabin flow v UI,
+- leave cabin flow v UI nad uz hotovym backend/API endpointem,
 - dotazeni drobnych admin akci,
 - lepsi nastaveni chaty podle realne zpetne vazby.
 
@@ -312,13 +471,14 @@ Riziko bez toho: Nizke az stredni
 ### 6.3 Testy a CI preflight
 
 Proc:
-Po prvnim pusteni rodine zacne bolet kazda regrese po male zmene.
+Po prvnim pusteni rodine zacne bolet kazda regrese po male zmene. Tohle je stale skutecna implementacni mezera, ne jen overeni.
 
 Doporuceny vystup:
 
 - frontend testy pro nejkritictejsi flow,
 - aspon zakladni backend smoke testy,
-- test + build pred deployem.
+- test + build pred deployem,
+- zastaveni deploye jeste pred produkcnim restartem, pokud validace spadne.
 
 Definition of done:
 
@@ -358,33 +518,32 @@ Odhad: M
 
 Odhad: L
 
-## 8. Doporuce poradi implementace
+## 8. Doporucene poradi implementace a overeni
 
 Nejrozumnejsi poradi je:
 
-1. Backup DB a uploadu
-2. Produkcni e-mail flow
-3. Monitoring a alerting
-4. Rodinny smoke rehearsal
-5. Password recovery
-6. Activation checklist pro prvniho admina
-7. Invite UX z adminu
-8. Zakladni rezervacni notifikace
-9. Auth enforcement cleanup
-10. Offline/PWA pravdivost a mobilni QA
-11. Realtime a drobny self-service polish
-12. Testy a CI preflight
+1. Opravit standardni deploy auth na VPS
+2. Potvrdit produkcni backup artefakty a restore z produkcni zalohy
+3. Dokoncit produkcni e-mail E2E overeni vcetne superadmin create-user flow
+4. Otestovat verify, invite a reset hesla end-to-end
+5. Zapnout externi monitoring a alerting
+6. Udelat rodinny smoke rehearsal
+7. Dodelat zakladni rezervacni notifikace
+8. Dotahnout offline/PWA pravdivost a mobilni QA
+9. Dodelat realtime a drobny self-service polish
+10. Dopsat testy a CI preflight
 
 ## 9. Minimalni go-live podminky pro rodinu
 
 Appku bych pustil rodine naplno az ve chvili, kdy budou splnene tyto podminky:
 
-- existuje funkcni a overeny backup,
+- standardni produkcni deploy funguje bez manualniho kopirovani souboru,
+- existuje funkcni a overeny produkcni backup,
 - registrace nebo invite projdou bez rucniho zasahu,
+- verify a reset hesla funguje na produkcni domene,
 - pri vypadku vite, ze aplikace nejede,
-- zapomenute heslo jde vyresit bez zasahu do databaze,
 - admin umi dostat dalsiho clena do appky bez vysvetlovani,
-- na telefonu jsou overene rezervace, shopping, chat a upload fotek,
+- na telefonu jsou overene rezervace, shopping, chat, admin a upload fotek,
 - probehl jeden cely rodinny rehearsal flow.
 
 ## 10. Co neni potreba resit ted
@@ -404,17 +563,18 @@ Tohle patri az do dalsi etapy, kdy budete resit cizi uzivatele a verejny launch.
 
 ### Tento vikend
 
-- dodelat backup plan a restore test,
-- potvrdit produkcni e-mail flow,
-- zapnout monitoring,
+- opravit standardni deploy auth na VPS,
+- potvrdit produkcni backup artefakty a jednou zkusit restore z realne zalohy,
+- dokoncit produkcni e-mail E2E overeni vcetne superadmin onboarding cesty,
+- otestovat verify, invite a reset hesla,
+- zapnout externi monitoring,
 - udelat rodinny smoke rehearsal.
 
 ### Dalsi sprint
 
-- password recovery,
-- activation checklist po registraci,
-- invite UX z admin page,
-- rezervacni notifikace.
+- zakladni rezervacni notifikace,
+- offline/PWA pravdivost,
+- mobilni QA pass a drobny polish backlog.
 
 ### Sprint po spusteni
 

@@ -14,6 +14,7 @@ const router = Router();
 
 const PASSWORD_RESET_EXPIRY_MS = 2 * 60 * 60 * 1000;
 const PASSWORD_RESET_GENERIC_MESSAGE = "Pokud účet existuje a má nastavený e-mail pro obnovu hesla, poslali jsme vám odkaz pro nastavení nového hesla.";
+const isProduction = process.env.NODE_ENV === "production";
 
 function hashToken(token: string): string {
   return crypto.createHash("sha256").update(token).digest("hex");
@@ -113,10 +114,15 @@ router.post("/login", validate(loginSchema), async (req: Request, res: Response)
         return res.status(403).json({ message: "Vaše e-mailová adresa ještě nebyla ověřena. Odeslali jsme vám nový ověřovací kód na e-mail." });
       } catch (err) {
         logger.error("AUTH", "Failed to resend verification email during login", { error: String(err) });
-        return res.status(403).json({
+        const response: { message: string; testCode?: string } = {
           message: "Vaše e-mailová adresa ještě nebyla ověřena a e-mail se nepodařilo odeslat. Kontaktujte administrátora.",
-          testCode: code
-        });
+        };
+
+        if (!isProduction) {
+          response.testCode = code;
+        }
+
+        return res.status(403).json(response);
       }
     }
 
@@ -261,17 +267,54 @@ router.post("/register", async (req: Request, res: Response) => {
         error: String(emailError),
       });
 
-      // Fallback — log token for testing/dev
-      logger.info(
-        "AUTH",
-        `=== NOUZOVÝ OVĚŘOVACÍ TOKEN PRO TESTOVÁNÍ: ${verificationToken} ===`
-      );
+      if (isProduction) {
+        try {
+          await prisma.$transaction(async (tx) => {
+            await tx.user.delete({ where: { id: newUser.id } });
+            await tx.cabin.delete({ where: { id: newCabin.id } });
+          });
 
-      res.status(201).json({
+          logger.warn("AUTH", "Registration rolled back because verification email could not be sent", {
+            userId: newUser.id,
+            cabinId: newCabin.id,
+            email,
+          });
+        } catch (rollbackError) {
+          logger.error("AUTH", "Failed to roll back registration after verification email error", {
+            userId: newUser.id,
+            cabinId: newCabin.id,
+            email,
+            error: String(rollbackError),
+          });
+        }
+
+        return res.status(503).json({
+          message: "Registraci se nepodarilo dokoncit, protoze se nepodarilo odeslat aktivacni e-mail. Zkuste to prosim znovu pozdeji nebo kontaktujte administrátora.",
+          requiresVerification: false,
+        });
+      }
+
+      if (!isProduction) {
+        logger.info(
+          "AUTH",
+          `=== NOUZOVÝ OVĚŘOVACÍ TOKEN PRO TESTOVÁNÍ: ${verificationToken} ===`
+        );
+      }
+
+      const response: {
+        message: string;
+        requiresVerification: boolean;
+        testToken?: string | null;
+      } = {
         message: "Registrace proběhla, ale e-mail s aktivačním odkazem se nepodařilo odeslat. Kontaktujte administrátora.",
         requiresVerification: true,
-        testToken: verificationToken,
-      });
+      };
+
+      if (!isProduction) {
+        response.testToken = verificationToken;
+      }
+
+      res.status(201).json(response);
     }
   } catch (error) {
     logger.error("AUTH", "Register error", { error: String(error), stack: (error as Error).stack });
@@ -333,6 +376,21 @@ router.post("/forgot-password", validate(forgotPasswordSchema), async (req: Requ
       logger.info("AUTH", "Password reset email queued", { userId: user.id });
     } catch (emailError) {
       logger.error("AUTH", "Failed to send password reset email", { userId: user.id, error: String(emailError) });
+
+      try {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            passwordResetToken: null,
+            passwordResetExpiresAt: null,
+          },
+        });
+      } catch (cleanupError) {
+        logger.error("AUTH", "Failed to clear password reset token after email error", {
+          userId: user.id,
+          error: String(cleanupError),
+        });
+      }
     }
 
     return res.json({ message: PASSWORD_RESET_GENERIC_MESSAGE });

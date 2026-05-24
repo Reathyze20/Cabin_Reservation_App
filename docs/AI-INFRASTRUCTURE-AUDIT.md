@@ -75,7 +75,7 @@ Problemy:
 
 - duplicita identity `product-advisor`,
 - typo ve filename `security-audit.promnt.md.prompt.md`,
-- prompty mimo managed vrstvu v rootu repo (`redesign-prompt.md`, `stitch-prompt.md`, `plan-performanceOptimization.prompt.md`).
+- historicke root prompty byly mimo managed vrstvu; byly odstraneny a aktivni prompt layer zustava v `.github/prompts/`.
 
 Dusledek:
 

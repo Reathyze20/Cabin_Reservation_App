@@ -12,7 +12,7 @@ import prisma from "../../utils/prisma";
 import logger from "../../utils/logger";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
-import { sendVerificationEmailWithToken } from "../../utils/email";
+import { sendSuperadminOnboardingEmail } from "../../utils/email";
 
 const router = express.Router();
 
@@ -46,6 +46,7 @@ router.get("/users", protect, requireSuperAdmin, async (req: Request, res: Respo
 router.post("/users", protect, requireSuperAdmin, validate(superadminCreateUserSchema), async (req: Request, res: Response) => {
   try {
     const { username, email, role } = req.body;
+    const isProduction = process.env.NODE_ENV === "production";
 
     // Kontrola zda uživatel již existuje
     const existingUser = await prisma.user.findFirst({
@@ -80,35 +81,86 @@ router.post("/users", protect, requireSuperAdmin, validate(superadminCreateUserS
       },
     });
 
-    // Pošli e-mail s dočasným heslem a aktivačním linkem
+    // Pošli onboarding e-mail s aktivačním linkem a dočasným heslem
     let verificationEmailSent = false;
+    let exposeFallbackSecrets = false;
     try {
-      await sendVerificationEmailWithToken(email, verificationToken);
-      verificationEmailSent = true;
-      logger.info("SUPERADMIN", `User ${username} created and verification email sent`, {
+      const emailResult = await sendSuperadminOnboardingEmail(email, verificationToken, tempPassword);
+      verificationEmailSent = emailResult.delivered;
+      exposeFallbackSecrets = !isProduction && !verificationEmailSent;
+
+      if (verificationEmailSent) {
+        logger.info("SUPERADMIN", `User ${username} created and onboarding email sent`, {
+          userId: newUser.id,
+          email,
+        });
+      } else {
+        logger.warn("SUPERADMIN", `User ${username} created but onboarding email was not delivered`, {
+          userId: newUser.id,
+          email,
+          simulated: true,
+        });
+      }
+    } catch (emailError) {
+      logger.error("SUPERADMIN", `Failed to send onboarding email to ${email}`, {
+        error: String(emailError),
         userId: newUser.id,
         email,
       });
-    } catch (emailError) {
-      logger.error("SUPERADMIN", `Failed to send verification email to ${email}`, {
-        error: String(emailError),
-      });
-      // Pokračuj i když email selže — vrátíme token v responsu
+
+      if (isProduction) {
+        try {
+          await prisma.user.delete({ where: { id: newUser.id } });
+          logger.warn("SUPERADMIN", "Rolled back user after onboarding email failure", {
+            userId: newUser.id,
+            email,
+          });
+          return res.status(503).json({
+            message: "Účet nebyl vytvořen, protože se nepodařilo odeslat onboarding e-mail. Zkuste to znovu po opravě SMTP nebo doručování.",
+          });
+        } catch (cleanupError) {
+          logger.error("SUPERADMIN", "Failed to rollback user after onboarding email failure", {
+            userId: newUser.id,
+            email,
+            error: String(cleanupError),
+          });
+          return res.status(500).json({
+            message: "Účet se nepodařilo bezpečně vytvořit. Zkontrolujte stav uživatele a logy, pak zkuste akci znovu.",
+          });
+        }
+      }
+
+      exposeFallbackSecrets = true;
     }
 
-    res.status(201).json({
+    const response: {
+      message: string;
+      user: {
+        id: string;
+        username: string;
+        email: string | null;
+      };
+      verificationEmailSent: boolean;
+      tempPassword?: string;
+      verificationToken?: string;
+    } = {
       message: verificationEmailSent
-        ? `Uživatel ${username} byl vytvořen. Verifikační e-mail byl odeslán.`
-        : `Uživatel ${username} byl vytvořen, ale verifikační e-mail se nepodařilo odeslat. Použijte dočasné údaje níže.`,
+        ? `Uživatel ${username} byl vytvořen. Onboarding e-mail s aktivačním odkazem a dočasným heslem byl odeslán.`
+        : `Uživatel ${username} byl vytvořen, ale onboarding e-mail se nepodařilo odeslat. Použijte nouzové údaje níže.`,
       user: {
         id: newUser.id,
         username: newUser.username,
         email: newUser.email,
       },
       verificationEmailSent,
-      tempPassword, // Pro Super Admina (v produkci by se měl poslat jen e-mailem)
-      verificationToken, // Fallback pokud e-mail selže
-    });
+    };
+
+    if (exposeFallbackSecrets) {
+      response.tempPassword = tempPassword;
+      response.verificationToken = verificationToken;
+    }
+
+    res.status(201).json(response);
   } catch (error) {
     logger.error("SUPERADMIN", "Failed to create user", { error: String(error) });
     res.status(500).json({ message: "Chyba při vytváření uživatele" });

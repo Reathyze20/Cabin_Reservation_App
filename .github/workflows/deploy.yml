@@ -2,7 +2,10 @@ name: Deploy to Production
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
+
+permissions:
+  contents: read
 
 jobs:
   deploy:
@@ -10,319 +13,381 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Execute deployment commands on server
-      uses: appleboy/ssh-action@master
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        host: ${{ secrets.SSH_HOST }}
-        username: ${{ secrets.SSH_USER }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        port: 22
-        envs: GITHUB_TOKEN
-        script: |
-          set -e
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-          # Explicitly source nvm to make node/npm/pm2 available
-          # IMPORTANT: NVM is installed for 'reathyze' user, not root — use absolute path
-          export NVM_DIR="/home/reathyze/.nvm"
-          export PM2_HOME="/home/reathyze/.pm2"
-          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+      - name: Package release bundle
+        run: |
+          tar \
+            --exclude=.git \
+            --exclude=.github \
+            --exclude=.env \
+            --exclude=node_modules \
+            --exclude=frontend-v2/node_modules \
+            --exclude=dist \
+            --exclude=data \
+            --exclude=src/generated/prisma \
+            -czf release.tgz .
 
-          # Failsafe: if any step fails, ensure app gets restarted with old build
-          trap 'echo "=== DEPLOY FAILED — restarting app with previous build ==="; npx pm2 restart chata-app 2>/dev/null || npx pm2 start npm --name "chata-app" -- run start; npx pm2 save' ERR
+      - name: Upload release bundle to server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          source: release.tgz
+          target: /tmp/
 
-          # Navigate to the app directory
-          APP_PATH="${{ secrets.SERVER_PATH }}"
-          APP_USER="reathyze"
-          BACKUP_ROOT="/home/reathyze/backups/cabin"
-          BACKUP_RETENTION_DAYS="14"
-          BACKUP_CRON_SCHEDULE="0 3 * * *"
+      - name: Execute deployment commands on server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            set -e
 
-          run_as_app() {
-            local user_script
-            user_script="$(mktemp)"
-            printf '%s\n' "$@" > "$user_script"
-            chmod 700 "$user_script"
-            chown "$APP_USER:$APP_USER" "$user_script"
-            su - "$APP_USER" -s /bin/bash -c "/bin/bash '$user_script'"
-            local status=$?
-            rm -f "$user_script"
-            return $status
-          }
+            # Explicitly source nvm to make node/npm/pm2 available
+            # IMPORTANT: NVM is installed for 'reathyze' user, not root — use absolute path
+            export NVM_DIR="/home/reathyze/.nvm"
+            export PM2_HOME="/home/reathyze/.pm2"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
-          cd "$APP_PATH"
+            # Failsafe: if any step fails, ensure app gets restarted with old build
+            trap 'echo "=== DEPLOY FAILED — restarting app with previous build ==="; npx pm2 restart chata-app 2>/dev/null || npx pm2 start npm --name "chata-app" -- run start; npx pm2 save' ERR
 
-          echo "=== Backing up data ==="
-          # Clean up any previous failed backup
-          rm -rf /tmp/cabin_data_backup
+            # Navigate to the app directory
+            APP_PATH="${{ secrets.SERVER_PATH }}"
+            APP_USER="reathyze"
+            BACKUP_ROOT="/home/reathyze/backups/cabin"
+            BACKUP_RETENTION_DAYS="14"
+            BACKUP_CRON_SCHEDULE="0 3 * * *"
+            RELEASE_BUNDLE="/tmp/release.tgz"
+            RELEASE_DIR="/tmp/chata-release"
 
-          # Clean up nested directories from previous bug
-          if [ -d "data/uploads/uploads" ]; then
-            echo "Cleaning up nested uploads..."
-            rm -rf data/uploads/uploads
-          fi
-          if [ -d "data/logs/logs" ]; then
-            echo "Cleaning up nested logs..."
-            rm -rf data/logs/logs
-          fi
+            run_as_app() {
+              local user_script
+              user_script="$(mktemp)"
+              printf '%s\n' "$@" > "$user_script"
+              chmod 700 "$user_script"
+              chown "$APP_USER:$APP_USER" "$user_script"
+              su - "$APP_USER" -s /bin/bash -c "/bin/bash '$user_script'"
+              local status=$?
+              rm -f "$user_script"
+              return $status
+            }
 
-          # Backup untracked/ignored data (live JSON data, logs, uploads)
-          mkdir -p /tmp/cabin_data_backup
-          if ls data/*.json 1>/dev/null 2>&1; then
-            cp data/*.json /tmp/cabin_data_backup/
-          fi
-          if [ -d "data/logs" ]; then
-            cp -R data/logs /tmp/cabin_data_backup/
-          fi
-          if [ -d "data/uploads" ]; then
-            cp -R data/uploads /tmp/cabin_data_backup/
-          fi
+            cd "$APP_PATH"
 
-          # Backup .env file (contains sensitive credentials)
-          if [ -f ".env" ]; then
-            echo "Backing up .env file..."
-            cp .env /tmp/cabin_data_backup/.env
-          fi
+            echo "=== Backing up data ==="
+            # Clean up any previous failed backup
+            rm -rf /tmp/cabin_data_backup
 
-          echo "=== Updating code ==="
-          # Set remote URL with token for HTTPS authentication
-          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/Reathyze20/Cabin_Reservation_App.git"
-          # Force-reset to remote main (avoids merge conflicts from
-          # package-lock.json or any server-side file modifications)
-          git fetch origin main
-          git reset --hard origin/main
+            # Clean up nested directories from previous bug
+            if [ -d "data/uploads/uploads" ]; then
+              echo "Cleaning up nested uploads..."
+              rm -rf data/uploads/uploads
+            fi
+            if [ -d "data/logs/logs" ]; then
+              echo "Cleaning up nested logs..."
+              rm -rf data/logs/logs
+            fi
 
-          echo "=== Restoring data ==="
-          # Restore backed-up data files on top of fresh checkout
-          if ls /tmp/cabin_data_backup/*.json 1>/dev/null 2>&1; then
-            cp /tmp/cabin_data_backup/*.json data/
-          fi
-          if [ -d "/tmp/cabin_data_backup/logs" ]; then
-            rm -rf data/logs
-            mkdir -p data/logs
-            cp -rT /tmp/cabin_data_backup/logs data/logs
-          fi
-          if [ -d "/tmp/cabin_data_backup/uploads" ]; then
-            rm -rf data/uploads
-            mkdir -p data/uploads
-            cp -rT /tmp/cabin_data_backup/uploads data/uploads
-          fi
+            # Backup untracked/ignored data (live JSON data, logs, uploads)
+            mkdir -p /tmp/cabin_data_backup
+            if ls data/*.json 1>/dev/null 2>&1; then
+              cp data/*.json /tmp/cabin_data_backup/
+            fi
+            if [ -d "data/logs" ]; then
+              cp -R data/logs /tmp/cabin_data_backup/
+            fi
+            if [ -d "data/uploads" ]; then
+              cp -R data/uploads /tmp/cabin_data_backup/
+            fi
 
-          # Restore .env file
-          if [ -f "/tmp/cabin_data_backup/.env" ]; then
-            echo "Restoring .env file..."
-            cp /tmp/cabin_data_backup/.env .env
-          fi
+            # Backup .env file (contains sensitive credentials)
+            if [ -f ".env" ]; then
+              echo "Backing up .env file..."
+              cp .env /tmp/cabin_data_backup/.env
+            fi
 
-          rm -rf /tmp/cabin_data_backup
+            echo "=== Updating code ==="
+            if [ ! -f "$RELEASE_BUNDLE" ]; then
+              echo "ERROR: release bundle was not uploaded to $RELEASE_BUNDLE"
+              exit 1
+            fi
 
-          echo "=== Configuring environment ==="
-          # Create .env file from GitHub secrets ONLY if .env doesn't already exist
-          if [ ! -f ".env" ]; then
-            if [ -n "${{ secrets.DATABASE_URL }}" ] && [ "${{ secrets.DATABASE_URL }}" != "" ]; then
-              echo "Creating .env from GitHub secrets..."
-              cat > .env << EOF
-          DATABASE_URL=${{ secrets.DATABASE_URL }}
-          JWT_SECRET=${{ secrets.JWT_SECRET }}
-          PORT=3000
-          EOF
+            rm -rf "$RELEASE_DIR"
+            mkdir -p "$RELEASE_DIR"
+            tar -xzf "$RELEASE_BUNDLE" -C "$RELEASE_DIR"
+
+            if command -v rsync >/dev/null 2>&1; then
+              rsync -a --delete \
+                --exclude 'data' \
+                --exclude '.env' \
+                --exclude 'node_modules' \
+                --exclude 'frontend-v2/node_modules' \
+                --exclude 'dist' \
+                --exclude 'src/generated/prisma' \
+                "$RELEASE_DIR"/ "$APP_PATH"/
             else
-              echo "ERROR: .env file not found and no GitHub secrets configured!"
-              echo ""
-              echo "Option 1: Create .env manually on server with:"
-              echo "  DATABASE_URL=postgresql://user:password@localhost:5432/dbname"
-              echo "  JWT_SECRET=your-secret-key"
-              echo "  PORT=3000"
-              echo ""
-              echo "Option 2: Add these secrets to GitHub repository:"
-              echo "  - DATABASE_URL"
-              echo "  - JWT_SECRET"
+              echo "WARNING: rsync not found. Falling back to archive overlay without delete semantics."
+              tar -xzf "$RELEASE_BUNDLE" -C "$APP_PATH"
+            fi
+
+            rm -rf "$RELEASE_DIR"
+            rm -f "$RELEASE_BUNDLE"
+
+            echo "=== Restoring data ==="
+            # Restore backed-up data files on top of fresh checkout
+            if ls /tmp/cabin_data_backup/*.json 1>/dev/null 2>&1; then
+              cp /tmp/cabin_data_backup/*.json data/
+            fi
+            if [ -d "/tmp/cabin_data_backup/logs" ]; then
+              rm -rf data/logs
+              mkdir -p data/logs
+              cp -rT /tmp/cabin_data_backup/logs data/logs
+            fi
+            if [ -d "/tmp/cabin_data_backup/uploads" ]; then
+              rm -rf data/uploads
+              mkdir -p data/uploads
+              cp -rT /tmp/cabin_data_backup/uploads data/uploads
+            fi
+
+            # Restore .env file
+            if [ -f "/tmp/cabin_data_backup/.env" ]; then
+              echo "Restoring .env file..."
+              cp /tmp/cabin_data_backup/.env .env
+            fi
+
+            rm -rf /tmp/cabin_data_backup
+
+            echo "=== Configuring environment ==="
+            # Create .env file from GitHub secrets ONLY if .env doesn't already exist
+            if [ ! -f ".env" ]; then
+              if [ -n "${{ secrets.DATABASE_URL }}" ] && [ "${{ secrets.DATABASE_URL }}" != "" ] && [ -n "${{ secrets.JWT_SECRET }}" ] && [ "${{ secrets.JWT_SECRET }}" != "" ] && [ -n "${{ secrets.FRONTEND_URL }}" ] && [ "${{ secrets.FRONTEND_URL }}" != "" ]; then
+                echo "Creating .env from GitHub secrets..."
+                cat > .env << EOF
+            DATABASE_URL=${{ secrets.DATABASE_URL }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            FRONTEND_URL=${{ secrets.FRONTEND_URL }}
+            PORT=3000
+            EOF
+              else
+                echo "ERROR: .env file not found and required GitHub secrets are missing!"
+                echo ""
+                echo "Option 1: Create .env manually on server with:"
+                echo "  DATABASE_URL=postgresql://user:password@localhost:5432/dbname"
+                echo "  JWT_SECRET=your-secret-key"
+                echo "  FRONTEND_URL=https://your-production-domain.tld"
+                echo "  PORT=3000"
+                echo ""
+                echo "Option 2: Add these secrets to GitHub repository:"
+                echo "  - DATABASE_URL"
+                echo "  - JWT_SECRET"
+                echo "  - FRONTEND_URL"
+                exit 1
+              fi
+            else
+              echo ".env file exists (restored from backup or already on server)"
+            fi
+
+            echo "=== Validating environment ==="
+            FRONTEND_URL_VALUE=$(sed -n 's/^FRONTEND_URL=//p' .env | tail -n 1 | tr -d '"' | tr -d "'" | tr -d '[:space:]')
+            if [ -z "$FRONTEND_URL_VALUE" ]; then
+              echo "ERROR: FRONTEND_URL is missing in .env"
               exit 1
             fi
-          else
-            echo ".env file exists (restored from backup or already on server)"
-          fi
 
-          echo "=== Installing dependencies ==="
-          # Clean up old moved node_modules backups from previous deploys.
-          # These can silently fill the VPS disk over time.
-          rm -rf node_modules.old.* 2>/dev/null || true
-          # Move old node_modules aside instead of deleting.
-          # Previous manual/root installs can leave files we cannot remove.
-          if [ -d "node_modules" ]; then
-            echo "Moving old node_modules directory..."
-            mv node_modules node_modules.old.$(date +%s)
-          fi
-          npm ci
-          # Rebuild native modules (bcrypt etc.) for current Node.js version
-          npm rebuild
+            case "$FRONTEND_URL_VALUE" in
+              http://localhost*|https://localhost*|http://127.0.0.1*|https://127.0.0.1*|http://::1*|https://::1*|http://[::1]*|https://[::1]*)
+                echo "ERROR: FRONTEND_URL points to localhost and is not valid for production."
+                exit 1
+                ;;
+            esac
 
-          echo "=== Stopping application ==="
-          # Stop PM2 to release file locks
-          npx pm2 stop chata-app 2>/dev/null || true
-          
-          echo "=== Generating Prisma client ==="
-          # Fix permissions first (files may have been created by root in a previous deploy)
-          if [ -d "src/generated/prisma" ]; then
-            echo "Fixing permissions and moving old Prisma directory..."
-            chmod -R u+rw src/generated/prisma 2>/dev/null || true
-            mv src/generated/prisma src/generated/prisma.old.$(date +%s) 2>/dev/null || rm -rf src/generated/prisma 2>/dev/null || true
-          fi
-          # Clean up any accumulated .old directories
-          rm -rf src/generated/prisma.old.* 2>/dev/null || true
-          npx prisma generate
+            echo "FRONTEND_URL validated: $FRONTEND_URL_VALUE"
 
-          echo "=== Running database migrations ==="
-          # Remove BOM if present (Windows-created .env files may have UTF-8 BOM)
-          sed -i '1s/^\xEF\xBB\xBF//' .env
-          # Load .env variables safely (handles special chars, skips comments/empty lines)
-          while IFS= read -r line || [ -n "$line" ]; do
-            # Skip empty lines and comments
-            [[ -z "$line" || "$line" =~ ^# ]] && continue
-            # Remove inline comments, trim whitespace
-            line="${line%%#*}"
-            line="${line%"${line##*[![:space:]]}"}"
-            # Only process lines with KEY=VALUE format
-            if [[ "$line" =~ ^[A-Za-z_][A-Za-z0-9_]*= ]]; then
-              export "$line"
+            echo "=== Installing dependencies ==="
+            # Clean up old moved node_modules backups from previous deploys.
+            # These can silently fill the VPS disk over time.
+            rm -rf node_modules.old.* 2>/dev/null || true
+            # Move old node_modules aside instead of deleting.
+            # Previous manual/root installs can leave files we cannot remove.
+            if [ -d "node_modules" ]; then
+              echo "Moving old node_modules directory..."
+              mv node_modules node_modules.old.$(date +%s)
             fi
-          done < .env
+            npm ci
+            # Rebuild native modules (bcrypt etc.) for current Node.js version
+            npm rebuild
 
-          # Verify DATABASE_URL is available
-          if [ -z "$DATABASE_URL" ]; then
-            echo "ERROR: DATABASE_URL is empty after sourcing .env!"
-            echo ".env contents (keys only):"
-            grep -oP '^[A-Z_]+(?==)' .env || echo "(no matches)"
-            exit 1
-          fi
-          echo "DATABASE_URL loaded (length: ${#DATABASE_URL})"
+            echo "=== Stopping application ==="
+            # Stop PM2 to release file locks
+            npx pm2 stop chata-app 2>/dev/null || true
 
-          # Check if cabins table exists (created by migration 20260301133234)
-          echo "Checking cabins table..."
-          CABINS_EXISTS=$(psql "$DATABASE_URL" -tAc "SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name='cabins')" 2>&1) || true
-          echo "Cabins table check result: $CABINS_EXISTS"
-
-          if [ "$CABINS_EXISTS" != "t" ]; then
-            echo "Creating cabins table and cabin_id columns via direct SQL..."
-            psql "$DATABASE_URL" -f prisma/migrations/20260301133234_add_cabin_multi_tenant/migration.sql || echo "WARNING: some SQL statements may have failed (expected for idempotent re-run)"
-          fi
-
-          # Resolve any failed/rolled-back migrations so migrate deploy can proceed
-          echo "Resolving migration states..."
-          for migration in \
-            20260301133234_add_cabin_multi_tenant \
-            20260303120000_add_cabin_settings_fields \
-            20260303162519_remove_precise_location \
-            20260303165649_add_checkout_fields \
-            20260307112043_add_wallpapers \
-            20260322091452_add_monthly_notes \
-            20260322145523_add_note_indexes \
-            20260322151531_add_chat_features \
-            20260323155930_add_thread_read_status \
-            20260402145027_gallery_folder_compound_unique; do
-            npx prisma migrate resolve --rolled-back "$migration" 2>&1 || true
-          done
-
-          echo "Running prisma migrate deploy..."
-          npx prisma migrate deploy
-
-          echo "=== Cleaning dist directory ==="
-          # Fix permissions first, then move old build artifacts
-          if [ -d "dist" ]; then
-            echo "Moving old dist directory..."
-            chmod -R u+rw dist 2>/dev/null || true
-            mv dist dist.old.$(date +%s) 2>/dev/null || rm -rf dist 2>/dev/null || true
-          fi
-          # Clean up any accumulated .old directories
-          rm -rf dist.old.* 2>/dev/null || true
-
-          echo "=== Installing frontend dependencies ==="
-          rm -rf frontend-v2/node_modules.old.* 2>/dev/null || true
-          if [ -d "frontend-v2/node_modules" ]; then
-            echo "Moving old frontend-v2/node_modules directory..."
-            mv frontend-v2/node_modules frontend-v2/node_modules.old.$(date +%s)
-          fi
-          cd frontend-v2 && npm ci && cd ..
-
-          echo "=== Building frontend ==="
-          npm run build
-
-          echo "=== Restarting application ==="
-          # Kill any orphan process on port 3000 (not under PM2 control)
-          fuser -k 3000/tcp 2>/dev/null || true
-          sleep 1
-          # Restart PM2 process, or start it if it doesn't exist yet
-          npx pm2 restart chata-app 2>/dev/null || npx pm2 start npm --name "chata-app" -- run start
-          npx pm2 save
-
-          # Wait for the server to be fully ready (max 60s, test dedicated health endpoint)
-          echo "Waiting for server health check..."
-          SERVER_READY=0
-          for i in $(seq 1 20); do
-            if curl -fsS http://localhost:3000/api/health | grep -q '"status":"ok"'; then
-              echo "Server is healthy after $((i * 3))s"
-              SERVER_READY=1
-              break
+            echo "=== Generating Prisma client ==="
+            # Fix permissions first (files may have been created by root in a previous deploy)
+            if [ -d "src/generated/prisma" ]; then
+              echo "Fixing permissions and moving old Prisma directory..."
+              chmod -R u+rw src/generated/prisma 2>/dev/null || true
+              mv src/generated/prisma src/generated/prisma.old.$(date +%s) 2>/dev/null || rm -rf src/generated/prisma 2>/dev/null || true
             fi
-            echo "  ...waiting (${i}/20)"
-            sleep 3
-          done
+            # Clean up any accumulated .old directories
+            rm -rf src/generated/prisma.old.* 2>/dev/null || true
+            npx prisma generate
 
-          if [ "$SERVER_READY" -ne 1 ]; then
-            echo "ERROR: /api/health did not return status ok in time"
-            exit 1
-          fi
+            echo "=== Running database migrations ==="
+            # Remove BOM if present (Windows-created .env files may have UTF-8 BOM)
+            sed -i '1s/^\xEF\xBB\xBF//' .env
+            # Load .env variables safely (handles special chars, skips comments/empty lines)
+            while IFS= read -r line || [ -n "$line" ]; do
+              # Skip empty lines and comments
+              [[ -z "$line" || "$line" =~ ^# ]] && continue
+              # Remove inline comments, trim whitespace
+              line="${line%%#*}"
+              line="${line%"${line##*[![:space:]]}"}"
+              # Only process lines with KEY=VALUE format
+              if [[ "$line" =~ ^[A-Za-z_][A-Za-z0-9_]*= ]]; then
+                export "$line"
+              fi
+            done < .env
 
-          echo "=== Ensuring backup prerequisites ==="
-          for required_command in pg_dump pg_restore tar; do
-            if ! command -v "$required_command" >/dev/null 2>&1; then
-              echo "ERROR: missing required backup command: $required_command"
+            # Verify DATABASE_URL is available
+            if [ -z "$DATABASE_URL" ]; then
+              echo "ERROR: DATABASE_URL is empty after sourcing .env!"
+              echo ".env contents (keys only):"
+              grep -oP '^[A-Z_]+(?==)' .env || echo "(no matches)"
               exit 1
             fi
-          done
+            echo "DATABASE_URL loaded (length: ${#DATABASE_URL})"
 
-          if ! run_as_app "export NVM_DIR=$NVM_DIR" ". $NVM_DIR/nvm.sh" "cd $APP_PATH" "command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1"; then
-            echo "ERROR: node/npm are not available for $APP_USER after sourcing NVM."
-            exit 1
-          fi
+            # Check if cabins table exists (created by migration 20260301133234)
+            echo "Checking cabins table..."
+            CABINS_EXISTS=$(psql "$DATABASE_URL" -tAc "SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name='cabins')" 2>&1) || true
+            echo "Cabins table check result: $CABINS_EXISTS"
 
-          echo "=== Installing backup cron ==="
-          install -d -m 755 -o "$APP_USER" -g "$APP_USER" "$BACKUP_ROOT" "$BACKUP_ROOT/db" "$BACKUP_ROOT/uploads" "$APP_PATH/data/logs"
+            if [ "$CABINS_EXISTS" != "t" ]; then
+              echo "Creating cabins table and cabin_id columns via direct SQL..."
+              psql "$DATABASE_URL" -f prisma/migrations/20260301133234_add_cabin_multi_tenant/migration.sql || echo "WARNING: some SQL statements may have failed (expected for idempotent re-run)"
+            fi
 
-          BACKUP_COMMAND_INNER=$(cat <<EOF
-          export NVM_DIR=$NVM_DIR; [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"; mkdir -p $BACKUP_ROOT $APP_PATH/data/logs; cd $APP_PATH; BACKUP_ROOT=$BACKUP_ROOT BACKUP_RETENTION_DAYS=$BACKUP_RETENTION_DAYS npm run backup:all >> $APP_PATH/data/logs/backup-cron.log 2>&1
-          EOF
-          )
-          printf -v BACKUP_COMMAND_QUOTED '%q' "$BACKUP_COMMAND_INNER"
-          BACKUP_CRON_LINE="$BACKUP_CRON_SCHEDULE /usr/bin/flock -n /tmp/cabin-backup.lock /bin/bash -lc $BACKUP_COMMAND_QUOTED"
+            # Resolve any failed/rolled-back migrations so migrate deploy can proceed
+            echo "Resolving migration states..."
+            for migration in \
+              20260301133234_add_cabin_multi_tenant \
+              20260303120000_add_cabin_settings_fields \
+              20260303162519_remove_precise_location \
+              20260303165649_add_checkout_fields \
+              20260307112043_add_wallpapers \
+              20260322091452_add_monthly_notes \
+              20260322145523_add_note_indexes \
+              20260322151531_add_chat_features \
+              20260323155930_add_thread_read_status \
+              20260402145027_gallery_folder_compound_unique; do
+              npx prisma migrate resolve --rolled-back "$migration" 2>&1 || true
+            done
 
-          existing_crontab="$(mktemp)"
-          updated_crontab="$(mktemp)"
-          crontab -u "$APP_USER" -l 2>/dev/null | grep -v 'cabin-backup.lock' > "$existing_crontab" || true
-          : > "$updated_crontab"
+            echo "Running prisma migrate deploy..."
+            npx prisma migrate deploy
 
-          if ! grep -qxF 'SHELL=/bin/bash' "$existing_crontab"; then
-            echo 'SHELL=/bin/bash' >> "$updated_crontab"
-          fi
+            echo "=== Cleaning dist directory ==="
+            # Fix permissions first, then move old build artifacts
+            if [ -d "dist" ]; then
+              echo "Moving old dist directory..."
+              chmod -R u+rw dist 2>/dev/null || true
+              mv dist dist.old.$(date +%s) 2>/dev/null || rm -rf dist 2>/dev/null || true
+            fi
+            # Clean up any accumulated .old directories
+            rm -rf dist.old.* 2>/dev/null || true
 
-          if ! grep -qxF 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin' "$existing_crontab"; then
-            echo 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin' >> "$updated_crontab"
-          fi
+            echo "=== Installing frontend dependencies ==="
+            rm -rf frontend-v2/node_modules.old.* 2>/dev/null || true
+            if [ -d "frontend-v2/node_modules" ]; then
+              echo "Moving old frontend-v2/node_modules directory..."
+              mv frontend-v2/node_modules frontend-v2/node_modules.old.$(date +%s)
+            fi
+            cd frontend-v2 && npm ci && cd ..
 
-          cat "$existing_crontab" >> "$updated_crontab"
-          echo "$BACKUP_CRON_LINE" >> "$updated_crontab"
-          awk 'NF && !seen[$0]++' "$updated_crontab" | crontab -u "$APP_USER" -
-          rm -f "$existing_crontab" "$updated_crontab"
-          crontab -u "$APP_USER" -l | grep 'cabin-backup.lock'
+            echo "=== Building frontend ==="
+            npm run build
 
-          echo "=== Seeding first backup if missing ==="
-          latest_db_backup=$(find "$BACKUP_ROOT/db" -maxdepth 1 -type f -name '*.dump' -print -quit)
-          latest_uploads_backup=$(find "$BACKUP_ROOT/uploads" -maxdepth 1 -type f -name '*.tar.gz' -print -quit)
+            echo "=== Restarting application ==="
+            # Kill any orphan process on port 3000 (not under PM2 control)
+            fuser -k 3000/tcp 2>/dev/null || true
+            sleep 1
+            # Restart PM2 process, or start it if it doesn't exist yet
+            npx pm2 restart chata-app 2>/dev/null || npx pm2 start npm --name "chata-app" -- run start
+            npx pm2 save
 
-          if [ -z "$latest_db_backup" ] || [ -z "$latest_uploads_backup" ]; then
-            run_as_app "export NVM_DIR=$NVM_DIR" ". $NVM_DIR/nvm.sh" "cd $APP_PATH" "BACKUP_ROOT=$BACKUP_ROOT BACKUP_RETENTION_DAYS=$BACKUP_RETENTION_DAYS npm run backup:all"
-          else
-            echo "Existing backup artifacts found. Skipping initial seed backup."
-          fi
+            # Wait for the server to be fully ready (max 60s, test dedicated health endpoint)
+            echo "Waiting for server health check..."
+            SERVER_READY=0
+            for i in $(seq 1 20); do
+              if curl -fsS http://localhost:3000/api/health | grep -q '"status":"ok"'; then
+                echo "Server is healthy after $((i * 3))s"
+                SERVER_READY=1
+                break
+              fi
+              echo "  ...waiting (${i}/20)"
+              sleep 3
+            done
 
+            if [ "$SERVER_READY" -ne 1 ]; then
+              echo "ERROR: /api/health did not return status ok in time"
+              exit 1
+            fi
+
+            echo "=== Ensuring backup prerequisites ==="
+            for required_command in pg_dump pg_restore tar; do
+              if ! command -v "$required_command" >/dev/null 2>&1; then
+                echo "ERROR: missing required backup command: $required_command"
+                exit 1
+              fi
+            done
+
+            if ! run_as_app "export NVM_DIR=$NVM_DIR" ". $NVM_DIR/nvm.sh" "cd $APP_PATH" "command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1"; then
+              echo "ERROR: node/npm are not available for $APP_USER after sourcing NVM."
+              exit 1
+            fi
+
+            echo "=== Installing backup cron ==="
+            install -d -m 755 -o "$APP_USER" -g "$APP_USER" "$BACKUP_ROOT" "$BACKUP_ROOT/db" "$BACKUP_ROOT/uploads" "$APP_PATH/data/logs"
+
+            BACKUP_COMMAND_INNER=$(cat <<EOF
+            export NVM_DIR=$NVM_DIR; [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"; mkdir -p $BACKUP_ROOT $APP_PATH/data/logs; cd $APP_PATH; BACKUP_ROOT=$BACKUP_ROOT BACKUP_RETENTION_DAYS=$BACKUP_RETENTION_DAYS npm run backup:all >> $APP_PATH/data/logs/backup-cron.log 2>&1
+            EOF
+            )
+            printf -v BACKUP_COMMAND_QUOTED '%q' "$BACKUP_COMMAND_INNER"
+            BACKUP_CRON_LINE="$BACKUP_CRON_SCHEDULE /usr/bin/flock -n /tmp/cabin-backup.lock /bin/bash -lc $BACKUP_COMMAND_QUOTED"
+
+            existing_crontab="$(mktemp)"
+            updated_crontab="$(mktemp)"
+            crontab -u "$APP_USER" -l 2>/dev/null | grep -v 'cabin-backup.lock' > "$existing_crontab" || true
+            : > "$updated_crontab"
+
+            if ! grep -qxF 'SHELL=/bin/bash' "$existing_crontab"; then
+              echo 'SHELL=/bin/bash' >> "$updated_crontab"
+            fi
+
+            if ! grep -qxF 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin' "$existing_crontab"; then
+              echo 'PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin' >> "$updated_crontab"
+            fi
+
+            cat "$existing_crontab" >> "$updated_crontab"
+            echo "$BACKUP_CRON_LINE" >> "$updated_crontab"
+            awk 'NF && !seen[$0]++' "$updated_crontab" | crontab -u "$APP_USER" -
+            rm -f "$existing_crontab" "$updated_crontab"
+            crontab -u "$APP_USER" -l | grep 'cabin-backup.lock'
+
+            echo "=== Seeding first backup if missing ==="
+            latest_db_backup=$(find "$BACKUP_ROOT/db" -maxdepth 1 -type f -name '*.dump' -print -quit)
+            latest_uploads_backup=$(find "$BACKUP_ROOT/uploads" -maxdepth 1 -type f -name '*.tar.gz' -print -quit)
+
+            if [ -z "$latest_db_backup" ] || [ -z "$latest_uploads_backup" ]; then
+              run_as_app "export NVM_DIR=$NVM_DIR" ". $NVM_DIR/nvm.sh" "cd $APP_PATH" "BACKUP_ROOT=$BACKUP_ROOT BACKUP_RETENTION_DAYS=$BACKUP_RETENTION_DAYS npm run backup:all"
+            else
+              echo "Existing backup artifacts found. Skipping initial seed backup."
+            fi

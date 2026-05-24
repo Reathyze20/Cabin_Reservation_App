@@ -32,8 +32,8 @@ export interface SuperadminCreateUserResponse {
     email: string | null
   }
   verificationEmailSent: boolean
-  tempPassword: string
-  verificationToken: string
+  tempPassword?: string
+  verificationToken?: string
 }
 
 export interface ToggleBanResponse {

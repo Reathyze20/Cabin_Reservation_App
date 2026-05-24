@@ -41,4 +41,20 @@ export const SMTP_PASS = process.env.SMTP_PASS || "";
 export const EMAIL_FROM = process.env.EMAIL_FROM || '"Chatačeskéstředohoří" <noreply@chataceskestredohori.cz>';
 
 // Frontend URL (for verification links in emails)
-export const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+const DEFAULT_FRONTEND_URL = "http://localhost:5173";
+export const FRONTEND_URL = process.env.FRONTEND_URL || DEFAULT_FRONTEND_URL;
+
+if (process.env.NODE_ENV === "production") {
+  try {
+    const frontendUrl = new URL(FRONTEND_URL);
+    const usesLocalhost = ["localhost", "127.0.0.1", "::1"].includes(frontendUrl.hostname);
+
+    if (!process.env.FRONTEND_URL || usesLocalhost) {
+      logger.error("CONFIG", "FATAL: FRONTEND_URL is not set to a valid production URL.");
+      process.exit(1);
+    }
+  } catch {
+    logger.error("CONFIG", "FATAL: FRONTEND_URL is not a valid absolute URL.");
+    process.exit(1);
+  }
+}
