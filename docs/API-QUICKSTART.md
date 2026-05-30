@@ -51,6 +51,7 @@ Vychozi chovani:
 
 - v developmentu jsou API docs zapnute automaticky,
 - v produkci jsou API docs vypnute automaticky.
+- pokud v produkci nejsou zapnute, `/api/docs` ani `/api/openapi.json` se nezobrazi.
 
 Kdyz je chcete vynutit i mimo dev, pouzijte:
 
@@ -68,6 +69,11 @@ Kdyz Swagger nejde otevrit, zkontroluj:
 - backend opravdu bezi,
 - neni vypnute `ENABLE_API_DOCS`,
 - nejdes omylem na frontend port `5173` misto backend `3000`.
+
+Poznamka pro produkci:
+
+- pokud chcete verejny Swagger na domene, musi byt v produkcnim `.env` nastavene `ENABLE_API_DOCS=true`
+- kdyz neni zapnute, po backend hotfixu uz route vraci normalni API 404 misto frontendove SPA stranky
 
 Co je dulezite vedet:
 

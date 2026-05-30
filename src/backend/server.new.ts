@@ -218,6 +218,11 @@ app.use("/api/wallpapers", wallpapersRoutes);
 app.use("/api/invites/accept", authLimiter); // Rate limit invite accept (public)
 app.use("/api/invites", invitesRoutes);
 
+// Keep unknown API routes out of the SPA fallback so clients get a real API error.
+app.use("/api", (_req, res) => {
+  res.status(404).json({ message: "API endpoint nenalezen" });
+});
+
 // ============================================================================
 //                            SPA FALLBACK
 // ============================================================================

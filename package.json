@@ -7,7 +7,7 @@
     "dev": "concurrently -n backend,frontend -c blue,green \"npm:dev:backend\" \"npm:dev:frontend\"",
     "dev:backend": "tsx watch src/backend/server.new.ts",
     "dev:frontend": "cd frontend-v2 && npm run dev",
-    "preflight:deploy": "npx tsc --noEmit && npm --prefix frontend-v2 run test:run && npm --prefix frontend-v2 run build",
+    "preflight:deploy": "npm run prisma:generate && npx tsc --noEmit && npm --prefix frontend-v2 run test:run && npm --prefix frontend-v2 run build",
     "build": "cd frontend-v2 && npm run build",
     "build:install": "cd frontend-v2 && npm ci && npm run build",
     "start": "NODE_ENV=production node --import tsx src/backend/server.new.ts",
