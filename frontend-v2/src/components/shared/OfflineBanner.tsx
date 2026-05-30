@@ -15,10 +15,10 @@ export function OfflineBanner() {
   if (isOnline) return null
 
   return (
-    <div className="offline-banner" role="alert" aria-live="polite">
+    <div className="offline-banner" role="alert" aria-live="polite" data-testid="offline-banner">
       {/* Unicode symbol — bez závislosti na icon knihovně */}
       <span aria-hidden="true">⚡</span>
-      <span>Jste offline — změny budou synchronizovány po obnovení připojení.</span>
+      <span>Jste offline — některé obrazovky poběží z naposledy načtených dat. Nové změny po návratu spojení zkontrolujte.</span>
     </div>
   )
 }

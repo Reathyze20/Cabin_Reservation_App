@@ -120,17 +120,17 @@ export function AvailabilityModal({ open, onClose, fromDate, toDate, myAvailabil
       footer={
         <div style={{ display: 'flex', gap: '0.5rem', width: '100%', justifyContent: 'flex-end' }}>
           {editId && (
-            <button type="button" className="btn-secondary" onClick={cancelEdit}>
+            <button type="button" className="btn-secondary" onClick={cancelEdit} data-testid="availability-cancel-edit-button">
               Zrušit úpravu
             </button>
           )}
-          <button type="submit" form="avail-form" className="btn-primary" disabled={submitting}>
+          <button type="submit" form="avail-form" className="btn-primary" disabled={submitting} data-testid="availability-submit-button">
             {submitting ? "Ukládám…" : editId ? "Uložit změny" : "Přidat dostupnost"}
           </button>
         </div>
       }
     >
-        <form id="avail-form" onSubmit={handleSubmit}>
+        <form id="avail-form" onSubmit={handleSubmit} data-testid="availability-form">
           <div className="form-group">
             <label htmlFor="avail-date-from">Od</label>
             <input
@@ -143,6 +143,7 @@ export function AvailabilityModal({ open, onClose, fromDate, toDate, myAvailabil
                 setFrom(e.target.value);
               }}
               required
+              data-testid="availability-from-input"
             />
           </div>
           <div className="form-group">
@@ -157,19 +158,20 @@ export function AvailabilityModal({ open, onClose, fromDate, toDate, myAvailabil
                 setTo(e.target.value);
               }}
               required
+              data-testid="availability-to-input"
             />
           </div>
           {submitError ? (
-            <div className="error-message show" role="alert">{submitError}</div>
+            <div className="error-message show" role="alert" data-testid="availability-submit-error">{submitError}</div>
           ) : null}
         </form>
 
         {myAvailabilities.length > 0 && (
-          <div className="my-availabilities">
+          <div className="my-availabilities" data-testid="availability-list-section">
             <h4 className="modal-section-title">Moje záznamy</h4>
-            <ul className="avail-list">
+            <ul className="avail-list" data-testid="availability-list">
               {myAvailabilities.map((a) => (
-                <li key={a.id} className={`avail-item${editId === a.id ? " is-editing" : ""}`}>
+                <li key={a.id} className={`avail-item${editId === a.id ? " is-editing" : ""}`} data-testid="availability-item" data-availability-id={a.id}>
                   <span className="avail-dates">
                     {formatDate(a.startDate)} → {formatDate(a.endDate)}
                   </span>
@@ -178,6 +180,7 @@ export function AvailabilityModal({ open, onClose, fromDate, toDate, myAvailabil
                       className="avail-btn"
                       onClick={() => startEdit(a)}
                       disabled={deletingId === a.id}
+                      data-testid="availability-edit-button"
                     >
                       Upravit
                     </button>
@@ -186,6 +189,7 @@ export function AvailabilityModal({ open, onClose, fromDate, toDate, myAvailabil
                       onClick={() => handleDelete(a.id)}
                       disabled={deletingId === a.id}
                       aria-label="Smazat dostupnost"
+                      data-testid="availability-delete-button"
                     >
                       {deletingId === a.id ? "…" : "Smazat"}
                     </button>
@@ -194,7 +198,7 @@ export function AvailabilityModal({ open, onClose, fromDate, toDate, myAvailabil
               ))}
             </ul>
             {deleteError ? (
-              <div className="error-message show" role="alert">{deleteError}</div>
+              <div className="error-message show" role="alert" data-testid="availability-delete-error">{deleteError}</div>
             ) : null}
           </div>
         )}

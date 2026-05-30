@@ -42,7 +42,7 @@ export function CookieConsent() {
   if (!visible) return null
 
   return (
-    <div className="cookie-consent-banner" role="dialog" aria-label="Informace o zpracování dat">
+    <div className="cookie-consent-banner" role="dialog" aria-label="Informace o zpracování dat" data-testid="cookie-consent-banner">
       <div className="cookie-consent-body">
         <h3 className="cookie-consent-title">
           <img src="/icons/cookies_icon.svg" alt="" aria-hidden="true" className="cookie-consent-icon" />
@@ -58,7 +58,7 @@ export function CookieConsent() {
         </p>
 
         {showDetail && (
-          <div className="cookie-consent-detail">
+          <div className="cookie-consent-detail" data-testid="cookie-consent-detail">
             <div className="cookie-detail-items">
               <div className="cookie-detail-item">
                 <span>●</span>
@@ -89,14 +89,15 @@ export function CookieConsent() {
             type="button"
             className="cookie-consent-detail-btn"
             onClick={() => setShowDetail(!showDetail)}
+            data-testid="cookie-consent-detail-toggle"
           >
             {showDetail ? 'Skrýt podrobnosti' : 'Jaké cookies? (ne ty dobré)'}
           </button>
           <div className="cookie-consent-buttons">
-            <Link to="/privacy" className="cookie-consent-link">
+            <Link to="/privacy" className="cookie-consent-link" data-testid="cookie-consent-privacy-link">
               Ochrana soukromí
             </Link>
-            <button className="cookie-consent-accept" onClick={handleAccept}>
+            <button className="cookie-consent-accept" onClick={handleAccept} data-testid="cookie-consent-accept-button">
               Rozumím
             </button>
           </div>

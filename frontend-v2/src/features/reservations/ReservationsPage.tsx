@@ -183,18 +183,24 @@ export function ReservationsPage() {
 
   // ── Skeleton while loading ────────────────────────────────────────────
   if (isLoading) {
-    return <ReservationsSkeleton />;
+    return (
+      <div className={styles.layout} data-testid="reservations-page" data-reservations-state="loading">
+        <ReservationsSkeleton />
+      </div>
+    );
   }
 
   if (isError) {
     return (
-      <FeatureErrorFallback
-        error={error as Error}
-        resetErrorBoundary={() => {
-          void refetch();
-        }}
-        title="Rezervace se nepodařilo načíst"
-      />
+      <div className={styles.layout} data-testid="reservations-page" data-reservations-state="error">
+        <FeatureErrorFallback
+          error={error as Error}
+          resetErrorBoundary={() => {
+            void refetch();
+          }}
+          title="Rezervace se nepodařilo načíst"
+        />
+      </div>
     );
   }
 
@@ -214,7 +220,7 @@ export function ReservationsPage() {
 
   // ── Render ─────────────────────────────────────────────────────────────
   return (
-    <div className={styles.layout}>
+    <div className={styles.layout} data-testid="reservations-page" data-reservations-state="ready">
       {/* ── Left: Calendar ── */}
       <ErrorBoundary
         FallbackComponent={(props) => (
@@ -249,7 +255,7 @@ export function ReservationsPage() {
       </ErrorBoundary>
 
       {/* ── Right: Sidebar ── */}
-      <div className={styles.listContainer}>
+      <div className={styles.listContainer} data-testid="reservations-sidebar">
         <div className={styles.listScroll}>
           {selectedReservation ? (
             <ReservationDetail

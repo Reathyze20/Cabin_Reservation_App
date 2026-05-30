@@ -180,6 +180,8 @@ export function Lightbox({ photos, initialIndex, folderId, onClose }: Props) {
         aria-modal="true"
         aria-label="Prohlížeč fotek"
         tabIndex={-1}
+        data-testid="gallery-lightbox"
+        data-photo-id={photo.id}
       >
         {/* ── Top toolbar ──────────────────────────────────────────────── */}
         <AnimatePresence>
@@ -190,6 +192,7 @@ export function Lightbox({ photos, initialIndex, folderId, onClose }: Props) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.2 }}
+              data-testid="gallery-lightbox-toolbar"
             >
               <span className="lb-counter">{index + 1} / {photos.length}</span>
               <div className="lb-toolbar-actions">
@@ -199,6 +202,7 @@ export function Lightbox({ photos, initialIndex, folderId, onClose }: Props) {
                   download="foto.jpg"
                   onClick={e => e.stopPropagation()}
                   title="Stáhnout"
+                  data-testid="gallery-lightbox-download-button"
                 >
                   <Download size={18} />
                 </a>
@@ -208,6 +212,7 @@ export function Lightbox({ photos, initialIndex, folderId, onClose }: Props) {
                     onClick={e => { e.stopPropagation(); setDeleteError(null); setDeleteConfirmOpen(true) }}
                     disabled={deletePhoto.isPending}
                     title="Smazat"
+                    data-testid="gallery-lightbox-delete-button"
                   >
                     <Trash2 size={18} />
                   </button>
@@ -216,6 +221,7 @@ export function Lightbox({ photos, initialIndex, folderId, onClose }: Props) {
                   className="lb-action-btn"
                   onClick={e => { e.stopPropagation(); onClose() }}
                   title="Zavřít"
+                  data-testid="gallery-lightbox-close-button"
                 >
                   <X size={20} />
                 </button>
@@ -225,7 +231,7 @@ export function Lightbox({ photos, initialIndex, folderId, onClose }: Props) {
         </AnimatePresence>
 
         {/* ── Photo ────────────────────────────────────────────────────── */}
-        <div className="lb-image-wrapper">
+        <div className="lb-image-wrapper" data-testid="gallery-lightbox-image-wrapper">
           <AnimatePresence mode="wait">
             <motion.img
               key={photo.id}
@@ -236,6 +242,7 @@ export function Lightbox({ photos, initialIndex, folderId, onClose }: Props) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
+              data-testid="gallery-lightbox-image"
             />
           </AnimatePresence>
         </div>
@@ -252,6 +259,7 @@ export function Lightbox({ photos, initialIndex, folderId, onClose }: Props) {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   aria-label="Předchozí fotka"
+                  data-testid="gallery-lightbox-prev-button"
                 >
                   <ChevronLeft size={28} />
                 </motion.button>
@@ -264,6 +272,7 @@ export function Lightbox({ photos, initialIndex, folderId, onClose }: Props) {
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   aria-label="Další fotka"
+                  data-testid="gallery-lightbox-next-button"
                 >
                   <ChevronRight size={28} />
                 </motion.button>
@@ -273,7 +282,7 @@ export function Lightbox({ photos, initialIndex, folderId, onClose }: Props) {
         </AnimatePresence>
 
         {/* ── Caption / description ────────────────────────────────────── */}
-        <div className="lb-caption">
+        <div className="lb-caption" data-testid="gallery-lightbox-caption">
           {showDescForm ? (
             <div className="lb-desc-form">
               <input
@@ -288,15 +297,16 @@ export function Lightbox({ photos, initialIndex, folderId, onClose }: Props) {
                 }}
                 onKeyDown={e => { if (e.key === 'Enter') handleSaveDesc(); if (e.key === 'Escape') setShowDescForm(false) }}
                 maxLength={500}
+                data-testid="gallery-lightbox-description-input"
               />
-              <button className="lb-desc-save" onClick={handleSaveDesc} disabled={updatePhoto.isPending}>
+              <button className="lb-desc-save" onClick={handleSaveDesc} disabled={updatePhoto.isPending} data-testid="gallery-lightbox-description-save-button">
                 {updatePhoto.isPending ? '…' : 'Uložit'}
               </button>
             </div>
           ) : photo.description ? (
             <>
               {descError ? (
-                <div className="error-message show" role="alert">{descError}</div>
+                <div className="error-message show" role="alert" data-testid="gallery-lightbox-description-error">{descError}</div>
               ) : null}
               <motion.span
                 className="lb-description"
@@ -307,6 +317,7 @@ export function Lightbox({ photos, initialIndex, folderId, onClose }: Props) {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3 }}
+                data-testid="gallery-lightbox-description"
               >
                 {photo.description}
               </motion.span>

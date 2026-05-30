@@ -103,7 +103,7 @@ export function ReservationDetail({ reservation: r, onBack, onEdit, onDelete, on
   };
 
   return (
-    <div className={styles.detailCard}>
+    <div className={styles.detailCard} data-testid="reservation-detail-card">
       {/* ── Header: User left, Badge right ── */}
       <div className={styles.detailHeader}>
         <div className={styles.detailHeaderLeft}>
@@ -172,7 +172,7 @@ export function ReservationDetail({ reservation: r, onBack, onEdit, onDelete, on
       {/* ── Action Bar (footer) ── */}
       <div className={styles.actionBar}>
         <div className={styles.actionLeft}>
-          <button className={styles.btnGhost} onClick={onBack}>
+          <button className={styles.btnGhost} onClick={onBack} data-testid="reservation-back-button">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="15 18 9 12 15 6" />
             </svg>
@@ -182,6 +182,7 @@ export function ReservationDetail({ reservation: r, onBack, onEdit, onDelete, on
             <button
               className={styles.btnGhostDanger}
               onClick={() => setDeleteConfirmOpen(true)}
+              data-testid="reservation-delete-button"
             >
               Smazat
             </button>
@@ -190,22 +191,22 @@ export function ReservationDetail({ reservation: r, onBack, onEdit, onDelete, on
         <div className={styles.actionRight}>
           {!isMine && (
             watchData?.watching ? (
-              <button className={styles.btnOutline} onClick={() => void handleWatchToggle(true)} disabled={watchSubmitting}>
+              <button className={styles.btnOutline} onClick={() => void handleWatchToggle(true)} disabled={watchSubmitting} data-testid="reservation-watch-button">
                 Zrušit
               </button>
             ) : (
-              <button className={styles.btnOutline} title="Dostaneš zprávu, pokud bude termín uvolněn" onClick={() => void handleWatchToggle(false)} disabled={watchSubmitting}>
+              <button className={styles.btnOutline} title="Když se termín uvolní, objeví se to na nástěnce chaty" onClick={() => void handleWatchToggle(false)} disabled={watchSubmitting} data-testid="reservation-watch-button">
                 Hlídat
               </button>
             )
           )}
           {canEdit && isAdmin && (
-            <button className={styles.btnOutline} onClick={() => onAssign(r.id)}>
+            <button className={styles.btnOutline} onClick={() => onAssign(r.id)} data-testid="reservation-assign-button">
               Přiřadit
             </button>
           )}
           {canEdit && (
-            <button className={styles.btnPrimary} onClick={() => onEdit(r)}>
+            <button className={styles.btnPrimary} onClick={() => onEdit(r)} data-testid="reservation-edit-button">
               Upravit
             </button>
           )}

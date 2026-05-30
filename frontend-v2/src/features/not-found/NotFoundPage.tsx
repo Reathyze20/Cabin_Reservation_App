@@ -6,7 +6,7 @@ export function NotFoundPage() {
   const { isLoggedIn } = useAuth()
 
   return (
-    <div className="not-found-page">
+    <div className="not-found-page" data-testid="not-found-page">
       <div className="not-found-content">
         <div className="not-found-icon">404</div>
         <h1 className="not-found-title">Stránka nenalezena</h1>
@@ -16,6 +16,7 @@ export function NotFoundPage() {
         <button
           className="btn btn-primary"
           onClick={() => navigate(isLoggedIn ? '/dashboard' : '/')}
+          data-testid="not-found-home-button"
         >
           {isLoggedIn ? 'Zpět na přehled' : 'Zpět na úvod'}
         </button>

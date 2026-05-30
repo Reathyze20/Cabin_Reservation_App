@@ -7,12 +7,12 @@ Prakticky odskrtavaci seznam je v [FAMILY-READY-CHECKLIST.md](FAMILY-READY-CHECK
 Tento plan je zamerne odlisny od verejneho SaaS launch planu.
 Neresi hlavne monetizaci, SEO ani akvizici. Resi to, co je potreba, aby aplikace byla spolehliva, srozumitelna a bezpecna pro realne rodinne pouzivani.
 
-Aktualizace k 2026-05-02:
+Aktualizace k 2026-05-26:
 
 - cast family-ready minima uz je hotova v repu,
 - cast puvodnich bodu uz neni vyvoj, ale produkcni overeni,
 - nejvetsi otevrene riziko uz neni chybejici modul, ale provozni jistota,
-- nejvetsi nove blockery jsou rozbita standardni deploy cesta na VPS, neuzavrene produkcni e-mail E2E vcetne superadmin onboarding cesty a chybejici externi alerting.
+- nejvetsi otevrene blockery jsou produkcni SMTP E2E, chybejici externi alerting a neodjety rucny desktop + mobil rehearsal.
 
 ## 1. Vychozi stav
 
@@ -34,15 +34,15 @@ Pro dalsi rozhodovani je dobre oddelit ctyri ruzne typy zbyvajici prace. Jinak s
 
 #### Co chybi dodelat v kodu
 
-- rezervace dnes umi watcher notifikaci hlavne pri zruseni rezervace, ale chybi minimum pro novou a upravenou rezervaci,
+- rezervace uz zapisuji activity zpravy do notes i pri vytvoreni, uprave a zruseni, ale stale chybi realne overeni textu, hluku a vnimane dorucitelnosti pro rodinu,
 - realtime infrastruktura existuje, ale `useSocket` zatim neni napojeny do aktivnich obrazovek, takze uzivatelsky efekt realtime jeste neni hotovy,
-- self-service leave cabin je hotovy v backendu a API vrstve, ale ve frontend-v2 zatim chybi viditelny vstup pro bezneho uzivatele,
-- deploy workflow dnes pousti build, ale nepousti lint ani test preflight jako gate pred restartem produkce,
-- superadmin create-user flow stale vraci `tempPassword` a `verificationToken`, pokud selze e-mail, takze tato onboarding cesta jeste neni produkcne dojeta.
+- self-service leave cabin uz ma viditelny vstup v profilovem draweru, ale stale chybi realne rehearsal overeni celeho toku na desktopu a mobilu,
+- deploy workflow uz blokuje backend typecheck + frontend test/build pred restartem produkce, ale stale chybi backend smoke coverage a vyber 3-5 kritickych flow pro automatizaci,
+- superadmin create-user flow uz v produkci failuje bezpecne bez fallback secret dat, ale onboarding E2E stale blokuje stejna SMTP `535 Authentication Credentials Invalid` chyba jako ostatni transactional maily.
 
 #### Co chybi doresit v provozu
 
-- opravit standardni git/deploy auth na VPS, aby produkce znovu bezela pres bezny deploy a ne pres rucni `scp` hotfixy,
+- potvrdit jeste jeden bezny produkcni deploy s novou preflight gate po dalsi zmene,
 - realne otestovat obnovu z produkcni DB a uploads zalohy,
 - pridat externi uptime monitoring a alerting pro web, health endpoint a stari backupu,
 - rozhodnout, kam pujde off-site kopie zaloh, aby vse nezustalo jen na jednom VPS.
@@ -51,12 +51,13 @@ Pro dalsi rozhodovani je dobre oddelit ctyri ruzne typy zbyvajici prace. Jinak s
 
 - verify e-mail, invite e-mail a reset hesla je potreba projet end-to-end na produkci po poslednim hardeningu,
 - onboarding prvniho admina a onboarding dalsiho clena rodiny je potreba overit bez manualni pomoci developera,
+- lokalni API-level rehearsal admin + pozvany clen uz probehl na izolovane DB, ale nenahrazuje browser a telefon test,
 - mobilni QA je potreba projet na 1-2 realnych telefonech, ne jen v DevTools,
 - je potreba jeden cely rodinny rehearsal, ktery potvrdi desktop + mobil + role flow v jednom scenari.
 
 #### Co je hlavne polish a pravdivost UX
 
-- offline banner a cast toastu dnes slibuji automatickou synchronizaci, ale pro vetsinu akci zatim neexistuje spolehliva persistovana queue,
+- offline copy uz nerika, ze se vse synchronizuje automaticky, ale stale chybi realny weak-signal rehearsal a pripadna queue pro vybrane akce,
 - wording v activation, invite a admin flow je potreba doladit az podle realne rodinne zkusenosti,
 - po prvnim realnem provozu bude potreba zapsat maly backlog drobnych mobilnich a admin UX chyb misto dalsich velkych refaktoru.
 
@@ -103,13 +104,13 @@ Co je uz hotove:
 - GitHub Actions deploy workflow existuje.
 - Produkcni app umi build, restart PM2 a operational smoke check.
 - Manualni hotfix deploy pres `scp` + `npm run build` + `pm2 restart` je overeny jako nouzovy fallback.
+- Bundle deploy z GitHub Actions byl znovu overen v produkci.
+- Workflow ted zastavi deploy jeste pred uploadem a restartem, pokud spadne backend typecheck nebo frontend test/build.
 
 Co jeste chybi:
 
-- opravit produkcni `origin`, ktery dnes pouziva expirovany GitHub HTTPS token,
-- zvolit bezpecnou standardni cestu: SSH deploy key nebo novy spravne spravovany token,
-- po oprave srovnat server na stejny commit jako repo,
-- overit, ze bezny deploy z `main` znovu funguje bez manualniho zasahu.
+- potvrdit jeste jeden bezny deploy z `main` s novou preflight gate po dalsi aplikacni zmene,
+- drzet post-deploy smoke jako soucast kazdeho dalsiho produkcniho releasu.
 
 Definition of done:
 
@@ -164,14 +165,21 @@ Co je uz hotove:
 - bezny auth flow uz v produkci nevraci `testCode` ani `testToken`,
 - registrace se v produkci rollbackne, pokud selze odeslani verifikacniho mailu,
 - genericke transactional maily se v produkci nesmi tise simulovat bez SMTP,
-- startup v produkci validuje smysluplny `FRONTEND_URL`.
+- startup v produkci validuje smysluplny `FRONTEND_URL`,
+- `POST /api/superadmin/users` uz v produkci pri failu mailu rollbackne ucet a nevraci fallback secret data,
+- invite create/accept flow byl na produkci 2026-05-24 realne overen bez manualni pomoci developera.
+
+Aktualni produkcni nalez z 2026-05-24:
+
+- `FRONTEND_URL` i `EMAIL_FROM` jsou na produkci nastavene spravne,
+- registrace, invite email, forgot password a superadmin onboarding vsechny padaji na `535 Authentication Credentials Invalid`,
+- nejde tedy o chybejici feature, ale o rozbity SMTP auth v produkcnim `.env` nebo u SES povereni.
 
 Co jeste chybi:
 
-- potvrdit realne SMTP nastaveni v produkci,
-- potvrdit `EMAIL_FROM` a skutecne doruceni linku na produkcni domene,
+- opravit produkcni SMTP auth (`535 Authentication Credentials Invalid`),
+- po oprave znovu potvrdit skutecne doruceni verify, invite, reset a superadmin onboarding mailu,
 - otestovat verify mail, invite mail, reset hesla a scenar mail nedorazil,
-- srovnat `POST /api/superadmin/users`, ktery dnes pri selhani mailu jeste vraci `tempPassword` a `verificationToken`,
 - dopsat kratky operacni postup co delat, kdyz SMTP nebo doruceni selze.
 
 Definition of done:
@@ -227,6 +235,7 @@ Co je uz hotove:
 
 - existuje smoke-test podklad pro desktop,
 - existuje mobile QA checklist,
+- existuje i rizeny desktop + mobil rehearsal flow poskladany nad aktualne hotovymi obrazovkami,
 - produkcni mobilni pristup k admin nastrojum uz byl dotazen.
 
 Co jeste chybi:
@@ -336,15 +345,12 @@ Jadro aplikace uz funguje, ale zmeny jsou casto tiche. Tady uz nejde jen o E2E o
 
 Co je uz hotove:
 
-- existuje parcialni watcher flow pri zruseni rezervace,
-- notes kanal umi poslouzit jako cast notifikacni logiky.
+- notes kanal slouzi jako jednotny activity log pro novou, upravenou i zrusenou rezervaci,
+- update notifikace jsou omezeny jen na zmenu terminu, stavu nebo ucelu, aby notes nebyly zahlcene drobnymi internimi upravami,
+- copy u "Hlidat" uz nepretvari verejnou activity zpravu za osobni direct notifikaci.
 
 Co jeste chybi:
 
-- rozhodnout minimum notifikaci pro rodinu,
-- pridat upozorneni pri nove rezervaci,
-- pridat upozorneni pri zmene rezervace,
-- sjednotit zruseni rezervace do stejneho minima,
 - overit ceske texty a omezit hluk tak, aby notifikace nebyly otravne.
 
 Definition of done:
@@ -392,12 +398,12 @@ Co je uz hotove:
 
 - existuje PWA plugin,
 - existuje offline banner,
-- existuje zakladni offline-aware chovani pro network chyby.
+- existuje zakladni offline-aware chovani pro network chyby,
+- banner a centralni offline toast uz neslibuji garantovanou automatickou synchronizaci,
+- je zapsane minimalni offline minimum: cache muze drzet drive nactena data, ale write akce je po navratu site potreba manualne overit.
 
 Co jeste chybi:
 
-- upravit texty tam, kde dnes slibuji automatickou synchronizaci bez jistoty,
-- rozhodnout minimum offline podpory pro klicove obrazovky,
 - pokud bude davat smysl, pridat jednoduchou queue pro vybrane akce,
 - otestovat vypnuti site a navrat site na realnem telefonu.
 
@@ -477,8 +483,8 @@ Doporuceny vystup:
 
 - frontend testy pro nejkritictejsi flow,
 - aspon zakladni backend smoke testy,
-- test + build pred deployem,
-- zastaveni deploye jeste pred produkcnim restartem, pokud validace spadne.
+- workflow uz ma test + build gate pred deployem,
+- dalsi krok je doplnit backend smoke testy a rozsirit kryti nad nejkritictejsi use cases.
 
 Definition of done:
 
@@ -531,7 +537,7 @@ Nejrozumnejsi poradi je:
 7. Dodelat zakladni rezervacni notifikace
 8. Dotahnout offline/PWA pravdivost a mobilni QA
 9. Dodelat realtime a drobny self-service polish
-10. Dopsat testy a CI preflight
+10. Rozsirit testy a backend smoke nad novou CI preflight gate
 
 ## 9. Minimalni go-live podminky pro rodinu
 

@@ -53,7 +53,7 @@ export function VerifyEmailPage() {
       justifyContent: 'center',
       background: 'var(--color-bg, #f5f5f5)',
       padding: '1rem',
-    }}>
+    }} data-testid="verify-email-page" data-verify-state={state}>
       <div style={{
         maxWidth: 420,
         width: '100%',
@@ -97,6 +97,7 @@ export function VerifyEmailPage() {
                 textDecoration: 'none',
                 fontWeight: 600,
               }}
+              data-testid="verify-email-login-link"
             >
               Přihlásit se
             </Link>
@@ -123,6 +124,7 @@ export function VerifyEmailPage() {
                 textDecoration: 'none',
                 fontWeight: 600,
               }}
+              data-testid="verify-email-login-link"
             >
               Zpět na přihlášení
             </Link>
@@ -149,6 +151,7 @@ export function VerifyEmailPage() {
                 textDecoration: 'none',
                 fontWeight: 600,
               }}
+              data-testid="verify-email-login-link"
             >
               Zpět na přihlášení
             </Link>

@@ -75,6 +75,7 @@ export function PhotoGrid({
             className="gallery-back-btn"
             onClick={onBack}
             aria-label="Zpět na seznam alb"
+            data-testid="gallery-back-to-folders-button"
           >
             <ArrowLeft size={18} />
           </button>
@@ -123,7 +124,7 @@ export function PhotoGrid({
                 {isSelectionMode ? <X size={16} /> : <CheckSquare size={16} />}
                 <span className="gallery-btn-label">{isSelectionMode ? 'Zrušit' : 'Vybrat'}</span>
               </button>
-              <button className="btn-primary gallery-upload-btn" onClick={onUpload}>
+              <button className="btn-primary gallery-upload-btn" onClick={onUpload} data-testid="gallery-upload-button">
                 <Upload size={16} />
                 <span className="gallery-btn-label">Nahrát</span>
               </button>
@@ -138,6 +139,7 @@ export function PhotoGrid({
         className={`photos-masonry${pagePhotos.length <= 1 ? ' photos-masonry--cols-1' : pagePhotos.length <= 3 ? ' photos-masonry--cols-2' : ''}`}
         role="grid"
         aria-label={`Fotky v albu ${folderName}`}
+        data-testid="gallery-photo-grid"
       >
         {photos.length === 0 && (
           <div className="gallery-empty-state" style={{ gridColumn: '1 / -1' }}>
@@ -145,7 +147,7 @@ export function PhotoGrid({
             <p className="gallery-empty-title">Album je prázdné</p>
             <p className="gallery-empty-subtitle">Nahrajte své první fotky</p>
             {!isGuest && (
-              <button className="btn-primary" onClick={onUpload} style={{ marginTop: 12 }}>
+              <button className="btn-primary" onClick={onUpload} style={{ marginTop: 12 }} data-testid="gallery-empty-upload-button">
                 <Upload size={16} /> Nahrát fotky
               </button>
             )}
@@ -168,6 +170,8 @@ export function PhotoGrid({
               role="gridcell"
               aria-selected={isSelected}
               aria-label={photo.description ?? `Fotka ${globalIdx + 1}`}
+              data-testid="gallery-photo-card"
+              data-photo-id={photo.id}
             >
               <img
                 src={photo.thumb ?? photo.src}

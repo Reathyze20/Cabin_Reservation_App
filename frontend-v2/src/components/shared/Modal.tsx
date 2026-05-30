@@ -107,6 +107,8 @@ export function Modal({
           animate="visible"
           exit="hidden"
           transition={overlayTransition}
+          data-testid="modal-overlay"
+          data-modal-persistent={persistent ? 'true' : 'false'}
         >
           <motion.div
             className={`modal-unified-card ${maxWidth}`}
@@ -115,28 +117,30 @@ export function Modal({
             animate="visible"
             exit="hidden"
             transition={cardTransition}
+            data-testid="modal-card"
           >
             {/* Header */}
             <div className="modal-unified-header">
-              <h3 className="modal-unified-title">{title}</h3>
+              <h3 className="modal-unified-title" data-testid="modal-title">{title}</h3>
               <button
                 type="button"
                 className="modal-unified-close"
                 onClick={onClose}
                 aria-label="Zavřít"
+                data-testid="modal-close-button"
               >
                 <X size={18} strokeWidth={2.5} />
               </button>
             </div>
 
             {/* Body */}
-            <div className="modal-unified-body">
+            <div className="modal-unified-body" data-testid="modal-body">
               {children}
             </div>
 
             {/* Footer (optional) */}
             {footer && (
-              <div className="modal-unified-footer">
+              <div className="modal-unified-footer" data-testid="modal-footer">
                 {footer}
               </div>
             )}

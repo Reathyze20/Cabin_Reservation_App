@@ -345,6 +345,7 @@ export function ReservationList({
         type="button"
         onClick={onNewReservation}
         className={`${css.ctaButton} ${css.ctaButtonLayout}`}
+        data-testid="reservation-create-button"
       >
         <span className={css.ctaIcon}>
           <Plus size={18} strokeWidth={2.5} />
@@ -444,6 +445,9 @@ function ReservationCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1], delay: index * 0.07 }}
       className={`${css.card} ${isPast ? css.cardPast : ""}`}
+      data-testid="reservation-list-item"
+      data-reservation-id={r.id}
+      data-reservation-status={r.status}
       onClick={() => onClick(r)}
     >
       {/* Avatar */}

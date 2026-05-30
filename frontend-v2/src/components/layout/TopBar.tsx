@@ -8,7 +8,7 @@ import { useAuth } from '@/context/AuthContext'
 import { showToast } from '@/lib/toast'
 import { NAV_ROUTES } from '@/lib/navRoutes'
 import { useCabinFeatures, isFeatureEnabled } from '@/hooks/useCabinFeatures'
-import { ScrollText, Settings, Shield } from 'lucide-react'
+import { ScrollText, Settings, Shield, UserPlus } from 'lucide-react'
 import { AnimalAvatar } from '@/components/shared/AnimalAvatar'
 
 interface TopBarProps {
@@ -52,18 +52,20 @@ export function TopBar({ onOpenProfileDrawer }: TopBarProps) {
   const username = user?.username ?? 'Uživatel'
 
   return (
-    <div className="top-bar">
+    <div className="top-bar" data-testid="desktop-topbar">
       <div className="nav-left-group">
-        <Link to={user?.isSuperAdmin && !user?.cabinId ? '/superadmin' : '/dashboard'} className="brand-logo-lockup">
+        <Link to={user?.isSuperAdmin && !user?.cabinId ? '/superadmin' : '/dashboard'} className="brand-logo-lockup" data-testid="desktop-home-link">
           <img src="/logo-icon.svg" alt="Chatačeskéstředohoří" className="nav-logo-icon" />
         </Link>
 
-        <nav id="app-nav" className="app-nav">
+        <nav id="app-nav" className="app-nav" data-testid="desktop-primary-nav">
           {mainNavRoutes.map((route) => (
             <NavLink
               key={route.path}
               to={route.path}
               className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+              data-testid="desktop-nav-link"
+              data-route={route.path}
             >
               {route.label}
             </NavLink>
@@ -79,6 +81,7 @@ export function TopBar({ onOpenProfileDrawer }: TopBarProps) {
           aria-expanded={dropdownOpen}
           aria-haspopup="true"
           onClick={() => setDropdownOpen((v) => !v)}
+          data-testid="profile-menu-button"
         >
           <span id="nav-animal-icon" className="nav-avatar">
             <AnimalAvatar icon={user?.animalIcon} username={username} size={32} />
@@ -90,7 +93,7 @@ export function TopBar({ onOpenProfileDrawer }: TopBarProps) {
           <span className="nav-dropdown-arrow">▼</span>
         </button>
 
-        <div id="nav-dropdown-menu" className={`nav-dropdown-menu${dropdownOpen ? '' : ' hidden'}`} role="menu">
+        <div id="nav-dropdown-menu" className={`nav-dropdown-menu${dropdownOpen ? '' : ' hidden'}`} role="menu" data-testid="profile-menu">
           {cabin?.name && (
             <>
               <div className="nav-dropdown-label" title={cabin.name}>{cabin.name}</div>
@@ -101,6 +104,7 @@ export function TopBar({ onOpenProfileDrawer }: TopBarProps) {
             id="profile-button"
             className="nav-dropdown-item"
             onClick={() => { setDropdownOpen(false); onOpenProfileDrawer() }}
+            data-testid="profile-menu-profile-button"
           >
             Osobní profil
           </button>
@@ -113,6 +117,7 @@ export function TopBar({ onOpenProfileDrawer }: TopBarProps) {
                   to="/superadmin"
                   className="nav-dropdown-item"
                   onClick={() => setDropdownOpen(false)}
+                  data-testid="profile-menu-superadmin-link"
                 >
                   <Shield size={16} style={{ marginRight: '8px', verticalAlign: 'text-bottom' }} />
                   Backoffice
@@ -125,15 +130,27 @@ export function TopBar({ onOpenProfileDrawer }: TopBarProps) {
                     id="nav-admin-management"
                     className="nav-dropdown-item"
                     onClick={() => setDropdownOpen(false)}
+                    data-testid="profile-menu-admin-link"
                   >
                     <Settings size={16} style={{ marginRight: '8px', verticalAlign: 'text-bottom' }} />
                     Administrativa
+                  </Link>
+                  <Link
+                    to="/admin/invites"
+                    id="nav-admin-invites"
+                    className="nav-dropdown-item"
+                    onClick={() => setDropdownOpen(false)}
+                    data-testid="profile-menu-invites-link"
+                  >
+                    <UserPlus size={16} style={{ marginRight: '8px', verticalAlign: 'text-bottom' }} />
+                    Pozvat člena
                   </Link>
                   <Link
                     to="/admin/diagnostics"
                     id="nav-admin-debug"
                     className="nav-dropdown-item"
                     onClick={() => setDropdownOpen(false)}
+                    data-testid="profile-menu-diagnostics-link"
                   >
                     <ScrollText size={16} style={{ marginRight: '8px', verticalAlign: 'text-bottom' }} />
                     Diagnostika
@@ -144,7 +161,7 @@ export function TopBar({ onOpenProfileDrawer }: TopBarProps) {
           )}
 
           <div className="nav-dropdown-separator"></div>
-          <button id="logout-button" className="nav-dropdown-item" onClick={handleLogout}>
+          <button id="logout-button" className="nav-dropdown-item" onClick={handleLogout} data-testid="profile-menu-logout-button">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
               strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px' }}>
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />

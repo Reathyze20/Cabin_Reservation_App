@@ -40,6 +40,9 @@ export function Toast() {
     <div
       id="toast"
       className={`toast toast-${state.type}${state.visible ? ' show' : ''}`}
+      data-testid="toast"
+      data-toast-type={state.type}
+      data-toast-visible={state.visible ? 'true' : 'false'}
     >
       {state.message}
     </div>

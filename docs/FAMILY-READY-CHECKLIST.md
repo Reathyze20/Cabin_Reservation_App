@@ -9,7 +9,7 @@ Poznamka k odskrtavani:
 - `[x]` = potvrzeno v repu nebo v navazujici dokumentaci.
 - `[ ]` = chybi implementace, produkcni deploy nebo rucni E2E overeni.
 
-## Aktualni stav k 2026-05-02
+## Aktualni stav k 2026-05-26
 
 - ✅ V repo je hotovy zaklad pro backupy a restore: `backupManager`, retence, cron installer a runbook.
 - ✅ Backup a restore probehly uspesne i v docasnem test prostredi pres `npm run backup:smoke`.
@@ -19,10 +19,12 @@ Poznamka k odskrtavani:
 - ✅ V admin rozhrani je hotove invite UX pro odeslani pozvanky e-mailem a zkopirovani hotove zpravy pro WhatsApp nebo SMS.
 - ✅ Auth enforcement je v repo dotazeny pro blokovane ucty: login i protected requesty se opiraji o aktualni stav uzivatele v DB a frontend umi blokovanou relaci okamzite shodit.
 - ✅ Produkcni backup minimum je potvrzene: cron bezi, seed artefakty `.dump` a `.tar.gz` existuji a operations smoke je umi overit.
-- ⚠️ Zakladni rezervacni notifikace jsou jen parcialni: existuje watcher flow pro zruseni rezervace pres notes, ale ne cele minimum pro novou a upravenou rezervaci.
-- ⚠️ Frontend uz ma PWA plugin, offline banner a offline-aware mutation handling, ale stale chybi audit pravdivosti textu a realny offline rehearsal.
-- ⚠️ Pro rucni overeni uz existuji podklady: [SPRINT-0-SMOKE-TEST.md](SPRINT-0-SMOKE-TEST.md), [SPRINT-3-MOBILE-QA-CHECKLIST.md](SPRINT-3-MOBILE-QA-CHECKLIST.md), [OPERATIONS-RUNBOOK.md](OPERATIONS-RUNBOOK.md), ale produkcni E2E kroky zatim nejsou odskrtnute.
-- ❌ Nejblizsi prakticky sled zustava: externi monitoring/alerting, produkcni e-mail E2E, potom rodinny rehearsal.
+- ✅ GitHub Actions deploy workflow ted blokuje nasazeni na backend typecheck + frontend testy + frontend build jeste pred uploadem bundle a restartem PM2.
+- ✅ Lokalni API rehearsal subset admin + pozvany clen probehl na izolovane DB pro registraci, invite accept, rezervace create/update/delete, shopping, notes, gallery, diary i admin role change.
+- ⚠️ Zakladni rezervacni notifikace uz maji verejny activity log v notes pro novou, upravenou i zrusenou rezervaci, ale stale chybi realne overeni textu, doruceni a vnimaneho hluku.
+- ⚠️ Frontend uz ma PWA plugin, offline banner a offline-aware mutation handling. Copy uz nepretvari offline stav za garantovanou synchronizaci, ale stale chybi realny offline rehearsal na telefonu.
+- ⚠️ Pro rucni browser/device overeni uz existuji podklady: [SPRINT-0-SMOKE-TEST.md](SPRINT-0-SMOKE-TEST.md), [SPRINT-3-MOBILE-QA-CHECKLIST.md](SPRINT-3-MOBILE-QA-CHECKLIST.md), [OPERATIONS-RUNBOOK.md](OPERATIONS-RUNBOOK.md), ale desktop, telefon a offline weak-signal cast rehearsal zatim nejsou odskrtnute.
+- ⚠️ Nejblizsi prakticky sled zustava: externi monitoring/alerting, produkcni e-mail E2E, potom rucny desktop + mobil rehearsal.
 
 ---
 
@@ -55,14 +57,21 @@ Definition of done:
 
 ### Produkcni e-mail flow
 
-- [ ] Zkontrolovat produkcni `.env` pro SMTP nastaveni.
-- [ ] Zkontrolovat `FRONTEND_URL` a `EMAIL_FROM`.
+- [x] Zkontrolovat produkcni `.env` pro SMTP nastaveni.
+- [x] Zkontrolovat `FRONTEND_URL` a `EMAIL_FROM`.
 - [ ] Otestovat registraci noveho uzivatele na produkci.
 - [ ] Otestovat doruceni verifikacniho e-mailu.
 - [ ] Otestovat otevreni verifikacniho odkazu v prohlizeci.
-- [ ] Otestovat vytvoreni invite linku adminem.
-- [ ] Otestovat prijeti pozvanky novym clenem.
+- [x] Otestovat vytvoreni invite linku adminem.
+- [x] Otestovat prijeti pozvanky novym clenem.
 - [ ] Zapsat fallback postup pro pripad, ze e-mail nedorazi.
+
+Stav z produkcniho smoke behu 2026-05-24:
+
+- `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`, `FRONTEND_URL` i `EMAIL_FROM` jsou na serveru vyplnene.
+- `FRONTEND_URL` miri na `https://chataceskestredohori.cz` a invite create/accept flow funguje end-to-end.
+- Registrace, invite email, forgot password i superadmin onboarding jsou aktualne blokovane na SMTP chybe `535 Authentication Credentials Invalid`.
+- Produkce se pri tomto failu chova bezpecne: registrace rollbackne, forgot password po failu znovu smaze reset token a superadmin create-user vraci `503` bez ponechani uctu v DB.
 
 Definition of done:
 
@@ -92,6 +101,7 @@ Definition of done:
 ### Rodinny rehearsal
 
 - [x] Existuje manualni smoke-test a mobilni QA checklist jako podklad pro rehearsal.
+- [x] Existuje rizeny desktop + mobil rehearsal flow navazany na smoke a mobile subset.
 - [ ] Provest scenar admin + pozvany clen.
 - [ ] Otestovat flow na desktopu.
 - [ ] Otestovat flow na telefonu.
@@ -103,6 +113,13 @@ Definition of done:
 - [ ] Vytvorit zaznam v deniku nebo overit jeho zalozeni.
 - [ ] Vyzkouset admin akce pro clena rodiny.
 - [ ] Zapsat posledni nalezene chyby nebo potvrdit readiness.
+
+Stav z lokalniho API rehearsal 2026-05-26:
+
+- admin + pozvany clen prosli registraci, invite flow a prihlasenim na izolovane DB,
+- create/update/delete rezervace, shopping, zprava do hlavni nastenky, upload fotky do galerie a zalozeni denikoveho zaznamu probehly uspesne,
+- admin role change `user -> guest` byl overen a novy guest token dostal spravne `403` pri pokusu psat do chatu,
+- tento beh nepotvrzuje desktop UI, mobilni layout ani offline/weak-signal chovani, to stale zustava na rucni browser/device pass.
 
 Podklady: [SPRINT-0-SMOKE-TEST.md](SPRINT-0-SMOKE-TEST.md) a [SPRINT-3-MOBILE-QA-CHECKLIST.md](SPRINT-3-MOBILE-QA-CHECKLIST.md)
 
@@ -157,11 +174,17 @@ Definition of done:
 ### Zakladni notifikace
 
 - [x] Existuje minimalni watcher notifikace pri zruseni rezervace pres notes.
-- [ ] Rozhodnout minimum notifikaci pro rodinu.
-- [ ] Pridat notifikaci pri nove rezervaci.
-- [ ] Pridat notifikaci pri zruseni nebo uprave rezervace.
+- [x] Rozhodnout minimum notifikaci pro rodinu.
+- [x] Pridat notifikaci pri nove rezervaci.
+- [x] Pridat notifikaci pri zruseni nebo uprave rezervace.
 - [ ] Overit texty a doruceni notifikaci.
 - [ ] Omezit hluk tak, aby notifikace nebyly otravne.
+
+Aktualni stav v repu:
+
+- create, update i delete rezervace zapisuji jednotnou activity zpravu do hlavni nastenky,
+- uprava rezervace vytvari zpravu jen pri zmene terminu, stavu nebo ucelu, ne pri kazde drobne poznamce,
+- copy u "Hlidat" uz neslibuje primou osobni zpravu, ale pravdive upozornuje na zpravu v nastence.
 
 Definition of done:
 
@@ -181,11 +204,18 @@ Definition of done:
 ### Offline a PWA pravdivost
 
 - [x] Repo uz ma PWA plugin, offline banner a offline-aware toasty pro sitove chyby.
-- [ ] Projit texty a UX kolem offline stavu.
-- [ ] Odstranit zavadejici tvrzeni o automaticke synchronizaci tam, kde neni garantovana.
-- [ ] Rozhodnout minimum offline podpory pro klicove obrazovky.
+- [x] Projit texty a UX kolem offline stavu.
+- [x] Odstranit zavadejici tvrzeni o automaticke synchronizaci tam, kde neni garantovana.
+- [x] Rozhodnout minimum offline podpory pro klicove obrazovky.
 - [ ] Otestovat chovani pri vypnuti site.
 - [ ] Otestovat navrat site po neuspesne akci.
+
+Aktualni minimum v repu:
+
+- offline banner a toasty uz slibuji jen to, co app realne umi,
+- drive nactena data mohou zustat kratce viditelna z cache,
+- nove mutace nejsou garantovane offline a po navratu site je potreba je overit nebo zopakovat,
+- po reloadu neni garantovana zadna perzistentni background queue.
 
 Definition of done:
 
@@ -220,8 +250,8 @@ Definition of done:
 
 ### Drobne self-service zlepseni
 
-- [ ] Pridat nebo dokoncit leave cabin flow v UI.
-- [ ] Dodelat drobne admin akce podle zpetne vazby rodiny.
+- [x] Pridat nebo dokoncit leave cabin flow v UI.
+- [ ] Dodelat drobne admin akce podle zpetne vazby rodiny (TopBar uz ma primou zkratku "Pozvat clena").
 - [ ] Dodelat drobna nastaveni chaty podle realneho pouzivani.
 
 ### Testy a CI preflight
@@ -229,8 +259,8 @@ Definition of done:
 - [ ] Vybrat 3-5 nejkritictejsich flow pro automatizaci.
 - [ ] Dopsat frontend testy pro kriticke use cases.
 - [ ] Dopsat aspon zakladni backend smoke testy.
-- [ ] Pridat test krok pred deploy.
-- [ ] Pridat build krok pred deploy pokud jeste neni vynuceny v workflow dostatecne brzy.
+- [x] Pridat test krok pred deploy.
+- [x] Pridat build krok pred deploy pokud jeste neni vynuceny v workflow dostatecne brzy.
 
 Definition of done:
 

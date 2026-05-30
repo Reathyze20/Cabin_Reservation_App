@@ -57,6 +57,15 @@ function getAuthItem(key: string): string | null {
   return sessionStorage.getItem(key) ?? localStorage.getItem(key)
 }
 
+function setStoredAuthItem(store: Storage, key: string, value: string | null | undefined): void {
+  if (value) {
+    store.setItem(key, value)
+    return
+  }
+
+  store.removeItem(key)
+}
+
 function readStoredUser(): { user: AuthUser | null; token: string | null } {
   const token = getAuthItem('authToken')
   const userId = getAuthItem('userId')
@@ -118,7 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback((payload: SetAuthPayload) => {
     const store = payload.remember ? localStorage : sessionStorage
     const otherStore = payload.remember ? sessionStorage : localStorage
-    ;['authToken', 'username', 'userId', 'role', 'animalIcon', 'cabinId', 'isSuperAdmin'].forEach((k) =>
+    ;['authToken', 'username', 'userId', 'role', 'animalIcon', 'cabinId', 'activeCabinId', 'isSuperAdmin'].forEach((k) =>
       otherStore.removeItem(k),
     )
 
@@ -127,8 +136,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     store.setItem('userId', payload.userId)
     store.setItem('role', payload.role)
     store.setItem('isSuperAdmin', payload.isSuperAdmin ? 'true' : 'false')
-    if (payload.animalIcon) store.setItem('animalIcon', payload.animalIcon)
-    if (payload.cabinId) store.setItem('cabinId', payload.cabinId)
+    setStoredAuthItem(store, 'animalIcon', payload.animalIcon ?? null)
+    setStoredAuthItem(store, 'cabinId', payload.cabinId ?? null)
 
     // Persist and update active cabin
     const cabinId = payload.cabinId ?? null

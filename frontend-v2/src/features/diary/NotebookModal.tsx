@@ -176,6 +176,7 @@ export function NotebookModal({ dateObj, entry, folderId, allDates, onNavigate, 
             <button
               className="notebook-btn-attach"
               onClick={() => setShowPickerModal(true)}
+              data-testid="diary-attach-photos-button"
             >
               Fotky
             </button>
@@ -184,6 +185,7 @@ export function NotebookModal({ dateObj, entry, folderId, allDates, onNavigate, 
                 className="notebook-btn-delete"
                 onClick={handleDeleteClick}
                 disabled={deleteEntry.isPending}
+                data-testid="diary-delete-entry-button"
               >
                 Vytrhnout
               </button>
@@ -192,6 +194,7 @@ export function NotebookModal({ dateObj, entry, folderId, allDates, onNavigate, 
               className="notebook-btn-save"
               onClick={handleSave}
               disabled={saveEntry.isPending}
+              data-testid="diary-save-entry-button"
             >
               {saveEntry.isPending ? 'Ukládám…' : 'Uložit'}
             </button>
@@ -214,6 +217,7 @@ export function NotebookModal({ dateObj, entry, folderId, allDates, onNavigate, 
                 placeholder="Napiš co se dnes dělo…"
                 maxLength={MAX_CHARS}
                 rows={12}
+                data-testid="diary-entry-textarea"
               />
               <div className="char-counter">{content.length}/{MAX_CHARS}</div>
             </div>

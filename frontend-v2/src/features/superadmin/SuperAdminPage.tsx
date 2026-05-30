@@ -254,7 +254,7 @@ export function SuperAdminPage() {
 
   if (!isSuperAdmin) {
     return (
-      <div className="main-content-admin pb-20 md:pb-0">
+      <div className="main-content-admin pb-20 md:pb-0" data-testid="superadmin-page" data-superadmin-state="denied">
         <div className="page-card admin-page-card admin-denied-card">
           <span className="admin-kicker">Backoffice</span>
           <h1 className="admin-page-title">Přístup odepřen</h1>
@@ -265,7 +265,7 @@ export function SuperAdminPage() {
   }
 
   return (
-    <div className="main-content-admin pb-20 md:pb-0">
+    <div className="main-content-admin pb-20 md:pb-0" data-testid="superadmin-page" data-superadmin-state="ready">
       <section className="page-card admin-page-card admin-overview-card superadmin-overview-card">
         <div className="admin-overview-header">
           <div className="admin-overview-copy">
@@ -277,11 +277,11 @@ export function SuperAdminPage() {
           </div>
 
           <div className="admin-hero-actions">
-            <button type="button" className="btn btn-primary" onClick={() => scrollToSection('superadmin-create-user')}>
+            <button type="button" className="btn btn-primary" onClick={() => scrollToSection('superadmin-create-user')} data-testid="superadmin-create-user-jump-button">
               <UserPlus size={16} />
               Nový účet
             </button>
-            <button type="button" className="btn btn-secondary" onClick={() => scrollToSection('superadmin-logs')}>
+            <button type="button" className="btn btn-secondary" onClick={() => scrollToSection('superadmin-logs')} data-testid="superadmin-logs-jump-button">
               <Shield size={16} />
               Provozní logy
             </button>
@@ -316,7 +316,7 @@ export function SuperAdminPage() {
       </section>
 
       <div className="admin-layout-grid superadmin-layout-grid">
-        <section className="page-card admin-page-card admin-card admin-users-card" id="superadmin-users">
+        <section className="page-card admin-page-card admin-card admin-users-card" id="superadmin-users" data-testid="superadmin-users-section">
           <div className="admin-card-header">
             <div>
               <div className="admin-card-eyebrow">Systémové účty</div>
@@ -341,11 +341,12 @@ export function SuperAdminPage() {
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
                 placeholder="Hledat podle jména nebo e-mailu"
+                data-testid="superadmin-user-search-input"
               />
             </label>
 
             <div className="superadmin-filter-groups">
-              <div className="admin-filter-row" role="tablist" aria-label="Filtrovat účty podle role">
+              <div className="admin-filter-row" role="tablist" aria-label="Filtrovat účty podle role" data-testid="superadmin-role-filters">
                 {roleFilters.map((option) => (
                   <button
                     key={option.value}
@@ -359,7 +360,7 @@ export function SuperAdminPage() {
                 ))}
               </div>
 
-              <div className="admin-filter-row" role="tablist" aria-label="Filtrovat účty podle stavu">
+              <div className="admin-filter-row" role="tablist" aria-label="Filtrovat účty podle stavu" data-testid="superadmin-status-filters">
                 {statusFilters.map((option) => (
                   <button
                     key={option.value}
@@ -423,7 +424,7 @@ export function SuperAdminPage() {
                   const lockActionDisabled = isSelf || user.isSuperAdmin
 
                   return (
-                    <article key={user.id} className={`admin-user-card superadmin-user-card ${isSelf ? 'is-current-user' : ''}`}>
+                    <article key={user.id} className={`admin-user-card superadmin-user-card ${isSelf ? 'is-current-user' : ''}`} data-testid="superadmin-user-card" data-user-id={user.id}>
                       <div className="admin-user-main">
                         <div className="superadmin-user-avatar">
                           <span>{user.username.charAt(0).toUpperCase()}</span>
@@ -465,6 +466,7 @@ export function SuperAdminPage() {
                                 ? 'Nelze blokovat jiného Super Admina.'
                                 : undefined
                           }
+                          data-testid="superadmin-toggle-ban-button"
                         >
                           {user.isBanned ? 'Zrušit blokaci' : 'Zablokovat'}
                         </button>
@@ -478,7 +480,7 @@ export function SuperAdminPage() {
         </section>
 
         <aside className="admin-sidebar-stack superadmin-sidebar-stack">
-          <section className="page-card admin-page-card admin-card" id="superadmin-create-user">
+          <section className="page-card admin-page-card admin-card" id="superadmin-create-user" data-testid="superadmin-create-user-section">
             <div className="admin-card-header">
               <div>
                 <div className="admin-card-eyebrow">Ruční založení</div>
@@ -497,24 +499,25 @@ export function SuperAdminPage() {
               onChange={() => {
                 if (createError) setCreateError(null)
               }}
+              data-testid="superadmin-create-user-form"
             >
               <div className="form-group">
                 <label htmlFor="superadmin-username">Uživatelské jméno</label>
-                <input id="superadmin-username" name="username" type="text" minLength={2} maxLength={50} required />
+                <input id="superadmin-username" name="username" type="text" minLength={2} maxLength={50} required data-testid="superadmin-create-username-input" />
               </div>
               <div className="form-group">
                 <label htmlFor="superadmin-email">E-mail</label>
-                <input id="superadmin-email" name="email" type="email" maxLength={255} required />
+                <input id="superadmin-email" name="email" type="email" maxLength={255} required data-testid="superadmin-create-email-input" />
               </div>
               <div className="form-group">
                 <label htmlFor="superadmin-role">Výchozí role</label>
-                <select id="superadmin-role" name="role" defaultValue="user">
+                <select id="superadmin-role" name="role" defaultValue="user" data-testid="superadmin-create-role-select">
                   <option value="user">Člen</option>
                   <option value="admin">Admin</option>
                   <option value="guest">Host</option>
                 </select>
               </div>
-              <button type="submit" className="btn btn-primary" disabled={createUser.isPending}>
+              <button type="submit" className="btn btn-primary" disabled={createUser.isPending} data-testid="superadmin-create-submit-button">
                 <UserPlus size={16} />
                 {createUser.isPending ? 'Zakládám…' : 'Vytvořit účet'}
               </button>

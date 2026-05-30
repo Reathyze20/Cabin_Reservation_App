@@ -4,17 +4,19 @@ import cors from "cors";
 import helmet from "helmet";
 import compression from "compression";
 import rateLimit from "express-rate-limit";
+import swaggerUi from "swagger-ui-express";
 import path from "path";
 import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
 import cron from "node-cron";
-import { PORT, UPLOADS_PATH } from "../config/config";
+import { ENABLE_API_DOCS, PORT, UPLOADS_PATH } from "../config/config";
 import prisma from "../utils/prisma";
 import logger from "../utils/logger";
 import { requestContext } from "../utils/asyncContext";
 import { httpLogger } from "../middleware/httpLogger";
 import { checkFrostAlerts } from "./jobs/weatherAlerts";
 import { initSocketServer } from "../utils/socket";
+import { openApiSpec } from "./openapi";
 
 // Import routes
 import authRoutes from "./routes/auth";
@@ -165,6 +167,25 @@ app.get("/api/health", async (req, res) => {
     });
   }
 });
+
+if (ENABLE_API_DOCS) {
+  app.get("/api/openapi.json", (_req, res) => {
+    res.json(openApiSpec);
+  });
+
+  app.use(
+    "/api/docs",
+    swaggerUi.serve,
+    swaggerUi.setup(openApiSpec, {
+      explorer: true,
+      customSiteTitle: "Chata API Docs",
+      swaggerOptions: {
+        persistAuthorization: true,
+        tryItOutEnabled: true,
+      },
+    })
+  );
+}
 
 // Auth routes (rate limiter on public auth/recovery endpoints)
 app.use("/api/login", authLimiter);

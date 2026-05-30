@@ -73,6 +73,7 @@ describe('HelpFab and OfflineBanner', () => {
     })
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Jste offline')
+    expect(screen.getByRole('alert')).toHaveTextContent('Nové změny po návratu spojení zkontrolujte.')
 
     act(() => {
       setNavigatorOnline(true)

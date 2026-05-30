@@ -297,6 +297,7 @@ function EditUserModal({ user, onClose, onDeleted }: EditUserModalProps) {
               className="btn btn-primary"
               onClick={handleSave}
               disabled={updateUser.isPending}
+              data-testid="edit-user-save-button"
             >
               {updateUser.isPending ? 'Ukládám…' : 'Uložit'}
             </button>
@@ -310,6 +311,7 @@ function EditUserModal({ user, onClose, onDeleted }: EditUserModalProps) {
                   }}
                   disabled={removeUserFromCabin.isPending || isSelf}
                   title={isSelf ? 'Nemůžete odebrat sami sebe z chaty' : undefined}
+                  data-testid="edit-user-remove-from-cabin-button"
                 >
                   Odebrat z chaty
                 </button>
@@ -320,6 +322,7 @@ function EditUserModal({ user, onClose, onDeleted }: EditUserModalProps) {
                     setConfirmAction('delete-reservations')
                   }}
                   disabled={deleteReservations.isPending}
+                  data-testid="edit-user-delete-reservations-button"
                 >
                   Smazat rezervace
                 </button>
@@ -331,6 +334,7 @@ function EditUserModal({ user, onClose, onDeleted }: EditUserModalProps) {
                   }}
                   disabled={deleteUser.isPending || isSelf}
                   title={isSelf ? 'Nemůžete smazat sami sebe' : undefined}
+                  data-testid="edit-user-delete-user-button"
                 >
                   Smazat uživatele
                 </button>
@@ -360,7 +364,7 @@ function EditUserModal({ user, onClose, onDeleted }: EditUserModalProps) {
 
           <div className="form-group">
             <label>Uživatelské jméno</label>
-            <input type="text" value={user.username} disabled className="form-control" />
+            <input type="text" value={user.username} disabled className="form-control" data-testid="edit-user-username-input" />
           </div>
 
           <div className="form-group">
@@ -373,6 +377,7 @@ function EditUserModal({ user, onClose, onDeleted }: EditUserModalProps) {
                 setRole(e.target.value as CabinUser['role'])
               }}
               disabled={!isAdmin}
+              data-testid="edit-user-role-select"
             >
               <option value="admin">Admin</option>
               <option value="user">Člen</option>
@@ -394,10 +399,11 @@ function EditUserModal({ user, onClose, onDeleted }: EditUserModalProps) {
               minLength={8}
               maxLength={100}
               autoComplete="new-password"
+              data-testid="edit-user-password-input"
             />
           </div>
           {saveError ? (
-            <div className="error-message show" role="alert">{saveError}</div>
+            <div className="error-message show" role="alert" data-testid="edit-user-save-error">{saveError}</div>
           ) : null}
       </Modal>
 
@@ -589,7 +595,7 @@ function InvitesSection({ invites, isLoading, isError, error, onRetry }: Invites
   const inactiveInvites = invites.filter((invite) => isInviteExpired(invite.expiresAt) || isInviteExhausted(invite))
 
   return (
-    <section className="page-card admin-page-card admin-card admin-invites-card" id="admin-invites">
+    <section className="page-card admin-page-card admin-card admin-invites-card" id="admin-invites" data-testid="admin-invites-section">
       <div className="admin-card-header">
         <div>
           <div className="admin-card-eyebrow">Pozvánky</div>
@@ -609,10 +615,11 @@ function InvitesSection({ invites, isLoading, isError, error, onRetry }: Invites
         onChange={() => {
           if (createError) setCreateError(null)
         }}
+        data-testid="invite-create-form"
       >
         <div className="form-group">
           <label htmlFor="invite-role">Role</label>
-          <select id="invite-role" name="invite-role">
+          <select id="invite-role" name="invite-role" data-testid="invite-role-select">
             <option value="user">Člen</option>
             <option value="admin">Admin</option>
             <option value="guest">Host</option>
@@ -620,13 +627,13 @@ function InvitesSection({ invites, isLoading, isError, error, onRetry }: Invites
         </div>
         <div className="form-group">
           <label htmlFor="invite-days">Platnost (dní)</label>
-          <input id="invite-days" name="invite-days" type="number" min={1} max={365} defaultValue={7} />
+          <input id="invite-days" name="invite-days" type="number" min={1} max={365} defaultValue={7} data-testid="invite-days-input" />
         </div>
         <div className="form-group">
           <label htmlFor="invite-max-uses">Počet použití</label>
-          <input id="invite-max-uses" name="invite-max-uses" type="number" min={1} max={100} defaultValue={1} placeholder="1" />
+          <input id="invite-max-uses" name="invite-max-uses" type="number" min={1} max={100} defaultValue={1} placeholder="1" data-testid="invite-max-uses-input" />
         </div>
-        <button type="submit" className="btn btn-primary" disabled={createInvite.isPending}>
+        <button type="submit" className="btn btn-primary" disabled={createInvite.isPending} data-testid="invite-create-submit">
           <TicketPlus size={16} />
           {createInvite.isPending ? 'Vytvářím…' : 'Vytvořit pozvánku'}
         </button>
@@ -653,9 +660,9 @@ function InvitesSection({ invites, isLoading, isError, error, onRetry }: Invites
           <p>Jakmile vytvoříš nový odkaz, objeví se tady s informací o využití a expiraci.</p>
         </div>
       ) : (
-        <div className="admin-invite-list">
+        <div className="admin-invite-list" data-testid="invite-active-list">
           {activeInvites.map((inv) => (
-            <article key={inv.id} className="admin-invite-card">
+            <article key={inv.id} className="admin-invite-card" data-testid="invite-card" data-invite-id={inv.id}>
               <div className="admin-invite-main">
                 <div className="admin-invite-top">
                   <span className={getRoleBadgeClass(inv.role)}>{getRoleLabel(inv.role)}</span>
@@ -682,6 +689,7 @@ function InvitesSection({ invites, isLoading, isError, error, onRetry }: Invites
                   className="btn btn-secondary btn-sm"
                   onClick={() => copyShareMessage(inv)}
                   title="Zkopírovat text pro WhatsApp nebo SMS"
+                  data-testid="invite-copy-message-button"
                 >
                   {copiedId === inv.id ? <><Check size={14} /> Zkopírováno</> : <><Copy size={14} /> Text zprávy</>}
                 </button>
@@ -690,6 +698,7 @@ function InvitesSection({ invites, isLoading, isError, error, onRetry }: Invites
                   className="btn btn-secondary btn-sm"
                   onClick={() => handleOpenEmailModal(inv)}
                   title="Odeslat pozvánku e-mailem"
+                  data-testid="invite-email-button"
                 >
                   <Mail size={14} /> E-mail
                 </button>
@@ -699,6 +708,7 @@ function InvitesSection({ invites, isLoading, isError, error, onRetry }: Invites
                   onClick={() => handleRevoke(inv.id)}
                   disabled={revokeInvite.isPending}
                   title="Zrušit pozvánku"
+                  data-testid="invite-revoke-button"
                 >
                   Zrušit
                 </button>
@@ -911,7 +921,7 @@ export function AdminPage() {
   // Guard
   if (!isAdmin) {
     return (
-      <div className="main-content-admin pb-20 md:pb-0">
+      <div className="main-content-admin pb-20 md:pb-0" data-testid="admin-page" data-admin-state="denied">
         <div className="page-card admin-page-card admin-denied-card">
           <span className="admin-kicker">Administrace</span>
           <h1 className="admin-page-title">Přístup odepřen</h1>
@@ -958,7 +968,7 @@ export function AdminPage() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="main-content-admin pb-20 md:pb-0">
+    <div className="main-content-admin pb-20 md:pb-0" data-testid="admin-page" data-admin-state="ready" data-admin-workspace={activeWorkspace}>
       <section className="page-card admin-page-card admin-shell-card">
         <div className="admin-shell-topbar">
           <div className="admin-shell-copy">
@@ -970,11 +980,11 @@ export function AdminPage() {
           </div>
 
           <div className="admin-hero-actions">
-            <button type="button" className="btn btn-primary" onClick={() => openWorkspace('members', 'admin-create-user')}>
+            <button type="button" className="btn btn-primary" onClick={() => openWorkspace('members', 'admin-create-user')} data-testid="admin-add-user-button">
               <UserPlus size={16} />
               Přidat člena
             </button>
-            <button type="button" className="btn btn-secondary" onClick={() => navigate('/admin/diagnostics#system-logs')}>
+            <button type="button" className="btn btn-secondary" onClick={() => navigate('/admin/diagnostics#system-logs')} data-testid="admin-open-diagnostics-button">
               <ScrollText size={16} />
               Otevřít diagnostiku
             </button>
@@ -986,7 +996,7 @@ export function AdminPage() {
 
       {activeWorkspace === 'members' ? (
         <div className="admin-layout-grid">
-          <section className="page-card admin-page-card admin-card admin-users-card" id="admin-users">
+          <section className="page-card admin-page-card admin-card admin-users-card" id="admin-users" data-testid="admin-users-section">
             <div className="admin-card-header">
               <div>
                 <div className="admin-card-eyebrow">Účty a role</div>
@@ -1011,16 +1021,19 @@ export function AdminPage() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Hledat podle jména nebo e-mailu"
+                  data-testid="admin-user-search-input"
                 />
               </label>
 
-              <div className="admin-filter-row" role="tablist" aria-label="Filtrovat účty podle role">
+              <div className="admin-filter-row" role="tablist" aria-label="Filtrovat účty podle role" data-testid="admin-role-filters">
                 {filterOptions.map((option) => (
                   <button
                     key={option.value}
                     type="button"
                     className={`admin-filter-chip ${roleFilter === option.value ? 'is-active' : ''}`}
                     onClick={() => setRoleFilter(option.value)}
+                    data-testid="admin-role-filter-button"
+                    data-role-filter={option.value}
                   >
                     <span>{option.label}</span>
                     <span className="admin-filter-chip-count">{option.count}</span>
@@ -1075,7 +1088,7 @@ export function AdminPage() {
                   ) : null}
                 </div>
 
-                <div id="users-list" className="admin-members-list">
+                <div id="users-list" className="admin-members-list" data-testid="admin-users-list">
                   {filteredUsers.map((user) => {
                     const statusMeta = getUserStatusMeta(user)
 
@@ -1083,6 +1096,8 @@ export function AdminPage() {
                       <article
                         key={user.id}
                         className={`admin-user-card ${currentUser?.userId === user.id ? 'is-current-user' : ''}`}
+                        data-testid="admin-user-card"
+                        data-user-id={user.id}
                       >
                         <div className="admin-user-main">
                           <AnimalAvatar
@@ -1123,6 +1138,7 @@ export function AdminPage() {
                             data-uid={user.id}
                             onClick={() => setEditUser(user)}
                             title={`Upravit účet ${user.username}`}
+                            data-testid="admin-edit-user-button"
                           >
                             <Pencil size={14} /> Upravit účet
                           </button>
@@ -1136,7 +1152,7 @@ export function AdminPage() {
           </section>
 
           <aside className="admin-sidebar-stack">
-            <section className="page-card admin-page-card admin-card" id="admin-create-user">
+            <section className="page-card admin-page-card admin-card" id="admin-create-user" data-testid="admin-create-user-section">
               <div className="admin-card-header">
                 <div>
                   <div className="admin-card-eyebrow">Nový přístup</div>
@@ -1156,24 +1172,25 @@ export function AdminPage() {
                 onChange={() => {
                   if (createUserError) setCreateUserError(null)
                 }}
+                data-testid="admin-create-user-form"
               >
                 <div className="form-group">
                   <label htmlFor="new-username">Uživatelské jméno</label>
-                  <input id="new-username" name="username" type="text" required minLength={3} maxLength={50} />
+                  <input id="new-username" name="username" type="text" required minLength={3} maxLength={50} data-testid="admin-create-username-input" />
                 </div>
                 <div className="form-group">
                   <label htmlFor="new-password">Heslo</label>
-                  <input id="new-password" name="password" type="password" required minLength={8} maxLength={100} autoComplete="new-password" />
+                  <input id="new-password" name="password" type="password" required minLength={8} maxLength={100} autoComplete="new-password" data-testid="admin-create-password-input" />
                 </div>
                 <div className="form-group">
                   <label htmlFor="new-role">Role</label>
-                  <select id="new-role" name="role">
+                  <select id="new-role" name="role" data-testid="admin-create-role-select">
                     <option value="user">Člen</option>
                     <option value="admin">Admin</option>
                     <option value="guest">Host</option>
                   </select>
                 </div>
-                <button type="submit" className="btn btn-primary" disabled={createUser.isPending}>
+                <button type="submit" className="btn btn-primary" disabled={createUser.isPending} data-testid="admin-create-submit-button">
                   <UserPlus size={16} />
                   {createUser.isPending ? 'Přidávám…' : 'Přidat uživatele'}
                 </button>
@@ -1184,11 +1201,11 @@ export function AdminPage() {
               </p>
 
               {createUserError ? (
-                <div className="error-message show admin-section-error" role="alert">{createUserError}</div>
+                <div className="error-message show admin-section-error" role="alert" data-testid="admin-create-user-error">{createUserError}</div>
               ) : null}
             </section>
 
-            <section className="page-card admin-page-card admin-card" id="system-info">
+            <section className="page-card admin-page-card admin-card" id="system-info" data-testid="admin-system-stats-section">
               <div className="admin-card-header">
                 <div>
                   <div className="admin-card-eyebrow">Přehled aplikace</div>
@@ -1221,7 +1238,7 @@ export function AdminPage() {
           </div>
 
           <aside className="admin-sidebar-stack">
-            <section className="page-card admin-page-card admin-card admin-focus-card">
+            <section className="page-card admin-page-card admin-card admin-focus-card" data-testid="admin-invite-guidance-section">
               <div className="admin-card-header">
                 <div>
                   <div className="admin-card-eyebrow">Rychlé rozhodnutí</div>
@@ -1265,7 +1282,7 @@ export function AdminPage() {
               </div>
             </section>
 
-            <section className="page-card admin-page-card admin-card" id="system-info">
+            <section className="page-card admin-page-card admin-card" id="system-info" data-testid="admin-invite-system-stats-section">
               <div className="admin-card-header">
                 <div>
                   <div className="admin-card-eyebrow">Přehled aplikace</div>
@@ -1284,7 +1301,7 @@ export function AdminPage() {
       ) : null}
 
       {activeWorkspace === 'cabin' ? (
-        <section className="page-card settings-page-card admin-page-card admin-card admin-settings-shell" id="admin-cabin-settings">
+        <section className="page-card settings-page-card admin-page-card admin-card admin-settings-shell" id="admin-cabin-settings" data-testid="admin-cabin-settings-section">
           <CabinSettingsPanel
             title="Společné nastavení chaty"
             subtitle="Všechno sdílené na jednom místě: údaje chaty, pravidla, odjezdový checklist i zapnuté moduly."

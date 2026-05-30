@@ -47,7 +47,7 @@ export function VerifyForm({ username, prefillCode = '', onShowLogin }: VerifyFo
   }
 
   return (
-    <div id="verify-section" className="login-container card">
+    <div id="verify-section" className="login-container card" data-testid="verify-form-view">
       <div className="auth-brand">
         <img src="/logo-icon.svg" alt="Logo" className="auth-logo-icon" />
         <h1 className="auth-brand-text">Chatačeskéstředohoří</h1>
@@ -59,7 +59,7 @@ export function VerifyForm({ username, prefillCode = '', onShowLogin }: VerifyFo
         Zadejte 6místný PIN kód, který vám byl zaslán na e-mail (nebo zobrazen v serverové konzoli pro testování).
       </p>
 
-      <form id="verify-form" noValidate onSubmit={handleSubmit}>
+      <form id="verify-form" noValidate onSubmit={handleSubmit} data-testid="verify-form">
         <input type="hidden" id="verify-username" value={username} readOnly />
 
         <div className="form-group">
@@ -74,10 +74,11 @@ export function VerifyForm({ username, prefillCode = '', onShowLogin }: VerifyFo
             required
             defaultValue={prefillCode}
             ref={codeRef}
+            data-testid="verify-code-input"
           />
         </div>
 
-        <button type="submit" className="button-primary" style={{ width: '100%' }} disabled={loading}>
+        <button type="submit" className="button-primary" style={{ width: '100%' }} disabled={loading} data-testid="verify-submit-button">
           {loading ? 'Ověřuji…' : 'Ověřit e-mail'}
         </button>
 
@@ -89,6 +90,7 @@ export function VerifyForm({ username, prefillCode = '', onShowLogin }: VerifyFo
               marginTop: '.5rem',
               color: message.type === 'error' ? 'var(--color-danger)' : 'var(--color-success)',
             }}
+            data-testid="verify-message"
           >
             {message.text}
           </p>
@@ -100,6 +102,7 @@ export function VerifyForm({ username, prefillCode = '', onShowLogin }: VerifyFo
           href="#"
           id="show-login-link-from-verify"
           onClick={(e) => { e.preventDefault(); onShowLogin() }}
+          data-testid="verify-back-to-login-link"
         >
           Vrátit se na přihlášení
         </a>

@@ -45,14 +45,14 @@ export function ForgotPasswordForm({ onShowLogin }: ForgotPasswordFormProps) {
   }
 
   return (
-    <div id="forgot-password-section" className="login-container card">
+    <div id="forgot-password-section" className="login-container card" data-testid="forgot-password-form-view">
       <div className="auth-brand">
         <img src="/logo-icon.svg" alt="Logo" className="auth-logo-icon" />
         <h1 className="auth-brand-text">Chatačeskéstředohoří</h1>
       </div>
       <p className="auth-subtitle">Obnova hesla</p>
 
-      <form noValidate onSubmit={handleSubmit}>
+      <form noValidate onSubmit={handleSubmit} data-testid="forgot-password-form">
         <div className="form-group">
           <label htmlFor="forgot-password-identifier">E-mail nebo uživatelské jméno</label>
           <input
@@ -64,6 +64,7 @@ export function ForgotPasswordForm({ onShowLogin }: ForgotPasswordFormProps) {
             placeholder="např. jan@domena.cz nebo Honza"
             ref={identifierRef}
             disabled={loading || requestSent}
+            data-testid="forgot-password-identifier-input"
           />
         </div>
 
@@ -71,7 +72,7 @@ export function ForgotPasswordForm({ onShowLogin }: ForgotPasswordFormProps) {
           Obnova funguje jen pro účty, které mají nastavený e-mail. Pokud e-mail u účtu není, požádejte správce chaty o změnu hesla.
         </p>
 
-        <button type="submit" className="button-primary" style={{ width: '100%' }} disabled={loading || requestSent}>
+        <button type="submit" className="button-primary" style={{ width: '100%' }} disabled={loading || requestSent} data-testid="forgot-password-submit-button">
           {loading ? 'Odesílám odkaz…' : requestSent ? 'Odkaz byl odeslán' : 'Poslat odkaz pro obnovu'}
         </button>
 
@@ -83,6 +84,7 @@ export function ForgotPasswordForm({ onShowLogin }: ForgotPasswordFormProps) {
               marginTop: '.75rem',
               color: message.type === 'error' ? 'var(--color-danger)' : 'var(--color-success)',
             }}
+            data-testid="forgot-password-message"
           >
             {message.text}
           </p>
@@ -90,7 +92,7 @@ export function ForgotPasswordForm({ onShowLogin }: ForgotPasswordFormProps) {
       </form>
 
       <p className="toggle-form-text">
-        <a href="#" onClick={(e) => { e.preventDefault(); onShowLogin() }}>
+        <a href="#" onClick={(e) => { e.preventDefault(); onShowLogin() }} data-testid="forgot-password-back-link">
           ← Zpět na přihlášení
         </a>
       </p>

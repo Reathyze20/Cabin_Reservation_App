@@ -113,6 +113,7 @@ export function FolderGrid({
               onChange={e => onSearchChange(e.target.value)}
               className="gallery-search-input"
               aria-label="Hledat album"
+              data-testid="gallery-folder-search-input"
             />
           </div>
           <select
@@ -120,6 +121,7 @@ export function FolderGrid({
             onChange={e => onSortChange(e.target.value)}
             className="gallery-sort-select"
             aria-label="Řazení alb"
+            data-testid="gallery-folder-sort-select"
           >
             <option value="date-desc">Nejnovější</option>
             <option value="date-asc">Nejstarší</option>
@@ -127,7 +129,7 @@ export function FolderGrid({
             <option value="name-desc">Z → A</option>
           </select>
           {!isGuest && (
-            <button className="btn-primary gallery-new-album-btn" onClick={onNewFolder}>
+            <button className="btn-primary gallery-new-album-btn" onClick={onNewFolder} data-testid="gallery-create-folder-button">
               <Plus size={16} />
               <span className="gallery-btn-label">Nové album</span>
             </button>
@@ -146,6 +148,7 @@ export function FolderGrid({
             transition={{ duration: 0.2 }}
             role="listitem"
             aria-label="Vytvořit nové album"
+            data-testid="gallery-create-folder-card"
           >
             <div className="folder-card__cover folder-card__cover--dashed">
               <Plus size={32} strokeWidth={1.5} />
@@ -189,6 +192,8 @@ export function FolderGrid({
             whileHover={{ y: -4, boxShadow: '0 12px 28px rgba(0,0,0,0.12)' }}
             role="listitem"
             aria-label={`Album ${f.name}, ${formatCount(f.photoCount ?? 0, 'fotka', 'fotky', 'fotek')}`}
+            data-testid="gallery-folder-card"
+            data-folder-id={f.id}
           >
             <div className="folder-card__cover">
               {f.coverPhotoUrl ? (

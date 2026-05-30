@@ -16,8 +16,8 @@ export function MobileHeader({ animalIcon, username, onOpenProfileDrawer }: Mobi
   const hasAvatar = isAvatarId(animalIcon) || !!animalIcon
 
   return (
-    <header className="mobile-header" id="mobile-header">
-      <Link to="/dashboard" className="mobile-header-logo brand-logo-lockup">
+    <header className="mobile-header" id="mobile-header" data-testid="mobile-header">
+      <Link to="/dashboard" className="mobile-header-logo brand-logo-lockup" data-testid="mobile-header-home-link">
         <img src="/logo-icon.svg" alt="Chatačeskéstředohoří" className="mobile-header-logo-img" />
         <span className="mobile-header-logo-text">Chatačeskéstředohoří</span>
       </Link>
@@ -27,6 +27,7 @@ export function MobileHeader({ animalIcon, username, onOpenProfileDrawer }: Mobi
         aria-label="Menu"
         title={`Menu — ${username}`}
         onClick={onOpenProfileDrawer}
+        data-testid="mobile-profile-menu-button"
       >
         {hasAvatar ? (
           <AnimalAvatar icon={animalIcon} username={username} size={32} />

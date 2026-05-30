@@ -8,6 +8,18 @@ Manualni regression checklist pro viewporty `320px` a `375px` po mobilnich uprav
 - Sleduj hlavne horizontalni overflow, prekryvani fixed prvku a velikost tap targetu.
 - Pokud scenar selze, zapis route, viewport, presne kroky a screenshot.
 
+## Mobilni subset pro rodinny rehearsal
+
+Kdyz nechces jet cely seznam, ale jeden realisticky rodinny pruchod s desktop adminem a mobilnim clenem, udelej v tomhle poradi aspon scenare `14`, `1`, `2`, `3`, `4`, `7`, `9`, `10` a `11`.
+
+Doporucene zasazeni do rehearsal flow z [SPRINT-0-SMOKE-TEST.md](SPRINT-0-SMOKE-TEST.md):
+
+- po prijeti invite: `14`,
+- pri praci s rezervacemi: `1`, `2`, `3`,
+- pri chatu a shoppingu: `4`, `7`,
+- pri galerii: `9`, `10`,
+- pri deniku nebo zaverecnem mobilnim dojezdu: `11`.
+
 ## Scenare
 
 1. Rezervace: kalendar bez horizontalniho scrollu

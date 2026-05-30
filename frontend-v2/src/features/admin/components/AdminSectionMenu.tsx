@@ -46,7 +46,7 @@ interface AdminSectionMenuProps {
 
 export function AdminSectionMenu({ active }: AdminSectionMenuProps) {
   return (
-    <nav className="admin-section-nav" aria-label="Sekce administrace">
+    <nav className="admin-section-nav" aria-label="Sekce administrace" data-testid="admin-section-menu">
       {adminMenuItems.map((item) => {
         const Icon = item.icon
 
@@ -56,6 +56,9 @@ export function AdminSectionMenu({ active }: AdminSectionMenuProps) {
             to={item.to}
             className={`admin-section-link ${active === item.key ? 'is-active' : ''}`}
             aria-current={active === item.key ? 'page' : undefined}
+            data-testid="admin-section-link"
+            data-section-key={item.key}
+            data-route={item.to}
           >
             <span className="admin-section-link-icon"><Icon size={16} /></span>
             <span className="admin-section-link-copy">

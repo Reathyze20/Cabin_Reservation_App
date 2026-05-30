@@ -67,7 +67,7 @@ export function ListDetail({ list, onBack }: Props) {
 
   if (!list) {
     return (
-      <section className="shopping-detail" id="shopping-detail">
+      <section className="shopping-detail" id="shopping-detail" data-testid="shopping-list-detail">
         <div className="detail-placeholder">
           <img src="/icons/empty_basket.svg" alt="" aria-hidden="true" style={{ maxHeight: 80, width: 'auto', opacity: 0.65, marginBottom: '0.5rem' }} />
           <p className="detail-placeholder-title">Vyberte nákupní seznam</p>
@@ -112,7 +112,7 @@ export function ListDetail({ list, onBack }: Props) {
   }
 
   return (
-    <section className="shopping-detail" id="shopping-detail">
+    <section className="shopping-detail" id="shopping-detail" data-testid="shopping-list-detail">
       <div className="detail-content-wrapper">
 
         {/* Centered max-width container — matches PantryView */}
@@ -124,6 +124,7 @@ export function ListDetail({ list, onBack }: Props) {
               className="detail-back-btn"
               id="detail-back-btn"
               onClick={onBack}
+              data-testid="shopping-detail-back-button"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="15 18 9 12 15 6" />
@@ -164,6 +165,7 @@ export function ListDetail({ list, onBack }: Props) {
                 onSubmit={handleAddItem}
                 noValidate
                 className="detail-inline-form"
+                data-testid="shopping-add-item-form"
               >
                 <input
                   ref={inputRef}
@@ -178,12 +180,14 @@ export function ListDetail({ list, onBack }: Props) {
                     setNewItemName(e.target.value)
                   }}
                   className="detail-form-input"
+                  data-testid="shopping-add-item-input"
                 />
                 <button
                   type="submit"
                   title="Přidat položku"
                   disabled={addItem.isPending || !newItemName.trim()}
                   className="add-form-submit-btn"
+                  data-testid="shopping-add-item-button"
                 >
                   +
                 </button>

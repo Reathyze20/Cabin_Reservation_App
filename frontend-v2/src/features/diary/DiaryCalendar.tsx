@@ -34,8 +34,8 @@ export function DiaryCalendar({ folder, entries, onOpenNotebook }: Props) {
   }
 
   return (
-    <div className="diary-calendar-wrapper">
-      <div className="diary-calendar">
+    <div className="diary-calendar-wrapper" data-testid="diary-calendar-wrapper">
+      <div className="diary-calendar" data-testid="diary-calendar">
         {days.length === 0 && (
           <p className="empty-state">Složka nemá nastavené datum pobytu.</p>
         )}
@@ -55,6 +55,8 @@ export function DiaryCalendar({ folder, entries, onOpenNotebook }: Props) {
               key={key}
               className={`diary-day-card${hasEntry ? ' has-entry' : ''}`}
               onClick={() => onOpenNotebook(day, entry)}
+              data-testid="diary-day-card"
+              data-date={key}
             >
               <div className="day-header-row">
                 <span className="day-weekday">{WEEKDAY_SHORT[day.getDay()]}</span>

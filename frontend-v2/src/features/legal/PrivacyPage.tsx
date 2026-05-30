@@ -6,9 +6,9 @@ import '@/styles/legal.css'
 
 export function PrivacyPage() {
   return (
-    <div className="legal-page">
+    <div className="legal-page" data-testid="privacy-page">
       <div className="legal-container">
-        <Link to="/" className="legal-back-link">← Zpět na úvod</Link>
+        <Link to="/" className="legal-back-link" data-testid="privacy-back-link">← Zpět na úvod</Link>
 
         <h1>Ochrana vašich údajů</h1>
         <p className="legal-subtitle">Chceme, abyste věděli, jak s vašimi daty nakládáme. Jednoduše a srozumitelně.</p>

@@ -60,13 +60,14 @@ export function GalleryPicker({ currentEntryPhotoIds, onConfirm, onClose }: Prop
       maxWidth="max-w-2xl"
       footer={
         <div className="gallery-picker-footer" style={{ display: 'flex', alignItems: 'center', gap: '1rem', width: '100%' }}>
-          <span className="picker-selected-count" style={{ flex: 1 }}>
+          <span className="picker-selected-count" style={{ flex: 1 }} data-testid="diary-gallery-picker-selected-count">
             {selected.size > 0 ? `${selected.size} vybráno` : ''}
           </span>
           <button
             className="button-primary"
             onClick={handleConfirm}
             disabled={selected.size === 0}
+            data-testid="diary-gallery-picker-confirm-button"
           >
             Přidat vybrané
           </button>
@@ -77,6 +78,7 @@ export function GalleryPicker({ currentEntryPhotoIds, onConfirm, onClose }: Prop
           <button
             className="gallery-btn"
             onClick={backToFolders}
+            data-testid="diary-gallery-picker-back-button"
           >
             ← Zpět na alba
           </button>
@@ -92,12 +94,14 @@ export function GalleryPicker({ currentEntryPhotoIds, onConfirm, onClose }: Prop
               <p style={{ margin: 0 }}>Žádná alba v galerii.</p>
             </div>
           ) : (
-            <div className="folders-grid gallery-picker-folders">
+            <div className="folders-grid gallery-picker-folders" data-testid="diary-gallery-picker-folders">
               {allFolders.map(folder => (
                 <div
                   key={folder.id}
                   className="folder-card"
                   onClick={() => openPickerFolder(folder)}
+                  data-testid="diary-gallery-picker-folder-card"
+                  data-folder-id={folder.id}
                 >
                   {folder.coverPhotoUrl ? (
                     <img className="folder-cover" src={folder.coverPhotoUrl} alt={folder.name} />
@@ -124,7 +128,7 @@ export function GalleryPicker({ currentEntryPhotoIds, onConfirm, onClose }: Prop
           ) : (
             <>
               <p className="picker-folder-name"><strong>{pickerFolderName}</strong></p>
-              <div className="photos-grid gallery-picker-photos">
+              <div className="photos-grid gallery-picker-photos" data-testid="diary-gallery-picker-photos">
                 {pickerPhotos.map(photo => {
                   const isAlreadyAdded = currentEntryPhotoIds.includes(photo.id)
                   const isSelected = selected.has(photo.id)
@@ -133,6 +137,8 @@ export function GalleryPicker({ currentEntryPhotoIds, onConfirm, onClose }: Prop
                       key={photo.id}
                       className={`photo-card picker-photo${isSelected ? ' picker-selected' : ''}${isAlreadyAdded ? ' picker-already-added' : ''}`}
                       onClick={() => togglePhoto(photo.id)}
+                      data-testid="diary-gallery-picker-photo-card"
+                      data-photo-id={photo.id}
                     >
                       <img src={photo.thumb ?? photo.src} alt={photo.description ?? ''} />
                       {isSelected && <span className="picker-check-overlay">✓</span>}

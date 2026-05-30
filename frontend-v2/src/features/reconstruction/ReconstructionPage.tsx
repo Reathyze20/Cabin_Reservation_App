@@ -136,12 +136,16 @@ export function ReconstructionPage() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   if (isLoading) {
-    return <ReconstructionSkeleton />
+    return (
+      <div className="main-content-reconstruction" data-testid="reconstruction-page" data-reconstruction-state="loading">
+        <ReconstructionSkeleton />
+      </div>
+    )
   }
 
   if (isError) {
     return (
-      <div className="main-content-reconstruction">
+      <div className="main-content-reconstruction" data-testid="reconstruction-page" data-reconstruction-state="error">
         <div className="page-card reconstruction-card">
           <div className="reconstruction-header">
             <div className="reconstruction-header-left">
@@ -162,14 +166,14 @@ export function ReconstructionPage() {
   }
 
   return (
-    <div className="main-content-reconstruction">
+    <div className="main-content-reconstruction" data-testid="reconstruction-page" data-reconstruction-state="ready">
       <div className="page-card reconstruction-card">
         <div className="reconstruction-header">
           <div className="reconstruction-header-left">
             <h1>Rekonstrukce a plány</h1>
             <p>Nápady, firmy a úkoly na jedno místo</p>
           </div>
-          <div className="reconstruction-summary" aria-label="Souhrn rekonstrukcí">
+          <div className="reconstruction-summary" aria-label="Souhrn rekonstrukcí" data-testid="reconstruction-summary">
             {summaryCards.map(({ label, value, icon: Icon }, index) => (
               <motion.div
                 key={label}
@@ -213,7 +217,7 @@ export function ReconstructionPage() {
           </motion.div>
         )}
 
-        <motion.div className="kanban-board" variants={BOARD_VARIANTS} initial="hidden" animate="visible">
+        <motion.div className="kanban-board" variants={BOARD_VARIANTS} initial="hidden" animate="visible" data-testid="reconstruction-board">
           <KanbanColumn
             category="idea"
             items={ideaItems}

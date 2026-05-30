@@ -105,8 +105,8 @@ export function ResetPasswordPage() {
       justifyContent: 'center',
       background: 'var(--color-bg, #f5f5f5)',
       padding: '1rem',
-    }}>
-      <div style={cardStyle}>
+    }} data-testid="reset-password-page" data-reset-state={viewState}>
+      <div style={cardStyle} data-testid="reset-password-card">
         <div style={{ marginBottom: '1.5rem' }}>
           <img src="/logo-icon.svg" alt="Logo" style={{ width: 48, height: 48 }} />
           <h1 style={{ fontSize: '1.25rem', fontWeight: 700, marginTop: '0.5rem' }}>
@@ -130,7 +130,7 @@ export function ResetPasswordPage() {
               Zvolte nové heslo pro svůj účet. Odkaz lze použít pouze jednou.
             </p>
 
-            <form onSubmit={handleSubmit} style={{ textAlign: 'left' }}>
+            <form onSubmit={handleSubmit} style={{ textAlign: 'left' }} data-testid="reset-password-form">
               <div className="form-group">
                 <label htmlFor="reset-password">Nové heslo</label>
                 <div className="input-eye-wrapper">
@@ -143,6 +143,7 @@ export function ResetPasswordPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={submitting}
+                    data-testid="reset-password-input"
                   />
                   <button
                     type="button"
@@ -168,6 +169,7 @@ export function ResetPasswordPage() {
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     disabled={submitting}
+                    data-testid="reset-password-confirm-input"
                   />
                   <button
                     type="button"
@@ -186,12 +188,12 @@ export function ResetPasswordPage() {
               </p>
 
               {(message || passwordMismatch) && (
-                <p style={{ color: 'var(--color-danger)', marginBottom: '1rem' }}>
+                <p style={{ color: 'var(--color-danger)', marginBottom: '1rem' }} data-testid="reset-password-message">
                   {passwordMismatch ? 'Hesla se neshodují.' : message}
                 </p>
               )}
 
-              <button type="submit" className="button-primary" style={{ width: '100%' }} disabled={submitting || passwordMismatch}>
+              <button type="submit" className="button-primary" style={{ width: '100%' }} disabled={submitting || passwordMismatch} data-testid="reset-password-submit-button">
                 {submitting ? 'Ukládám nové heslo…' : 'Uložit nové heslo'}
               </button>
             </form>
@@ -218,6 +220,7 @@ export function ResetPasswordPage() {
                 textDecoration: 'none',
                 fontWeight: 600,
               }}
+              data-testid="reset-password-login-link"
             >
               Přihlásit se
             </Link>
@@ -244,6 +247,7 @@ export function ResetPasswordPage() {
                 textDecoration: 'none',
                 fontWeight: 600,
               }}
+              data-testid="reset-password-login-link"
             >
               Zpět na přihlášení
             </Link>
@@ -270,6 +274,7 @@ export function ResetPasswordPage() {
                 textDecoration: 'none',
                 fontWeight: 600,
               }}
+              data-testid="reset-password-login-link"
             >
               Zpět na přihlášení
             </Link>

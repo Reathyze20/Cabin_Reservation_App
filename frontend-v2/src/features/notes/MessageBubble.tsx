@@ -180,6 +180,9 @@ export function MessageBubble({
       <motion.div
         className={wrapperCls}
         data-id={note.id}
+        data-testid="notes-message-bubble"
+        data-note-id={note.id}
+        data-message-owner="mine"
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2, ease: 'easeOut' }}
@@ -198,6 +201,7 @@ export function MessageBubble({
               className="message-action-trigger"
               aria-label="Akce zprávy"
               onClick={handleTriggerClick}
+              data-testid="notes-message-actions-button"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
                 <path d="M12 17.414l-6.707-6.707a1 1 0 0 1 1.414-1.414L12 14.586l5.293-5.293a1 1 0 0 1 1.414 1.414L12 17.414z" />
@@ -215,6 +219,9 @@ export function MessageBubble({
     <motion.div
       className={wrapperCls}
       data-id={note.id}
+      data-testid="notes-message-bubble"
+      data-note-id={note.id}
+      data-message-owner="other"
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2, ease: 'easeOut' }}
@@ -237,6 +244,7 @@ export function MessageBubble({
               className="message-action-trigger"
               aria-label="Akce zprávy"
               onClick={handleTriggerClick}
+              data-testid="notes-message-actions-button"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none">
                 <path d="M12 17.414l-6.707-6.707a1 1 0 0 1 1.414-1.414L12 14.586l5.293-5.293a1 1 0 0 1 1.414 1.414L12 17.414z" />

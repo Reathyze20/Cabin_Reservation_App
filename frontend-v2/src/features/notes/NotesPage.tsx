@@ -173,7 +173,7 @@ export function NotesPage() {
 
   return (
     <>
-      <div className="notes-layout">
+      <div className="notes-layout" data-testid="notes-page">
 
           {/* ── Left: ThreadList ── */}
           {showSidebar && (

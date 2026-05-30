@@ -6,6 +6,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import apiClient from '@/api/client'
 import { PromptDialog } from '@/components/shared/PromptDialog'
+import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
+import { membersApi } from '@/api/members'
 import { useAuth } from '@/context/AuthContext'
 import { showToast } from '@/lib/toast'
 import { AVATARS } from '@/lib/avatars'
@@ -35,7 +37,7 @@ interface ProfileDrawerProps {
 }
 
 export function ProfileDrawer({ isOpen, onClose }: ProfileDrawerProps) {
-  const { updateAnimalIcon, logout, isAdmin, isSuperAdmin } = useAuth()
+  const { updateAnimalIcon, logout, isAdmin, isSuperAdmin, user, token, login } = useAuth()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState<'personal' | 'security'>('personal')
@@ -59,6 +61,11 @@ export function ProfileDrawer({ isOpen, onClose }: ProfileDrawerProps) {
   // ─── Delete account state ────────────────────────────────────────────────────
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
+
+  // ─── Leave cabin state ──────────────────────────────────────────────────────
+  const [showLeaveCabinConfirm, setShowLeaveCabinConfirm] = useState(false)
+  const [leaveCabinLoading, setLeaveCabinLoading] = useState(false)
+  const [leaveCabinError, setLeaveCabinError] = useState('')
 
   // ─── Zavřít klávesou Escape ─────────────────────────────────────────────────
   useEffect(() => {
@@ -95,6 +102,9 @@ export function ProfileDrawer({ isOpen, onClose }: ProfileDrawerProps) {
     setSecurityError(false)
     setShowDeleteConfirm(false)
     setDeleteLoading(false)
+    setShowLeaveCabinConfirm(false)
+    setLeaveCabinLoading(false)
+    setLeaveCabinError('')
   }, [isOpen, profileData])
 
   // ─── Auto-save color / animal ───────────────────────────────────────────────
@@ -217,6 +227,40 @@ export function ProfileDrawer({ isOpen, onClose }: ProfileDrawerProps) {
     }
   }
 
+  async function handleLeaveCabin() {
+    if (!user || !token) return
+
+    setLeaveCabinLoading(true)
+    setLeaveCabinError('')
+
+    try {
+      const response = await membersApi.leaveCabin() as { message?: string }
+      const remember = localStorage.getItem('authToken') !== null
+
+      login({
+        token,
+        username: user.username,
+        userId: user.userId,
+        role: 'user',
+        animalIcon: user.animalIcon,
+        cabinId: null,
+        isSuperAdmin: user.isSuperAdmin,
+        remember,
+      })
+
+      queryClient.clear()
+      setShowLeaveCabinConfirm(false)
+      onClose()
+      showToast(response.message || 'Úspěšně jste opustili chatu.', 'success')
+      navigate(user.isSuperAdmin ? '/superadmin' : '/onboarding', { replace: true })
+    } catch (err: unknown) {
+      const data = (err as { response?: { data?: { message?: string } } })?.response?.data
+      setLeaveCabinError(data?.message || 'Chyba při opouštění chaty.')
+    } finally {
+      setLeaveCabinLoading(false)
+    }
+  }
+
   function handleNavigate(path: string) {
     onClose()
     navigate(path)
@@ -229,11 +273,18 @@ export function ProfileDrawer({ isOpen, onClose }: ProfileDrawerProps) {
       id="profile-drawer-overlay"
       className="drawer-overlay"
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+      data-testid="profile-drawer-overlay"
     >
-      <div id="profile-drawer" className="drawer-content right-drawer">
+      <div id="profile-drawer" className="drawer-content right-drawer" data-testid="profile-drawer">
         <div className="drawer-header">
           <h2>Můj profil</h2>
-          <button className="close-drawer" id="close-profile-drawer" aria-label="Zavřít" onClick={onClose}>
+          <button
+            className="close-drawer"
+            id="close-profile-drawer"
+            aria-label="Zavřít"
+            onClick={onClose}
+            data-testid="profile-drawer-close-button"
+          >
             &times;
           </button>
         </div>
@@ -285,6 +336,7 @@ export function ProfileDrawer({ isOpen, onClose }: ProfileDrawerProps) {
               className={`segmented-btn${activeTab === 'personal' ? ' active' : ''}`}
               data-target="profile-tab-personal"
               onClick={() => setActiveTab('personal')}
+              data-testid="profile-tab-personal-button"
             >
               Osobní údaje
             </button>
@@ -292,6 +344,7 @@ export function ProfileDrawer({ isOpen, onClose }: ProfileDrawerProps) {
               className={`segmented-btn${activeTab === 'security' ? ' active' : ''}`}
               data-target="profile-tab-security"
               onClick={() => setActiveTab('security')}
+              data-testid="profile-tab-security-button"
             >
               Zabezpečení
             </button>
@@ -301,6 +354,7 @@ export function ProfileDrawer({ isOpen, onClose }: ProfileDrawerProps) {
           <div
             id="profile-tab-personal"
             className={`drawer-tab-content${activeTab === 'personal' ? ' active-tab' : ' hidden'}`}
+            data-testid="profile-tab-personal"
           >
             <div className="drawer-section">
               <h3>Kontaktní údaje</h3>
@@ -318,6 +372,7 @@ export function ProfileDrawer({ isOpen, onClose }: ProfileDrawerProps) {
                     onChange={(e) => setEmail(e.target.value)}
                     onBlur={handleEmailBlur}
                     style={emailError ? { borderColor: 'var(--color-danger)' } : undefined}
+                    data-testid="profile-email-input"
                   />
                   <button
                     type="button"
@@ -325,6 +380,7 @@ export function ProfileDrawer({ isOpen, onClose }: ProfileDrawerProps) {
                     className="button-secondary"
                     style={{ whiteSpace: 'nowrap', padding: '0 15px' }}
                     onClick={handleChangeEmail}
+                    data-testid="profile-change-email-button"
                   >
                     Změnit
                   </button>
@@ -388,24 +444,30 @@ export function ProfileDrawer({ isOpen, onClose }: ProfileDrawerProps) {
           <div
             id="profile-tab-security"
             className={`drawer-tab-content${activeTab === 'security' ? ' active-tab' : ' hidden'}`}
+            data-testid="profile-tab-security"
           >
             <div className="drawer-section">
               <h3>Zabezpečení účtu</h3>
-              <form id="profile-security-form" style={{ marginTop: '1.5rem' }} onSubmit={handleSecuritySubmit}>
+              <form
+                id="profile-security-form"
+                style={{ marginTop: '1.5rem' }}
+                onSubmit={handleSecuritySubmit}
+                data-testid="profile-security-form"
+              >
                 <div className="form-group">
                   <label htmlFor="profile-old-password">Staré heslo:</label>
-                  <input type="password" id="profile-old-password" name="oldPassword" className="form-control" maxLength={100} required ref={oldPasswordRef} />
+                  <input type="password" id="profile-old-password" name="oldPassword" className="form-control" maxLength={100} required ref={oldPasswordRef} data-testid="profile-old-password-input" />
                 </div>
                 <div className="form-group">
                   <label htmlFor="profile-new-password">Nové heslo:</label>
-                  <input type="password" id="profile-new-password" name="newPassword" className="form-control" minLength={8} maxLength={100} required ref={newPasswordRef} />
+                  <input type="password" id="profile-new-password" name="newPassword" className="form-control" minLength={8} maxLength={100} required ref={newPasswordRef} data-testid="profile-new-password-input" />
                 </div>
                 <div className="form-group">
                   <label htmlFor="profile-new-password-confirm">Potvrdit nové heslo:</label>
-                  <input type="password" id="profile-new-password-confirm" name="newPasswordConfirm" className="form-control" minLength={8} maxLength={100} required ref={newPasswordConfirmRef} />
+                  <input type="password" id="profile-new-password-confirm" name="newPasswordConfirm" className="form-control" minLength={8} maxLength={100} required ref={newPasswordConfirmRef} data-testid="profile-new-password-confirm-input" />
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '20px' }}>
-                  <button type="submit" className="button-primary" style={{ width: '100%' }}>Změnit heslo</button>
+                  <button type="submit" className="button-primary" style={{ width: '100%' }} data-testid="profile-change-password-button">Změnit heslo</button>
                 </div>
                 {securityMessage && (
                   <p
@@ -417,6 +479,48 @@ export function ProfileDrawer({ isOpen, onClose }: ProfileDrawerProps) {
                   </p>
                 )}
               </form>
+            </div>
+
+            <div className="drawer-section" style={{ marginTop: '2rem' }}>
+              <h3>Členství v chatě</h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0.5rem 0 1rem' }}>
+                Opustíte aktuální chatu, ale účet vám zůstane. Potom můžete přijmout novou pozvánku nebo založit vlastní chatu.
+              </p>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0 0 1rem' }}>
+                Pokud jste poslední admin, nejdřív předejte roli admina jinému členovi.
+              </p>
+
+              <button
+                type="button"
+                className="button-danger"
+                style={{ width: '100%' }}
+                onClick={() => {
+                  setLeaveCabinError('')
+                  setShowLeaveCabinConfirm(true)
+                }}
+                data-testid="profile-leave-cabin-button"
+              >
+                Opustit tuto chatu
+              </button>
+
+              <ConfirmDialog
+                isOpen={showLeaveCabinConfirm}
+                title="Opravdu opustit chatu?"
+                message="Ztratíte přístup k rezervacím, nákupům, poznámkám a dalším datům této chaty. Účet vám zůstane a po potvrzení přejdete do onboardingu."
+                errorMessage={leaveCabinError || undefined}
+                confirmLabel="Opustit chatu"
+                cancelLabel="Zůstat"
+                danger
+                loading={leaveCabinLoading}
+                onConfirm={() => {
+                  void handleLeaveCabin()
+                }}
+                onCancel={() => {
+                  if (leaveCabinLoading) return
+                  setShowLeaveCabinConfirm(false)
+                  setLeaveCabinError('')
+                }}
+              />
             </div>
 
             {/* GDPR — Export & Delete */}

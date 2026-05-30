@@ -15,6 +15,19 @@ export const DATABASE_URL = process.env.DATABASE_URL || "";
 // Server Configuration
 export const PORT = parseInt(process.env.PORT || "3000", 10);
 
+function readBooleanEnv(name: string, fallback: boolean): boolean {
+  const rawValue = process.env[name];
+
+  if (rawValue === undefined) {
+    return fallback;
+  }
+
+  return ["1", "true", "yes", "on"].includes(rawValue.trim().toLowerCase());
+}
+
+// API docs are enabled by default in development and disabled by default in production.
+export const ENABLE_API_DOCS = readBooleanEnv("ENABLE_API_DOCS", process.env.NODE_ENV !== "production");
+
 // Uploads — configurable via UPLOADS_PATH env var (Docker mounts, custom paths)
 const defaultUploads = path.join(__dirname, "../../data/uploads");
 export const UPLOADS_PATH = process.env.UPLOADS_PATH || defaultUploads;

@@ -17,8 +17,8 @@ export function AdminDiagnosticsPage() {
   useDocumentTitle('Diagnostika')
 
   return (
-    <div className="main-content-admin pb-20 md:pb-0">
-      <section className="page-card admin-page-card admin-overview-card admin-diagnostics-hero">
+    <div className="main-content-admin pb-20 md:pb-0" data-testid="admin-diagnostics-page">
+      <section className="page-card admin-page-card admin-overview-card admin-diagnostics-hero" data-testid="admin-diagnostics-hero">
         <div className="admin-overview-header">
           <div className="admin-overview-copy admin-overview-copy--wide">
             <span className="admin-kicker">Diagnostika</span>
@@ -59,7 +59,7 @@ export function AdminDiagnosticsPage() {
       </section>
 
       <div className="admin-diagnostics-layout">
-        <section className="page-card admin-page-card admin-card admin-diagnostics-primary" id="diagnostics-guide">
+        <section className="page-card admin-page-card admin-card admin-diagnostics-primary" id="diagnostics-guide" data-testid="admin-diagnostics-guide">
           <div className="admin-card-header">
             <div>
               <div className="admin-card-eyebrow">Support workflow</div>
@@ -97,7 +97,7 @@ export function AdminDiagnosticsPage() {
           </div>
         </section>
 
-        <section className="page-card admin-page-card admin-card admin-diagnostics-secondary" id="system-info">
+        <section className="page-card admin-page-card admin-card admin-diagnostics-secondary" id="system-info" data-testid="admin-diagnostics-system-info">
           <div className="admin-card-header">
             <div>
               <div className="admin-card-eyebrow">Snapshot systému</div>

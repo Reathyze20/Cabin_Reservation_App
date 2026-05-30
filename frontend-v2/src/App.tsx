@@ -18,6 +18,7 @@ import { AppShell } from '@/components/layout/AppShell'
 import { Toast } from '@/components/shared/Toast'
 import { GlobalFallback } from '@/components/shared/GlobalFallback'
 import { FeatureErrorFallback } from '@/components/shared/FeatureErrorFallback'
+import { RouteLoadingFallback } from '@/components/shared/RouteTransitionSkeleton'
 import { lazyRetry } from '@/lib/lazyRetry'
 import { Suspense } from 'react'
 import type { ReactNode } from 'react'
@@ -34,11 +35,6 @@ const AdminPage = lazyRetry(() => import('@/features/admin/AdminPage').then(m =>
 const AdminDiagnosticsPage = lazyRetry(() => import('@/features/admin/AdminDiagnosticsPage').then(m => ({ default: m.AdminDiagnosticsPage })))
 const SuperAdminPage = lazyRetry(() => import('@/features/superadmin/SuperAdminPage').then(m => ({ default: m.SuperAdminPage })))
 const OnboardingPage = lazyRetry(() => import('@/features/onboarding/OnboardingPage'))
-
-// ─── Placeholder pages (budou nahrazeny v Fázích 2–7) ─────────────────────────
-function PageSpinner() {
-  return <div className="spinner-container"><div className="spinner" /></div>
-}
 
 // ─── Guard pro přihlášené routy ─────────────────────────────────────────────────
 function PrivateRoute({ children }: { children: ReactNode }) {
@@ -105,7 +101,7 @@ function AppRoutes() {
             {user?.isSuperAdmin && !user?.cabinId ? (
               <Navigate to="/superadmin" replace />
             ) : (
-              <Suspense fallback={<PageSpinner />}>
+              <Suspense fallback={<RouteLoadingFallback />}>
                 <OnboardingPage />
               </Suspense>
             )}
@@ -123,19 +119,19 @@ function AppRoutes() {
           </PrivateRoute>
         }
       >
-        <Route path="/dashboard"      element={<ErrorBoundary FallbackComponent={FeatureErrorFallback}><Suspense fallback={<PageSpinner />}><DashboardPage /></Suspense></ErrorBoundary>} />
-        <Route path="/reservations"   element={<ErrorBoundary FallbackComponent={FeatureErrorFallback}><Suspense fallback={<PageSpinner />}><ReservationsPage /></Suspense></ErrorBoundary>} />
-        <Route path="/notes"          element={<ErrorBoundary FallbackComponent={FeatureErrorFallback}><Suspense fallback={<PageSpinner />}><NotesPage /></Suspense></ErrorBoundary>} />
-        <Route path="/shopping"       element={<ErrorBoundary FallbackComponent={FeatureErrorFallback}><Suspense fallback={<PageSpinner />}><ShoppingPage /></Suspense></ErrorBoundary>} />
-        <Route path="/gallery"        element={<ErrorBoundary FallbackComponent={FeatureErrorFallback}><Suspense fallback={<PageSpinner />}><GalleryPage /></Suspense></ErrorBoundary>} />
-        <Route path="/diary"          element={<ErrorBoundary FallbackComponent={FeatureErrorFallback}><Suspense fallback={<PageSpinner />}><DiaryPage /></Suspense></ErrorBoundary>} />
-        <Route path="/reconstruction" element={<ErrorBoundary FallbackComponent={FeatureErrorFallback}><Suspense fallback={<PageSpinner />}><ReconstructionPage /></Suspense></ErrorBoundary>} />
-        <Route path="/admin" element={<AdminRoute><ErrorBoundary FallbackComponent={FeatureErrorFallback}><Suspense fallback={<PageSpinner />}><AdminPage /></Suspense></ErrorBoundary></AdminRoute>} />
-        <Route path="/admin/invites" element={<AdminRoute><ErrorBoundary FallbackComponent={FeatureErrorFallback}><Suspense fallback={<PageSpinner />}><AdminPage /></Suspense></ErrorBoundary></AdminRoute>} />
-        <Route path="/admin/cabin" element={<AdminRoute><ErrorBoundary FallbackComponent={FeatureErrorFallback}><Suspense fallback={<PageSpinner />}><AdminPage /></Suspense></ErrorBoundary></AdminRoute>} />
-        <Route path="/admin/diagnostics" element={<AdminRoute><ErrorBoundary FallbackComponent={FeatureErrorFallback}><Suspense fallback={<PageSpinner />}><AdminDiagnosticsPage /></Suspense></ErrorBoundary></AdminRoute>} />
+        <Route path="/dashboard"      element={<ErrorBoundary FallbackComponent={FeatureErrorFallback}><Suspense fallback={<RouteLoadingFallback />}><DashboardPage /></Suspense></ErrorBoundary>} />
+        <Route path="/reservations"   element={<ErrorBoundary FallbackComponent={FeatureErrorFallback}><Suspense fallback={<RouteLoadingFallback />}><ReservationsPage /></Suspense></ErrorBoundary>} />
+        <Route path="/notes"          element={<ErrorBoundary FallbackComponent={FeatureErrorFallback}><Suspense fallback={<RouteLoadingFallback />}><NotesPage /></Suspense></ErrorBoundary>} />
+        <Route path="/shopping"       element={<ErrorBoundary FallbackComponent={FeatureErrorFallback}><Suspense fallback={<RouteLoadingFallback />}><ShoppingPage /></Suspense></ErrorBoundary>} />
+        <Route path="/gallery"        element={<ErrorBoundary FallbackComponent={FeatureErrorFallback}><Suspense fallback={<RouteLoadingFallback />}><GalleryPage /></Suspense></ErrorBoundary>} />
+        <Route path="/diary"          element={<ErrorBoundary FallbackComponent={FeatureErrorFallback}><Suspense fallback={<RouteLoadingFallback />}><DiaryPage /></Suspense></ErrorBoundary>} />
+        <Route path="/reconstruction" element={<ErrorBoundary FallbackComponent={FeatureErrorFallback}><Suspense fallback={<RouteLoadingFallback />}><ReconstructionPage /></Suspense></ErrorBoundary>} />
+        <Route path="/admin" element={<AdminRoute><ErrorBoundary FallbackComponent={FeatureErrorFallback}><Suspense fallback={<RouteLoadingFallback />}><AdminPage /></Suspense></ErrorBoundary></AdminRoute>} />
+        <Route path="/admin/invites" element={<AdminRoute><ErrorBoundary FallbackComponent={FeatureErrorFallback}><Suspense fallback={<RouteLoadingFallback />}><AdminPage /></Suspense></ErrorBoundary></AdminRoute>} />
+        <Route path="/admin/cabin" element={<AdminRoute><ErrorBoundary FallbackComponent={FeatureErrorFallback}><Suspense fallback={<RouteLoadingFallback />}><AdminPage /></Suspense></ErrorBoundary></AdminRoute>} />
+        <Route path="/admin/diagnostics" element={<AdminRoute><ErrorBoundary FallbackComponent={FeatureErrorFallback}><Suspense fallback={<RouteLoadingFallback />}><AdminDiagnosticsPage /></Suspense></ErrorBoundary></AdminRoute>} />
         <Route path="/cabin-settings" element={<AdminRoute><Navigate to="/admin/cabin" replace /></AdminRoute>} />
-        <Route path="/superadmin"     element={<SuperAdminRoute><ErrorBoundary FallbackComponent={FeatureErrorFallback}><Suspense fallback={<PageSpinner />}><SuperAdminPage /></Suspense></ErrorBoundary></SuperAdminRoute>} />
+        <Route path="/superadmin"     element={<SuperAdminRoute><ErrorBoundary FallbackComponent={FeatureErrorFallback}><Suspense fallback={<RouteLoadingFallback />}><SuperAdminPage /></Suspense></ErrorBoundary></SuperAdminRoute>} />
       </Route>
 
       {/* Fallback — 404 */}

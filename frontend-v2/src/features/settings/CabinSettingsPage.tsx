@@ -67,10 +67,10 @@ function ChecklistEditor({ items, onChange }: ChecklistEditorProps) {
   }
 
   return (
-    <div>
-      <div id="cs-checklist-container" className="cs-checklist">
+    <div data-testid="cabin-settings-checklist">
+      <div id="cs-checklist-container" className="cs-checklist" data-testid="cabin-settings-checklist-list">
         {items.map((item, i) => (
-          <div key={i} className="cs-checklist-item" data-index={i}>
+          <div key={i} className="cs-checklist-item" data-index={i} data-testid="cabin-settings-checklist-item">
             <span className="cs-checklist-drag">⠿</span>
             <input
               type="text"
@@ -79,19 +79,21 @@ function ChecklistEditor({ items, onChange }: ChecklistEditorProps) {
               onChange={(e) => update(i, e.target.value)}
               maxLength={100}
               placeholder="Položka checklistu"
+              data-testid="cabin-settings-checklist-input"
             />
             <button
               type="button"
               className="cs-checklist-remove"
               title="Odebrat"
               onClick={() => remove(i)}
+              data-testid="cabin-settings-checklist-remove-button"
             >
               ×
             </button>
           </div>
         ))}
       </div>
-      <button type="button" className="cs-btn-add" id="cs-add-checklist-item" onClick={add}>
+      <button type="button" className="cs-btn-add" id="cs-add-checklist-item" onClick={add} data-testid="cabin-settings-checklist-add-button">
         + Přidat položku
       </button>
     </div>
@@ -111,9 +113,9 @@ function FeatureToggles({ features, onChange }: FeatureTogglesProps) {
   }
 
   return (
-    <div className="cs-features-list">
+    <div className="cs-features-list" data-testid="cabin-settings-feature-toggles">
       {AVAILABLE_FEATURES.map((f) => (
-        <label key={f.key} className="cs-feature-item">
+        <label key={f.key} className="cs-feature-item" data-testid="cabin-settings-feature-toggle-row" data-feature={f.key}>
           <div className="cs-feature-info">
             <strong>{f.label}</strong>
             <span>{f.description}</span>
@@ -124,6 +126,7 @@ function FeatureToggles({ features, onChange }: FeatureTogglesProps) {
             data-feature={f.key}
             checked={features[f.key] !== false}
             onChange={(e) => toggle(f.key, e.target.checked)}
+            data-testid="cabin-settings-feature-toggle"
           />
         </label>
       ))}
@@ -270,11 +273,12 @@ export function CabinSettingsPanel({
     'tab-operations': 'Provoz a údržba',
     'tab-modules': 'Moduly',
   }
+  const panelState = isLoading ? 'loading' : isError ? 'error' : 'ready'
 
   const saveBtnText = updateSettings.isPending ? 'Ukládám…' : saveSuccess ? 'Uloženo' : 'Uložit změny'
 
   return (
-    <div className="main-content-settings">
+    <div className="main-content-settings" data-testid="cabin-settings-panel" data-cabin-settings-state={panelState}>
       <div className="page-card settings-page-card">
 
         {/* ── Header ── */}
@@ -285,6 +289,7 @@ export function CabinSettingsPanel({
                 className="cabin-settings-back"
                 title="Zpět na správu chaty"
                 onClick={onBack}
+                data-testid="cabin-settings-back-button"
               >
                 ←
               </button>
@@ -299,22 +304,25 @@ export function CabinSettingsPanel({
             className={`cs-btn-save${saveSuccess ? ' cs-btn-save--success' : ''}`}
             onClick={doSave}
             disabled={updateSettings.isPending}
+            data-testid="cabin-settings-save-button"
           >
             {saveBtnText}
           </button>
         </div>
         {saveError ? (
-          <div className="error-message show" role="alert">{saveError}</div>
+          <div className="error-message show" role="alert" data-testid="cabin-settings-save-error">{saveError}</div>
         ) : null}
 
         {/* ── Tabs ── */}
-        <div className="cs-tabs">
+        <div className="cs-tabs" data-testid="cabin-settings-tab-nav">
           {(['tab-basic', 'tab-operations', 'tab-modules'] as TabId[]).map((tab) => (
             <button
               key={tab}
               type="button"
               className={`cs-tab${activeTab === tab ? ' active' : ''}`}
               onClick={() => setActiveTab(tab)}
+              data-testid="cabin-settings-tab-button"
+              data-tab-id={tab}
             >
               {TAB_LABELS[tab]}
             </button>
@@ -337,9 +345,9 @@ export function CabinSettingsPanel({
               title="Nastavení chaty se nepodařilo načíst"
             />
           ) : (
-            <form id="cs-form" className="cabin-settings-form" noValidate onSubmit={handleSubmit} onChangeCapture={clearSaveFeedback}>
+            <form id="cs-form" className="cabin-settings-form" noValidate onSubmit={handleSubmit} onChangeCapture={clearSaveFeedback} data-testid="cabin-settings-form">
               {/* Tab 1: Basic */}
-              <div className={`cs-tab-pane${activeTab === 'tab-basic' ? ' active' : ''}`} id="tab-basic">
+              <div className={`cs-tab-pane${activeTab === 'tab-basic' ? ' active' : ''}`} id="tab-basic" data-testid="cabin-settings-basic-tab">
                 <section className="cs-section">
                   <div className="cs-section-header">
                     <h2>Základní informace</h2>
@@ -356,6 +364,7 @@ export function CabinSettingsPanel({
                       onChange={(e) => setName(e.target.value)}
                       placeholder="např. Chalupa pod Kletí"
                       required
+                      data-testid="cabin-settings-name-input"
                     />
                     <span className="cs-hint">Zobrazuje se v navigaci a pozvánkách</span>
                   </div>
@@ -371,6 +380,7 @@ export function CabinSettingsPanel({
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       placeholder="Útulná chaloupka v podhůří Kleti s krásným výhledem…"
+                      data-testid="cabin-settings-description-input"
                     />
                     <CharCounter value={description} max={2000} />
                   </div>
@@ -387,6 +397,7 @@ export function CabinSettingsPanel({
                       value={weatherLocation}
                       onChange={(e) => setWeatherLocation(e.target.value)}
                       placeholder="Např. Třebenice nebo 412 01"
+                      data-testid="cabin-settings-weather-location-input"
                     />
                     <span className="cs-hint">
                       Z bezpečnostních důvodů úmyslně neukládáme přesnou adresu ani GPS vaší chaty.
@@ -410,6 +421,7 @@ export function CabinSettingsPanel({
                       value={welcomeMessage}
                       onChange={(e) => setWelcomeMessage(e.target.value)}
                       placeholder="např. U nás je vždy příjemně — ať prší nebo svítí"
+                      data-testid="cabin-settings-welcome-message-input"
                     />
                     <span className="cs-hint">Zobrazí se novým členům v pozvánce a na dashboardu</span>
                   </div>
@@ -425,6 +437,7 @@ export function CabinSettingsPanel({
                       value={rules}
                       onChange={(e) => setRules(e.target.value)}
                       placeholder={'1. Při odjezdu zavřít okna a okenice\n2. Dřevo nosit z kůlny, ne od sousedů'}
+                      data-testid="cabin-settings-rules-input"
                     />
                     <CharCounter value={rules} max={5000} />
                   </div>
@@ -432,7 +445,7 @@ export function CabinSettingsPanel({
               </div>
 
               {/* Tab 2: Operations */}
-              <div className={`cs-tab-pane${activeTab === 'tab-operations' ? ' active' : ''}`} id="tab-operations">
+              <div className={`cs-tab-pane${activeTab === 'tab-operations' ? ' active' : ''}`} id="tab-operations" data-testid="cabin-settings-operations-tab">
                 <section className="cs-section">
                   <div className="cs-section-header">
                     <h2>Odjezdový checklist</h2>
@@ -458,6 +471,7 @@ export function CabinSettingsPanel({
                       id="cs-winterized"
                       checked={isWinterized}
                       onChange={(e) => setIsWinterized(e.target.checked)}
+                      data-testid="cabin-settings-winterized-toggle"
                     />
                     <span className="cs-toggle-label">Chata je zazimovaná</span>
                     <span className="cs-hint" style={{ margin: 0 }}>
@@ -468,7 +482,7 @@ export function CabinSettingsPanel({
               </div>
 
               {/* Tab 3: Modules */}
-              <div className={`cs-tab-pane${activeTab === 'tab-modules' ? ' active' : ''}`} id="tab-modules">
+              <div className={`cs-tab-pane${activeTab === 'tab-modules' ? ' active' : ''}`} id="tab-modules" data-testid="cabin-settings-modules-tab">
                 <section className="cs-section">
                   <div className="cs-section-header">
                     <h2>Aktivní moduly</h2>
@@ -499,7 +513,7 @@ export function CabinSettingsPage() {
   const navigate = useNavigate()
 
   return (
-    <div className="main-content-settings">
+    <div className="main-content-settings" data-testid="cabin-settings-page">
       <div className="page-card settings-page-card">
         <CabinSettingsPanel
           showBackButton={true}

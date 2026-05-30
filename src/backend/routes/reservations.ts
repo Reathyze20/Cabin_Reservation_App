@@ -3,10 +3,164 @@ import { protect } from "../../middleware/authMiddleware";
 import { requireCabin } from "../../middleware/cabinMiddleware";
 import { validate } from "../../validators/validate";
 import { createReservationSchema, updateReservationSchema, upsertMonthlyNoteSchema, deleteReservationSchema } from "../../validators/schemas";
+import { emitToCabin } from "../../utils/socket";
 import prisma from "../../utils/prisma";
 import logger from "../../utils/logger";
 
 const router = Router();
+
+type ReservationActivitySnapshot = {
+  id: string;
+  userId: string;
+  username: string;
+  dateFrom: Date;
+  dateTo: Date;
+  purpose: string;
+  status: string;
+};
+
+function formatReservationDate(date: Date): string {
+  return date.toISOString().split("T")[0];
+}
+
+function formatReservationRange(dateFrom: Date, dateTo: Date): string {
+  return `${formatReservationDate(dateFrom)} → ${formatReservationDate(dateTo)}`;
+}
+
+function formatReservationStatus(status: string): string {
+  switch (status) {
+    case "backup":
+      return "záložní";
+    case "soft":
+      return "předběžnou";
+    default:
+      return "potvrzenou";
+  }
+}
+
+function formatReservationStatusForChange(status: string): string {
+  switch (status) {
+    case "backup":
+      return "záložní";
+    case "soft":
+      return "předběžné";
+    default:
+      return "potvrzené";
+  }
+}
+
+function formatReservationActor(actorUsername: string, ownerUsername: string, verb: string): string {
+  if (actorUsername === ownerUsername) {
+    return `**${ownerUsername}** ${verb}`;
+  }
+
+  return `**${actorUsername}** ${verb} rezervaci uživatele **${ownerUsername}**`;
+}
+
+function buildReservationCreatedMessage(
+  actorUsername: string,
+  reservation: ReservationActivitySnapshot,
+): string {
+  return (
+    `🗓️ ${formatReservationActor(actorUsername, reservation.username, "přidal/a")} ` +
+    `${formatReservationStatus(reservation.status)} rezervaci ` +
+    `(${formatReservationRange(reservation.dateFrom, reservation.dateTo)}).`
+  );
+}
+
+function buildReservationUpdatedMessage(
+  actorUsername: string,
+  before: ReservationActivitySnapshot,
+  after: ReservationActivitySnapshot,
+): string | null {
+  const changes: string[] = [];
+  const beforeRange = formatReservationRange(before.dateFrom, before.dateTo);
+  const afterRange = formatReservationRange(after.dateFrom, after.dateTo);
+
+  if (beforeRange !== afterRange) {
+    changes.push(`termín z ${beforeRange} na ${afterRange}`);
+  }
+
+  if (before.status !== after.status) {
+    changes.push(
+      `stav z ${formatReservationStatusForChange(before.status)} na ${formatReservationStatusForChange(after.status)}`,
+    );
+  }
+
+  if (before.purpose.trim() !== after.purpose.trim()) {
+    changes.push(`účel na „${after.purpose.trim()}“`);
+  }
+
+  if (changes.length === 0) {
+    return null;
+  }
+
+  return `🗓️ ${formatReservationActor(actorUsername, after.username, "upravil/a")} ${changes.join(", ")}.`;
+}
+
+function buildReservationDeletedMessage(
+  actorUsername: string,
+  reservation: ReservationActivitySnapshot,
+): string {
+  return (
+    `🗓️ ${formatReservationActor(actorUsername, reservation.username, "zrušil/a")} ` +
+    `${formatReservationStatus(reservation.status)} rezervaci ` +
+    `(${formatReservationRange(reservation.dateFrom, reservation.dateTo)}). ` +
+    `Termín je znovu volný.`
+  );
+}
+
+async function publishReservationActivityNote(params: {
+  actorUserId: string;
+  cabinId: string;
+  reservationId: string;
+  eventType: "created" | "updated" | "deleted";
+  message: string;
+}): Promise<void> {
+  const { actorUserId, cabinId, reservationId, eventType, message } = params;
+
+  try {
+    const note = await prisma.note.create({
+      data: {
+        userId: actorUserId,
+        cabinId,
+        message,
+      },
+      include: {
+        user: { select: { username: true } },
+      },
+    });
+
+    emitToCabin(cabinId, "note:created", {
+      id: note.id,
+      userId: note.userId,
+      threadId: note.threadId,
+      username: note.user.username,
+      message: note.message,
+      createdAt: note.createdAt.toISOString(),
+      isResolvedAsTask: note.isResolvedAsTask,
+      editedAt: note.editedAt?.toISOString() ?? null,
+      isPinned: note.isPinned,
+      replyToId: note.replyToId,
+      replyTo: null,
+      reactions: [],
+    });
+
+    logger.info("RESERVATION_ACTIVITY", "Published reservation activity note", {
+      reservationId,
+      eventType,
+      noteId: note.id,
+      cabinId,
+    });
+  } catch (error) {
+    logger.warn("RESERVATION_ACTIVITY", "Failed to publish reservation activity note", {
+      reservationId,
+      eventType,
+      cabinId,
+      error: String(error),
+    });
+  }
+}
 
 // ============================================================================
 //                        GET ALL RESERVATIONS
@@ -125,6 +279,22 @@ router.post("/", protect, requireCabin, validate(createReservationSchema), async
           },
         },
       },
+    });
+
+    await publishReservationActivityNote({
+      actorUserId: req.user!.userId,
+      cabinId,
+      reservationId: newReservation.id,
+      eventType: "created",
+      message: buildReservationCreatedMessage(req.user!.username, {
+        id: newReservation.id,
+        userId: newReservation.userId,
+        username: newReservation.user.username,
+        dateFrom: newReservation.dateFrom,
+        dateTo: newReservation.dateTo,
+        purpose: newReservation.purpose,
+        status: newReservation.status,
+      }),
     });
 
     res.status(201).json({
@@ -256,6 +426,13 @@ router.put("/:id", protect, requireCabin, validate(updateReservationSchema), asy
   try {
     const reservation = await prisma.reservation.findFirst({
       where: { id, cabinId: req.user!.cabinId },
+      include: {
+        user: {
+          select: {
+            username: true,
+          },
+        },
+      },
     });
 
     if (!reservation) {
@@ -265,6 +442,16 @@ router.put("/:id", protect, requireCabin, validate(updateReservationSchema), asy
     if (reservation.userId !== req.user!.userId && req.user!.role !== "admin") {
       return res.status(403).json({ message: "Bez oprávnění." });
     }
+
+    const beforeUpdate: ReservationActivitySnapshot = {
+      id: reservation.id,
+      userId: reservation.userId,
+      username: reservation.user.username,
+      dateFrom: reservation.dateFrom,
+      dateTo: reservation.dateTo,
+      purpose: reservation.purpose,
+      status: reservation.status,
+    };
 
     // Determine effective dates and status after update
     const effectiveFrom = from ? new Date(from) : reservation.dateFrom;
@@ -310,6 +497,26 @@ router.put("/:id", protect, requireCabin, validate(updateReservationSchema), asy
       },
     });
 
+    const updateMessage = buildReservationUpdatedMessage(req.user!.username, beforeUpdate, {
+      id: updated.id,
+      userId: updated.userId,
+      username: updated.user.username,
+      dateFrom: updated.dateFrom,
+      dateTo: updated.dateTo,
+      purpose: updated.purpose,
+      status: updated.status,
+    });
+
+    if (updateMessage) {
+      await publishReservationActivityNote({
+        actorUserId: req.user!.userId,
+        cabinId: req.user!.cabinId!,
+        reservationId: updated.id,
+        eventType: "updated",
+        message: updateMessage,
+      });
+    }
+
     res.json({
       id: updated.id,
       userId: updated.userId,
@@ -340,12 +547,6 @@ router.post("/delete", protect, requireCabin, validate(deleteReservationSchema),
       where: { id, cabinId: req.user!.cabinId },
       include: {
         user: { select: { username: true } },
-        // Načteme hlidáče PŘED smazáním (onDelete: Cascade je smaže automaticky)
-        watchers: {
-          include: {
-            user: { select: { id: true, username: true } },
-          },
-        },
       },
     });
 
@@ -357,40 +558,25 @@ router.post("/delete", protect, requireCabin, validate(deleteReservationSchema),
       return res.status(403).json({ message: "Bez oprávnění." });
     }
 
-    const fromStr = reservation.dateFrom.toISOString().split("T")[0];
-    const toStr = reservation.dateTo.toISOString().split("T")[0];
-    const ownerUsername = reservation.user.username;
-    const watcherUsers = reservation.watchers.map((w) => w.user);
+    const deletedSnapshot: ReservationActivitySnapshot = {
+      id: reservation.id,
+      userId: reservation.userId,
+      username: reservation.user.username,
+      dateFrom: reservation.dateFrom,
+      dateTo: reservation.dateTo,
+      purpose: reservation.purpose,
+      status: reservation.status,
+    };
 
-    // Smazat rezervaci (watchers se smažou kaskádou)
     await prisma.reservation.delete({ where: { id } });
 
-    // ── Notifikace sledovatelů přes hlavní nástěnku ──────────────────────
-    if (watcherUsers.length > 0) {
-      const notifyPromises = watcherUsers.map((watcher) => {
-        const message =
-          `🐕 Hldácí pes: Rezervace uživatele **${ownerUsername}** ` +
-          `(${fromStr} → ${toStr}) byla právě **zrušena**. ` +
-          `Termín je nyní volný — můžeš si ho zarezervovat! 🏕️`;
-
-        return prisma.note.create({
-          data: {
-            message,
-            userId: watcher.id,
-            cabinId: req.user!.cabinId!,
-            // threadId: null = hlavní nástěnka
-          },
-        });
-      });
-
-      await Promise.allSettled(notifyPromises);
-
-      logger.info("WATCHER", "Watchers notified via notes", {
-        reservationId: id,
-        notifiedCount: watcherUsers.length,
-        watchers: watcherUsers.map((w) => w.username),
-      });
-    }
+    await publishReservationActivityNote({
+      actorUserId: req.user!.userId,
+      cabinId: req.user!.cabinId!,
+      reservationId: id,
+      eventType: "deleted",
+      message: buildReservationDeletedMessage(req.user!.username, deletedSnapshot),
+    });
 
     res.json({ message: "Smazáno." });
   } catch (error) {
@@ -459,7 +645,7 @@ router.post("/:id/watch", protect, requireCabin, async (req: Request, res: Respo
     logger.info("WATCHER", "Watch added", { watcherId: req.user.userId, reservationId });
     res.status(201).json({
       watching: true,
-      message: `Hlídáš rezervaci uživatele ${reservation.user.username}.`,
+      message: `Jakmile se termín uvolní, objeví se zpráva na nástěnce chaty.`,
     });
   } catch (err) {
     logger.error("WATCHER", "Watch error", { error: String(err), reservationId });

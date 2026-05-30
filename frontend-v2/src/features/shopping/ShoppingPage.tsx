@@ -168,7 +168,7 @@ export function ShoppingPage() {
   }
 
   return (
-    <div className="shopping-page" id="shopping-page">
+    <div className="shopping-page" id="shopping-page" data-testid="shopping-page">
       {/* Mobile-only switcher — visible when master panel is showing */}
       <div className="shopping-switcher-bar shopping-switcher-bar--mobile">
         <ViewSwitcher

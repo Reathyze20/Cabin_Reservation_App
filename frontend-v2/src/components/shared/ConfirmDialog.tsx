@@ -55,6 +55,7 @@ export function ConfirmDialog({
             className="btn-secondary"
             onClick={onCancel}
             disabled={loading}
+            data-testid="confirm-dialog-cancel-button"
           >
             {cancelLabel}
           </button>
@@ -63,15 +64,16 @@ export function ConfirmDialog({
             className={danger ? 'btn-danger' : 'btn-primary'}
             onClick={onConfirm}
             disabled={loading}
+            data-testid="confirm-dialog-confirm-button"
           >
             {loading ? '…' : confirmLabel}
           </button>
         </div>
       }
     >
-      <p style={{ color: 'var(--text-main)', lineHeight: 1.5 }}>{message}</p>
+      <p style={{ color: 'var(--text-main)', lineHeight: 1.5 }} data-testid="confirm-dialog-message">{message}</p>
       {errorMessage ? (
-        <div className="error-message show" role="alert" style={{ marginTop: '12px' }}>
+        <div className="error-message show" role="alert" style={{ marginTop: '12px' }} data-testid="confirm-dialog-error">
           {errorMessage}
         </div>
       ) : null}

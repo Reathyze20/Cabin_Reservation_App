@@ -6,9 +6,9 @@ import '@/styles/legal.css'
 
 export function TermsPage() {
   return (
-    <div className="legal-page">
+    <div className="legal-page" data-testid="terms-page">
       <div className="legal-container">
-        <Link to="/" className="legal-back-link">← Zpět na úvod</Link>
+        <Link to="/" className="legal-back-link" data-testid="terms-back-link">← Zpět na úvod</Link>
 
         <h1>Obchodní podmínky</h1>
         <p className="legal-subtitle">Pravidla hry — co od nás můžete čekat a co očekáváme my od vás.</p>

@@ -104,7 +104,7 @@ export default function OnboardingPage() {
 
   if (checking) {
     return (
-      <div className="onboarding-page">
+      <div className="onboarding-page" data-testid="onboarding-page" data-onboarding-state="checking">
         <div className="onboarding-card card" style={{ textAlign: 'center' }}>
           <div className="spinner" />
           <p style={{ marginTop: '1rem', color: 'var(--text-muted)' }}>Kontroluji přiřazení k chatě...</p>
@@ -124,7 +124,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="onboarding-page">
+    <div className="onboarding-page" data-testid="onboarding-page" data-onboarding-state="ready">
       <div className="onboarding-card card">
         <div className="auth-brand">
           <img src="/logo-icon.svg" alt="Logo" className="auth-logo-icon" />
@@ -134,13 +134,13 @@ export default function OnboardingPage() {
         <p className="auth-subtitle">
           Vítejte{user?.username ? `, ${user.username}` : ''}! Pojmenujte svou chatu.
         </p>
-        <form onSubmit={handleSubmit} noValidate>
+        <form onSubmit={handleSubmit} noValidate data-testid="onboarding-form">
           <div className="form-group">
             <label htmlFor="cabin-name">Název chaty</label>
-            <input ref={nameRef} id="cabin-name" type="text" placeholder="např. Chata U Lesa" maxLength={100} autoFocus autoComplete="off" required />
+            <input ref={nameRef} id="cabin-name" type="text" placeholder="např. Chata U Lesa" maxLength={100} autoFocus autoComplete="off" required data-testid="onboarding-cabin-name-input" />
           </div>
-          {error && <p className="error-message">{error}</p>}
-          <button type="submit" className="button-primary" style={{ width: '100%' }} disabled={loading}>
+          {error && <p className="error-message" data-testid="onboarding-error-message">{error}</p>}
+          <button type="submit" className="button-primary" style={{ width: '100%' }} disabled={loading} data-testid="onboarding-submit-button">
             {loading ? 'Vytváří se...' : 'Vytvořit chatu'}
           </button>
         </form>
@@ -156,6 +156,7 @@ export default function OnboardingPage() {
               onClick={handleRetryCheck}
               className="button-secondary"
               style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
+              data-testid="onboarding-retry-button"
             >
               Zkusit znovu
             </button>
@@ -164,6 +165,7 @@ export default function OnboardingPage() {
               onClick={handleLogout}
               className="button-secondary"
               style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}
+              data-testid="onboarding-logout-button"
             >
               Odhlásit se
             </button>

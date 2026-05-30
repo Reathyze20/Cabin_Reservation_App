@@ -47,7 +47,7 @@ export function ThreadList({
     });
 
   return (
-    <div className="notes-sidebar" id="notes-sidebar">
+    <div className="notes-sidebar" id="notes-sidebar" data-testid="notes-thread-sidebar">
       <div className="notes-sidebar-header">
         <div className="notes-sidebar-title">
           <h2>Témata</h2>
@@ -60,11 +60,12 @@ export function ThreadList({
             autoComplete="off"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
+            data-testid="notes-thread-search-input"
           />
         </div>
       </div>
 
-      <div className="notes-thread-list" id="chat-tabs-list">
+      <div className="notes-thread-list" id="chat-tabs-list" data-testid="notes-thread-list">
         {filtered.map((t, index) => {
           let lastText = "Žádné zprávy";
           let lastTime = "";
@@ -89,6 +90,8 @@ export function ThreadList({
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1], delay: Math.min(index * 0.07, 0.35) }}
+              data-testid="notes-thread-item"
+              data-thread-id={t.id ?? '__main__'}
             >
               <AnimalAvatar
                 icon={authorInfo?.animalIcon ?? null}
@@ -118,6 +121,7 @@ export function ThreadList({
         <button
           className="btn-primary sidebar-footer-btn"
           onClick={onCreateThread}
+          data-testid="notes-create-thread-button"
         >
           Nové téma
         </button>

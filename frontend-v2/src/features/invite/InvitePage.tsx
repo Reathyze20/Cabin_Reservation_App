@@ -101,7 +101,7 @@ export function InvitePage() {
 
   if (loading) {
     return (
-      <div className="invite-page" style={bgStyle}>
+      <div className="invite-page" style={bgStyle} data-testid="invite-page" data-invite-step="loading">
         <div style={{ textAlign: 'center' }}>
           <div className="invite-spinner" />
           <p style={{ color: '#fff', textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>Ověřuji pozvánku…</p>
@@ -112,12 +112,12 @@ export function InvitePage() {
 
   if (error || !inviteInfo) {
     return (
-      <div className="invite-page" style={bgStyle}>
-        <div className="invite-card invite-card-narrow">
+      <div className="invite-page" style={bgStyle} data-testid="invite-page" data-invite-step="invalid">
+        <div className="invite-card invite-card-narrow" data-testid="invite-invalid-card">
           <div className="invite-icon" style={{ fontSize: '2rem', color: '#dc2626' }}>×</div>
           <h2 className="invite-title">Neplatná pozvánka</h2>
           <p className="invite-text">{error}</p>
-          <button className="invite-btn invite-btn-primary invite-btn-full" onClick={() => navigate('/login')}>
+          <button className="invite-btn invite-btn-primary invite-btn-full" onClick={() => navigate('/login')} data-testid="invite-invalid-login-button">
             Přejít na přihlášení
           </button>
         </div>
@@ -130,8 +130,8 @@ export function InvitePage() {
   // ── Step 1: Welcome ──────────────────────────────────────────────────
   if (step === 'welcome') {
     return (
-      <div className="invite-page" style={bgStyle}>
-        <div className="invite-card invite-card-narrow">
+      <div className="invite-page" style={bgStyle} data-testid="invite-page" data-invite-step="welcome">
+        <div className="invite-card invite-card-narrow" data-testid="invite-welcome-card">
           <h1 className="invite-heading" style={{ fontSize: '1.5rem' }}>
             Pozvánka na chatu
           </h1>
@@ -151,12 +151,13 @@ export function InvitePage() {
             <button
               className="invite-btn invite-btn-primary invite-btn-full"
               onClick={() => setStep('register')}
+              data-testid="invite-continue-button"
             >
               Pokračovat →
             </button>
           </div>
           <div className="invite-back-link">
-            Už máte účet? <a onClick={() => navigate('/login')}>Přihlásit se</a>
+            Už máte účet? <a onClick={() => navigate('/login')} data-testid="invite-existing-login-link">Přihlásit se</a>
           </div>
         </div>
       </div>
@@ -165,14 +166,15 @@ export function InvitePage() {
 
   // ── Step 2: Registration form ────────────────────────────────────────
   return (
-    <div className="invite-page" style={bgStyle}>
-      <div className="invite-card invite-card-compact">
+    <div className="invite-page" style={bgStyle} data-testid="invite-page" data-invite-step="register">
+      <div className="invite-card invite-card-compact" data-testid="invite-register-card">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
           <button
             type="button"
             className="invite-back-btn"
             onClick={() => setStep('welcome')}
             title="Zpět"
+            data-testid="invite-back-button"
           >
             ←
           </button>
@@ -181,9 +183,9 @@ export function InvitePage() {
           </h2>
         </div>
 
-        {error && <div className="invite-error-msg">{error}</div>}
+        {error && <div className="invite-error-msg" data-testid="invite-register-error">{error}</div>}
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} data-testid="invite-register-form">
           <div className="invite-form-row">
             <div className="invite-form-group">
               <label>Přezdívka</label>
@@ -196,6 +198,7 @@ export function InvitePage() {
                 value={formData.username}
                 onChange={e => setFormData({ ...formData, username: e.target.value })}
                 autoFocus
+                data-testid="invite-username-input"
               />
             </div>
             <div className="invite-form-group">
@@ -208,6 +211,7 @@ export function InvitePage() {
                 placeholder="Min. 8 znaků"
                 value={formData.password}
                 onChange={e => setFormData({ ...formData, password: e.target.value })}
+                data-testid="invite-password-input"
               />
             </div>
           </div>
@@ -219,6 +223,7 @@ export function InvitePage() {
               placeholder="vas@email.cz"
               value={formData.email}
               onChange={e => setFormData({ ...formData, email: e.target.value })}
+              data-testid="invite-email-input"
             />
           </div>
 
@@ -245,6 +250,7 @@ export function InvitePage() {
             type="submit" 
             className="invite-btn invite-btn-primary invite-btn-full"
             disabled={submitting}
+            data-testid="invite-submit-button"
           >
             {submitting ? 'Připojuji…' : 'Připojit se k chatě →'}
           </button>

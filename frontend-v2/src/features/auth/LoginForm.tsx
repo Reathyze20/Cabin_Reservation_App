@@ -101,14 +101,14 @@ export function LoginForm({ onShowForgotPassword, onShowRegister, onShowVerify }
   }
 
   return (
-    <div id="login-section" className="login-container card">
+    <div id="login-section" className="login-container card" data-testid="login-form-view">
       <div className="auth-brand">
         <img src="/logo-icon.svg" alt="Logo" className="auth-logo-icon" />
         <h1 className="auth-brand-text">Chatačeskéstředohoří</h1>
       </div>
       <p className="auth-subtitle">Přihlaste se ke svému účtu</p>
 
-      <form id="login-form" noValidate onSubmit={handleSubmit}>
+      <form id="login-form" noValidate onSubmit={handleSubmit} data-testid="login-form">
         <div className="form-group">
           <label htmlFor="username">Uživatelské jméno:</label>
           <input
@@ -119,6 +119,7 @@ export function LoginForm({ onShowForgotPassword, onShowRegister, onShowVerify }
             autoComplete="username"
             required
             ref={usernameRef}
+            data-testid="login-username-input"
           />
         </div>
 
@@ -133,6 +134,7 @@ export function LoginForm({ onShowForgotPassword, onShowRegister, onShowVerify }
               autoComplete="current-password"
               required
               ref={passwordRef}
+              data-testid="login-password-input"
             />
             <button
               type="button"
@@ -154,12 +156,19 @@ export function LoginForm({ onShowForgotPassword, onShowRegister, onShowVerify }
               id="remember-me"
               checked={rememberMe}
               onChange={(e) => setRememberMe(e.target.checked)}
+              data-testid="login-remember-checkbox"
             />
             <span>Zapamatovat si mě</span>
           </label>
         </div>
 
-        <button type="submit" className="button-primary" style={{ width: '100%' }} disabled={loading}>
+        <button
+          type="submit"
+          className="button-primary"
+          style={{ width: '100%' }}
+          disabled={loading}
+          data-testid="login-submit-button"
+        >
           {loading ? 'Přihlašuji…' : 'Přihlásit se'}
         </button>
 
@@ -167,6 +176,7 @@ export function LoginForm({ onShowForgotPassword, onShowRegister, onShowVerify }
           <a
             href="#"
             onClick={(e) => { e.preventDefault(); onShowForgotPassword() }}
+            data-testid="login-forgot-password-link"
           >
             Zapomněli jste heslo?
           </a>
@@ -177,6 +187,7 @@ export function LoginForm({ onShowForgotPassword, onShowRegister, onShowVerify }
             id="login-error"
             className="error-message"
             style={{ display: 'block' }}
+            data-testid="login-error-message"
           >
             {error.text}
             {error.testCode && (
@@ -197,6 +208,7 @@ export function LoginForm({ onShowForgotPassword, onShowRegister, onShowVerify }
           href="#"
           id="show-register-link"
           onClick={(e) => { e.preventDefault(); onShowRegister() }}
+          data-testid="login-show-register-link"
         >
           Zaregistrujte se
         </a>

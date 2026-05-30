@@ -142,19 +142,19 @@ export function TaskFormModal({ initialCategory, editItem, onClose, onSubmit, is
       maxWidth="max-w-lg"
       footer={
         <div className="rec-modal-footer-actions">
-          <button type="button" className="btn btn-secondary" onClick={onClose} disabled={isLoading}>Zrušit</button>
-          <button type="submit" form="rec-task-form" className="rec-submit-btn btn btn-primary" disabled={isLoading}>
+          <button type="button" className="btn btn-secondary" onClick={onClose} disabled={isLoading} data-testid="reconstruction-cancel-button">Zrušit</button>
+          <button type="submit" form="rec-task-form" className="rec-submit-btn btn btn-primary" disabled={isLoading} data-testid="reconstruction-submit-button">
             {isLoading ? 'Ukládám…' : isEdit ? 'Uložit změny' : 'Přidat položku'}
           </button>
         </div>
       }
     >
-      <form id="rec-task-form" className="rec-modal-form" onSubmit={handleSubmit} onChangeCapture={() => onDirty?.()}>
+      <form id="rec-task-form" className="rec-modal-form" onSubmit={handleSubmit} onChangeCapture={() => onDirty?.()} data-testid="reconstruction-item-form">
           {/* Category select (hidden in edit mode) */}
           {!isEdit && (
             <div className="form-group">
               <span className="form-label">Kategorie</span>
-              <div className="rec-category-tabs" role="tablist" aria-label="Kategorie položky rekonstrukce">
+              <div className="rec-category-tabs" role="tablist" aria-label="Kategorie položky rekonstrukce" data-testid="reconstruction-category-tabs">
                 {CATEGORY_TABS.map(({ value, label, icon: Icon }) => {
                   const isActive = category === value
                   return (
@@ -167,6 +167,8 @@ export function TaskFormModal({ initialCategory, editItem, onClose, onSubmit, is
                         onDirty?.()
                         setCategory(value)
                       }}
+                      data-testid="reconstruction-category-tab"
+                      data-category={value}
                     >
                       <Icon size={16} aria-hidden="true" />
                       <span>{label}</span>
@@ -189,6 +191,7 @@ export function TaskFormModal({ initialCategory, editItem, onClose, onSubmit, is
               onChange={(e) => setTitle(e.target.value)}
               maxLength={200}
               required
+              data-testid="reconstruction-title-input"
               placeholder={
                 category === 'idea'
                   ? 'Např. Nová terasa ze dřeva'
@@ -209,6 +212,7 @@ export function TaskFormModal({ initialCategory, editItem, onClose, onSubmit, is
               onChange={(e) => setDescription(e.target.value)}
               maxLength={2000}
               rows={3}
+              data-testid="reconstruction-description-input"
             />
           </div>
 
@@ -224,6 +228,7 @@ export function TaskFormModal({ initialCategory, editItem, onClose, onSubmit, is
                   value={link ?? ''}
                   onChange={(e) => setLink(e.target.value)}
                   placeholder="https://..."
+                  data-testid="reconstruction-idea-link-input"
                 />
               </div>
               <div className="form-group">
@@ -235,6 +240,7 @@ export function TaskFormModal({ initialCategory, editItem, onClose, onSubmit, is
                   value={thumbnail ?? ''}
                   onChange={(e) => setThumbnail(e.target.value)}
                   placeholder="https://..."
+                  data-testid="reconstruction-idea-thumbnail-input"
                 />
               </div>
               <div className="form-group">
@@ -247,6 +253,7 @@ export function TaskFormModal({ initialCategory, editItem, onClose, onSubmit, is
                   value={costIdea}
                   onChange={(e) => setCostIdea(e.target.value)}
                   placeholder="0"
+                  data-testid="reconstruction-idea-cost-input"
                 />
               </div>
             </div>
@@ -264,6 +271,7 @@ export function TaskFormModal({ initialCategory, editItem, onClose, onSubmit, is
                   value={phone ?? ''}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+420 123 456 789"
+                  data-testid="reconstruction-company-phone-input"
                 />
               </div>
               <div className="form-group">
@@ -275,6 +283,7 @@ export function TaskFormModal({ initialCategory, editItem, onClose, onSubmit, is
                   value={email ?? ''}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="firma@example.cz"
+                  data-testid="reconstruction-company-email-input"
                 />
               </div>
               <div className="form-group">
@@ -286,6 +295,7 @@ export function TaskFormModal({ initialCategory, editItem, onClose, onSubmit, is
                   value={companyLink ?? ''}
                   onChange={(e) => setCompanyLink(e.target.value)}
                   placeholder="https://..."
+                  data-testid="reconstruction-company-link-input"
                 />
               </div>
               <div className="form-group">
@@ -295,6 +305,7 @@ export function TaskFormModal({ initialCategory, editItem, onClose, onSubmit, is
                   className="form-input"
                   value={companyStatus}
                   onChange={(e) => setCompanyStatus(e.target.value as CompanyStatus)}
+                  data-testid="reconstruction-company-status-select"
                 >
                   <option value="pending">Čeká na kontakt</option>
                   <option value="contacted">Kontaktováno</option>
@@ -316,6 +327,7 @@ export function TaskFormModal({ initialCategory, editItem, onClose, onSubmit, is
                   className="form-input"
                   value={deadline}
                   onChange={(e) => setDeadline(e.target.value)}
+                  data-testid="reconstruction-task-deadline-input"
                 />
               </div>
               <div className="form-group">
@@ -328,12 +340,13 @@ export function TaskFormModal({ initialCategory, editItem, onClose, onSubmit, is
                   value={costTask}
                   onChange={(e) => setCostTask(e.target.value)}
                   placeholder="0"
+                  data-testid="reconstruction-task-cost-input"
                 />
               </div>
             </div>
           )}
           {errorMessage ? (
-            <div className="error-message show" role="alert">{errorMessage}</div>
+            <div className="error-message show" role="alert" data-testid="reconstruction-form-error">{errorMessage}</div>
           ) : null}
 
       </form>

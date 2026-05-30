@@ -156,7 +156,7 @@ export function RegisterForm({ onShowLogin, onShowVerify }: RegisterFormProps) {
   // E-mail byl odeslán — zobrazíme potvrzovací screen (stejné jako v originálu)
   if (emailSent) {
     return (
-      <div id="register-section" className="login-container card">
+      <div id="register-section" className="login-container card" data-testid="register-email-sent-screen">
         <div style={{ textAlign: 'center', padding: '40px 24px' }}>
           <div style={{ fontSize: '48px', marginBottom: '16px', color: 'var(--color-primary)' }}>✉</div>
           <h2 style={{ margin: '0 0 12px', color: 'var(--text-main, #1a2721)' }}>Zkontrolujte svůj e-mail</h2>
@@ -168,6 +168,7 @@ export function RegisterForm({ onShowLogin, onShowVerify }: RegisterFormProps) {
             href="#"
             style={{ color: 'var(--brand-primary, #3f7b63)', textDecoration: 'underline', cursor: 'pointer' }}
             onClick={(e) => { e.preventDefault(); onShowLogin() }}
+            data-testid="register-back-to-login-link"
           >
             ← Vrátit se na přihlášení
           </a>
@@ -177,14 +178,14 @@ export function RegisterForm({ onShowLogin, onShowVerify }: RegisterFormProps) {
   }
 
   return (
-    <div id="register-section" className="login-container card">
+    <div id="register-section" className="login-container card" data-testid="register-form-view">
       <div className="auth-brand">
         <img src="/logo-icon.svg" alt="Logo" className="auth-logo-icon" />
         <h1 className="auth-brand-text">Chatačeskéstředohoří</h1>
       </div>
       <p className="auth-subtitle">Vytvořte prostor pro vaši chatu</p>
 
-      <form id="register-form" noValidate onSubmit={handleSubmit}>
+      <form id="register-form" noValidate onSubmit={handleSubmit} data-testid="register-form">
         <div className="form-section-label">Vaše chata</div>
 
         <div className="form-group">
@@ -193,6 +194,7 @@ export function RegisterForm({ onShowLogin, onShowVerify }: RegisterFormProps) {
             type="text" id="register-cabin-name" name="cabinName" maxLength={100}
             autoComplete="off" placeholder="např. Chalupa pod Kletí"
             required minLength={2} ref={cabinNameRef}
+            data-testid="register-cabin-name-input"
           />
         </div>
 
@@ -202,6 +204,7 @@ export function RegisterForm({ onShowLogin, onShowVerify }: RegisterFormProps) {
             type="text" id="register-weather-location" name="weatherLocation" maxLength={100}
             autoComplete="off" placeholder="např. Liberec nebo 46001"
             required minLength={2} ref={weatherLocationRef}
+            data-testid="register-weather-location-input"
           />
         </div>
 
@@ -212,6 +215,7 @@ export function RegisterForm({ onShowLogin, onShowVerify }: RegisterFormProps) {
           <input
             type="text" id="register-username" name="username" maxLength={50}
             autoComplete="username" required minLength={2} ref={usernameRef}
+            data-testid="register-username-input"
           />
         </div>
 
@@ -220,6 +224,7 @@ export function RegisterForm({ onShowLogin, onShowVerify }: RegisterFormProps) {
           <input
             type="email" id="register-email" name="email" maxLength={255}
             autoComplete="email" required ref={emailRef}
+            data-testid="register-email-input"
           />
         </div>
 
@@ -230,6 +235,7 @@ export function RegisterForm({ onShowLogin, onShowVerify }: RegisterFormProps) {
               type={showPassword ? 'text' : 'password'}
               id="register-password" name="password" maxLength={100}
               autoComplete="new-password" required minLength={8} ref={passwordRef}
+              data-testid="register-password-input"
             />
             <button
               type="button"
@@ -246,7 +252,7 @@ export function RegisterForm({ onShowLogin, onShowVerify }: RegisterFormProps) {
 
         <div className="form-group">
           <label>Barva profilu</label>
-          <div className="color-picker-swatches" id="register-color-swatches">
+          <div className="color-picker-swatches" id="register-color-swatches" data-testid="register-color-swatches">
             {REGISTER_SWATCH_COLORS.map((color) => (
               <button
                 key={color}
@@ -255,6 +261,7 @@ export function RegisterForm({ onShowLogin, onShowVerify }: RegisterFormProps) {
                 style={{ backgroundColor: color }}
                 data-color={color}
                 aria-label={`Barva ${color}`}
+                data-testid={`register-color-swatch-${color.slice(1).toLowerCase()}`}
                 onClick={() => setSelectedColor(color)}
               />
             ))}
@@ -262,7 +269,13 @@ export function RegisterForm({ onShowLogin, onShowVerify }: RegisterFormProps) {
           <input type="hidden" name="color" id="register-color" value={selectedColor} />
         </div>
 
-        <button type="submit" className="button-primary" style={{ width: '100%' }} disabled={loading}>
+        <button
+          type="submit"
+          className="button-primary"
+          style={{ width: '100%' }}
+          disabled={loading}
+          data-testid="register-submit-button"
+        >
           {loading ? 'Zakládám chatu…' : 'Založit chatu a registrovat'}
         </button>
 
@@ -279,6 +292,7 @@ export function RegisterForm({ onShowLogin, onShowVerify }: RegisterFormProps) {
                   : 'var(--color-success)',
               display: 'block',
             }}
+            data-testid="register-message"
           >
             {message.text}
             {message.testCode && (
@@ -295,7 +309,12 @@ export function RegisterForm({ onShowLogin, onShowVerify }: RegisterFormProps) {
 
       <p className="toggle-form-text">
         Máte již účet?{' '}
-        <a href="#" id="show-login-link" onClick={(e) => { e.preventDefault(); onShowLogin() }}>
+        <a
+          href="#"
+          id="show-login-link"
+          onClick={(e) => { e.preventDefault(); onShowLogin() }}
+          data-testid="register-show-login-link"
+        >
           Přihlaste se
         </a>
       </p>

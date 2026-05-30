@@ -97,8 +97,8 @@ export function LandingPage() {
   return (
     <>
       {/* ========== GLASS NAVIGATION ========== */}
-      <nav className={`landing-nav${scrolled ? ' scrolled' : ''}`} id="landing-nav">
-        <a href="/" className="landing-nav-logo" onClick={e => { e.preventDefault() }}>
+      <nav className={`landing-nav${scrolled ? ' scrolled' : ''}`} id="landing-nav" data-testid="landing-nav">
+        <a href="/" className="landing-nav-logo" onClick={e => { e.preventDefault() }} data-testid="landing-home-link">
           <img src="/logo-icon.svg" alt="Chatačeskéstředohoří" className="landing-nav-logo-img" />
           <span className="landing-nav-logo-text">Chatačeskéstředohoří</span>
         </a>
@@ -110,8 +110,8 @@ export function LandingPage() {
         </div>
 
         <div className="landing-nav-actions">
-          <button className="landing-btn landing-btn-ghost" onClick={goToLogin}>Přihlásit se</button>
-          <button className="landing-btn landing-btn-primary landing-btn-sm" onClick={goToLogin}>Vyzkoušet zdarma</button>
+          <button className="landing-btn landing-btn-ghost" onClick={goToLogin} data-testid="landing-login-button">Přihlásit se</button>
+          <button className="landing-btn landing-btn-primary landing-btn-sm" onClick={goToLogin} data-testid="landing-trial-button">Vyzkoušet zdarma</button>
         </div>
 
         {/* Mobile hamburger */}
@@ -119,6 +119,7 @@ export function LandingPage() {
           className={`landing-nav-hamburger${mobileMenuOpen ? ' active' : ''}`}
           aria-label="Otevřít menu"
           onClick={toggleMobileMenu}
+          data-testid="landing-mobile-menu-button"
         >
           <span></span>
           <span></span>
@@ -127,17 +128,17 @@ export function LandingPage() {
       </nav>
 
       {/* Mobile menu overlay */}
-      <div className={`landing-mobile-menu${mobileMenuOpen ? ' open' : ''}`}>
+      <div className={`landing-mobile-menu${mobileMenuOpen ? ' open' : ''}`} data-testid="landing-mobile-menu">
         <a href="#funkce" className="landing-mobile-link" onClick={smoothScroll('funkce')}>Funkce</a>
         <a href="#jak-to-funguje" className="landing-mobile-link" onClick={smoothScroll('jak-to-funguje')}>Jak to funguje</a>
         <a href="#cenik" className="landing-mobile-link" onClick={smoothScroll('cenik')}>Ceník</a>
         <hr className="landing-mobile-divider" />
-        <button className="landing-btn landing-btn-ghost" style={{ width: '100%', textAlign: 'center' }} onClick={goToLogin}>Přihlásit se</button>
-        <button className="landing-btn landing-btn-primary" style={{ width: '100%', textAlign: 'center' }} onClick={goToLogin}>Vyzkoušet zdarma</button>
+        <button className="landing-btn landing-btn-ghost" style={{ width: '100%', textAlign: 'center' }} onClick={goToLogin} data-testid="landing-mobile-login-button">Přihlásit se</button>
+        <button className="landing-btn landing-btn-primary" style={{ width: '100%', textAlign: 'center' }} onClick={goToLogin} data-testid="landing-mobile-trial-button">Vyzkoušet zdarma</button>
       </div>
 
       {/* ========== HERO SECTION ========== */}
-      <section className="hero-section">
+      <section className="hero-section" data-testid="landing-hero-section">
         <div className="hero-overlay"></div>
 
         {/* Decorative blobs */}
@@ -157,14 +158,14 @@ export function LandingPage() {
           </p>
 
           <div className="hero-cta-group">
-            <button className="landing-btn landing-btn-primary landing-btn-lg" onClick={goToLogin}>
+            <button className="landing-btn landing-btn-primary landing-btn-lg" onClick={goToLogin} data-testid="landing-hero-primary-cta">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M5 12h14" />
                 <path d="M12 5l7 7-7 7" />
               </svg>
               Vyzkoušet zdarma
             </button>
-            <a href="#funkce" className="landing-btn landing-btn-outline landing-btn-lg" onClick={smoothScroll('funkce')}>
+            <a href="#funkce" className="landing-btn landing-btn-outline landing-btn-lg" onClick={smoothScroll('funkce')} data-testid="landing-hero-secondary-cta">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polygon points="5 3 19 12 5 21 5 3" />
               </svg>
@@ -296,7 +297,7 @@ export function LandingPage() {
             <article className="step-card reveal reveal-delay-3">
               <div className="step-number">3</div>
               <h3>Používáte každý den</h3>
-              <p>Rezervace, nákupní seznamy a úkoly se synchronizují v reálném čase.</p>
+              <p>Rezervace, nákupní seznamy a úkoly máte na jednom místě pro celou rodinu.</p>
             </article>
           </div>
         </div>

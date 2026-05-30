@@ -99,6 +99,7 @@ export function UploadModal({ folderId, onClose }: Props) {
             className="btn-primary"
             disabled={upload.isPending || files.length === 0}
             style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+            data-testid="gallery-upload-submit-button"
           >
             <Upload size={16} />
             {upload.isPending ? 'Nahrávám…' : 'Nahrát'}
@@ -106,7 +107,7 @@ export function UploadModal({ folderId, onClose }: Props) {
         </div>
       }
     >
-      <form id="upload-photo-form" onSubmit={handleSubmit}>
+      <form id="upload-photo-form" onSubmit={handleSubmit} data-testid="gallery-upload-form">
         {/* Drop zone */}
         <div
           className={`upload-dropzone${isDragging ? ' upload-dropzone--active' : ''}${files.length > 0 ? ' upload-dropzone--has-files' : ''}`}
@@ -114,6 +115,7 @@ export function UploadModal({ folderId, onClose }: Props) {
           onDragLeave={() => setIsDragging(false)}
           onDrop={handleDrop}
           onClick={() => inputRef.current?.click()}
+          data-testid="gallery-upload-dropzone"
         >
           <input
             ref={inputRef}
@@ -122,6 +124,7 @@ export function UploadModal({ folderId, onClose }: Props) {
             multiple
             onChange={e => { addFiles(e.target.files); if (inputRef.current) inputRef.current.value = '' }}
             style={{ display: 'none' }}
+            data-testid="gallery-upload-file-input"
           />
           <ImagePlus size={28} strokeWidth={1.5} style={{ color: isDragging ? 'var(--brand-primary)' : 'var(--text-placeholder)' }} />
           <p className="upload-dropzone__text">
@@ -132,15 +135,16 @@ export function UploadModal({ folderId, onClose }: Props) {
 
         {/* File previews */}
         {files.length > 0 && (
-          <div className="upload-previews">
+          <div className="upload-previews" data-testid="gallery-upload-previews">
             {previews.map((p, i) => (
-              <div key={`${p.name}-${i}`} className="upload-preview-item">
+              <div key={`${p.name}-${i}`} className="upload-preview-item" data-testid="gallery-upload-preview-item" data-file-index={String(i)}>
                 <img src={p.url} alt={p.name} />
                 <button
                   type="button"
                   className="upload-preview-remove"
                   onClick={e => { e.stopPropagation(); removeFile(i) }}
                   aria-label={`Odebrat ${p.name}`}
+                  data-testid="gallery-upload-remove-file-button"
                 >
                   <X size={12} />
                 </button>
@@ -149,6 +153,7 @@ export function UploadModal({ folderId, onClose }: Props) {
             <div
               className="upload-preview-add"
               onClick={e => { e.stopPropagation(); inputRef.current?.click() }}
+              data-testid="gallery-upload-add-more-button"
             >
               <ImagePlus size={20} strokeWidth={1.5} />
             </div>
@@ -157,12 +162,12 @@ export function UploadModal({ folderId, onClose }: Props) {
 
         {/* Upload progress */}
         {upload.isPending && (
-          <div className="upload-progress-bar">
+          <div className="upload-progress-bar" data-testid="gallery-upload-progress">
             <div className="upload-progress-bar__fill" />
           </div>
         )}
         {submitError ? (
-          <div className="error-message show" role="alert">{submitError}</div>
+          <div className="error-message show" role="alert" data-testid="gallery-upload-error">{submitError}</div>
         ) : null}
       </form>
     </Modal>

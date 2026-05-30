@@ -274,10 +274,10 @@ export function DashboardPage() {
   const departureChecklist = cabinQuery.data?.departureChecklist ?? [];
 
   return (
-    <div className="dashboard nordic-dashboard">
+    <div className="dashboard nordic-dashboard" data-testid="dashboard-page">
       {/* Winter banner */}
       {isWinterized && (
-        <div id="dashboard-winter-banner" className="winter-banner">
+        <div id="dashboard-winter-banner" className="winter-banner" data-testid="dashboard-winter-banner">
           <div className="winter-banner-content">
             <span className="winter-banner-icon">*</span>
             <div className="winter-banner-text">
@@ -314,9 +314,10 @@ export function DashboardPage() {
         variants={gridVariants}
         initial="hidden"
         animate="visible"
+        data-testid="dashboard-grid"
       >
         {/* Row 1, Col 1: Reservation Card */}
-        <motion.div variants={cardVariants}>
+        <motion.div variants={cardVariants} data-testid="dashboard-reservation-widget">
           {reservationsQuery.isLoading ? (
             <StatusCardSkeleton />
           ) : reservationsQuery.isError ? (
@@ -329,7 +330,7 @@ export function DashboardPage() {
         </motion.div>
 
         {/* Row 1, Col 2: Weather Card */}
-        <motion.div variants={cardVariants}>
+        <motion.div variants={cardVariants} data-testid="dashboard-weather-widget">
           {weatherQuery.isLoading || cabinQuery.isLoading ? (
             <WeatherSkeleton />
           ) : weatherQuery.isError ? (
@@ -342,7 +343,7 @@ export function DashboardPage() {
         </motion.div>
 
         {/* Row 1, Col 3: Shopping Widget */}
-        <motion.div variants={cardVariants}>
+        <motion.div variants={cardVariants} data-testid="dashboard-shopping-widget">
           {shoppingQuery.isLoading ? (
             <ShoppingSkeleton />
           ) : shoppingQuery.isError ? (
@@ -359,7 +360,7 @@ export function DashboardPage() {
         </motion.div>
 
         {/* Row 2, Col 1: Handover Note */}
-        <motion.div variants={cardVariants}>
+        <motion.div variants={cardVariants} data-testid="dashboard-handover-widget">
           {notesQuery.isLoading ? (
             <HandoverNoteSkeleton />
           ) : notesQuery.isError ? (
@@ -381,7 +382,7 @@ export function DashboardPage() {
         </motion.div>
 
         {/* Row 2, Col 2: Reconstruction Widget */}
-        <motion.div variants={cardVariants}>
+        <motion.div variants={cardVariants} data-testid="dashboard-reconstruction-widget">
           {reconstructionQuery.isLoading ? (
             <ReconstructionSkeleton />
           ) : reconstructionQuery.isError ? (
@@ -395,11 +396,11 @@ export function DashboardPage() {
       </motion.div>
 
       {isAdmin && (activationQuery.isLoading ? (
-        <motion.div variants={cardVariants}>
+        <motion.div variants={cardVariants} data-testid="dashboard-activation-widget">
           <ActivationChecklistSkeleton />
         </motion.div>
       ) : activationQuery.isSuccess && activationQuery.data?.shouldShow ? (
-        <motion.div variants={cardVariants}>
+        <motion.div variants={cardVariants} data-testid="dashboard-activation-widget">
           <ErrorBoundary fallbackRender={() => null}>
             <AdminActivationChecklist data={activationQuery.data} />
           </ErrorBoundary>

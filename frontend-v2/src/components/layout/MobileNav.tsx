@@ -20,12 +20,14 @@ export function MobileNav() {
   })
 
   return (
-    <nav id="mobile-nav" className="mobile-nav">
+    <nav id="mobile-nav" className="mobile-nav" data-testid="mobile-nav">
       {visibleRoutes.map((route) => (
         <NavLink
           key={route.path}
           to={route.path}
           className={({ isActive }) => `mobile-nav-link${isActive ? ' active' : ''}`}
+          data-testid="mobile-nav-link"
+          data-route={route.path}
         >
           <route.icon size={20} />
           <span>{route.label}</span>

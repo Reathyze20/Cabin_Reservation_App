@@ -32,7 +32,7 @@ export function ListMaster({
   const isAdmin = user?.role === 'admin'
 
   return (
-    <aside className="shopping-master" id="shopping-master">
+    <aside className="shopping-master" id="shopping-master" data-testid="shopping-list-master">
       <h2 className="master-heading">Seznamy</h2>
       <ul className="master-list" id="master-list">
         {lists.length === 0 && (
@@ -60,6 +60,8 @@ export function ListMaster({
                 transition={{ duration: 0.2, ease: 'easeOut' }}
                 className={`master-item group relative ${isActive ? ' is-active' : ''}${allDone ? ' is-complete' : ''}`}
                 onClick={() => onSelect(list.id)}
+                data-testid="shopping-list-row"
+                data-list-id={list.id}
               >
                 <div className="master-item-info">
                   <span className="master-item-name">{list.name}</span>
@@ -105,7 +107,7 @@ export function ListMaster({
           })}
         </AnimatePresence>
       </ul>
-      <button className="master-new-btn" onClick={onNewList}>
+      <button className="master-new-btn" onClick={onNewList} data-testid="shopping-list-create-button">
         + Nový seznam
       </button>
     </aside>

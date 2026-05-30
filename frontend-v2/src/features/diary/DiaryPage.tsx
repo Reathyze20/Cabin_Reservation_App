@@ -235,7 +235,7 @@ export function DiaryPage() {
   }
 
   return (
-    <div className="main-content-diary">
+    <div className="main-content-diary" data-testid="diary-page">
       <div className="page-card diary-card">
 
         {/* ── FOLDERS VIEW ─────────────────────────────────────────────── */}

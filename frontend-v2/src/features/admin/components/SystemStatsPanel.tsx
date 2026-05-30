@@ -6,7 +6,7 @@ export function SystemStatsPanel() {
 
   if (isLoading) {
     return (
-      <div className="system-skeleton-grid">
+      <div className="system-skeleton-grid" data-testid="system-stats-panel" data-system-stats-state="loading">
         {[0, 1, 2, 3].map((index) => (
           <div key={index} className="skeleton system-skeleton-card" />
         ))}
@@ -16,13 +16,15 @@ export function SystemStatsPanel() {
 
   if (isError || !data) {
     return (
-      <FeatureErrorFallback
-        error={error instanceof Error ? error : new Error('Nepodařilo se načíst statistiky')}
-        resetErrorBoundary={() => {
-          void refetch()
-        }}
-        title="Statistiky se nepodařilo načíst"
-      />
+      <div data-testid="system-stats-panel" data-system-stats-state="error">
+        <FeatureErrorFallback
+          error={error instanceof Error ? error : new Error('Nepodařilo se načíst statistiky')}
+          resetErrorBoundary={() => {
+            void refetch()
+          }}
+          title="Statistiky se nepodařilo načíst"
+        />
+      </div>
     )
   }
 
@@ -34,9 +36,9 @@ export function SystemStatsPanel() {
   ]
 
   return (
-    <div id="sys-info-content" className="system-stats-grid">
+    <div id="sys-info-content" className="system-stats-grid" data-testid="system-stats-panel" data-system-stats-state="ready">
       {stats.map((stat) => (
-        <div key={stat.label} className={`system-stat system-stat--${stat.tone}`}>
+        <div key={stat.label} className={`system-stat system-stat--${stat.tone}`} data-testid="system-stat-card" data-stat-tone={stat.tone}>
           <div className="stat-label">{stat.label}</div>
           <div className="stat-value">{stat.value}</div>
           <div className="stat-meta">{stat.meta}</div>

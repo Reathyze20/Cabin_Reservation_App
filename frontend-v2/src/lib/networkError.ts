@@ -46,4 +46,4 @@ export function getNetworkAwareActionMessage(
 }
 
 /** Zpráva zobrazená při výpadku připojení místo červeného erroru */
-export const OFFLINE_TOAST_MSG = 'Není připojení k internetu. Změna bude synchronizována automaticky po obnovení spojení.'
+export const OFFLINE_TOAST_MSG = 'Není připojení k internetu. Změnu po obnovení spojení zkontrolujte a případně ji zopakujte.'

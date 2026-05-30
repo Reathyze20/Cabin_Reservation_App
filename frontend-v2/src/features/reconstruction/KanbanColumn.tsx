@@ -129,7 +129,7 @@ function TaskCard({ item, currentUserId, isGuest = false, onEdit }: TaskCardProp
 
   if (item.category === 'idea') {
     return (
-      <div className="kanban-item idea-card">
+      <div className="kanban-item idea-card" data-testid="reconstruction-item-card" data-item-id={item.id} data-item-category={item.category}>
         {item.thumbnail && (
           <div className="idea-thumbnail">
             <img src={item.thumbnail} alt="" loading="lazy" />
@@ -153,10 +153,10 @@ function TaskCard({ item, currentUserId, isGuest = false, onEdit }: TaskCardProp
               )}
               {!isGuest && (
                 <>
-                  <button type="button" className="card-action-edit" title="Upravit" aria-label="Upravit položku" onClick={() => onEdit(item)}>
+                  <button type="button" className="card-action-edit" title="Upravit" aria-label="Upravit položku" onClick={() => onEdit(item)} data-testid="reconstruction-item-edit-button">
                     <Pencil className="rec-action-icon" aria-hidden="true" />
                   </button>
-                  <button type="button" className="card-action-del" title="Smazat" aria-label="Smazat položku" onClick={handleDelete}>
+                  <button type="button" className="card-action-del" title="Smazat" aria-label="Smazat položku" onClick={handleDelete} data-testid="reconstruction-item-delete-button">
                     <Trash2 className="rec-action-icon" aria-hidden="true" />
                   </button>
                 </>
@@ -181,6 +181,7 @@ function TaskCard({ item, currentUserId, isGuest = false, onEdit }: TaskCardProp
               disabled={vote.isPending}
               type="button"
               aria-pressed={hasVoted}
+              data-testid="reconstruction-item-vote-button"
             >
               <ThumbsUp size={14} aria-hidden="true" />
               Hlasy: {item.votes?.length ?? 0}
@@ -209,16 +210,16 @@ function TaskCard({ item, currentUserId, isGuest = false, onEdit }: TaskCardProp
 
   if (item.category === 'company') {
     return (
-      <div className="kanban-item company-card">
+      <div className="kanban-item company-card" data-testid="reconstruction-item-card" data-item-id={item.id} data-item-category={item.category}>
         <div className="card-header">
           <div className="kanban-item-title">{item.title}</div>
           <div className="card-actions">
             {!isGuest && (
               <>
-                <button type="button" className="card-action-edit" title="Upravit" aria-label="Upravit kontakt" onClick={() => onEdit(item)}>
+                <button type="button" className="card-action-edit" title="Upravit" aria-label="Upravit kontakt" onClick={() => onEdit(item)} data-testid="reconstruction-item-edit-button">
                   <Pencil className="rec-action-icon" aria-hidden="true" />
                 </button>
-                <button type="button" className="card-action-del" title="Smazat" aria-label="Smazat kontakt" onClick={handleDelete}>
+                <button type="button" className="card-action-del" title="Smazat" aria-label="Smazat kontakt" onClick={handleDelete} data-testid="reconstruction-item-delete-button">
                   <Trash2 className="rec-action-icon" aria-hidden="true" />
                 </button>
               </>
@@ -262,6 +263,7 @@ function TaskCard({ item, currentUserId, isGuest = false, onEdit }: TaskCardProp
             value={item.status ?? 'pending'}
             onChange={(e) => handleStatusChange(e.target.value as RecStatus)}
             disabled={updateStatus.isPending}
+            data-testid="reconstruction-item-status-select"
           >
             <option value="pending">Čeká na kontakt</option>
             <option value="contacted">Kontaktováno</option>
@@ -291,7 +293,7 @@ function TaskCard({ item, currentUserId, isGuest = false, onEdit }: TaskCardProp
 
   const isDone = item.status === 'done'
   return (
-    <div className={`kanban-item task-card${isDone ? ' task-done' : ''}`}>
+    <div className={`kanban-item task-card${isDone ? ' task-done' : ''}`} data-testid="reconstruction-item-card" data-item-id={item.id} data-item-category={item.category}>
       <div className="card-header">
         <div className="task-title-row">
           <label className="task-checkbox-wrapper">
@@ -301,6 +303,7 @@ function TaskCard({ item, currentUserId, isGuest = false, onEdit }: TaskCardProp
               checked={isDone}
               onChange={(e) => handleStatusChange(e.target.checked ? 'done' : 'pending')}
               disabled={updateStatus.isPending}
+              data-testid="reconstruction-item-toggle-done"
             />
             <span className="checkmark" />
           </label>
@@ -309,10 +312,10 @@ function TaskCard({ item, currentUserId, isGuest = false, onEdit }: TaskCardProp
         <div className="card-actions">
           {!isGuest && (
             <>
-              <button type="button" className="card-action-edit" title="Upravit" aria-label="Upravit úkol" onClick={() => onEdit(item)}>
+              <button type="button" className="card-action-edit" title="Upravit" aria-label="Upravit úkol" onClick={() => onEdit(item)} data-testid="reconstruction-item-edit-button">
                 <Pencil className="rec-action-icon" aria-hidden="true" />
               </button>
-              <button type="button" className="card-action-del" title="Smazat" aria-label="Smazat úkol" onClick={handleDelete}>
+              <button type="button" className="card-action-del" title="Smazat" aria-label="Smazat úkol" onClick={handleDelete} data-testid="reconstruction-item-delete-button">
                 <Trash2 className="rec-action-icon" aria-hidden="true" />
               </button>
             </>

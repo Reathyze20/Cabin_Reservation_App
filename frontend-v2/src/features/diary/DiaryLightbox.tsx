@@ -36,27 +36,29 @@ export function DiaryLightbox({ photos, initialIndex, onClose }: Props) {
       className="lightbox-overlay"
       id="diary-lightbox-modal"
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
+      data-testid="diary-lightbox"
+      data-photo-id={photo.id}
     >
       <div className="lightbox-content">
-        <button className="lightbox-close" onClick={onClose} aria-label="Zavřít">×</button>
+        <button className="lightbox-close" onClick={onClose} aria-label="Zavřít" data-testid="diary-lightbox-close-button">×</button>
 
         {photos.length > 1 && (
           <>
-            <button className="lightbox-arrow lightbox-arrow-left" onClick={prev} aria-label="Předchozí">‹</button>
-            <button className="lightbox-arrow lightbox-arrow-right" onClick={next} aria-label="Další">›</button>
+            <button className="lightbox-arrow lightbox-arrow-left" onClick={prev} aria-label="Předchozí" data-testid="diary-lightbox-prev-button">‹</button>
+            <button className="lightbox-arrow lightbox-arrow-right" onClick={next} aria-label="Další" data-testid="diary-lightbox-next-button">›</button>
           </>
         )}
 
-        <img id="diary-lightbox-img" src={photo.src} alt={photo.description ?? ''} />
+        <img id="diary-lightbox-img" src={photo.src} alt={photo.description ?? ''} data-testid="diary-lightbox-image" />
 
         {photo.description && (
-          <div className="lightbox-caption" id="diary-lightbox-description">
+          <div className="lightbox-caption" id="diary-lightbox-description" data-testid="diary-lightbox-caption">
             <p className="lightbox-description">{photo.description}</p>
           </div>
         )}
 
         <div className="lightbox-controls">
-          <a className="lightbox-btn" href={photo.src} download target="_blank" rel="noreferrer">↓ Stáhnout</a>
+          <a className="lightbox-btn" href={photo.src} download target="_blank" rel="noreferrer" data-testid="diary-lightbox-download-button">↓ Stáhnout</a>
         </div>
       </div>
     </div>

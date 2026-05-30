@@ -202,6 +202,15 @@ export function LogsPanel({
     || Boolean(pathFilter.trim())
     || Boolean(statusFilter.trim())
     || Boolean(searchFilter.trim())
+  const logsState = filesQuery.isError
+    ? 'files-error'
+    : logsQuery.isError
+      ? 'logs-error'
+      : logsQuery.isLoading
+        ? 'loading'
+        : logs.length === 0
+          ? 'empty'
+          : 'ready'
 
   function resetFilters(): void {
     setLevel('all')
@@ -216,7 +225,7 @@ export function LogsPanel({
   }
 
   return (
-    <section id={id} className="page-card admin-page-card admin-card admin-logs-card">
+    <section id={id} className="page-card admin-page-card admin-card admin-logs-card" data-testid="logs-panel" data-logs-scope={scopeKey} data-logs-state={logsState}>
       <div className="admin-card-header">
         <div>
           <div className="admin-card-eyebrow">{eyebrow}</div>
@@ -230,7 +239,7 @@ export function LogsPanel({
         </div>
       </div>
 
-      <div className="admin-log-toolbar">
+      <div className="admin-log-toolbar" data-testid="logs-toolbar">
         <div className="form-group">
           <label htmlFor={`${scopeKey}-log-date`}>Den</label>
           <select
@@ -238,6 +247,7 @@ export function LogsPanel({
             value={selectedDate}
             onChange={(event) => setSelectedDate(event.target.value)}
             disabled={filesQuery.isLoading || availableDates.length === 0}
+            data-testid="logs-date-select"
           >
             {availableDates.length === 0 ? (
               <option value="">Dnešní log</option>
@@ -257,6 +267,7 @@ export function LogsPanel({
             id={`${scopeKey}-log-level`}
             value={level}
             onChange={(event) => setLevel(event.target.value as 'all' | 'debug' | 'error' | 'warn' | 'info')}
+            data-testid="logs-level-select"
           >
             <option value="all">Vše</option>
             <option value="debug">Jen debug</option>
@@ -272,6 +283,7 @@ export function LogsPanel({
             id={`${scopeKey}-log-source`}
             value={source}
             onChange={(event) => setSource(event.target.value as 'all' | 'backend' | 'frontend')}
+            data-testid="logs-source-select"
           >
             <option value="all">Backend + frontend</option>
             <option value="backend">Jen backend</option>
@@ -285,6 +297,7 @@ export function LogsPanel({
             id={`${scopeKey}-log-lines`}
             value={String(lines)}
             onChange={(event) => setLines(Number(event.target.value))}
+            data-testid="logs-lines-select"
           >
             <option value="50">50 řádků</option>
             <option value="100">100 řádků</option>
@@ -301,6 +314,7 @@ export function LogsPanel({
             value={requestId}
             placeholder="Např. 1a2b3c"
             onChange={(event) => setRequestId(event.target.value)}
+            data-testid="logs-request-id-input"
           />
         </div>
 
@@ -312,6 +326,7 @@ export function LogsPanel({
             value={userId}
             placeholder="UUID nebo actorId"
             onChange={(event) => setUserId(event.target.value)}
+            data-testid="logs-user-id-input"
           />
         </div>
 
@@ -323,6 +338,7 @@ export function LogsPanel({
             value={moduleFilter}
             placeholder="AUTH, INVITES, SHOPPING"
             onChange={(event) => setModuleFilter(event.target.value)}
+            data-testid="logs-module-input"
           />
         </div>
 
@@ -334,6 +350,7 @@ export function LogsPanel({
             value={pathFilter}
             placeholder="/api/invites, /dashboard"
             onChange={(event) => setPathFilter(event.target.value)}
+            data-testid="logs-path-input"
           />
         </div>
 
@@ -346,6 +363,7 @@ export function LogsPanel({
             value={statusFilter}
             placeholder="500"
             onChange={(event) => setStatusFilter(event.target.value)}
+            data-testid="logs-status-input"
           />
         </div>
 
@@ -357,6 +375,7 @@ export function LogsPanel({
             value={searchFilter}
             placeholder="invite, SMTP, galerie"
             onChange={(event) => setSearchFilter(event.target.value)}
+            data-testid="logs-search-input"
           />
         </div>
 
@@ -366,6 +385,7 @@ export function LogsPanel({
               type="button"
               className="btn btn-secondary admin-log-refresh"
               onClick={resetFilters}
+              data-testid="logs-reset-filters-button"
             >
               Vyčistit filtry
             </button>
@@ -378,6 +398,7 @@ export function LogsPanel({
               void filesQuery.refetch()
               void logsQuery.refetch()
             }}
+            data-testid="logs-refresh-button"
           >
             Obnovit logy
           </button>
@@ -412,15 +433,15 @@ export function LogsPanel({
         </div>
       ) : (
         <>
-          <div className="admin-log-summary">
+          <div className="admin-log-summary" data-testid="logs-summary">
             <span className="admin-log-summary-pill admin-log-summary-pill--error">{errorCount} error</span>
             <span className="admin-log-summary-pill admin-log-summary-pill--warn">{warnCount} warn</span>
             <span className="admin-log-summary-pill admin-log-summary-pill--info">{infoCount} info</span>
           </div>
 
-          <div className="admin-log-list">
+          <div className="admin-log-list" data-testid="logs-list">
             {logs.map((entry, index) => (
-              <details key={`${entry.time ?? 'time'}-${entry.msg ?? 'msg'}-${index}`} className="admin-log-item">
+              <details key={`${entry.time ?? 'time'}-${entry.msg ?? 'msg'}-${index}`} className="admin-log-item" data-testid="log-entry" data-log-index={String(index)}>
                 <summary>
                   <div className="admin-log-item-main">
                     <span className={getLevelBadgeClass(typeof entry.level === 'string' ? entry.level : undefined)}>

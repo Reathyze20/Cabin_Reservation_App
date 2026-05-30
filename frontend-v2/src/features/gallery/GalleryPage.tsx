@@ -216,7 +216,7 @@ export function GalleryPage() {
   }
 
   return (
-    <div className="gallery-page-wrapper">
+    <div className="gallery-page-wrapper" data-testid="gallery-page">
       <div className="page-card gallery-glass-card">
         <AnimatePresence mode="wait">
           {view === 'folders' ? (

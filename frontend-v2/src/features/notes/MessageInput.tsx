@@ -121,7 +121,7 @@ export function MessageInput({ activeThreadId, replyTo, onCancelReply }: Props) 
   }, [replyTo]);
 
   return (
-    <div className="chat-footer-wrapper">
+    <div className="chat-footer-wrapper" data-testid="notes-message-input">
       {/* Reply preview */}
       {replyTo && (
         <div className="reply-preview">
@@ -218,6 +218,7 @@ export function MessageInput({ activeThreadId, replyTo, onCancelReply }: Props) 
           type="button"
           className="btn-chip btn-chip-action"
           onClick={() => setHandoverOpen((o) => !o)}
+          data-testid="notes-handover-toggle-button"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
@@ -247,6 +248,7 @@ export function MessageInput({ activeThreadId, replyTo, onCancelReply }: Props) 
           className="fake-input-wrapper pill-shape"
           noValidate
           onSubmit={handleFormSubmit}
+          data-testid="notes-message-form"
         >
           <textarea
             ref={textareaRef}
@@ -262,6 +264,7 @@ export function MessageInput({ activeThreadId, replyTo, onCancelReply }: Props) 
               autoResize();
             }}
             onKeyDown={handleKeyDown}
+            data-testid="notes-message-textarea"
           />
           <button
             type="submit"
@@ -269,6 +272,7 @@ export function MessageInput({ activeThreadId, replyTo, onCancelReply }: Props) 
             aria-label="Odeslat"
             disabled={sendNote.isPending}
             title={sendNote.isPending ? "Odesílám…" : "Odeslat (Enter)"}
+            data-testid="notes-send-button"
           >
             {sendNote.isPending ? (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ animation: "spin 0.7s linear infinite" }}>

@@ -57,7 +57,7 @@ export function DiaryFolders({ folders, onOpen, onRename, onDelete, onNewFolder 
   const visible = filterFolders(folders, period)
 
   return (
-    <div className="diary-folders-view">
+    <div className="diary-folders-view" data-testid="diary-folders-view">
       <div className="diary-header">
         <div className="diary-header-left">
           <h1>Deník pobytů</h1>
@@ -75,7 +75,7 @@ export function DiaryFolders({ folders, onOpen, onRename, onDelete, onNewFolder 
               </button>
             ))}
           </div>
-          <button className="gallery-btn gallery-btn-primary" onClick={onNewFolder}>
+          <button className="gallery-btn gallery-btn-primary" onClick={onNewFolder} data-testid="diary-new-folder-button">
             + Nový pobyt
           </button>
         </div>
@@ -91,6 +91,8 @@ export function DiaryFolders({ folders, onOpen, onRename, onDelete, onNewFolder 
             key={folder.id}
             className="folder-card diary-folder"
             onClick={() => onOpen(folder)}
+            data-testid="diary-folder-card"
+            data-folder-id={folder.id}
           >
             <div className="folder-icon-large">{tagIcon(folder.activityTag)}</div>
             <div className="folder-info">
