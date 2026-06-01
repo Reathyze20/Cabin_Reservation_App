@@ -20,6 +20,7 @@
     "validate:ai": "tsx src/scripts/validateAiAssets.ts",
     "report:ai": "tsx src/scripts/reportAiGovernance.ts",
     "db:seed": "tsx src/scripts/migrateData.ts",
+    "create-learning-admin": "tsx src/scripts/createLearningAdmin.ts",
     "backup:db": "tsx src/scripts/backupManager.ts backup db",
     "backup:uploads": "tsx src/scripts/backupManager.ts backup uploads",
     "backup:all": "tsx src/scripts/backupManager.ts backup all",

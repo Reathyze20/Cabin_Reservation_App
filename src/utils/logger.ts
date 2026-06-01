@@ -156,7 +156,10 @@ function makeRecord(
     source:    'backend',
     ...fields,
     ...(ctx?.requestId ? { requestId: ctx.requestId } : {}),
+    ...(ctx?.cabinId ? { cabinId: ctx.cabinId } : {}),
     ...(ctx?.userId    ? { actorId:   ctx.userId }    : {}),
+    ...(ctx?.username  ? { actorUsername: ctx.username } : {}),
+    ...(ctx?.role      ? { actorRole: ctx.role } : {}),
   };
 }
 
@@ -241,7 +244,7 @@ export const logger = {
     if (!fs.existsSync(LOGS_DIR)) return [];
     try {
       return fs.readdirSync(LOGS_DIR)
-        .filter(f => f.endsWith('.log'))
+        .filter(f => /^\d{4}-\d{2}-\d{2}\.log$/.test(f))
         .map(f => f.replace('.log', ''))
         .sort((a, b) => b.localeCompare(a));
     } catch { return []; }
@@ -258,6 +261,8 @@ export const logger = {
     path?: string;
     status?: number;
     search?: string;
+    cabinId?: string | null;
+    allowedUserIds?: string[];
   }): Record<string, unknown>[] {
     try {
       const date    = options.date ?? new Date().toISOString().split('T')[0];
@@ -276,6 +281,20 @@ export const logger = {
           return { time: '', level: 'info', msg: line, source: 'backend', _legacy: true };
         }
       });
+
+      if (options.cabinId || options.allowedUserIds?.length) {
+        const allowedUserIds = new Set(options.allowedUserIds ?? []);
+        parsed = parsed.filter((record) => {
+          const recordCabinId = typeof record['cabinId'] === 'string' ? record['cabinId'] : null;
+          const recordUserId = typeof record['userId'] === 'string' ? record['userId'] : null;
+          const recordActorId = typeof record['actorId'] === 'string' ? record['actorId'] : null;
+
+          if (options.cabinId && recordCabinId === options.cabinId) return true;
+          if (recordUserId && allowedUserIds.has(recordUserId)) return true;
+          if (recordActorId && allowedUserIds.has(recordActorId)) return true;
+          return false;
+        });
+      }
 
       // Server-side filtry (Kibana-style)
       if (options.level) {

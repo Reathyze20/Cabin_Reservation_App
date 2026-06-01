@@ -56,3 +56,22 @@ export const requireSuperAdmin = async (
     res.status(500).json({ message: "Interní chyba serveru" });
   }
 };
+
+export const requireSuperAdminFromClaims = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): void => {
+  if (!req.user || !req.user.userId) {
+    res.status(401).json({ message: "Neautorizováno" });
+    return;
+  }
+
+  if (!req.user.isSuperAdmin) {
+    logger.warn("SUPERADMIN", `Unauthorized Super Admin access attempt by userId: ${req.user.userId}`);
+    res.status(403).json({ message: "Přístup odepřen. Tato sekce je dostupná pouze Super Adminům." });
+    return;
+  }
+
+  next();
+};

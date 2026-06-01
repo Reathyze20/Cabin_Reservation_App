@@ -1,27 +1,41 @@
-# Aplikace pro Rezervaci Chaty
+# Chata Třebenice / kdynachatu.cz
 
-Jednoduchá webová aplikace s vlastním backendem pro rezervaci termínů v chatě. Umožňuje přihlášení uživatele, zobrazení obsazených termínů v kalendáři a vytváření nových rezervací.
+Moderní rodinná SPA/PWA aplikace pro správu rekreačních objektů — rezervace, galerie, deník, chat, nákupní seznamy a rekonstrukce. Single-tenant MVP s přípravou na multi-tenant SaaS platformu.
 
 ## Klíčové funkce
-- Autentizace uživatelů pomocí JWT
-- Vizuální kalendář (Flatpickr) se zobrazením rezervací
-- Barevné odlišení rezervací podle uživatele
-- Vytváření rezervací výběrem rozsahu dat
-- Kontrola kolizí na backendu
-- Jednoduché REST API
+- 🔐 Autentizace přes JWT + invite-based onboarding
+- 📅 Vizuální kalendář s barevně odlišenými rezervacemi
+- 💬 Real-time chat přes Socket.IO
+- 🛒 Nákupní seznamy + pantry/inventář
+- 📸 Galerie s albums a lighboxem
+- 📖 Deník pobytů
+- 🏗️ Evidance rekonstrukcí a hlasování
+- 🎨 Frosted-glass design, dark mode, PWA offline support
 
-## Použité technologie
-- Backend:
-    - Node.js, Express.js, TypeScript
-    - bcrypt, jsonwebtoken, CORS
-- Frontend:
-    - HTML5, CSS3, Vanilla JavaScript
-    - Flatpickr, Font Awesome
+## Stack
+
+### Frontend
+- **React 19** + TypeScript strict
+- **Vite 7** + code splitting
+- **TanStack Query 5** (server state)
+- **React Router DOM 7** (client routing)
+- **Tailwind CSS 4** + shadcn/ui
+- **Framer Motion** (animace)
+- **Socket.IO client** (real-time)
+
+### Backend
+- **Node.js 20+** + Express 4 + TypeScript
+- **Prisma ORM 7** + PostgreSQL 16
+- **JWT** auth + role-based access
+- **Zod 4** validace
+- **Sharp** (image resize)
+- **Pino** (structured logging)
+- **Socket.IO** server
 
 ## Požadavky
-- Node.js 12+
-- NPM (součást Node.js)
-- VS Code doplněk Live Server (pro frontend)
+- Node.js 20+
+- PostgreSQL 16 (nebo Docker)
+- npm (součást Node.js)
 
 ## Instalace
 ```bash
@@ -50,28 +64,68 @@ Běží na http://localhost:3000
 - Otevřete `src/frontend/index.html` ve VS Code
 - Klikněte pravým tlačítkem a zvolte „Open with Live Server“
 
-## Skripty (package.json)
-- `npm run dev` — vývojový backend (ts-node-dev)
-- `npm run build` — kompilace TypeScriptu do `dist`
-- `npm start` — spuštění zkompilované aplikace (produkce)
+## Důležité skripty
 
-## API Endpoints
+```bash
+# Vývoj
+npm run dev              # backend + frontend najednou
+npm run dev:backend      # jen backend
+npm run dev:frontend     # jen frontend
 
-### POST /api/login
-Přihlášení uživatele, vrací JWT.
-Body:
-```json
-{ "username": "uzivatel", "password": "heslo" }
+# Build & produkce
+npm run build            # zkompiluje frontend do dist/frontend
+npm run start            # spustí produkční server
+npm run preview          # build + start
+
+# Databáze
+npm run prisma:generate  # vygeneruje Prisma klienta
+npm run prisma:migrate   # vytvoří migraci
+npm run prisma:studio    # otevře Prisma Studio (DB GUI)
+npm run db:seed          # naimportuje archivní JSON data
+
+# Testování & validace
+npm run preflight:deploy # kontrola před nasazením (TS + testy + build)
+npm run create-learning-admin  # vytvoří testovacího admina pro učení
+
+# Docker
+npm run docker:up        # spustí DB + app v Dockeru
+npm run docker:down      # vypne Docker stack
+npm run docker:logs      # zobrazí logy aplikace
 ```
 
-### GET /api/reservations
-Vrátí seznam všech rezervací.
-- Autorizace: Bearer token
+## První spuštění (quick start)
 
-### POST /api/reservations
-Vytvoří novou rezervaci.
-- Autorizace: Bearer token  
-Body:
-```json
-{ "from": "YYYY-MM-DD", "to": "YYYY-MM-DD" }
-```
+1. **Spusť aplikaci:**
+   ```bash
+   npm run dev
+   ```
+
+2. **Vytvoř testovacího admina:**
+   ```bash
+   npm run create-learning-admin
+   ```
+
+3. **Otevři browser:**
+   - Frontend: http://localhost:5173
+   - Swagger API docs: http://localhost:3000/api/docs
+
+4. **Přihlaš se:**
+   - Username: `admin`
+   - Password: `tajneheslo123`
+
+## Učení a testování
+
+### 🎓 Pro začátečníky v testování
+- **Quick Start:** [docs/learning/GETTING-STARTED.md](docs/learning/GETTING-STARTED.md) — 15 minut k funkční aplikaci
+- **Postman Guide:** [docs/learning/POSTMAN-GUIDE.md](docs/learning/POSTMAN-GUIDE.md) — kompletní průvodce API testováním
+- **Playwright Guide:** [docs/learning/PLAYWRIGHT-GUIDE.md](docs/learning/PLAYWRIGHT-GUIDE.md) — kompletní průvodce browser automatizaci
+
+### 📚 Další dokumentace
+- **Implementation Roadmap:** [docs/learning/IMPLEMENTATION-ROADMAP.md](docs/learning/IMPLEMENTATION-ROADMAP.md) — co je hotové a co chybí
+- **Manuální testování:** [docs/SPRINT-0-SMOKE-TEST.md](docs/SPRINT-0-SMOKE-TEST.md) — rodinné smoke test scénáře
+
+### 🔧 API dokumentace
+- **Swagger UI:** http://localhost:3000/api/docs (v devu zapnuté automaticky)
+- **API Quickstart:** [docs/API-QUICKSTART.md](docs/API-QUICKSTART.md)
+- **Postman collection:** [postman/cabin-api-learning.postman_collection.json](postman/cabin-api-learning.postman_collection.json)
+- **OpenAPI spec:** [src/backend/openapi.ts](src/backend/openapi.ts)

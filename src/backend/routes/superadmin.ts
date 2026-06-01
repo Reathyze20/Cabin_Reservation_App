@@ -225,7 +225,7 @@ router.get("/logs/files", protect, requireSuperAdmin, async (_req: Request, res:
 // ─── GET /api/superadmin/logs ────────────────────────────────────────────────
 router.get("/logs", protect, requireSuperAdmin, async (req: Request, res: Response) => {
   try {
-    const { date, lines, level, userId, module: mod, source } = req.query;
+    const { date, lines, level, userId, module: mod, source, requestId, path, status, search } = req.query;
 
     const logs = logger.readLogs({
       date: date as string | undefined,
@@ -234,6 +234,10 @@ router.get("/logs", protect, requireSuperAdmin, async (req: Request, res: Respon
       userId: userId as string | undefined,
       module: mod as string | undefined,
       source: source as string | undefined,
+      requestId: requestId as string | undefined,
+      path: path as string | undefined,
+      status: status ? parseInt(status as string, 10) : undefined,
+      search: search as string | undefined,
     });
 
     res.json({

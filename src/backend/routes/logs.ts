@@ -1,21 +1,14 @@
 import { Router, Request, Response } from 'express';
-import { protect }      from '../../middleware/authMiddleware';
+import { protect, protectWithTokenFallback } from '../../middleware/authMiddleware';
 import logger           from '../../utils/logger';
 import prisma           from '../../utils/prisma';
 import { z }            from 'zod';
 
 const router = Router();
 
-async function hasLogAccess(req: Request): Promise<boolean> {
+function hasCabinLogAccess(req: Request): boolean {
   if (!req.user) return false;
-  if (req.user.role === 'admin' || req.user.isSuperAdmin === true) return true;
-
-  const user = await prisma.user.findUnique({
-    where: { id: req.user.userId },
-    select: { isSuperAdmin: true },
-  });
-
-  return user?.isSuperAdmin === true;
+  return req.user.role === 'admin' && typeof req.user.cabinId === 'string' && req.user.cabinId.length > 0;
 }
 
 // ─── Validační schéma pro frontend chybový report ────────────────────────────
@@ -48,7 +41,12 @@ const LogQuerySchema = z.object({
 //               GET /api/logs — číst logy (admin only)
 // ============================================================================
 router.get('/', protect, async (req: Request, res: Response) => {
-  if (!(await hasLogAccess(req))) {
+  if (!hasCabinLogAccess(req)) {
+    return res.status(403).json({ message: 'Pouze pro adminy.' });
+  }
+
+  const currentUser = req.user;
+  if (!currentUser?.cabinId) {
     return res.status(403).json({ message: 'Pouze pro adminy.' });
   }
 
@@ -62,31 +60,47 @@ router.get('/', protect, async (req: Request, res: Response) => {
 
   const { date, lines, level, userId, module: mod, source, requestId, path, status, search } = parsedQuery.data;
 
-  const logLines = logger.readLogs({
-    date,
-    lines,
-    level,
-    userId,
-    module: mod,
-    source,
-    requestId,
-    path,
-    status,
-    search,
-  });
+  try {
+    const cabinUserIds = await prisma.user.findMany({
+      where: { cabinId: currentUser.cabinId },
+      select: { id: true },
+    });
 
-  res.json({
-    date:  date ?? new Date().toISOString().split('T')[0],
-    count: logLines.length,
-    logs:  logLines, // pole JSON objektů (NDJSON)
-  });
+    const logLines = logger.readLogs({
+      date,
+      lines,
+      level,
+      userId,
+      module: mod,
+      source,
+      requestId,
+      path,
+      status,
+      search,
+      cabinId: currentUser.cabinId,
+      allowedUserIds: cabinUserIds.map((cabinUser) => cabinUser.id),
+    });
+
+    res.json({
+      date:  date ?? new Date().toISOString().split('T')[0],
+      count: logLines.length,
+      logs:  logLines,
+    });
+  } catch (error) {
+    logger.error('LOGS', 'Failed to read cabin-scoped logs', {
+      error: String(error),
+      cabinId: currentUser.cabinId,
+      userId: currentUser.userId,
+    });
+    res.status(500).json({ message: 'Chyba při načítání logů.' });
+  }
 });
 
 // ============================================================================
 //               GET /api/logs/files — seznam dostupných dat
 // ============================================================================
 router.get('/files', protect, async (req: Request, res: Response) => {
-  if (!(await hasLogAccess(req))) {
+  if (!hasCabinLogAccess(req)) {
     return res.status(403).json({ message: 'Pouze pro adminy.' });
   }
   res.json({ files: logger.listLogFiles() });
@@ -95,7 +109,7 @@ router.get('/files', protect, async (req: Request, res: Response) => {
 // ============================================================================
 //   POST /api/logs/client — frontend chyby (autentizovaný uživatel)
 // ============================================================================
-router.post('/client', protect, (req: Request, res: Response) => {
+router.post('/client', protectWithTokenFallback, (req: Request, res: Response) => {
   const parsed = ClientErrorSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({
