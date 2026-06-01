@@ -29,7 +29,7 @@ try {
 		-czf $releaseBundle `
 		.
 
-	if ($LASTEXITCODE -ne 0) {
+	if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne 1) {
 		throw 'Failed to package release bundle.'
 	}
 

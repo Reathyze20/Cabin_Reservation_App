@@ -54,8 +54,9 @@ jobs:
             --exclude=frontend-v2/node_modules \
             --exclude=dist \
             --exclude=data \
+            --exclude=release.tgz \
             --exclude=src/generated/prisma \
-            -czf release.tgz .
+            -czf release.tgz . || [ $? -eq 1 ]
 
       - name: Upload release bundle to server
         uses: appleboy/scp-action@master
