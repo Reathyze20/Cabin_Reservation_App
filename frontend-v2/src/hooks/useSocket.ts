@@ -42,8 +42,8 @@ export function useSocket() {
     socketRef.current?.on(event, handler as (...args: unknown[]) => void)
   }, [])
 
-  const off = useCallback((event: string, handler?: (...args: unknown[]) => void) => {
-    socketRef.current?.off(event, handler)
+  const off = useCallback(<T = unknown>(event: string, handler?: (data: T) => void) => {
+    socketRef.current?.off(event, handler as ((...args: unknown[]) => void) | undefined)
   }, [])
 
   const emit = useCallback((event: string, data?: unknown) => {
