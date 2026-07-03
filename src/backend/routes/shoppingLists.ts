@@ -5,6 +5,7 @@ import { validate } from "../../validators/validate";
 import { createShoppingListSchema, renameShoppingListSchema } from "../../validators/schemas";
 import prisma from "../../utils/prisma";
 import logger from "../../utils/logger";
+import { emitToCabin } from "../../utils/socket";
 
 const router = Router();
 
@@ -80,6 +81,7 @@ router.post("/", protect, requireCabin, validate(createShoppingListSchema), asyn
             }
         });
 
+        emitToCabin(req.user!.cabinId!, "shopping:list:changed", { id: newList.id });
         res.status(201).json(newList);
     } catch (error) {
         logger.error("SHOPPING_LISTS", "Failed to create shopping list", error);
@@ -187,6 +189,7 @@ router.patch("/:id/rename", protect, requireCabin, validate(renameShoppingListSc
             },
         });
 
+        emitToCabin(req.user!.cabinId!, "shopping:list:changed", { id: updated.id });
         res.json(updated);
     } catch (error) {
         logger.error("SHOPPING_LISTS", "Failed to rename shopping list", error);
@@ -235,6 +238,7 @@ router.delete("/:id", protect, requireCabin, async (req: Request, res: Response)
             }
         });
 
+        emitToCabin(req.user!.cabinId!, "shopping:list:changed", { id: req.params.id });
         res.json({ message: "List deleted successfully" });
     } catch (error) {
         logger.error("SHOPPING_LISTS", "Failed to delete shopping list", error);
@@ -270,6 +274,7 @@ router.patch("/:id/resolve", protect, requireCabin, async (req: Request, res: Re
             }
         });
 
+        emitToCabin(req.user!.cabinId!, "shopping:list:changed", { id: updatedList.id });
         res.json(updatedList);
     } catch (error) {
         logger.error("SHOPPING_LISTS", "Failed to resolve shopping list", error);
@@ -322,6 +327,7 @@ router.put("/:listId/items/:itemId", protect, requireCabin, async (req: Request,
             return updated;
         });
 
+        emitToCabin(req.user!.cabinId!, "shopping:item:updated", updatedItem);
         res.json(updatedItem);
     } catch (error) {
         logger.error("SHOPPING_LISTS", "Failed to update item purchased status", error);

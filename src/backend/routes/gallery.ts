@@ -5,6 +5,7 @@ import { validate } from "../../validators/validate";
 import { createFolderSchema, renameFolderSchema, updatePhotoDescriptionSchema, bulkDeletePhotosSchema } from "../../validators/schemas";
 import prisma from "../../utils/prisma";
 import logger from "../../utils/logger";
+import { emitToCabin } from "../../utils/socket";
 import { UPLOADS_PATH, THUMBS_PATH } from "../../config/config";
 import fs from "fs";
 import path from "path";
@@ -117,6 +118,7 @@ router.post("/folders", protect, requireCabin, validate(createFolderSchema), asy
       },
     });
 
+    emitToCabin(req.user!.cabinId!, "gallery:changed", { folderId: newFolder.id });
     res.status(201).json({
       id: newFolder.id,
       name: newFolder.name,
@@ -173,6 +175,7 @@ router.patch("/folders/:id", protect, requireCabin, validate(renameFolderSchema)
       },
     });
 
+    emitToCabin(req.user!.cabinId!, "gallery:changed", { folderId: updated.id });
     res.json({
       message: "Složka úspěšně přejmenována.",
       folder: {
@@ -235,6 +238,7 @@ router.delete("/folders/:id", protect, requireCabin, async (req: Request, res: R
       where: { id },
     });
 
+    emitToCabin(req.user!.cabinId!, "gallery:changed", { folderId: id });
     res.json({ message: "Složka smazána." });
   } catch (error) {
     logger.error("GALLERY", "Delete folder error", { error: String(error), id });
@@ -379,6 +383,7 @@ router.post("/photos", protect, requireCabin, upload.array("photos", 20), async 
       })
     );
 
+    emitToCabin(req.user!.cabinId!, "gallery:changed", { folderId: results[0]?.folderId });
     res.status(201).json(results);
   } catch (error) {
     logger.error("GALLERY", "Upload photo error", { error: String(error) });
@@ -419,6 +424,7 @@ router.patch("/photos/:id", protect, requireCabin, validate(updatePhotoDescripti
       },
     });
 
+    emitToCabin(req.user!.cabinId!, "gallery:changed", { folderId: updated.folderId });
     res.json({
       id: updated.id,
       folderId: updated.folderId,
@@ -473,6 +479,7 @@ router.delete("/photos/:id", protect, requireCabin, async (req: Request, res: Re
       where: { id },
     });
 
+    emitToCabin(req.user!.cabinId!, "gallery:changed", { folderId: photo.folderId });
     res.json({ message: "Smazáno." });
   } catch (error) {
     logger.error("GALLERY", "Delete photo error", { error: String(error), id });
@@ -529,6 +536,7 @@ router.delete("/photos", protect, requireCabin, validate(bulkDeletePhotosSchema)
       where: { id: { in: deletableIds } },
     });
 
+    emitToCabin(req.user!.cabinId!, "gallery:changed", { folderId: deletable[0]?.folderId });
     res.json({ message: `Smazáno ${deletable.length} fotek.` });
   } catch (error) {
     logger.error("GALLERY", "Bulk delete photos error", { error: String(error), count: photoIds?.length });

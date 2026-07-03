@@ -50,6 +50,20 @@ export function useRealtimeSync() {
       void qc.invalidateQueries({ queryKey: ['reconstruction'] })
     }
 
+    function handleInventoryChange() {
+      void qc.invalidateQueries({ queryKey: ['inventory'] })
+    }
+
+    function handleGalleryChange() {
+      void qc.invalidateQueries({ queryKey: ['gallery-folders'] })
+      void qc.invalidateQueries({ queryKey: ['gallery-photos'] })
+    }
+
+    function handleDiaryChange() {
+      void qc.invalidateQueries({ queryKey: ['diary-folders'] })
+      void qc.invalidateQueries({ queryKey: ['diary-entries'] })
+    }
+
     on('reservation:created', handleReservationChange)
     on('reservation:updated', handleReservationChange)
     on('reservation:deleted', handleReservationChange)
@@ -64,6 +78,12 @@ export function useRealtimeSync() {
     on('reconstruction:created', handleReconstructionChange)
     on('reconstruction:updated', handleReconstructionChange)
     on('reconstruction:deleted', handleReconstructionChange)
+    on('shopping:list:changed', handleShoppingChange)
+    on('inventory:created', handleInventoryChange)
+    on('inventory:updated', handleInventoryChange)
+    on('inventory:deleted', handleInventoryChange)
+    on('gallery:changed', handleGalleryChange)
+    on('diary:changed', handleDiaryChange)
 
     return () => {
       off('reservation:created', handleReservationChange)
@@ -80,6 +100,12 @@ export function useRealtimeSync() {
       off('reconstruction:created', handleReconstructionChange)
       off('reconstruction:updated', handleReconstructionChange)
       off('reconstruction:deleted', handleReconstructionChange)
+      off('shopping:list:changed', handleShoppingChange)
+      off('inventory:created', handleInventoryChange)
+      off('inventory:updated', handleInventoryChange)
+      off('inventory:deleted', handleInventoryChange)
+      off('gallery:changed', handleGalleryChange)
+      off('diary:changed', handleDiaryChange)
     }
   }, [on, off, qc, user, socketGeneration])
 }

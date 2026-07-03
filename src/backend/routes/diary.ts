@@ -5,6 +5,7 @@ import { validate } from "../../validators/validate";
 import { createDiaryFolderSchema, renameDiaryFolderSchema, createDiaryEntrySchema, updateDiaryEntrySchema } from "../../validators/schemas";
 import prisma from "../../utils/prisma";
 import logger from "../../utils/logger";
+import { emitToCabin } from "../../utils/socket";
 import { PrismaClient } from "../../generated/prisma/client.js";
 
 const router = Router();
@@ -94,6 +95,7 @@ router.post("/folders", protect, requireCabin, validate(createDiaryFolderSchema)
       },
     });
 
+    emitToCabin(req.user!.cabinId!, "diary:changed", { folderId: newFolder.id });
     res.status(201).json({
       id: newFolder.id,
       name: newFolder.name,
@@ -156,6 +158,7 @@ router.patch("/folders/:id", protect, requireCabin, validate(renameDiaryFolderSc
       },
     });
 
+    emitToCabin(req.user!.cabinId!, "diary:changed", { folderId: updated.id });
     res.json({
       message: "Deník úspěšně přejmenován.",
       folder: {
@@ -209,6 +212,7 @@ router.delete("/folders/:id", protect, requireCabin, async (req: Request, res: R
       where: { id },
     });
 
+    emitToCabin(req.user!.cabinId!, "diary:changed", { folderId: id });
     res.json({ message: "Složka a záznamy smazány." });
   } catch (error) {
     logger.error("DIARY", "Delete diary folder error", { error: String(error), id });
@@ -322,6 +326,7 @@ router.post("/entries", protect, requireCabin, validate(createDiaryEntrySchema),
       },
     });
 
+    emitToCabin(req.user!.cabinId!, "diary:changed", { folderId: newEntry.folderId });
     res.status(201).json({
       id: newEntry.id,
       folderId: newEntry.folderId,
@@ -385,6 +390,7 @@ router.put("/entries/:id", protect, requireCabin, validate(updateDiaryEntrySchem
       });
     });
 
+    emitToCabin(req.user!.cabinId!, "diary:changed", { folderId: updated.folderId });
     res.json({
       id: updated.id,
       folderId: updated.folderId,
@@ -429,6 +435,7 @@ router.delete("/entries/:id", protect, requireCabin, async (req: Request, res: R
       where: { id },
     });
 
+    emitToCabin(req.user!.cabinId!, "diary:changed", { folderId: entry.folderId });
     res.json({ message: "Záznam smazán." });
   } catch (error) {
     logger.error("DIARY", "Delete diary entry error", { error: String(error), id });

@@ -5,6 +5,7 @@ import { validate } from "../../validators/validate";
 import { createInventoryItemSchema, updateInventoryItemSchema, addToCartSchema } from "../../validators/schemas";
 import prisma from "../../utils/prisma";
 import logger from "../../utils/logger";
+import { emitToCabin } from "../../utils/socket";
 
 const router = Router();
 
@@ -49,6 +50,7 @@ router.post("/", protect, requireCabin, validate(createInventoryItemSchema), asy
       include: { updatedBy: { select: { id: true, username: true } } },
     });
 
+    emitToCabin(req.user!.cabinId!, "inventory:created", item);
     res.status(201).json(item);
   } catch (error) {
     logger.error("INVENTORY", "Failed to create inventory item", { error: String(error) });
@@ -85,6 +87,7 @@ router.put("/:id", protect, requireCabin, validate(updateInventoryItemSchema), a
       include: { updatedBy: { select: { id: true, username: true } } },
     });
 
+    emitToCabin(req.user!.cabinId!, "inventory:updated", updated);
     res.json(updated);
   } catch (error) {
     logger.error("INVENTORY", "Failed to update inventory item", { error: String(error) });
@@ -115,6 +118,7 @@ router.patch("/:id/toggle-essential", protect, requireCabin, async (req: Request
       include: { updatedBy: { select: { id: true, username: true } } },
     });
 
+    emitToCabin(req.user!.cabinId!, "inventory:updated", updated);
     res.json(updated);
   } catch (error) {
     logger.error("INVENTORY", "Failed to toggle essential", { error: String(error) });
@@ -135,6 +139,7 @@ router.delete("/:id", protect, requireCabin, async (req: Request, res: Response)
     }
 
     await prisma.inventoryItem.delete({ where: { id } });
+    emitToCabin(req.user!.cabinId!, "inventory:deleted", { id });
     res.json({ message: "PoloĹľka smazĂˇna." });
   } catch (error) {
     logger.error("INVENTORY", "Failed to delete inventory item", { error: String(error) });
@@ -209,6 +214,8 @@ router.post("/:id/add-to-cart", protect, requireCabin, validate(addToCartSchema)
       });
     });
 
+    emitToCabin(req.user!.cabinId!, "inventory:updated", { id });
+    emitToCabin(req.user!.cabinId!, "shopping:item:added", { linkedInventoryId: id });
     res.json({ message: "PĹ™idĂˇno do nĂˇkupnĂ­ho seznamu." });
   } catch (error) {
     logger.error("INVENTORY", "Failed to add inventory item to cart", { error: String(error) });
