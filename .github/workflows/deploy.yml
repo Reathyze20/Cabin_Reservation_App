@@ -14,12 +14,12 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
           cache-dependency-path: |
             package-lock.json
@@ -42,7 +42,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Package release bundle
         run: |
@@ -90,6 +90,23 @@ jobs:
             # Navigate to the app directory
             APP_PATH="${{ secrets.SERVER_PATH }}"
             APP_USER="reathyze"
+
+            # Guard: SERVER_PATH secret may be empty, contain a literal '~'
+            # (tilde does not expand inside quotes) or point to a moved dir.
+            # Fall back to the known production path instead of failing.
+            APP_PATH_FALLBACK="/home/reathyze/chata"
+            if [ ! -d "$APP_PATH" ]; then
+              echo "WARNING: SERVER_PATH secret does not point to an existing directory."
+              if [ -d "$APP_PATH_FALLBACK" ]; then
+                echo "Falling back to $APP_PATH_FALLBACK"
+                APP_PATH="$APP_PATH_FALLBACK"
+              else
+                echo "ERROR: fallback path $APP_PATH_FALLBACK does not exist either."
+                echo "Directories under /home/reathyze:"
+                ls -la /home/reathyze || true
+                exit 1
+              fi
+            fi
             BACKUP_ROOT="/home/reathyze/backups/cabin"
             BACKUP_RETENTION_DAYS="14"
             BACKUP_CRON_SCHEDULE="0 3 * * *"
