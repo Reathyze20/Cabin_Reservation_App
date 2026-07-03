@@ -5,6 +5,7 @@
 import axios from 'axios'
 import { showToast } from '@/lib/toast'
 import { rememberApiCorrelation } from '@/lib/observability'
+import { enqueueMutation, isQueueableRequest } from '@/lib/offlineQueue'
 
 interface AuthErrorPayload {
   code?: string
@@ -130,6 +131,19 @@ apiClient.interceptors.response.use(
   (error) => {
     // Network/SSL errors — no response at all
     if (!error.response && (error.code === 'ERR_NETWORK' || error.message?.includes('Network Error'))) {
+      // Mutace bez připojení → uložit do offline fronty, odešle se po reconnectu
+      if (isQueueableRequest(error.config) && enqueueMutation(error.config)) {
+        ;(error as CorrelatableError & { queuedOffline?: boolean }).queuedOffline = true
+        showToast(
+          {
+            title: 'Uloženo do fronty',
+            detail: 'Jste offline — změna se odešle automaticky po obnovení připojení.',
+          },
+          'info',
+        )
+        return Promise.reject(error)
+      }
+
       const now = Date.now()
       // Throttle: show toast max once per 10 seconds to avoid spam
       if (now - lastNetworkErrorToast > 10_000) {

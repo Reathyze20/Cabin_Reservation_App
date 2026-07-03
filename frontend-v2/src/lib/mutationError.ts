@@ -33,6 +33,8 @@ export function handleMutationError(
   return (err: Error) => {
     // ── Síťový výpadek → soft info toast, žádný rollback ──────────────
     if (isNetworkError(err)) {
+      // Změna už je v offline frontě — apiClient o tom uživatele informoval
+      if ((err as Error & { queuedOffline?: boolean }).queuedOffline) return
       if (!options?.silent) {
         showToast({ title: 'Výpadek připojení', detail: OFFLINE_TOAST_MSG }, 'info')
       }

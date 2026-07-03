@@ -9,6 +9,7 @@ import { QueryClient, QueryClientProvider, onlineManager } from '@tanstack/react
 import './index.css'
 import App from './App'
 import { installGlobalErrorHandlers } from '@/lib/errorReporting'
+import { initOfflineQueue } from '@/lib/offlineQueue'
 
 // Načtení uživatelsky nastaveného pozadí při startu aplikace
 const customBg = localStorage.getItem('app-background');
@@ -58,10 +59,18 @@ const queryClient = new QueryClient({
       networkMode: 'online',
     },
     mutations: {
-      // Mutace se pozastaví když je offline → neselžou okamžitě
-      networkMode: 'online',
-      // 1 automatický retry pro přechodné výpadky (brief connectivity drops)
-      retry: 1,
+      // 'always' = mutace se pokusí odeslat i offline → axios selže a
+      // request se uloží do perzistentní offline fronty (lib/offlineQueue),
+      // která přežije reload. Pozastavené mutace ('online') by se při
+      // reloadu ztratily bez upozornění.
+      networkMode: 'always',
+      // Retry řeší offline fronta + query retry; okamžité opakování mutace
+      // by offline jen zdrželo uložení do fronty
+      retry: (failureCount, error) => {
+        if (isNetworkError(error)) return false
+        if (isClientError(error)) return false
+        return failureCount < 1
+      },
       retryDelay: (attempt) => Math.min(1_000 * 2 ** attempt, 10_000),
     },
   },
@@ -84,6 +93,13 @@ function isClientError(error: unknown): boolean {
   const status = err.response?.status
   return !!status && status >= 400 && status < 500
 }
+
+// ─── Offline fronta: replay mutací po obnovení připojení ───────────────────────
+initOfflineQueue()
+window.addEventListener('offline-queue:flushed', () => {
+  // Server má po přehrání fronty novější data než cache → obnovit vše
+  void queryClient.invalidateQueries()
+})
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
