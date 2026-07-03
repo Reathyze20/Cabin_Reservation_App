@@ -20,7 +20,7 @@
     justify-content: center;
     padding: 0;
     z-index: var(--z-overlay);
-    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, opacity 0.2s ease;
 }
 
 .fab-help svg {
@@ -46,6 +46,19 @@
 
 .fab-help:active {
     transform: translateY(-1px) scale(0.98);
+}
+
+/* Schované při scrollu dolů — nesmí překrývat obsah pod prstem */
+.fab-help--hidden {
+    transform: translateY(90px);
+    opacity: 0;
+    pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fab-help {
+        transition: none;
+    }
 }
 
 /* ── Help Modal ─────────────────────────────────────────────────────── */

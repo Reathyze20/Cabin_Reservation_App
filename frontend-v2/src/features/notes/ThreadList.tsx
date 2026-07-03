@@ -16,6 +16,28 @@ interface Props {
   onCreateThread: () => void;
 }
 
+/**
+ * Odstraní markdown syntaxi z náhledu poslední zprávy — v jednořádkovém
+ * preview by hvězdičky a checkboxy působily jako rozbitý text.
+ */
+function stripMarkdown(text: string): string {
+  return text
+    .replace(/```[\s\S]*?```/g, ' ')          // code blocks
+    .replace(/`([^`]*)`/g, '$1')              // inline code
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1') // images
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')  // links
+    .replace(/^#{1,6}\s+/gm, '')              // headings
+    .replace(/(\*\*|__)(.*?)\1/g, '$2')       // bold
+    .replace(/(\*|_)(.*?)\1/g, '$2')          // italic
+    .replace(/~~(.*?)~~/g, '$1')              // strikethrough
+    .replace(/^\s*-\s*\[[ xX]\]\s*/gm, '')    // task list checkboxes
+    .replace(/^\s*[-*+]\s+/gm, '')            // bullet markers
+    .replace(/^\s*\d+\.\s+/gm, '')            // ordered list markers
+    .replace(/^\s*>\s?/gm, '')                // blockquotes
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
 function formatThreadTime(isoStr: string): string {
   const d = new Date(isoStr);
   const today = new Date();
@@ -70,7 +92,7 @@ export function ThreadList({
           let lastText = "Žádné zprávy";
           let lastTime = "";
           if (t.lastMessage) {
-            let raw = t.lastMessage.replace(/\n/g, " ");
+            let raw = stripMarkdown(t.lastMessage);
             if (raw.length > 30) raw = raw.substring(0, 30) + "...";
             lastText = raw;
             if (t.lastMessageAt) lastTime = formatThreadTime(t.lastMessageAt);

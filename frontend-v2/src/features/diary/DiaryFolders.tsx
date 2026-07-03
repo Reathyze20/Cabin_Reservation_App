@@ -105,7 +105,7 @@ export function DiaryFolders({ folders, onOpen, onRename, onDelete, onNewFolder 
               <div className="folder-stats-badges">
                 {folder.stats && (
                   <>
-                    <span className="badge">{folder.stats.entries} dnů</span>
+                    <span className="badge">{formatCount(folder.stats.entries, 'záznam', 'záznamy', 'záznamů')}</span>
                     <span className="badge">{formatCount(folder.stats.photos, 'fotka', 'fotky', 'fotek')}</span>
                   </>
                 )}

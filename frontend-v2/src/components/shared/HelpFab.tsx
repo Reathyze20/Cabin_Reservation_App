@@ -2,7 +2,7 @@
  * components/shared/HelpFab.tsx
  * Překlad z #fab-help + #help-modal-overlay z index.html + initHelpSystem() z main.ts
  */
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useLocation } from 'react-router-dom'
 import { Modal } from './Modal'
@@ -162,7 +162,25 @@ const helpDictionary: Record<string, ReactNode> = {
 
 export function HelpFab() {
   const [isOpen, setIsOpen] = useState(false)
+  const [hidden, setHidden] = useState(false)
+  const lastScrollY = useRef(0)
   const location = useLocation()
+
+  // Při scrollu dolů se FAB schová, aby nepřekrýval obsah a tlačítka;
+  // při scrollu nahoru (nebo na vršku stránky) se zase objeví.
+  useEffect(() => {
+    function handleScroll() {
+      const y = window.scrollY
+      if (y <= 8) {
+        setHidden(false)
+      } else if (Math.abs(y - lastScrollY.current) > 12) {
+        setHidden(y > lastScrollY.current)
+      }
+      lastScrollY.current = y
+    }
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   // help obsah dle aktuální routy
   const routeKey = location.pathname.replace(/^\//, '') || 'dashboard'
@@ -172,7 +190,7 @@ export function HelpFab() {
     <>
       <button
         id="fab-help"
-        className="fab-help"
+        className={`fab-help${hidden ? ' fab-help--hidden' : ''}`}
         title="Potřebujete poradit?"
         aria-label="Potřebujete poradit?"
         onClick={() => setIsOpen(true)}
