@@ -761,23 +761,35 @@
 
 /* �� Responsive �������������������������������������������������������������� */
 @media (max-width: 900px) {
+  /* Na mobilu scrolluje celá stránka — karta nesmí mít fixní výšku
+     s overflow:hidden, jinak se sloupce zmáčknou na nulovou výšku */
+  .main-content-reconstruction,
+  .reconstruction-card {
+    overflow: visible;
+    flex-grow: 0;
+    height: auto;
+  }
+
   .kanban-board {
     flex-direction: column;
     align-items: stretch;
-    overflow-y: auto;
-    overflow-x: hidden;
+    overflow: visible;
     scroll-snap-type: none;
     padding: var(--space-md);
+    flex-grow: 0;
   }
 
   .kanban-column {
     max-width: 100%;
     min-width: 0;
     max-height: none;
+    flex: none;
+    overflow: visible;
   }
 
   .kanban-column-body {
     max-height: 400px;
+    overflow-y: auto;
   }
 
   .reconstruction-header {
