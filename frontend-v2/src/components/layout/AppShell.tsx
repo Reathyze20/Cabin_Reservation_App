@@ -14,6 +14,7 @@ import { ProfileDrawer } from './ProfileDrawer'
 import { HelpFab } from '@/components/shared/HelpFab'
 import { OfflineBanner } from '@/components/shared/OfflineBanner'
 import { RouteTransitionSkeleton, getRouteSkeletonVariant } from '@/components/shared/RouteTransitionSkeleton'
+import { useRealtimeSync } from '@/hooks/useRealtimeSync'
 
 const pageVariants = {
   initial: { opacity: 0 },
@@ -33,6 +34,7 @@ export function AppShell() {
   const location = useLocation()
   const outlet = useOutlet()
   const [profileDrawerOpen, setProfileDrawerOpen] = useState(false)
+  useRealtimeSync()
   const [showRouteSkeleton, setShowRouteSkeleton] = useState(false)
   const isFirstRoutePaint = useRef(true)
 

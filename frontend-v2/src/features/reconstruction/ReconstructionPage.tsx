@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { motion } from 'framer-motion'
 import { Building2, Lightbulb, ListTodo } from 'lucide-react'
+import { DndContext, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { FeatureErrorFallback } from '@/components/shared/FeatureErrorFallback'
 import { useAuth } from '@/context/AuthContext'
 import { useDocumentTitle } from '@/hooks/useDocumentTitle'
@@ -133,6 +134,37 @@ export function ReconstructionPage() {
   const isSubmitting = createItem.isPending || updateItem.isPending
   const currentUserId = user?.userId ?? ''
 
+  // ── DnD ───────────────────────────────────────────────────────────────────
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }))
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over) return
+    const draggedItem = items.find((i) => i.id === active.id)
+    if (!draggedItem) return
+    const newCategory = over.id as RecCategory
+    if (newCategory === draggedItem.category) return
+    updateItem.mutate(
+      {
+        id: draggedItem.id,
+        data: {
+          category: newCategory,
+          title: draggedItem.title,
+          description: draggedItem.description ?? undefined,
+          link: draggedItem.link ?? undefined,
+          thumbnail: draggedItem.thumbnail ?? undefined,
+          cost: draggedItem.cost,
+          phone: draggedItem.phone ?? undefined,
+          email: draggedItem.email ?? undefined,
+          status: draggedItem.status ?? undefined,
+          deadline: draggedItem.deadline ?? undefined,
+        },
+      },
+      { onError: () => showToast('Přesun se nepodařilo uložit.', 'error') },
+    )
+  }
+
   // ── Render ────────────────────────────────────────────────────────────────
 
   if (isLoading) {
@@ -217,32 +249,34 @@ export function ReconstructionPage() {
           </motion.div>
         )}
 
-        <motion.div className="kanban-board" variants={BOARD_VARIANTS} initial="hidden" animate="visible" data-testid="reconstruction-board">
-          <KanbanColumn
-            category="idea"
-            items={ideaItems}
-            currentUserId={currentUserId}
-            isGuest={isGuest}
-            onAdd={openAdd}
-            onEdit={openEdit}
-          />
-          <KanbanColumn
-            category="company"
-            items={companyItems}
-            currentUserId={currentUserId}
-            isGuest={isGuest}
-            onAdd={openAdd}
-            onEdit={openEdit}
-          />
-          <KanbanColumn
-            category="task"
-            items={taskItems}
-            currentUserId={currentUserId}
-            isGuest={isGuest}
-            onAdd={openAdd}
-            onEdit={openEdit}
-          />
-        </motion.div>
+        <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+          <motion.div className="kanban-board" variants={BOARD_VARIANTS} initial="hidden" animate="visible" data-testid="reconstruction-board">
+            <KanbanColumn
+              category="idea"
+              items={ideaItems}
+              currentUserId={currentUserId}
+              isGuest={isGuest}
+              onAdd={openAdd}
+              onEdit={openEdit}
+            />
+            <KanbanColumn
+              category="company"
+              items={companyItems}
+              currentUserId={currentUserId}
+              isGuest={isGuest}
+              onAdd={openAdd}
+              onEdit={openEdit}
+            />
+            <KanbanColumn
+              category="task"
+              items={taskItems}
+              currentUserId={currentUserId}
+              isGuest={isGuest}
+              onAdd={openAdd}
+              onEdit={openEdit}
+            />
+          </motion.div>
+        </DndContext>
       </div>
 
       {showModal && (

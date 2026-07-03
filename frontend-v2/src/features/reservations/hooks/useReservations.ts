@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import apiClient from "@/api/client";
 import { showToast } from "@/lib/toast";
+import { handleMutationError } from "@/lib/mutationError";
 import type {
   Reservation,
   ReservationUser,
@@ -51,7 +52,7 @@ export function useCreateReservation() {
     mutationFn: (payload: BookingPayload) =>
       apiClient.post<Reservation>("/reservations", payload).then((r) => r.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: RESERVATIONS_KEY }),
-    onError: () => showToast("Nepodařilo se uložit rezervaci.", "error"),
+    onError: handleMutationError("Nepodařilo se uložit rezervaci"),
   });
 }
 
@@ -64,7 +65,7 @@ export function useUpdateReservation() {
       qc.invalidateQueries({ queryKey: RESERVATIONS_KEY });
       showToast("Rezervace upravena.", "success");
     },
-    onError: () => showToast("Nepodařilo se upravit rezervaci.", "error"),
+    onError: handleMutationError("Nepodařilo se upravit rezervaci"),
   });
 }
 
@@ -77,7 +78,7 @@ export function useDeleteReservation() {
       qc.invalidateQueries({ queryKey: RESERVATIONS_KEY });
       showToast("Rezervace smazána.", "success");
     },
-    onError: () => showToast("Nepodařilo se smazat rezervaci.", "error"),
+    onError: handleMutationError("Nepodařilo se smazat rezervaci"),
   });
 }
 
@@ -90,7 +91,7 @@ export function useAssignReservation() {
       qc.invalidateQueries({ queryKey: RESERVATIONS_KEY });
       showToast("Rezervace přiřazena.", "success");
     },
-    onError: () => showToast("Nepodařilo se přiřadit rezervaci.", "error"),
+    onError: handleMutationError("Nepodařilo se přiřadit rezervaci"),
   });
 }
 
@@ -120,7 +121,8 @@ export function useCheckoutReservation() {
       if (context?.previous) {
         qc.setQueryData(RESERVATIONS_KEY, context.previous);
       }
-      showToast("Nepodařilo se odeslat checklist.", "error");
+      // Optimistic rollback done, now show structured toast
+      handleMutationError("Nepodařilo se odeslat checklist")(_err);
     },
     onSettled: () => {
       qc.invalidateQueries({ queryKey: RESERVATIONS_KEY });
@@ -144,7 +146,7 @@ export function useCreateAvailability() {
       qc.invalidateQueries({ queryKey: RESERVATIONS_KEY });
       showToast("Volno nahlášeno!", "success");
     },
-    onError: () => showToast("Nepodařilo se uložit volno.", "error"),
+    onError: handleMutationError("Nepodařilo se uložit volno"),
   });
 }
 
@@ -157,7 +159,7 @@ export function useUpdateAvailability() {
       qc.invalidateQueries({ queryKey: RESERVATIONS_KEY });
       showToast("Volno upraveno!", "success");
     },
-    onError: () => showToast("Nepodařilo se upravit volno.", "error"),
+    onError: handleMutationError("Nepodařilo se upravit volno"),
   });
 }
 
@@ -170,7 +172,7 @@ export function useDeleteAvailability() {
       qc.invalidateQueries({ queryKey: RESERVATIONS_KEY });
       showToast("Volno smazáno.", "success");
     },
-    onError: () => showToast("Nepodařilo se smazat volno.", "error"),
+    onError: handleMutationError("Nepodařilo se smazat volno"),
   });
 }
 
@@ -194,7 +196,7 @@ export function useWatchReservation() {
       return apiClient[method]<{ watching: boolean; message: string }>(`/reservations/${id}/watch`).then((r) => r.data);
     },
     onSuccess: (data) => showToast(data.message, "success"),
-    onError: () => showToast("Nepodařilo se změnit hlídání.", "error"),
+    onError: handleMutationError("Nepodařilo se změnit hlídání"),
   });
 }
 
@@ -242,6 +244,6 @@ export function useUpdateMonthlyNote() {
       qc.invalidateQueries({ queryKey: ["reservations", "monthly-note"] });
       showToast("Poznámka uložena.", "success");
     },
-    onError: () => showToast("Nepodařilo se uložit poznámku.", "error"),
+    onError: handleMutationError("Nepodařilo se uložit poznámku"),
   });
 }

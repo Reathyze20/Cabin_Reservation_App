@@ -126,7 +126,14 @@ describe('shopping optimistic status mutation', () => {
       expect(cachedItem?.purchased).toBe(false)
     })
 
-    expect(showToast).toHaveBeenCalledWith('Chyba při aktualizaci položky.', 'error')
+    expect(showToast).toHaveBeenCalledWith(
+      {
+        title: 'Chyba při aktualizaci položky',
+        detail: 'Něco se pokazilo. Zkuste to prosím znovu.',
+        supportCode: undefined,
+      },
+      'error',
+    )
   })
 
   it('keeps optimistic purchased state on network error', async () => {
@@ -158,7 +165,10 @@ describe('shopping optimistic status mutation', () => {
       expect(cachedItem?.purchased).toBe(true)
     })
 
-    expect(showToast).toHaveBeenCalledWith(OFFLINE_TOAST_MSG, 'info')
+    expect(showToast).toHaveBeenCalledWith(
+      { title: 'Výpadek připojení', detail: OFFLINE_TOAST_MSG },
+      'info',
+    )
   })
 
   it('optimistically marks bring-from-home without purchased flag', async () => {

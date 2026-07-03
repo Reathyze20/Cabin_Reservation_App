@@ -3,8 +3,7 @@
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { reconstructionApi, type RecItem, type RecItemCreate, type RecStatus } from '@/api/reconstruction'
-import { showToast } from '@/lib/toast'
-import { isNetworkError, OFFLINE_TOAST_MSG } from '@/lib/networkError'
+import { handleMutationError } from '@/lib/mutationError'
 
 const QK = ['reconstruction'] as const
 
@@ -50,12 +49,7 @@ export function useCreateRecItem() {
   return useMutation({
     mutationFn: reconstructionApi.create,
     onSuccess: () => qc.invalidateQueries({ queryKey: QK }),
-    onError: (err) => {
-      showToast(
-        isNetworkError(err) ? OFFLINE_TOAST_MSG : 'Chyba při vytváření položky.',
-        isNetworkError(err) ? 'info' : 'error',
-      )
-    },
+    onError: handleMutationError('Chyba při vytváření položky'),
   })
 }
 
@@ -65,12 +59,7 @@ export function useUpdateRecItem() {
     mutationFn: ({ id, data }: { id: string; data: Partial<RecItemCreate> }) =>
       reconstructionApi.update(id, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: QK }),
-    onError: (err) => {
-      showToast(
-        isNetworkError(err) ? OFFLINE_TOAST_MSG : 'Chyba při úpravě položky.',
-        isNetworkError(err) ? 'info' : 'error',
-      )
-    },
+    onError: handleMutationError('Chyba při úpravě položky'),
   })
 }
 
@@ -99,10 +88,7 @@ export function useUpdateRecStatus() {
       if (context?.previous) {
         qc.setQueryData(QK, context.previous)
       }
-      showToast(
-        isNetworkError(err) ? OFFLINE_TOAST_MSG : 'Chyba při změně statusu.',
-        isNetworkError(err) ? 'info' : 'error',
-      )
+      handleMutationError('Chyba při změně statusu')(err)
     },
     onSettled: () => qc.invalidateQueries({ queryKey: QK }),
   })
@@ -113,12 +99,7 @@ export function useDeleteRecItem() {
   return useMutation({
     mutationFn: (id: string) => reconstructionApi.delete(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: QK }),
-    onError: (err) => {
-      showToast(
-        isNetworkError(err) ? OFFLINE_TOAST_MSG : 'Chyba při mazání položky.',
-        isNetworkError(err) ? 'info' : 'error',
-      )
-    },
+    onError: handleMutationError('Chyba při mazání položky'),
   })
 }
 
@@ -153,10 +134,7 @@ export function useVoteRecItem() {
       if (context?.previous) {
         qc.setQueryData(QK, context.previous)
       }
-      showToast(
-        isNetworkError(err) ? OFFLINE_TOAST_MSG : 'Chyba při hlasování.',
-        isNetworkError(err) ? 'info' : 'error',
-      )
+      handleMutationError('Chyba při hlasování')(err)
     },
     onSettled: () => qc.invalidateQueries({ queryKey: QK }),
   })

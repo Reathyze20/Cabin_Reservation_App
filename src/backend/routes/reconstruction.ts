@@ -7,6 +7,7 @@ import {
   updateReconstructionItemSchema,
   updateReconstructionStatusSchema,
 } from "../../validators/schemas";
+import { emitToCabin } from "../../utils/socket";
 import prisma from "../../utils/prisma";
 import logger from "../../utils/logger";
 
@@ -143,7 +144,7 @@ router.post("/", protect, requireCabin, validate(createReconstructionItemSchema)
       },
     });
 
-    res.status(201).json({
+    const payload = {
       id: newItem.id,
       category: newItem.category,
       title: newItem.title,
@@ -160,7 +161,9 @@ router.post("/", protect, requireCabin, validate(createReconstructionItemSchema)
       votes: [],
       createdBy: newItem.createdBy.username,
       createdAt: newItem.createdAt.toISOString(),
-    });
+    };
+    emitToCabin(req.user!.cabinId!, "reconstruction:created", payload);
+    res.status(201).json(payload);
   } catch (error) {
     logger.error("RECONSTRUCTION", "Create item error", { error: String(error) });
     res.status(500).json({ message: "Chyba při ukládání." });
@@ -221,7 +224,7 @@ router.put("/:id", protect, requireCabin, validate(updateReconstructionItemSchem
       },
     });
 
-    res.json({
+    const updatedPayload = {
       id: updatedItem.id,
       category: updatedItem.category,
       title: updatedItem.title,
@@ -238,7 +241,9 @@ router.put("/:id", protect, requireCabin, validate(updateReconstructionItemSchem
       votes: updatedItem.votes.map((v) => v.userId),
       createdBy: updatedItem.createdBy.username,
       createdAt: updatedItem.createdAt.toISOString(),
-    });
+    };
+    emitToCabin(req.user!.cabinId!, "reconstruction:updated", updatedPayload);
+    res.json(updatedPayload);
   } catch (error) {
     logger.error("RECONSTRUCTION", "Update item error", { error: String(error), id });
     res.status(500).json({ message: "Chyba při aktualizaci." });
@@ -264,6 +269,7 @@ router.delete("/:id", protect, requireCabin, async (req: Request, res: Response)
       where: { id },
     });
 
+    emitToCabin(req.user!.cabinId!, "reconstruction:deleted", { id });
     res.json({ message: "Smazáno." });
   } catch (error) {
     logger.error("RECONSTRUCTION", "Delete item error", { error: String(error), id });
@@ -340,7 +346,7 @@ router.patch("/:id/vote", protect, requireCabin, async (req: Request, res: Respo
       return res.status(404).json({ message: "Nenalezeno." });
     }
 
-    res.json({
+    const votePayload = {
       id: item.id,
       category: item.category,
       title: item.title,
@@ -357,7 +363,9 @@ router.patch("/:id/vote", protect, requireCabin, async (req: Request, res: Respo
       votes: item.votes.map((v) => v.userId),
       createdBy: item.createdBy.username,
       createdAt: item.createdAt.toISOString(),
-    });
+    };
+    emitToCabin(req.user!.cabinId!, "reconstruction:updated", votePayload);
+    res.json(votePayload);
   } catch (error) {
     logger.error("RECONSTRUCTION", "Toggle vote error", { error: String(error), id });
     res.status(500).json({ message: "Chyba." });
@@ -405,7 +413,7 @@ router.patch("/:id/status", protect, requireCabin, validate(updateReconstruction
       },
     });
 
-    res.json({
+    const statusPayload = {
       id: updated.id,
       category: updated.category,
       title: updated.title,
@@ -422,7 +430,9 @@ router.patch("/:id/status", protect, requireCabin, validate(updateReconstruction
       votes: updated.votes.map((v) => v.userId),
       createdBy: updated.createdBy.username,
       createdAt: updated.createdAt.toISOString(),
-    });
+    };
+    emitToCabin(req.user!.cabinId!, "reconstruction:updated", statusPayload);
+    res.json(statusPayload);
   } catch (error) {
     logger.error("RECONSTRUCTION", "Update status error", { error: String(error), id });
     res.status(500).json({ message: "Chyba." });

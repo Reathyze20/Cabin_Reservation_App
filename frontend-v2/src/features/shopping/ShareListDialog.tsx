@@ -7,6 +7,7 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { notesThreadApi } from '@/api/shopping'
 import type { NoteThread } from '@/api/shopping'
 import { showToast } from '@/lib/toast'
+import { handleMutationError } from '@/lib/mutationError'
 import { useNavigate } from 'react-router-dom'
 import { Modal } from '@/components/shared/Modal'
 
@@ -50,7 +51,7 @@ export function ShareListDialog({ listName, onClose }: Props) {
       setShowNewThreadForm(false)
       setNewThreadName('')
     },
-    onError: () => showToast('Chyba při vytváření vlákna.', 'error'),
+    onError: handleMutationError('Chyba při vytváření vlákna'),
   })
 
   const sendNote = useMutation({
@@ -62,7 +63,7 @@ export function ShareListDialog({ listName, onClose }: Props) {
       onClose()
       setTimeout(() => navigate('/notes'), 600)
     },
-    onError: () => showToast('Chyba při odesílání zprávy.', 'error'),
+    onError: handleMutationError('Chyba při odesílání zprávy'),
   })
 
   function handleSelectAction(action: ActionType) {

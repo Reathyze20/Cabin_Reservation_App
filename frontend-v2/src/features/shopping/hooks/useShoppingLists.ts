@@ -11,6 +11,7 @@ import { shoppingApi } from '@/api/shopping'
 import type { ItemStatus, ShoppingItem, ShoppingList } from '@/api/shopping'
 import { ShoppingListArraySchema } from '@/api/schemas'
 import { showToast } from '@/lib/toast'
+import { handleMutationError } from '@/lib/mutationError'
 import { isNetworkError, OFFLINE_TOAST_MSG } from '@/lib/networkError'
 
 export const SHOPPING_KEY = ['shopping-lists'] as const
@@ -38,12 +39,7 @@ export function useCreateList() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: SHOPPING_KEY })
     },
-    onError: (err) => {
-      showToast(
-        isNetworkError(err) ? OFFLINE_TOAST_MSG : 'Chyba při vytváření seznamu.',
-        isNetworkError(err) ? 'info' : 'error',
-      )
-    },
+    onError: handleMutationError('Chyba při vytváření seznamu'),
   })
 }
 
@@ -54,12 +50,7 @@ export function useDeleteList() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: SHOPPING_KEY })
     },
-    onError: (err) => {
-      showToast(
-        isNetworkError(err) ? OFFLINE_TOAST_MSG : 'Chyba při mazání seznamu.',
-        isNetworkError(err) ? 'info' : 'error',
-      )
-    },
+    onError: handleMutationError('Chyba při mazání seznamu'),
   })
 }
 
@@ -70,12 +61,7 @@ export function useArchiveList() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: SHOPPING_KEY })
     },
-    onError: (err) => {
-      showToast(
-        isNetworkError(err) ? OFFLINE_TOAST_MSG : 'Chyba při archivaci seznamu.',
-        isNetworkError(err) ? 'info' : 'error',
-      )
-    },
+    onError: handleMutationError('Chyba při archivaci seznamu'),
   })
 }
 
@@ -96,10 +82,7 @@ export function useRenameList() {
     },
     onError: (err, _vars, ctx) => {
       if (ctx?.prev) qc.setQueryData(SHOPPING_KEY, ctx.prev)
-      showToast(
-        isNetworkError(err) ? OFFLINE_TOAST_MSG : 'Chyba při přejmenování seznamu.',
-        isNetworkError(err) ? 'info' : 'error',
-      )
+      handleMutationError('Chyba při přejmenování seznamu')(err)
     },
     onSettled: () => {
       void qc.invalidateQueries({ queryKey: SHOPPING_KEY })
@@ -117,12 +100,7 @@ export function useAddItem() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: SHOPPING_KEY })
     },
-    onError: (err) => {
-      showToast(
-        isNetworkError(err) ? OFFLINE_TOAST_MSG : 'Chyba při přidávání položky.',
-        isNetworkError(err) ? 'info' : 'error',
-      )
-    },
+    onError: handleMutationError('Chyba při přidávání položky'),
   })
 }
 
@@ -159,14 +137,14 @@ export function useToggleItemStatus() {
       if (isNetworkError(_err)) {
         // Síťová chyba: ponech optmistické UI, ukaž soft toast
         // Položka zůstává v checked stavu v cache — udrží UX iluzi
-        showToast(OFFLINE_TOAST_MSG, 'info')
+        showToast({ title: 'Výpadek připojení', detail: OFFLINE_TOAST_MSG }, 'info')
         return
       }
       // Serverová chyba (4xx/5xx): rollback optmistické změny
       if (ctx?.previous) {
         qc.setQueryData(SHOPPING_KEY, ctx.previous)
       }
-      showToast('Chyba při aktualizaci položky.', 'error')
+      handleMutationError('Chyba při aktualizaci položky')(_err)
     },
 
     onSettled: () => {
@@ -182,12 +160,7 @@ export function useDeleteItem() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: SHOPPING_KEY })
     },
-    onError: (err) => {
-      showToast(
-        isNetworkError(err) ? OFFLINE_TOAST_MSG : 'Chyba při mazání položky.',
-        isNetworkError(err) ? 'info' : 'error',
-      )
-    },
+    onError: handleMutationError('Chyba při mazání položky'),
   })
 }
 
@@ -216,13 +189,13 @@ export function useToggleItemEssential() {
 
     onError: (_err, _vars, ctx) => {
       if (isNetworkError(_err)) {
-        showToast(OFFLINE_TOAST_MSG, 'info')
+        showToast({ title: 'Výpadek připojení', detail: OFFLINE_TOAST_MSG }, 'info')
         return
       }
       if (ctx?.previous) {
         qc.setQueryData(SHOPPING_KEY, ctx.previous)
       }
-      showToast('Chyba při změně označení položky.', 'error')
+      handleMutationError('Chyba při změně označení položky')(_err)
     },
 
     onSettled: () => {

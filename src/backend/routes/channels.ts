@@ -4,6 +4,7 @@ import { requireCabin } from "../../middleware/cabinMiddleware";
 import prisma from "../../utils/prisma";
 import logger from "../../utils/logger";
 import { createMessageSchema, createChannelSchema } from "../../validators/schemas";
+import { emitToCabin } from "../../utils/socket";
 
 const router = Router();
 
@@ -320,7 +321,9 @@ router.post("/messages", protect, requireCabin, async (req: Request, res: Respon
       include: MESSAGE_INCLUDE,
     });
 
-    res.status(201).json(formatNote({ ...newNote, reactions: [] }, req.user!.userId));
+    const formatted = formatNote({ ...newNote, reactions: [] }, req.user!.userId);
+    emitToCabin(req.user!.cabinId!, "message:created", formatted);
+    res.status(201).json(formatted);
   } catch (error) {
     logger.error("CHANNELS", "Post main message error", {
       error: String(error),
@@ -424,7 +427,9 @@ router.post("/:channelId/messages", protect, requireCabin, async (req: Request, 
       include: MESSAGE_INCLUDE,
     });
 
-    res.status(201).json(formatNote({ ...newNote, reactions: [] }, req.user!.userId));
+    const formatted = formatNote({ ...newNote, reactions: [] }, req.user!.userId);
+    emitToCabin(cabinId, "message:created", formatted);
+    res.status(201).json(formatted);
   } catch (error) {
     logger.error("CHANNELS", "Post channel message error", {
       error: String(error),

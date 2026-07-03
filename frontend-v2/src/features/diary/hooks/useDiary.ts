@@ -4,6 +4,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { diaryApi } from '@/api/diary'
 import { showToast } from '@/lib/toast'
+import { handleMutationError } from '@/lib/mutationError'
 
 export const DIARY_FOLDERS_KEY = ['diary-folders'] as const
 
@@ -45,7 +46,7 @@ export function useCreateDiaryFolder() {
   return useMutation({
     mutationFn: diaryApi.createFolder,
     onSuccess: () => void qc.invalidateQueries({ queryKey: DIARY_FOLDERS_KEY }),
-    onError: () => showToast('Chyba při vytváření pobytu.', 'error'),
+    onError: handleMutationError('Chyba při vytváření pobytu'),
   })
 }
 
@@ -55,7 +56,7 @@ export function useRenameDiaryFolder() {
     mutationFn: ({ id, name }: { id: string; name: string }) =>
       diaryApi.renameFolder(id, name),
     onSuccess: () => void qc.invalidateQueries({ queryKey: DIARY_FOLDERS_KEY }),
-    onError: () => showToast('Chyba při přejmenování.', 'error'),
+    onError: handleMutationError('Chyba při přejmenování'),
   })
 }
 
@@ -64,7 +65,7 @@ export function useDeleteDiaryFolder() {
   return useMutation({
     mutationFn: (id: string) => diaryApi.deleteFolder(id),
     onSuccess: () => void qc.invalidateQueries({ queryKey: DIARY_FOLDERS_KEY }),
-    onError: () => showToast('Chyba při mazání pobytu.', 'error'),
+    onError: handleMutationError('Chyba při mazání pobytu'),
   })
 }
 
@@ -97,7 +98,7 @@ export function useSaveDiaryEntry(folderId: string) {
       void qc.invalidateQueries({ queryKey: DIARY_FOLDERS_KEY })
       showToast('Uloženo.', 'success')
     },
-    onError: () => showToast('Chyba při ukládání záznamu.', 'error'),
+    onError: handleMutationError('Chyba při ukládání záznamu'),
   })
 }
 
@@ -110,6 +111,6 @@ export function useDeleteDiaryEntry(folderId: string) {
       void qc.invalidateQueries({ queryKey: DIARY_FOLDERS_KEY })
       showToast('Vytrženo.', 'success')
     },
-    onError: () => showToast('Chyba při mazání záznamu.', 'error'),
+    onError: handleMutationError('Chyba při mazání záznamu'),
   })
 }

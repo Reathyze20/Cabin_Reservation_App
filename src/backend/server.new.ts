@@ -64,10 +64,20 @@ app.use(
   })
 );
 
-// Rate limiting for auth endpoints only
+// General API rate limit — prevents abuse on all endpoints
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 500,
+  message: "Příliš mnoho požadavků. Zkuste to prosím za chvíli.",
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => req.path === "/api/health",
+});
+
+// Strict limit for auth/recovery endpoints
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 30, // Limit each IP to 30 login/register requests per windowMs
+  windowMs: 15 * 60 * 1000,
+  max: 30,
   message: "Příliš mnoho pokusů o přihlášení. Zkuste to prosím později.",
   standardHeaders: true,
   legacyHeaders: false,
@@ -187,7 +197,10 @@ if (ENABLE_API_DOCS) {
   );
 }
 
-// Auth routes (rate limiter on public auth/recovery endpoints)
+// Apply general API rate limit to all /api routes
+app.use("/api", apiLimiter);
+
+// Auth routes (strict rate limiter on public auth/recovery endpoints)
 app.use("/api/login", authLimiter);
 app.use("/api/register", authLimiter);
 app.use("/api/forgot-password", authLimiter);

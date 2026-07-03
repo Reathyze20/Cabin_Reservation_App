@@ -1,10 +1,11 @@
-﻿import { Router, Request, Response } from "express";
+import { Router, Request, Response } from "express";
 import { protect } from "../../middleware/authMiddleware";
 import { requireCabin } from "../../middleware/cabinMiddleware";
 import { validate } from "../../validators/validate";
 import { createShoppingItemSchema, updateItemStatusSchema } from "../../validators/schemas";
 import prisma from "../../utils/prisma";
 import logger from "../../utils/logger";
+import { emitToCabin } from "../../utils/socket";
 
 const router = Router();
 
@@ -44,7 +45,7 @@ router.get("/", protect, requireCabin, async (req: Request, res: Response) => {
       isEssential: item.isEssential,
     }));
 
-    res.json([{ id: "default", name: "HlavnĂ­ seznam", items: formatted }]);
+    res.json([{ id: "default", name: "Hlavní seznam", items: formatted }]);
   } catch (error) {
     logger.error("SHOPPING", "Get shopping list error", { error: String(error) });
     res.status(500).json({ message: "Chyba" });
@@ -55,7 +56,7 @@ router.get("/", protect, requireCabin, async (req: Request, res: Response) => {
 //                      CREATE SHOPPING LIST
 // ============================================================================
 router.post("/", protect, requireCabin, async (req: Request, res: Response) => {
-  res.status(200).json({ id: "default", name: "HlavnĂ­ seznam", items: [] });
+  res.status(200).json({ id: "default", name: "Hlavní seznam", items: [] });
 });
 
 // ============================================================================
@@ -85,7 +86,7 @@ router.post("/:listId/items", protect, requireCabin, validate(createShoppingItem
       },
     });
 
-    res.status(201).json({
+    const itemPayload = {
       id: newItem.id,
       name: newItem.name,
       addedBy: newItem.addedBy.username,
@@ -93,7 +94,9 @@ router.post("/:listId/items", protect, requireCabin, validate(createShoppingItem
       createdAt: newItem.createdAt.toISOString(),
       purchased: newItem.purchased,
       isEssential: newItem.isEssential,
-    });
+    };
+    emitToCabin(req.user!.cabinId!, "shopping:item:added", itemPayload);
+    res.status(201).json(itemPayload);
   } catch (error) {
     logger.error("SHOPPING", "Add item error", { error: String(error) });
     res.status(500).json({ message: "Chyba" });
@@ -103,19 +106,19 @@ router.post("/:listId/items", protect, requireCabin, validate(createShoppingItem
 // ============================================================================
 //                    MARK ITEM AS PURCHASED / UPDATE STATUS
 // ============================================================================
-router.put("/:itemId/purchase", protect, requireCabin, validate(updateItemStatusSchema), async (req: Request, res: Response) => {
+async function handlePurchaseItem(req: Request, res: Response) {
   const { itemId } = req.params;
   // Accept either new `status` enum or legacy boolean `purchased`
   let { status, purchased, price, splitWith } = req.body;
 
-  // Map legacy boolean â†’ enum
+  // Map legacy boolean → enum
   if (status === undefined && purchased !== undefined) {
     status = purchased ? "purchased" : "pending";
   }
 
   const validStatuses = ["pending", "bring_from_home", "purchased"];
   if (!validStatuses.includes(status)) {
-    return res.status(400).json({ message: "NeplatnĂ˝ status poloĹľky." });
+    return res.status(400).json({ message: "Neplatný status položky." });
   }
 
   const isPurchased = status === "purchased";
@@ -127,10 +130,10 @@ router.put("/:itemId/purchase", protect, requireCabin, validate(updateItemStatus
       include: { list: { select: { cabinId: true } } },
     });
     if (!item || (item.list && item.list.cabinId !== req.user!.cabinId)) {
-      return res.status(404).json({ message: "PoloĹľka nenalezena." });
+      return res.status(404).json({ message: "Položka nenalezena." });
     }
 
-    // Use transaction â€” update item + restock linked inventory + handle splits
+    // Use transaction — update item + restock linked inventory + handle splits
     const { updated, splits } = await prisma.$transaction(async (tx) => {
       const updatedItem = await tx.shoppingListItem.update({
         where: { id: itemId },
@@ -155,7 +158,7 @@ router.put("/:itemId/purchase", protect, requireCabin, validate(updateItemStatus
         },
       });
 
-      // Auto-restock: if purchased and linked to inventory â†’ set OK + remove from cart
+      // Auto-restock: if purchased and linked to inventory → set OK + remove from cart
       if (isPurchased && updatedItem.linkedInventoryId) {
         await tx.inventoryItem.update({
           where: { id: updatedItem.linkedInventoryId },
@@ -179,7 +182,7 @@ router.put("/:itemId/purchase", protect, requireCabin, validate(updateItemStatus
       return { updated: updatedItem, splits: itemSplits };
     });
 
-    res.json({
+    const updatedPayload = {
       id: updated.id,
       name: updated.name,
       addedBy: updated.addedBy.username,
@@ -193,31 +196,19 @@ router.put("/:itemId/purchase", protect, requireCabin, validate(updateItemStatus
       price: updated.price ? parseFloat(updated.price.toString()) : undefined,
       splitWith: splits.map((s) => s.userId),
       isEssential: updated.isEssential,
-    });
+    };
+    emitToCabin(req.user!.cabinId!, "shopping:item:updated", updatedPayload);
+    res.json(updatedPayload);
   } catch (error) {
     logger.error("SHOPPING", "Purchase item error", { error: String(error), itemId });
     res.status(500).json({ message: "Chyba" });
   }
-});
+}
 
-// Legacy endpoint â€” delegates to the main handler
-router.put(
-  "/:listId/items/:itemId/purchase",
-  protect,
-  requireCabin,
-  async (req: Request, res: Response) => {
-    // Rewrite params so the main handler sees itemId
-    req.params = { ...req.params, itemId: req.params.itemId };
-    // Forward to the actual purchase handler below
-    const handler = router.stack.find(
-      (layer: any) => layer.route?.path === "/:itemId/purchase" && layer.route?.methods?.put
-    );
-    if (handler) {
-      return handler.route!.stack[0].handle(req, res, () => { });
-    }
-    res.status(404).json({ message: "Not found" });
-  }
-);
+router.put("/:itemId/purchase", protect, requireCabin, validate(updateItemStatusSchema), handlePurchaseItem);
+
+// Legacy path — Express sets req.params.itemId from the named segment, handler is identical
+router.put("/:listId/items/:itemId/purchase", protect, requireCabin, validate(updateItemStatusSchema), handlePurchaseItem);
 
 // ============================================================================
 //                 MOVE ITEM FROM PANTRY TO LATEST SHOPPING LIST
@@ -231,20 +222,20 @@ router.post("/:itemId/move-from-pantry", protect, requireCabin, async (req: Requ
       include: { list: { select: { cabinId: true } } },
     });
     if (!item || (item.list && item.list.cabinId !== req.user!.cabinId)) {
-      return res.status(404).json({ message: "PoloĹľka nenalezena." });
+      return res.status(404).json({ message: "Položka nenalezena." });
     }
 
-    // Najdi nejnovÄ›jĹˇĂ­ normĂˇlnĂ­ (ne-pantry) nĂˇkupnĂ­ seznam v rĂˇmci cabin
+    // Najdi nejnovějĹˇí normální (ne-pantry) nákupní seznam v rámci cabin
     let targetList = await prisma.shoppingList.findFirst({
       where: { isResolved: false, isPantry: false, cabinId: req.user!.cabinId },
       orderBy: { createdAt: "desc" }
     });
 
     if (!targetList) {
-      // VytvoĹ™ novĂ˝, pokud ĹľĂˇdnĂ˝ nenĂ­
+      // Vytvoř nový, pokud žádný není
       targetList = await prisma.shoppingList.create({
         data: {
-          name: "AktuĂˇlnĂ­ nĂˇkup",
+          name: "Aktuální nákup",
           createdById: req.user!.userId,
           cabinId: req.user!.cabinId!,
         }
@@ -266,7 +257,7 @@ router.post("/:itemId/move-from-pantry", protect, requireCabin, async (req: Requ
 
     await prisma.shoppingItemSplit.deleteMany({ where: { itemId } });
 
-    res.json({ message: "PĹ™esunuto", listId: targetList.id });
+    res.json({ message: "Přesunuto", listId: targetList.id });
   } catch (error) {
     logger.error("SHOPPING", "Move from pantry error", { error: String(error), itemId });
     res.status(500).json({ message: "Chyba" });
@@ -281,7 +272,7 @@ router.patch("/:itemId/toggle-essential", protect, requireCabin, async (req: Req
   try {
     const role = req.user!.role;
     if (role === "guest") {
-      return res.status(403).json({ message: "HostĂ© nemohou mÄ›nit kritickĂ© poloĹľky." });
+      return res.status(403).json({ message: "Hosté nemohou měnit kritické položky." });
     }
 
     const item = await prisma.shoppingListItem.findUnique({
@@ -289,7 +280,7 @@ router.patch("/:itemId/toggle-essential", protect, requireCabin, async (req: Req
       include: { list: { select: { cabinId: true } } },
     });
     if (!item || (item.list && item.list.cabinId !== req.user!.cabinId)) {
-      return res.status(404).json({ message: "PoloĹľka nenalezena." });
+      return res.status(404).json({ message: "Položka nenalezena." });
     }
 
     const updated = await prisma.shoppingListItem.update({
@@ -317,7 +308,7 @@ async function deleteItem(req: Request, res: Response) {
     });
 
     if (!item || (item.list && item.list.cabinId !== req.user!.cabinId)) {
-      return res.status(404).json({ message: "PoloĹľka nenalezena" });
+      return res.status(404).json({ message: "Položka nenalezena" });
     }
 
     // Delete the item and reset linked inventory in a transaction
@@ -333,6 +324,7 @@ async function deleteItem(req: Request, res: Response) {
       }
     });
 
+    emitToCabin(req.user!.cabinId!, "shopping:item:deleted", { id: itemId });
     res.json({ success: true });
   } catch (error) {
     logger.error("SHOPPING", "Delete item error", { error: String(error), itemId });
@@ -342,7 +334,7 @@ async function deleteItem(req: Request, res: Response) {
 
 router.delete("/:itemId", protect, requireCabin, deleteItem);
 
-// Legacy endpoint â€” same handler, just different path pattern
+// Legacy endpoint — same handler, just different path pattern
 router.delete("/:listId/items/:itemId", protect, requireCabin, deleteItem);
 
 export default router;

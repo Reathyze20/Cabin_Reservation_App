@@ -3,7 +3,7 @@
  * Connects once per mount, auto-disconnects on unmount.
  * Provides `on`, `off`, `emit` helpers bound to the current connection.
  */
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef, useCallback, useState } from 'react'
 import { io, Socket } from 'socket.io-client'
 import { useAuth } from '@/context/AuthContext'
 
@@ -16,6 +16,7 @@ import { useAuth } from '@/context/AuthContext'
 export function useSocket() {
   const { token } = useAuth()
   const socketRef = useRef<Socket | null>(null)
+  const [socketGeneration, setSocketGeneration] = useState(0)
 
   useEffect(() => {
     if (!token) return
@@ -29,6 +30,7 @@ export function useSocket() {
     })
 
     socketRef.current = socket
+    setSocketGeneration((g) => g + 1)
 
     return () => {
       socket.disconnect()
@@ -48,5 +50,5 @@ export function useSocket() {
     socketRef.current?.emit(event, data)
   }, [])
 
-  return { on, off, emit }
+  return { on, off, emit, socketGeneration }
 }

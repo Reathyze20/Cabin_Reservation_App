@@ -4,6 +4,7 @@ import type { Note, SendNotePayload } from "@/api/notes";
 import { NoteArraySchema } from "@/api/schemas";
 import { useAuth } from "@/context/AuthContext";
 import { showToast } from "@/lib/toast";
+import { handleMutationError } from "@/lib/mutationError";
 import { isNetworkError, OFFLINE_TOAST_MSG } from "@/lib/networkError";
 import { THREADS_KEY } from "./useThreads";
 
@@ -113,12 +114,13 @@ export function useSendNote() {
 
     onError: (_err, _vars, context) => {
       if (isNetworkError(_err)) {
-        showToast(OFFLINE_TOAST_MSG, "info");
+        showToast({ title: 'Výpadek připojení', detail: OFFLINE_TOAST_MSG }, 'info');
         return;
       }
       if (context?.previousData !== undefined) {
         qc.setQueryData(context.key, context.previousData);
       }
+      handleMutationError('Zprávu se nepodařilo odeslat')(_err);
     },
 
     onSettled: (_data, _err, vars) => {
@@ -178,7 +180,7 @@ export function useDeleteNote() {
 
     onError: (_err, _vars, context) => {
       if (context?.prev) qc.setQueryData(context.key, context.prev);
-      showToast("Zprávu se nepodařilo smazat.", "error");
+      handleMutationError('Zprávu se nepodařilo smazat')(_err);
     },
 
     onSettled: (_data, _err, vars) => {
@@ -198,13 +200,7 @@ export function useResolveNote() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["channels"] });
     },
-    onError: (err) => {
-      if (isNetworkError(err)) {
-        showToast(OFFLINE_TOAST_MSG, "info");
-      } else {
-        showToast("Nepodařilo se označit zprávu jako vyřešenou.", "error");
-      }
-    },
+    onError: handleMutationError('Nepodařilo se označit zprávu jako vyřešenou'),
   });
 }
 
@@ -229,12 +225,7 @@ export function useEditNote() {
 
     onError: (_err, _vars, context) => {
       if (context?.prev) qc.setQueryData(context.key, context.prev);
-      if (isNetworkError(_err)) {
-        showToast(OFFLINE_TOAST_MSG, "info");
-      } else {
-        const msg = (_err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-        showToast(msg || "Nepodařilo se upravit zprávu.", "error");
-      }
+      handleMutationError('Nepodařilo se upravit zprávu')(_err);
     },
 
     onSettled: (_data, _err, vars) => {
@@ -262,7 +253,7 @@ export function useTogglePin() {
 
     onError: (_err, _vars, context) => {
       if (context?.prev) qc.setQueryData(context.key, context.prev);
-      showToast("Nepodařilo se připnout zprávu.", "error");
+      handleMutationError('Nepodařilo se připnout zprávu')(_err);
     },
 
     onSettled: (_data, _err, vars) => {

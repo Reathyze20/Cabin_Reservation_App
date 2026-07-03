@@ -4,7 +4,7 @@
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { galleryApi } from '@/api/gallery'
-import { showToast } from '@/lib/toast'
+import { handleMutationError } from '@/lib/mutationError'
 
 export const GALLERY_FOLDERS_KEY = ['gallery-folders'] as const
 
@@ -51,7 +51,7 @@ export function useCreateFolder() {
   return useMutation({
     mutationFn: (name: string) => galleryApi.createFolder(name),
     onSuccess: () => void qc.invalidateQueries({ queryKey: GALLERY_FOLDERS_KEY }),
-    onError: () => showToast('Chyba při vytváření alba.', 'error'),
+    onError: handleMutationError('Chyba při vytváření alba'),
   })
 }
 
@@ -60,7 +60,7 @@ export function useRenameFolder() {
   return useMutation({
     mutationFn: ({ id, name }: { id: string; name: string }) => galleryApi.renameFolder(id, name),
     onSuccess: () => void qc.invalidateQueries({ queryKey: GALLERY_FOLDERS_KEY }),
-    onError: () => showToast('Chyba při přejmenování alba.', 'error'),
+    onError: handleMutationError('Chyba při přejmenování alba'),
   })
 }
 
@@ -69,7 +69,7 @@ export function useDeleteFolder() {
   return useMutation({
     mutationFn: (id: string) => galleryApi.deleteFolder(id),
     onSuccess: () => void qc.invalidateQueries({ queryKey: GALLERY_FOLDERS_KEY }),
-    onError: () => showToast('Chyba při mazání alba.', 'error'),
+    onError: handleMutationError('Chyba při mazání alba'),
   })
 }
 
@@ -83,7 +83,7 @@ export function useUploadPhotos(folderId: string) {
       void qc.invalidateQueries({ queryKey: photosKey(folderId) })
       void qc.invalidateQueries({ queryKey: GALLERY_FOLDERS_KEY })
     },
-    onError: () => showToast('Chyba při nahrávání fotek.', 'error'),
+    onError: handleMutationError('Chyba při nahrávání fotek'),
   })
 }
 
@@ -93,7 +93,7 @@ export function useUpdatePhoto(folderId: string) {
     mutationFn: ({ id, description }: { id: string; description: string }) =>
       galleryApi.updatePhoto(id, description),
     onSuccess: () => void qc.invalidateQueries({ queryKey: photosKey(folderId) }),
-    onError: () => showToast('Chyba při ukládání vzpomínky.', 'error'),
+    onError: handleMutationError('Chyba při ukládání vzpomínky'),
   })
 }
 
@@ -105,7 +105,7 @@ export function useDeletePhoto(folderId: string) {
       void qc.invalidateQueries({ queryKey: photosKey(folderId) })
       void qc.invalidateQueries({ queryKey: GALLERY_FOLDERS_KEY })
     },
-    onError: () => showToast('Chyba při mazání fotky.', 'error'),
+    onError: handleMutationError('Chyba při mazání fotky'),
   })
 }
 
@@ -117,6 +117,6 @@ export function useDeletePhotos(folderId: string) {
       void qc.invalidateQueries({ queryKey: photosKey(folderId) })
       void qc.invalidateQueries({ queryKey: GALLERY_FOLDERS_KEY })
     },
-    onError: () => showToast('Chyba při mazání fotek.', 'error'),
+    onError: handleMutationError('Chyba při mazání fotek'),
   })
 }

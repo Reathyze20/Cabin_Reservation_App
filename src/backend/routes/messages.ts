@@ -4,6 +4,7 @@ import { requireCabin } from "../../middleware/cabinMiddleware";
 import prisma from "../../utils/prisma";
 import logger from "../../utils/logger";
 import { editNoteSchema, noteReactionSchema } from "../../validators/schemas";
+import { emitToCabin } from "../../utils/socket";
 
 const router = Router();
 
@@ -40,11 +41,14 @@ router.patch("/:messageId", protect, requireCabin, async (req: Request, res: Res
       data: { message: parsed.data.message, editedAt: new Date() },
     });
 
-    res.json({
+    const payload = {
       id: updated.id,
+      threadId: updated.threadId,
       message: updated.message,
       editedAt: updated.editedAt?.toISOString() ?? null,
-    });
+    };
+    emitToCabin(req.user!.cabinId!, "message:updated", payload);
+    res.json(payload);
   } catch (error) {
     logger.error("MESSAGES", "Edit message error", { error: String(error), messageId });
     res.status(500).json({ message: "Chyba při úpravě zprávy." });
@@ -69,6 +73,7 @@ router.delete("/:messageId", protect, requireCabin, async (req: Request, res: Re
     }
 
     await prisma.note.delete({ where: { id: messageId } });
+    emitToCabin(req.user!.cabinId!, "message:deleted", { id: messageId, threadId: note.threadId });
     res.json({ message: "Smazáno." });
   } catch (error) {
     logger.error("MESSAGES", "Delete message error", { error: String(error), messageId });
@@ -98,6 +103,7 @@ router.patch("/:messageId/pin", protect, requireCabin, async (req: Request, res:
       data: { isPinned: !note.isPinned },
     });
 
+    emitToCabin(req.user!.cabinId!, "message:updated", { id: updated.id, threadId: updated.threadId, isPinned: updated.isPinned });
     res.json({ id: updated.id, isPinned: updated.isPinned });
   } catch (error) {
     logger.error("MESSAGES", "Pin message error", { error: String(error), messageId });
@@ -127,6 +133,7 @@ router.patch("/:messageId/resolve", protect, requireCabin, async (req: Request, 
       data: { isResolvedAsTask: true },
     });
 
+    emitToCabin(req.user!.cabinId!, "message:updated", { id: updated.id, threadId: updated.threadId, isResolvedAsTask: updated.isResolvedAsTask });
     res.json({ id: updated.id, isResolvedAsTask: updated.isResolvedAsTask });
   } catch (error) {
     logger.error("MESSAGES", "Resolve message error", { error: String(error), messageId });
@@ -160,9 +167,11 @@ router.post("/:messageId/reactions", protect, requireCabin, async (req: Request,
 
     if (existing) {
       await prisma.noteReaction.delete({ where: { id: existing.id } });
+      emitToCabin(req.user!.cabinId!, "message:reaction", { messageId, threadId: note.threadId, emoji, action: "removed", userId });
       res.json({ action: "removed", emoji });
     } else {
       await prisma.noteReaction.create({ data: { noteId: messageId, userId, emoji } });
+      emitToCabin(req.user!.cabinId!, "message:reaction", { messageId, threadId: note.threadId, emoji, action: "added", userId });
       res.json({ action: "added", emoji });
     }
   } catch (error) {

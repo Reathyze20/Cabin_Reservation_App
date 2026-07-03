@@ -177,6 +177,9 @@ model Reservation {
   user     User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   watchers ReservationWatcher[]
 
+  @@index([cabinId])
+  @@index([cabinId, dateFrom, dateTo])
+  @@index([cabinId, status])
   @@map("reservations")
 }
 
@@ -206,6 +209,7 @@ model ShoppingList {
   createdBy User               @relation(fields: [createdById], references: [id], onDelete: Cascade)
   items     ShoppingListItem[]
 
+  @@index([cabinId, isResolved])
   @@map("shopping_lists")
 }
 
@@ -329,6 +333,7 @@ model GalleryFolder {
   photos    GalleryPhoto[]
 
   @@unique([name, cabinId])
+  @@index([cabinId])
   @@map("gallery_folders")
 }
 
@@ -345,6 +350,7 @@ model GalleryPhoto {
   uploadedBy   User?             @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
   diaryEntries DiaryEntryPhoto[]
 
+  @@index([folderId])
   @@map("gallery_photos")
 }
 
@@ -368,6 +374,7 @@ model DiaryFolder {
   createdBy User         @relation(fields: [createdById], references: [id], onDelete: Cascade)
   entries   DiaryEntry[]
 
+  @@index([cabinId])
   @@map("diary_folders")
 }
 
@@ -384,6 +391,7 @@ model DiaryEntry {
   author User              @relation(fields: [authorId], references: [id], onDelete: Cascade)
   photos DiaryEntryPhoto[]
 
+  @@index([folderId])
   @@map("diary_entries")
 }
 
@@ -428,6 +436,8 @@ model ReconstructionItem {
   createdBy User                 @relation(fields: [createdById], references: [id], onDelete: Cascade)
   votes     ReconstructionVote[]
 
+  @@index([cabinId])
+  @@index([cabinId, category])
   @@map("reconstruction_items")
 }
 
@@ -482,6 +492,8 @@ model InventoryItem {
   // Relations
   updatedBy User? @relation("UpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
 
+  @@index([cabinId])
+  @@index([cabinId, status])
   @@map("inventory_items")
 }
 
@@ -502,6 +514,7 @@ model UserAvailability {
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([cabinId, startDate, endDate])
   @@map("user_availabilities")
 }
 

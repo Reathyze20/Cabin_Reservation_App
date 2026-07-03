@@ -281,6 +281,14 @@
   scrollbar-color: var(--border-strong) transparent;
 }
 
+.kanban-column-body.kanban-drop-over {
+  background: color-mix(in srgb, var(--color-primary, #6366f1) 8%, transparent);
+  outline: 2px dashed var(--color-primary, #6366f1);
+  outline-offset: -4px;
+  border-radius: 8px;
+  transition: background 0.15s, outline 0.15s;
+}
+
 .kanban-column-body::-webkit-scrollbar {
   width: 6px;
 }

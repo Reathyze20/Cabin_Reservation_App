@@ -9,6 +9,7 @@ import {
 } from '@tanstack/react-query'
 import { inventoryApi } from '@/api/shopping'
 import { showToast } from '@/lib/toast'
+import { handleMutationError } from '@/lib/mutationError'
 import { SHOPPING_KEY } from './useShoppingLists'
 
 export const INVENTORY_KEY = ['inventory'] as const
@@ -32,9 +33,7 @@ export function useCreateInventoryItem() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: INVENTORY_KEY })
     },
-    onError: () => {
-      showToast('Chyba při přidávání zásoby.', 'error')
-    },
+    onError: handleMutationError('Chyba při přidávání zásoby'),
   })
 }
 
@@ -51,9 +50,7 @@ export function useUpdateInventoryItem() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: INVENTORY_KEY })
     },
-    onError: () => {
-      showToast('Chyba při úpravě zásoby.', 'error')
-    },
+    onError: handleMutationError('Chyba při úpravě zásoby'),
   })
 }
 
@@ -64,9 +61,7 @@ export function useDeleteInventoryItem() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: INVENTORY_KEY })
     },
-    onError: () => {
-      showToast('Chyba při mazání zásoby.', 'error')
-    },
+    onError: handleMutationError('Chyba při mazání zásoby'),
   })
 }
 
@@ -77,9 +72,7 @@ export function useToggleInventoryEssential() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: INVENTORY_KEY })
     },
-    onError: () => {
-      showToast('Chyba při změně označení zásoby.', 'error')
-    },
+    onError: handleMutationError('Chyba při změně označení zásoby'),
   })
 }
 
@@ -99,9 +92,7 @@ export function useAddInventoryToCart() {
       void qc.invalidateQueries({ queryKey: SHOPPING_KEY })
       showToast('Přidáno do nákupního seznamu.', 'success')
     },
-    onError: () => {
-      showToast('Chyba při přidávání do nákupu.', 'error')
-    },
+    onError: handleMutationError('Chyba při přidávání do nákupu'),
   })
 }
 
@@ -119,10 +110,10 @@ export function useBulkAddToCart() {
       void qc.invalidateQueries({ queryKey: SHOPPING_KEY })
       showToast('Všechny chybějící zásoby přidány do nákupu.', 'success')
     },
-    onError: () => {
+    onError: (err) => {
       void qc.invalidateQueries({ queryKey: INVENTORY_KEY })
       void qc.invalidateQueries({ queryKey: SHOPPING_KEY })
-      showToast('Některé položky se nepodařilo přidat.', 'error')
+      handleMutationError('Některé položky se nepodařilo přidat')(err)
     },
   })
 }

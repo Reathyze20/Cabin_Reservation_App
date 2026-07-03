@@ -6,6 +6,7 @@ import type { RecItem, RecCategory, RecStatus } from '@/api/reconstruction'
 import { useVoteRecItem, useUpdateRecStatus, useDeleteRecItem } from './hooks/useReconstruction'
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
+import { useDraggable, useDroppable } from '@dnd-kit/core'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
 import { escapeHtml } from '@/lib/utils'
 import { getNetworkAwareActionMessage } from '@/lib/networkError'
@@ -361,6 +362,28 @@ function TaskCard({ item, currentUserId, isGuest = false, onEdit }: TaskCardProp
   )
 }
 
+// ─── DraggableCard ────────────────────────────────────────────────────────────
+
+interface DraggableCardProps {
+  id: string
+  disabled: boolean
+  children: React.ReactNode
+}
+
+function DraggableCard({ id, disabled, children }: DraggableCardProps) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id, disabled })
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ opacity: isDragging ? 0.35 : 1, touchAction: 'none', cursor: disabled ? 'default' : 'grab' }}
+      {...(disabled ? {} : { ...listeners, ...attributes })}
+    >
+      {children}
+    </div>
+  )
+}
+
 // ─── Column config ────────────────────────────────────────────────────────────
 
 const COLUMN_CONFIG: Record<
@@ -418,6 +441,7 @@ interface KanbanColumnProps {
 export function KanbanColumn({ category, items, currentUserId, isGuest = false, onAdd, onEdit }: KanbanColumnProps) {
   const cfg = COLUMN_CONFIG[category]
   const Icon = cfg.icon
+  const { setNodeRef, isOver } = useDroppable({ id: category })
 
   return (
     <motion.section className={`kanban-column ${cfg.cssClass}`} variants={COLUMN_VARIANTS}>
@@ -441,7 +465,12 @@ export function KanbanColumn({ category, items, currentUserId, isGuest = false, 
         )}
       </div>
 
-      <motion.div className="kanban-column-body" id={cfg.listId} layout>
+      <motion.div
+        ref={setNodeRef}
+        className={`kanban-column-body${isOver ? ' kanban-drop-over' : ''}`}
+        id={cfg.listId}
+        layout
+      >
         <AnimatePresence initial={false} mode="popLayout">
           {items.length === 0 ? (
             <motion.div key={`${category}-empty`} className="kanban-empty-state" {...EMPTY_MOTION}>
@@ -458,12 +487,14 @@ export function KanbanColumn({ category, items, currentUserId, isGuest = false, 
           ) : (
             items.map((item) => (
               <motion.div key={item.id} layout className="kanban-item-motion" {...ITEM_MOTION}>
-                <TaskCard
-                  item={item}
-                  currentUserId={currentUserId}
-                  isGuest={isGuest}
-                  onEdit={onEdit}
-                />
+                <DraggableCard id={item.id} disabled={isGuest}>
+                  <TaskCard
+                    item={item}
+                    currentUserId={currentUserId}
+                    isGuest={isGuest}
+                    onEdit={onEdit}
+                  />
+                </DraggableCard>
               </motion.div>
             ))
           )}

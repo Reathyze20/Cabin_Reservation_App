@@ -3,8 +3,7 @@
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { settingsApi, type CabinConfigUpdate } from '@/api/settings'
-import { showToast } from '@/lib/toast'
-import { isNetworkError, OFFLINE_TOAST_MSG } from '@/lib/networkError'
+import { handleMutationError } from '@/lib/mutationError'
 
 // Use same QK as useCabinFeatures so nav auto-updates after save
 const QK = ['cabin'] as const
@@ -25,11 +24,6 @@ export function useUpdateCabinSettings() {
       // Update cache so nav (TopBar + MobileNav) re-renders with new feature flags
       qc.setQueryData(QK, updated)
     },
-    onError: (err) => {
-      showToast(
-        isNetworkError(err) ? OFFLINE_TOAST_MSG : 'Nepodařilo se uložit nastavení.',
-        isNetworkError(err) ? 'info' : 'error',
-      )
-    },
+    onError: handleMutationError('Nepodařilo se uložit nastavení'),
   })
 }

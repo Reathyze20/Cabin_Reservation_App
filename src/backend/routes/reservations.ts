@@ -281,6 +281,20 @@ router.post("/", protect, requireCabin, validate(createReservationSchema), async
       },
     });
 
+    emitToCabin(cabinId, "reservation:created", {
+      id: newReservation.id,
+      userId: newReservation.userId,
+      username: newReservation.user.username,
+      from: newReservation.dateFrom.toISOString().split("T")[0],
+      to: newReservation.dateTo.toISOString().split("T")[0],
+      purpose: newReservation.purpose,
+      notes: newReservation.notes,
+      handoverNote: newReservation.handoverNote,
+      status: newReservation.status,
+      userColor: newReservation.user.color,
+      userAnimalIcon: newReservation.user.animalIcon,
+    });
+
     await publishReservationActivityNote({
       actorUserId: req.user!.userId,
       cabinId,
@@ -517,7 +531,7 @@ router.put("/:id", protect, requireCabin, validate(updateReservationSchema), asy
       });
     }
 
-    res.json({
+    const updatedPayload = {
       id: updated.id,
       userId: updated.userId,
       username: updated.user.username,
@@ -529,7 +543,11 @@ router.put("/:id", protect, requireCabin, validate(updateReservationSchema), asy
       status: updated.status,
       userColor: updated.user.color,
       userAnimalIcon: updated.user.animalIcon,
-    });
+    };
+
+    emitToCabin(req.user!.cabinId!, "reservation:updated", updatedPayload);
+
+    res.json(updatedPayload);
   } catch (error) {
     logger.error("RESERVATIONS", "Update reservation error", { error: String(error), id });
     res.status(500).json({ message: "Chyba." });
@@ -569,6 +587,8 @@ router.post("/delete", protect, requireCabin, validate(deleteReservationSchema),
     };
 
     await prisma.reservation.delete({ where: { id } });
+
+    emitToCabin(req.user!.cabinId!, "reservation:deleted", { id });
 
     await publishReservationActivityNote({
       actorUserId: req.user!.userId,
