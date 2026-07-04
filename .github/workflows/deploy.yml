@@ -93,8 +93,9 @@ jobs:
             trap 'echo "=== DEPLOY FAILED: command [$BASH_COMMAND] exited with $? at line $LINENO ==="; npx pm2 restart chata-app 2>/dev/null || npx pm2 start npm --name "chata-app" -- run start; npx pm2 save' ERR
 
             # Navigate to the app directory
+            # NOTE: the SSH user IS the app user (reathyze) — no root, so no
+            # su/chown/crontab -u anywhere in this script.
             APP_PATH="${{ secrets.SERVER_PATH }}"
-            APP_USER="reathyze"
 
             # Guard: SERVER_PATH secret may be empty, contain a literal '~'
             # (tilde does not expand inside quotes) or point to a moved dir.
@@ -117,18 +118,6 @@ jobs:
             BACKUP_CRON_SCHEDULE="0 3 * * *"
             RELEASE_BUNDLE="/tmp/release.tgz"
             RELEASE_DIR="/tmp/chata-release"
-
-            run_as_app() {
-              local user_script
-              user_script="$(mktemp)"
-              printf '%s\n' "$@" > "$user_script"
-              chmod 700 "$user_script"
-              chown "$APP_USER:$APP_USER" "$user_script"
-              su - "$APP_USER" -s /bin/bash -c "/bin/bash '$user_script'"
-              local status=$?
-              rm -f "$user_script"
-              return $status
-            }
 
             cd "$APP_PATH"
 
@@ -185,6 +174,9 @@ jobs:
             if command -v rsync >/dev/null 2>&1; then
               # Excludes are anchored to the transfer root (leading /) so they
               # only match the top-level dirs, not e.g. dist/ inside a package.
+              # '*.old.*' protects leftover moved-aside dirs (possibly owned by
+              # root and undeletable by the deploy user) from --delete, which
+              # would otherwise abort the whole deploy with rsync error 23.
               rsync -a --delete \
                 --exclude '/data' \
                 --exclude '/.env' \
@@ -192,6 +184,7 @@ jobs:
                 --exclude '/frontend-v2/node_modules' \
                 --exclude '/dist' \
                 --exclude '/src/generated' \
+                --exclude '*.old.*' \
                 "$RELEASE_DIR"/ "$APP_PATH"/
             else
               echo "WARNING: rsync not found. Falling back to archive overlay without delete semantics."
@@ -409,13 +402,13 @@ jobs:
               fi
             done
 
-            if ! run_as_app "export NVM_DIR=$NVM_DIR" ". $NVM_DIR/nvm.sh" "cd $APP_PATH" "command -v node >/dev/null 2>&1 && command -v npm >/dev/null 2>&1"; then
-              echo "ERROR: node/npm are not available for $APP_USER after sourcing NVM."
+            if ! command -v node >/dev/null 2>&1 || ! command -v npm >/dev/null 2>&1; then
+              echo "ERROR: node/npm are not available after sourcing NVM."
               exit 1
             fi
 
             echo "=== Installing backup cron ==="
-            install -d -m 755 -o "$APP_USER" -g "$APP_USER" "$BACKUP_ROOT" "$BACKUP_ROOT/db" "$BACKUP_ROOT/uploads" "$APP_PATH/data/logs"
+            mkdir -p "$BACKUP_ROOT" "$BACKUP_ROOT/db" "$BACKUP_ROOT/uploads" "$APP_PATH/data/logs"
 
             BACKUP_COMMAND_INNER=$(cat <<EOF
             export NVM_DIR=$NVM_DIR; [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"; mkdir -p $BACKUP_ROOT $APP_PATH/data/logs; cd $APP_PATH; BACKUP_ROOT=$BACKUP_ROOT BACKUP_RETENTION_DAYS=$BACKUP_RETENTION_DAYS npm run backup:all >> $APP_PATH/data/logs/backup-cron.log 2>&1
@@ -426,7 +419,7 @@ jobs:
 
             existing_crontab="$(mktemp)"
             updated_crontab="$(mktemp)"
-            crontab -u "$APP_USER" -l 2>/dev/null | grep -v 'cabin-backup.lock' > "$existing_crontab" || true
+            crontab -l 2>/dev/null | grep -v 'cabin-backup.lock' > "$existing_crontab" || true
             : > "$updated_crontab"
 
             if ! grep -qxF 'SHELL=/bin/bash' "$existing_crontab"; then
@@ -439,16 +432,16 @@ jobs:
 
             cat "$existing_crontab" >> "$updated_crontab"
             echo "$BACKUP_CRON_LINE" >> "$updated_crontab"
-            awk 'NF && !seen[$0]++' "$updated_crontab" | crontab -u "$APP_USER" -
+            awk 'NF && !seen[$0]++' "$updated_crontab" | crontab -
             rm -f "$existing_crontab" "$updated_crontab"
-            crontab -u "$APP_USER" -l | grep 'cabin-backup.lock'
+            crontab -l | grep 'cabin-backup.lock'
 
             echo "=== Seeding first backup if missing ==="
             latest_db_backup=$(find "$BACKUP_ROOT/db" -maxdepth 1 -type f -name '*.dump' -print -quit)
             latest_uploads_backup=$(find "$BACKUP_ROOT/uploads" -maxdepth 1 -type f -name '*.tar.gz' -print -quit)
 
             if [ -z "$latest_db_backup" ] || [ -z "$latest_uploads_backup" ]; then
-              run_as_app "export NVM_DIR=$NVM_DIR" ". $NVM_DIR/nvm.sh" "cd $APP_PATH" "BACKUP_ROOT=$BACKUP_ROOT BACKUP_RETENTION_DAYS=$BACKUP_RETENTION_DAYS npm run backup:all"
+              BACKUP_ROOT="$BACKUP_ROOT" BACKUP_RETENTION_DAYS="$BACKUP_RETENTION_DAYS" npm run backup:all
             else
               echo "Existing backup artifacts found. Skipping initial seed backup."
             fi
