@@ -78,6 +78,11 @@ jobs:
           script: |
             set -e
 
+            # Mirror all output to a file on the server so the follow-up
+            # "Report failure details" step can publish the tail of it
+            # as a workflow annotation (Actions logs need login to view).
+            exec > >(tee /tmp/deploy-last.log) 2>&1
+
             # Explicitly source nvm to make node/npm/pm2 available
             # IMPORTANT: NVM is installed for 'reathyze' user, not root — use absolute path
             export NVM_DIR="/home/reathyze/.nvm"
@@ -85,7 +90,7 @@ jobs:
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
             # Failsafe: if any step fails, ensure app gets restarted with old build
-            trap 'echo "=== DEPLOY FAILED — restarting app with previous build ==="; npx pm2 restart chata-app 2>/dev/null || npx pm2 start npm --name "chata-app" -- run start; npx pm2 save' ERR
+            trap 'echo "=== DEPLOY FAILED: command [$BASH_COMMAND] exited with $? at line $LINENO ==="; npx pm2 restart chata-app 2>/dev/null || npx pm2 start npm --name "chata-app" -- run start; npx pm2 save' ERR
 
             # Navigate to the app directory
             APP_PATH="${{ secrets.SERVER_PATH }}"
@@ -447,3 +452,32 @@ jobs:
             else
               echo "Existing backup artifacts found. Skipping initial seed backup."
             fi
+
+      # Actions logs require login to view, but workflow annotations are
+      # readable through the public API. On failure, pull the tail of the
+      # deploy log from the server and publish it as an ::error:: annotation
+      # so the root cause is visible without opening the log viewer.
+      - name: Report failure details
+        if: failure()
+        env:
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          DETAIL=$(ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o ConnectTimeout=15 -p 22 "$SSH_USER@$SSH_HOST" '
+            echo "--- tail of /tmp/deploy-last.log ---"
+            tail -c 2500 /tmp/deploy-last.log 2>/dev/null || echo "(no deploy log found)"
+            echo "--- server state ---"
+            ls -ld /home/reathyze/chata 2>&1 || true
+            df -h /tmp | tail -n 1
+            df -h / | tail -n 1
+            free -m | head -n 2
+          ' 2>&1) || DETAIL="ssh for failure report failed: $DETAIL"
+          echo "$DETAIL"
+          DETAIL="${DETAIL//'%'/%25}"
+          DETAIL="${DETAIL//$'\n'/%0A}"
+          DETAIL="${DETAIL//$'\r'/%0D}"
+          echo "::error title=Deploy failure detail::$DETAIL"
