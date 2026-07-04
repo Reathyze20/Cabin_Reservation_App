@@ -169,14 +169,24 @@ jobs:
             mkdir -p "$RELEASE_DIR"
             tar -xzf "$RELEASE_BUNDLE" -C "$RELEASE_DIR"
 
+            # Remove leftover *.old.* dirs from previous (possibly failed) deploys
+            # BEFORE rsync --delete runs — unanchored excludes would otherwise
+            # protect nested dirs inside them and rsync fails with code 23.
+            rm -rf "$APP_PATH"/node_modules.old.* \
+                   "$APP_PATH"/frontend-v2/node_modules.old.* \
+                   "$APP_PATH"/dist.old.* \
+                   "$APP_PATH"/src/generated/prisma.old.* 2>/dev/null || true
+
             if command -v rsync >/dev/null 2>&1; then
+              # Excludes are anchored to the transfer root (leading /) so they
+              # only match the top-level dirs, not e.g. dist/ inside a package.
               rsync -a --delete \
-                --exclude 'data' \
-                --exclude '.env' \
-                --exclude 'node_modules' \
-                --exclude 'frontend-v2/node_modules' \
-                --exclude 'dist' \
-                --exclude 'src/generated/prisma' \
+                --exclude '/data' \
+                --exclude '/.env' \
+                --exclude '/node_modules' \
+                --exclude '/frontend-v2/node_modules' \
+                --exclude '/dist' \
+                --exclude '/src/generated' \
                 "$RELEASE_DIR"/ "$APP_PATH"/
             else
               echo "WARNING: rsync not found. Falling back to archive overlay without delete semantics."
