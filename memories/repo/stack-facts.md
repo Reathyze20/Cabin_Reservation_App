@@ -13,4 +13,5 @@ Scope: canonical short stack facts for AI guidance
 - Dev startup: root `npm run dev` starts backend and frontend together.
 - Frontend dev proxy expects backend on `http://localhost:3000`.
 - Production deploy uses GitHub Actions SSH deploy, PM2, and `prisma migrate deploy`.
+- Family production (chataceskestredohori.cz) deploys only from branch `rodina-stable` (its own `deploy.yml`); `main` is multi-family development and targets staging (staging.kdynachatu.cz). See `docs/plans/SEP-1.md`.
 - Production server Node/PM2 tooling lives under `/home/reathyze/.nvm`; server-side helper scripts must source NVM before calling `node`, `npm`, or `pm2`.
