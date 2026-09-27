@@ -1,8 +1,10 @@
 name: Deploy to Production
 
+# Family production (kdynachatu.cz) deploys only from `rodina-stable`.
+# `main` is multi-family development and must never reach production (docs/plans/SEP-1.md).
 on:
   push:
-    branches: [main]
+    branches: [rodina-stable]
 
 permissions:
   contents: read
@@ -13,6 +15,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Refuse to deploy anything but rodina-stable
+        if: github.ref != 'refs/heads/rodina-stable'
+        run: |
+          echo "::error::Production deploy is allowed only from rodina-stable (got ${{ github.ref }})."
+          exit 1
+
       - name: Checkout repository
         uses: actions/checkout@v5
 
