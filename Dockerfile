@@ -5,7 +5,7 @@
 # ==============================================================================
 
 # ── Stage 1: Build ────────────────────────────────────────────────────────────
-FROM node:20-slim AS builder
+FROM node:26-slim AS builder
 
 # sharp & bcrypt need native build tools + OpenSSL for Prisma
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -38,7 +38,7 @@ COPY src/ src/
 RUN npm run build
 
 # ── Stage 2: Production ──────────────────────────────────────────────────────
-FROM node:20-slim AS production
+FROM node:26-slim AS production
 
 # sharp needs libvips at runtime, bcrypt needs libc
 RUN apt-get update && apt-get install -y --no-install-recommends \
