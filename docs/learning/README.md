@@ -81,7 +81,7 @@ Professional guides for learning API testing and browser automation with this ap
 
 ### Test Credentials
 - **Username:** `admin`
-- **Password:** `tajneheslo123`
+- **Password:** `LEARNING_ADMIN_PASSWORD` from `.env`
 - **Create account:** `npm run create-learning-admin`
 
 ### Key Commands

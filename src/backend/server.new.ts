@@ -3,13 +3,13 @@ import http from "http";
 import cors from "cors";
 import helmet from "helmet";
 import compression from "compression";
-import rateLimit from "express-rate-limit";
+import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import swaggerUi from "swagger-ui-express";
 import path from "path";
 import fs from "fs";
 import { v4 as uuidv4 } from "uuid";
 import cron from "node-cron";
-import { ENABLE_API_DOCS, PORT, UPLOADS_PATH } from "../config/config";
+import { CORS_ALLOWED_ORIGINS, ENABLE_API_DOCS, PORT, UPLOADS_PATH } from "../config/config";
 import prisma from "../utils/prisma";
 import logger from "../utils/logger";
 import { requestContext } from "../utils/asyncContext";
@@ -57,10 +57,29 @@ initSocketServer(server);
 app.use(compression());
 
 // Security headers
+// CSP runs in report-only mode first so violations show up in the browser console
+// without breaking the SPA; switch reportOnly off once no violations are reported.
 app.use(
   helmet({
-    contentSecurityPolicy: false, // Disable for now (can be configured later)
+    contentSecurityPolicy: {
+      reportOnly: true,
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
+        imgSrc: ["'self'", "data:", "blob:"],
+        connectSrc: ["'self'", "ws:", "wss:", "https://api.open-meteo.com", "https://geocoding-api.open-meteo.com"],
+        workerSrc: ["'self'", "blob:"],
+        manifestSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        frameAncestors: ["'none'"],
+        baseUri: ["'self'"],
+        formAction: ["'self'"],
+      },
+    },
     crossOriginEmbedderPolicy: false,
+    referrerPolicy: { policy: "strict-origin-when-cross-origin" },
   })
 );
 
@@ -83,21 +102,33 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Brute-force protection for login: failed attempts per IP + username.
+// Successful logins do not count, so a legitimate user is not locked out.
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { message: "Příliš mnoho neúspěšných pokusů o přihlášení. Zkuste to prosím za 15 minut." },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
+  keyGenerator: (req) => {
+    const username = typeof req.body?.username === "string" ? req.body.username.trim().toLowerCase() : "";
+    return `${ipKeyGenerator(req.ip ?? "")}:${username}`;
+  },
+});
+
 // Body parser (10mb for photo uploads via multer, reduced from 50mb)
 app.use(express.json({ limit: "10mb" }));
 
 // Trust proxy (for Docker / reverse proxy — correct IP in rate limiter & logs)
 app.set("trust proxy", 1);
 
-// CORS — in production allow same origin, in dev allow all
-if (isProd) {
-  app.use(cors({
-    origin: true, // Reflect the request origin (allows same-origin)
-    credentials: true, // Allow credentials (cookies, authorization headers)
-  }));
-} else {
-  app.use(cors());
-}
+// CORS — only the configured frontend origin(s) are allowed (FRONTEND_URL + optional
+// CORS_ORIGINS). In dev FRONTEND_URL defaults to the Vite dev server, which also proxies /api.
+app.use(cors({
+  origin: CORS_ALLOWED_ORIGINS,
+  credentials: true,
+}));
 
 // Request ID & Context middleware
 app.use((req, res, next) => {
@@ -201,7 +232,7 @@ if (ENABLE_API_DOCS) {
 app.use("/api", apiLimiter);
 
 // Auth routes (strict rate limiter on public auth/recovery endpoints)
-app.use("/api/login", authLimiter);
+app.use("/api/login", authLimiter, loginLimiter);
 app.use("/api/register", authLimiter);
 app.use("/api/forgot-password", authLimiter);
 app.use("/api/reset-password", authLimiter);

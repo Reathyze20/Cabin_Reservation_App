@@ -10,7 +10,7 @@ import { validate } from "../../validators/validate";
 import { superadminCreateUserSchema } from "../../validators/schemas";
 import prisma from "../../utils/prisma";
 import logger from "../../utils/logger";
-import bcrypt from "bcrypt";
+import { hashPassword } from "../../utils/password";
 import crypto from "crypto";
 import { sendSuperadminOnboardingEmail } from "../../utils/email";
 
@@ -62,7 +62,7 @@ router.post("/users", protect, requireSuperAdmin, validate(superadminCreateUserS
 
     // Vygeneruj dočasné heslo
     const tempPassword = crypto.randomBytes(8).toString("hex"); // 16 znaků
-    const passwordHash = await bcrypt.hash(tempPassword, 10);
+    const passwordHash = await hashPassword(tempPassword);
 
     // Vygeneruj verifikační token
     const verificationToken = crypto.randomBytes(32).toString("hex");

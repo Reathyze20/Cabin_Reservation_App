@@ -37,7 +37,7 @@ You should see the landing page or login screen.
 
 **Why you need this:**
 - For learning Postman and Playwright, you need a working account
-- Pre-filled examples in the documentation use `admin` / `tajneheslo123`
+- Examples in the documentation use username `admin`; the password is whatever you set as `LEARNING_ADMIN_PASSWORD` in `.env`
 - This account **is not** in the database by default — you must create it
 
 **How to do it:**
@@ -49,8 +49,8 @@ npm run create-learning-admin
 ```
 
 **What happens:**
-- Script creates or updates user `admin` with password `tajneheslo123`
-- You'll see: `Admin reset successfully!`
+- Script creates or updates user `admin` with the password from `LEARNING_ADMIN_PASSWORD` in `.env` (required, min 12 chars)
+- You'll see: `Learning admin ready!`
 
 **✅ Done!** You now have a functional admin for testing.
 
@@ -61,7 +61,7 @@ npm run create-learning-admin
 1. In the browser (http://localhost:5173), click **Log In**
 2. Enter:
    - Username: `admin`
-   - Password: `tajneheslo123`
+   - Password: your `LEARNING_ADMIN_PASSWORD` from `.env`
 3. Click **Log In**
 
 **What happens:**
@@ -124,7 +124,7 @@ See: **[../SPRINT-0-SMOKE-TEST.md](../SPRINT-0-SMOKE-TEST.md)** for manual test 
 ### "Admin login fails" / "Invalid credentials"
 **Solution:**
 - Verify you ran the create-learning-admin script (Step 3)
-- Verify username and password are exactly: `admin` / `tajneheslo123` (no spaces)
+- Verify the username is `admin` and the password matches `LEARNING_ADMIN_PASSWORD` in `.env` (no spaces)
 - Try running the script again
 
 ### "Frontend shows blank page"

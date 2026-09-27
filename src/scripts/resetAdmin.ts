@@ -1,6 +1,6 @@
 import { PrismaClient } from "../generated/prisma/client.js";
 import { PrismaPg } from "@prisma/adapter-pg";
-import bcrypt from "bcrypt";
+import { hashPassword } from "../utils/password";
 import dotenv from "dotenv";
 import crypto from "crypto";
 
@@ -11,8 +11,11 @@ const prisma = new PrismaClient({ adapter });
 
 async function reset() {
     const username = process.env.ADMIN_USERNAME || "AdminUser";
-    const newPassword = process.env.ADMIN_PASSWORD || "admin123";
-    const passwordHash = await bcrypt.hash(newPassword, 10);
+    const newPassword = process.env.ADMIN_PASSWORD;
+    if (!newPassword || newPassword.length < 12) {
+        throw new Error("Set ADMIN_PASSWORD (min 12 characters) in the environment before running resetAdmin.");
+    }
+    const passwordHash = await hashPassword(newPassword);
 
     // Ensure admin belongs to a cabin (required by requireCabin middleware)
     let cabin = await prisma.cabin.findFirst({
@@ -31,7 +34,7 @@ async function reset() {
         console.log(`Created fallback cabin: ${cabin.name} (${cabin.id})`);
     }
 
-    console.log(`Setting password for ${username} to ${newPassword}...`);
+    console.log("Setting new admin password...");
 
     const user = await prisma.user.upsert({
         where: { username },
@@ -59,5 +62,8 @@ async function reset() {
 }
 
 reset()
-    .catch(console.error)
+    .catch((error) => {
+        console.error(error);
+        process.exitCode = 1;
+    })
     .finally(() => prisma.$disconnect());

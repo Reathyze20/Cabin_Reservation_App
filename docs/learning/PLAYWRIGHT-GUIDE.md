@@ -62,6 +62,8 @@ npx playwright install
 
 ### Step 3: Create Your First Test
 
+> The examples read the admin password from `E2E_ADMIN_PASSWORD` — set it to your `LEARNING_ADMIN_PASSWORD`. Never hard-code passwords in tests.
+
 Create a file `example.spec.ts`:
 
 ```typescript
@@ -76,7 +78,7 @@ test('basic test - open and login', async ({ page }) => {
   
   // Fill in login form
   await page.getByTestId('login-username-input').fill('admin');
-  await page.getByTestId('login-password-input').fill('tajneheslo123');
+  await page.getByTestId('login-password-input').fill(process.env.E2E_ADMIN_PASSWORD!);
   
   // Click login button
   await page.getByTestId('login-submit-button').click();
@@ -154,7 +156,7 @@ await page.getByRole('textbox', { name: 'Email' }).fill('test@example.com');
 #### 3. `getByLabel` — Recommended for Form Fields
 ```typescript
 await page.getByLabel('Username').fill('admin');
-await page.getByLabel('Password').fill('tajneheslo123');
+await page.getByLabel('Password').fill(process.env.E2E_ADMIN_PASSWORD!);
 ```
 
 **Why use this:** Works with proper form labels, accessible.
@@ -251,7 +253,7 @@ import { Page, expect } from '@playwright/test';
 export async function loginAsAdmin(page: Page) {
   await page.goto('/login');
   await page.getByTestId('login-username-input').fill('admin');
-  await page.getByTestId('login-password-input').fill('tajneheslo123');
+  await page.getByTestId('login-password-input').fill(process.env.E2E_ADMIN_PASSWORD!);
   await page.getByTestId('login-submit-button').click();
   await expect(page.getByTestId('dashboard-page')).toBeVisible();
 }
@@ -337,7 +339,7 @@ test.describe('Authentication', () => {
     await page.goto('/login');
     
     await page.getByTestId('login-username-input').fill('admin');
-    await page.getByTestId('login-password-input').fill('tajneheslo123');
+    await page.getByTestId('login-password-input').fill(process.env.E2E_ADMIN_PASSWORD!);
     await page.getByTestId('login-submit-button').click();
     
     // Should redirect to dashboard
@@ -446,7 +448,7 @@ export const test = base.extend({
   authenticatedPage: async ({ page }, use) => {
     await page.goto('/login');
     await page.getByTestId('login-username-input').fill('admin');
-    await page.getByTestId('login-password-input').fill('tajneheslo123');
+    await page.getByTestId('login-password-input').fill(process.env.E2E_ADMIN_PASSWORD!);
     await page.getByTestId('login-submit-button').click();
     await page.waitForURL(/\/dashboard/);
     
@@ -474,7 +476,7 @@ import { test as setup } from '@playwright/test';
 setup('authenticate', async ({ page }) => {
   await page.goto('/login');
   await page.getByTestId('login-username-input').fill('admin');
-  await page.getByTestId('login-password-input').fill('tajneheslo123');
+  await page.getByTestId('login-password-input').fill(process.env.E2E_ADMIN_PASSWORD!);
   await page.getByTestId('login-submit-button').click();
   await page.waitForURL(/\/dashboard/);
   

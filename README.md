@@ -44,12 +44,16 @@ cd <nazev_slozky>
 npm install
 ```
 
-## Konfigurace (volitelné)
-V kořenovém adresáři vytvořte soubor `.env`:
-```env
-JWT_SECRET=vas_super_tajny_klic_ktery_nikdo_neuhodne
+## Konfigurace (povinné)
+V kořenovém adresáři vytvořte soubor `.env` podle `.env.example`:
+```bash
+cp .env.example .env
+# vygenerujte náhodný JWT klíč a vložte ho do .env jako JWT_SECRET
+node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
 ```
-Pokud .env chybí, použije se méně bezpečný výchozí klíč.
+Bez `JWT_SECRET` (nebo s hodnotou z příkladu) aplikace **nenastartuje** — žádný výchozí klíč neexistuje.
+
+V produkci povoluje CORS jen `FRONTEND_URL`; další originy lze přidat přes `CORS_ORIGINS` (čárkami oddělený seznam).
 
 ## Spuštění
 Aplikace se spouští zvlášť pro backend a frontend.
@@ -100,10 +104,11 @@ npm run docker:logs      # zobrazí logy aplikace
    npm run dev
    ```
 
-2. **Vytvoř testovacího admina:**
+2. **Vytvoř lokálního admina (jen pro vývoj):**
    ```bash
    npm run create-learning-admin
    ```
+   Předtím nastavte v `.env` vlastní `LEARNING_ADMIN_PASSWORD` (min. 12 znaků). Skript heslo nikam nevypisuje.
 
 3. **Otevři browser:**
    - Frontend: http://localhost:5173
@@ -111,7 +116,7 @@ npm run docker:logs      # zobrazí logy aplikace
 
 4. **Přihlaš se:**
    - Username: `admin`
-   - Password: `tajneheslo123`
+   - Password: hodnota `LEARNING_ADMIN_PASSWORD` z `.env`
 
 ## Učení a testování
 
