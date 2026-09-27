@@ -1,0 +1,109 @@
+name: Deploy to Staging
+
+# Staging (staging.kdynachatu.cz) is deployed only from `main`.
+# Family production lives on `rodina-stable` and has its own deploy.yml there.
+# Disabled until the server is prepared (SEP-1 B3): set repository variable
+# STAGING_ENABLED=true (Settings → Secrets and variables → Actions → Variables).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+jobs:
+  preflight:
+    name: Staging Preflight
+    if: vars.STAGING_ENABLED == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Refuse to deploy anything but main
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::Staging deploy is allowed only from main (got ${{ github.ref }})."
+          exit 1
+
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            frontend-v2/package-lock.json
+
+      - name: Install backend dependencies
+        run: npm ci
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend-v2
+
+      - name: Run deploy preflight
+        run: npm run preflight:deploy
+
+  deploy:
+    name: Deploy to Staging Server
+    runs-on: ubuntu-latest
+    needs: preflight
+    environment:
+      name: staging
+      url: https://staging.kdynachatu.cz
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Package release bundle
+        run: |
+          tar \
+            --exclude=.git \
+            --exclude=.github \
+            --exclude=.env \
+            --exclude=node_modules \
+            --exclude=frontend-v2/node_modules \
+            --exclude=dist \
+            --exclude=data \
+            --exclude=release.tgz \
+            --exclude=src/generated/prisma \
+            -czf release.tgz . || [ $? -eq 1 ]
+
+      - name: Upload release bundle to server
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          source: release.tgz
+          target: /tmp/chata-staging-upload/
+
+      - name: Run guarded deploy script on server
+        uses: appleboy/ssh-action@master
+        env:
+          DEPLOY_TARGET: staging
+          APP_PATH: /home/reathyze/chata-staging
+          PM2_NAME: chata-staging
+          APP_PORT: '3100'
+          SOURCE_REF: ${{ github.ref }}
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          envs: DEPLOY_TARGET,APP_PATH,PM2_NAME,APP_PORT,SOURCE_REF
+          script: |
+            set -e
+            UPLOAD=/tmp/chata-staging-upload
+            # Run the script from the uploaded bundle, not from the server copy.
+            tar -xzOf "$UPLOAD/release.tgz" ./scripts/deploy/remote-deploy.sh > "$UPLOAD/remote-deploy.sh"
+            RELEASE_BUNDLE="$UPLOAD/release.tgz" bash "$UPLOAD/remote-deploy.sh"

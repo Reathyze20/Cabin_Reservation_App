@@ -130,7 +130,7 @@ Nový soubor `nginx-staging.conf`: `server_name staging.kdynachatu.cz`, proxy na
 
 PR 1–4 jdou jen na `main`, produkce se jich nedotkne. PR 5 až po B3 a po ověření stagingu.
 
-**Pořadí s infrastrukturou (B3, 👤):** DNS + certifikát + staging DB a role + staging `.env` + htpasswd musí existovat před prvním během `deploy-staging.yml`. Do té doby lze PR 2 mergnout, ale workflow selže na kontrole `.env` (bezpečně, nic nezmění).
+**Pořadí s infrastrukturou (B3, 👤):** DNS + certifikát + staging DB a role + staging `.env` + htpasswd musí existovat před prvním během `deploy-staging.yml`. Workflow je proto vypnutý, dokud se nenastaví proměnná repozitáře `STAGING_ENABLED=true`. Postup: [`SEP-1-staging-setup.md`](SEP-1-staging-setup.md).
 
 ## 6. Rozhodnutí (27. 9. 2026)
 
