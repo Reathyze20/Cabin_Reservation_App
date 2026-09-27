@@ -30,7 +30,7 @@ const block = (reason) => {
 }
 
 const base = path.posix.basename(rel)
-if (base.startsWith('.env') && base !== '.env.example') {
+if (base.startsWith('.env') && !base.endsWith('.example')) {
   block('Secrets files must never be edited by the agent.')
 }
 if (rel.startsWith('.github/')) {

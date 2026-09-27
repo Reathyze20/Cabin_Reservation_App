@@ -34,9 +34,9 @@ The user has RS and relies on this app for financial independence. **Downtime is
 ## Deployment Flow
 
 ```
-git push main
+merge PR into rodina-stable        (family production; main deploys only to staging, see docs/plans/SEP-1.md)
     ↓
-GitHub Actions (.github/workflows/deploy.yml)
+GitHub Actions (.github/workflows/deploy.yml on rodina-stable)
     ↓
 SSH to VPS (appleboy/ssh-action)
     ↓
