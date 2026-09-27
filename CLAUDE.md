@@ -18,7 +18,7 @@ Proces a pravidla: @docs/SDLC.md · Stack (kanonický zdroj): @memories/repo/sta
 
 ## Větve a prostředí (docs/plans/SEP-1.md)
 - `main` = vývoj pro víc rodin. Do rodinné produkce se nenasazuje.
-- `rodina-stable` = rodinná produkce (kdynachatu.cz), push do ní spouští produkční deploy. Nikdy do ní nepřenášej nové funkce, jen opravy výslovně zadané jako hotfix. Každá změna přes PR s cílem `rodina-stable`.
+- `rodina-stable` = rodinná produkce (chataceskestredohori.cz), push do ní spouští produkční deploy. Nikdy do ní nepřenášej nové funkce, jen opravy výslovně zadané jako hotfix. Každá změna přes PR s cílem `rodina-stable`.
 - Nikdy nepracuj s produkční databází ani produkčními soubory. Staging používá jen fiktivní data.
 - Hotfix: oprav nejdřív na `main` (pokud se kód týká i main), pak cherry-pick do větve `hotfix/<popis>` z `rodina-stable` a PR do `rodina-stable`.
 
