@@ -3,7 +3,7 @@ import { protect } from "../../middleware/authMiddleware";
 import { requireCabin } from "../../middleware/cabinMiddleware";
 import { validate } from "../../validators/validate";
 import { createUserSchema, updateProfileSchema, changeMyPasswordSchema, changeRoleSchema, changePasswordSchema, adminUpdateUserSchema } from "../../validators/schemas";
-import bcrypt from "bcrypt";
+import { hashPassword, verifyPassword } from "../../utils/password";
 import prisma from "../../utils/prisma";
 import logger from "../../utils/logger";
 
@@ -58,7 +58,7 @@ router.post("/", protect, requireCabin, validate(createUserSchema), async (req: 
       return res.status(400).json({ message: "Uživatel již existuje." });
     }
 
-    const passwordHash = await bcrypt.hash(password, 10);
+    const passwordHash = await hashPassword(password);
     const randomColor = "#" + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
     const newUser = await prisma.user.create({
       data: {
@@ -139,14 +139,14 @@ router.patch("/me/password", protect, validate(changeMyPasswordSchema), async (r
 
   try {
     const user = await prisma.user.findUnique({ where: { id: req.user.userId } });
-    if (!user || !(await bcrypt.compare(oldPassword, user.passwordHash))) {
+    if (!user || !(await verifyPassword(oldPassword, user.passwordHash))) {
       return res.status(400).json({ message: "Nesprávné původní heslo." });
     }
 
     await prisma.user.update({
       where: { id: req.user.userId },
       data: {
-        passwordHash: await bcrypt.hash(newPassword, 10),
+        passwordHash: await hashPassword(newPassword),
         passwordResetToken: null,
         passwordResetExpiresAt: null,
       }
@@ -230,7 +230,7 @@ router.put("/:id/password", protect, requireCabin, validate(changePasswordSchema
     await prisma.user.update({
       where: { id },
       data: {
-        passwordHash: await bcrypt.hash(password, 10),
+        passwordHash: await hashPassword(password),
         passwordResetToken: null,
         passwordResetExpiresAt: null,
       },
@@ -263,7 +263,7 @@ router.patch("/:id", protect, requireCabin, validate(adminUpdateUserSchema), asy
     const data: any = {};
     if (role) data.role = role;
     if (password && password.length >= 8) {
-      data.passwordHash = await bcrypt.hash(password, 10);
+      data.passwordHash = await hashPassword(password);
       data.passwordResetToken = null;
       data.passwordResetExpiresAt = null;
     }
@@ -474,7 +474,7 @@ router.delete("/me", protect, async (req: Request, res: Response) => {
     if (!user) return res.status(404).json({ message: "Uživatel nenalezen." });
 
     // Verify password
-    const isValid = await bcrypt.compare(password, user.passwordHash);
+    const isValid = await verifyPassword(password, user.passwordHash);
     if (!isValid) {
       return res.status(400).json({ message: "Nesprávné heslo." });
     }

@@ -104,7 +104,7 @@ const schemas: Record<string, JsonSchema> = {
     required: ["username", "password"],
     properties: {
       username: { type: "string", example: "admin" },
-      password: { type: "string", format: "password", example: "tajneheslo123" },
+      password: { type: "string", format: "password", example: "<vase-heslo>" },
     },
   },
   LoginResponse: {
@@ -130,7 +130,7 @@ const schemas: Record<string, JsonSchema> = {
       weatherLocation: { type: "string", example: "Trebenice" },
       username: { type: "string", example: "novyadmin" },
       email: { type: "string", format: "email", example: "admin@example.cz" },
-      password: { type: "string", format: "password", example: "tajneheslo123" },
+      password: { type: "string", format: "password", example: "<vase-heslo>" },
       color: { type: "string", nullable: true, example: "#FFB300" },
     },
   },

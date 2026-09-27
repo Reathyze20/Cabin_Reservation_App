@@ -2,7 +2,7 @@
    routes/invites.ts — Invite link management (magic links to join a cabin)
    ============================================================================ */
 import { Router, Request, Response } from "express";
-import bcrypt from "bcrypt";
+import { hashPassword } from "../../utils/password";
 import jwt from "jsonwebtoken";
 import { FRONTEND_URL, JWT_SECRET } from "../../config/config";
 import prisma from "../../utils/prisma";
@@ -256,7 +256,7 @@ router.post("/accept/:token", validate(acceptInviteSchema), async (req: Request,
     }
 
     // Create user + increment usedCount atomically
-    const passwordHash = await bcrypt.hash(password, 10);
+    const passwordHash = await hashPassword(password);
 
     // Use provided color/icon or random fallback
     const userColor = (color && typeof color === "string" && /^#[0-9a-fA-F]{6}$/.test(color)) ? color : randomColor();

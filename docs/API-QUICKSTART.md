@@ -194,7 +194,7 @@ Body:
 ```json
 {
   "username": "admin",
-  "password": "tajneheslo123"
+  "password": "<heslo-z-create-learning-admin>"
 }
 ```
 

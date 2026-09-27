@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import crypto from "crypto";
-import bcrypt from "bcrypt";
+import { hashPassword, verifyPassword } from "../../utils/password";
 import jwt from "jsonwebtoken";
 import { JWT_SECRET } from "../../config/config";
 import prisma from "../../utils/prisma";
@@ -70,12 +70,10 @@ router.post("/login", validate(loginSchema), async (req: Request, res: Response)
       where: { username: { equals: username, mode: "insensitive" } },
     });
 
-    if (!user) {
-      return res.status(401).json({ message: "Nesprávné uživatelské jméno." });
-    }
-
-    if (!(await bcrypt.compare(password, user.passwordHash))) {
-      return res.status(401).json({ message: "Nesprávné heslo." });
+    // Same response (and timing) for unknown user and wrong password — no user enumeration.
+    const passwordOk = await verifyPassword(password, user?.passwordHash);
+    if (!user || !passwordOk) {
+      return res.status(401).json({ message: "Nesprávné uživatelské jméno nebo heslo." });
     }
 
     if (user.isBanned) {
@@ -194,7 +192,7 @@ router.post("/register", async (req: Request, res: Response) => {
     const uniqueSubdomain = await ensureUniqueSubdomain(baseSubdomain);
 
     // ── Prepare auth data ──────────────────────────────────────────────
-    const passwordHash = await bcrypt.hash(password, 10);
+    const passwordHash = await hashPassword(password);
 
     // First user in the entire system gets auto-verified admin
     const globalUserCount = await prisma.user.count();
@@ -455,7 +453,7 @@ router.post("/reset-password", validate(resetPasswordSchema), async (req: Reques
     await prisma.user.update({
       where: { id: user.id },
       data: {
-        passwordHash: await bcrypt.hash(password, 10),
+        passwordHash: await hashPassword(password),
         passwordResetToken: null,
         passwordResetExpiresAt: null,
       },

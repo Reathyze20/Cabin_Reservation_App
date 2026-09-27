@@ -6,3 +6,20 @@
 /data/uploads
 /data/backups
 /src/generated
+# Logs
+*.log
+logs/
+
+# TypeScript build artifacts
+*.tsbuildinfo
+
+# Local env files (keep .env.example tracked)
+.env.*
+!.env.example
+
+# Local scratch / debug scripts
+/test-db.ts
+
+# OS / editor
+.DS_Store
+Thumbs.db

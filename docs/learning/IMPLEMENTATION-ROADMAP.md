@@ -41,14 +41,13 @@
 **Status:** ✅ **RESOLVED**
 
 **What was the problem:**
-- Postman collection used `admin` / `tajneheslo123`
-- Playwright examples used `admin` / `tajneheslo123`
+- Postman collection and Playwright examples used a hard-coded admin password
 - Archive seed had `AdminUser` with unknown password hash
-- Reset script defaulted to `AdminUser` / `admin123`
+- Reset script defaulted to a hard-coded password (now requires `ADMIN_PASSWORD`)
 
 **Solution implemented:**
 - ✅ Created `npm run create-learning-admin` script
-- ✅ Script creates `admin` / `tajneheslo123` consistently
+- ✅ Script creates `admin` with a password from `.env` or a generated one (no hard-coded credentials)
 - ✅ Updated [GETTING-STARTED.md](GETTING-STARTED.md) with clear instructions
 - ✅ All guides now reference the same credentials
 
@@ -127,7 +126,7 @@
 **Ideal solution:**
 - [ ] Create `src/scripts/seedE2EData.ts`:
   - One cabin
-  - Admin `admin` / `tajneheslo123`
+  - Admin `admin` (password from env)
   - Regular member `member` / `heslo123`
   - Guest `guest` / `heslo123`
   - 1-2 sample reservations

@@ -5,7 +5,7 @@
 import { Server as HttpServer } from "http";
 import { Server, Socket } from "socket.io";
 import jwt from "jsonwebtoken";
-import { JWT_SECRET } from "../config/config";
+import { CORS_ALLOWED_ORIGINS, JWT_SECRET } from "../config/config";
 import logger from "./logger";
 
 let io: Server | null = null;
@@ -24,7 +24,7 @@ interface SocketUser {
 export function initSocketServer(httpServer: HttpServer): Server {
   io = new Server(httpServer, {
     cors: {
-      origin: "*",
+      origin: process.env.NODE_ENV === "production" ? CORS_ALLOWED_ORIGINS : "*",
       methods: ["GET", "POST"],
     },
     path: "/ws",

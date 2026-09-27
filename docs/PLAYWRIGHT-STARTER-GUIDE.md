@@ -240,7 +240,7 @@ Typicky tvar:
 ```ts
 await page.goto('/login')
 await page.getByTestId('login-username-input').fill('admin')
-await page.getByTestId('login-password-input').fill('tajneheslo123')
+await page.getByTestId('login-password-input').fill(process.env.E2E_ADMIN_PASSWORD!)
 await page.getByTestId('login-submit-button').click()
 
 await expect(page.getByTestId('dashboard-page')).toBeVisible()
