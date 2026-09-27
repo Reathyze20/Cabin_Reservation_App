@@ -14,7 +14,13 @@ Proces a pravidla: @docs/SDLC.md · Stack (kanonický zdroj): @memories/repo/sta
 - Nikdy neupravuj existující soubory v `prisma/migrations/`. Migrace jen aditivní (SDLC §6).
 - Neměň `.github/`, `.claude/`, auth ani middleware bez výslovného zadání.
 - Nejjednodušší řešení splňující akceptační kritéria. Žádné nevyžádané refaktory ani nové závislosti bez zdůvodnění v PR.
-- Nikdy push do `main` (push do `main` = produkční deploy). Jeden úkol = jedna větev = jeden PR do ~400 řádků.
+- Nikdy push do `main` ani do `rodina-stable`. Jeden úkol = jedna větev = jeden PR do ~400 řádků.
+
+## Větve a prostředí (docs/plans/SEP-1.md)
+- `main` = vývoj pro víc rodin. Do rodinné produkce se nenasazuje.
+- `rodina-stable` = rodinná produkce (kdynachatu.cz), push do ní spouští produkční deploy. Nikdy do ní nepřenášej nové funkce, jen opravy výslovně zadané jako hotfix. Každá změna přes PR s cílem `rodina-stable`.
+- Nikdy nepracuj s produkční databází ani produkčními soubory. Staging používá jen fiktivní data.
+- Hotfix: oprav nejdřív na `main` (pokud se kód týká i main), pak cherry-pick do větve `hotfix/<popis>` z `rodina-stable` a PR do `rodina-stable`.
 
 ## Workflow
 - U všeho delšího než jednověté změny: spec v `docs/specs/` (šablona `_TEMPLATE.md`), pak plán, pak kód.
