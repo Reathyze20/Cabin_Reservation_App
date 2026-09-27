@@ -1,0 +1,32 @@
+name: Guardrails
+
+# Separate from CI so that adding/removing a label re-runs only this cheap check.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, labeled, unlabeled]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: guardrails-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  guardrails:
+    name: guardrails
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Check PR against SDLC guardrails
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+        run: node .github/scripts/guardrails.mjs
