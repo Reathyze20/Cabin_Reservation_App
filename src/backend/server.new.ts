@@ -123,16 +123,12 @@ app.use(express.json({ limit: "10mb" }));
 // Trust proxy (for Docker / reverse proxy — correct IP in rate limiter & logs)
 app.set("trust proxy", 1);
 
-// CORS — in production only the configured frontend origin(s) are allowed
-// (FRONTEND_URL + optional CORS_ORIGINS); in dev allow all.
-if (isProd) {
-  app.use(cors({
-    origin: CORS_ALLOWED_ORIGINS,
-    credentials: true,
-  }));
-} else {
-  app.use(cors());
-}
+// CORS — only the configured frontend origin(s) are allowed (FRONTEND_URL + optional
+// CORS_ORIGINS). In dev FRONTEND_URL defaults to the Vite dev server, which also proxies /api.
+app.use(cors({
+  origin: CORS_ALLOWED_ORIGINS,
+  credentials: true,
+}));
 
 // Request ID & Context middleware
 app.use((req, res, next) => {

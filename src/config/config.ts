@@ -94,19 +94,25 @@ if (process.env.NODE_ENV === "production") {
 
 // CORS — explicit allowlist of browser origins. FRONTEND_URL is always allowed;
 // extra origins can be added as a comma-separated CORS_ORIGINS list.
-function toOrigin(value: string): string | null {
-  try {
-    return new URL(value.trim()).origin;
-  } catch {
-    return null;
+// Only http(s) origins are accepted (a non-http URL would yield the permissive "null" origin).
+function buildCorsAllowlist(values: string[]): string[] {
+  const origins: string[] = [];
+  for (const value of values) {
+    const trimmed = value.trim();
+    if (!trimmed) continue;
+    try {
+      const url = new URL(trimmed);
+      if ((url.protocol === "http:" || url.protocol === "https:") && !origins.includes(url.origin)) {
+        origins.push(url.origin);
+      }
+    } catch {
+      logger.warn("CONFIG", "Ignoring invalid CORS origin", { value: trimmed });
+    }
   }
+  return origins;
 }
 
-export const CORS_ALLOWED_ORIGINS: string[] = Array.from(
-  new Set(
-    [FRONTEND_URL, ...(process.env.CORS_ORIGINS || "").split(",")]
-      .filter((value) => value.trim())
-      .map(toOrigin)
-      .filter((origin): origin is string => origin !== null)
-  )
-);
+export const CORS_ALLOWED_ORIGINS: string[] = buildCorsAllowlist([
+  FRONTEND_URL,
+  ...(process.env.CORS_ORIGINS || "").split(","),
+]);

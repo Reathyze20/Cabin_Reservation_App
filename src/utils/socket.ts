@@ -24,7 +24,7 @@ interface SocketUser {
 export function initSocketServer(httpServer: HttpServer): Server {
   io = new Server(httpServer, {
     cors: {
-      origin: process.env.NODE_ENV === "production" ? CORS_ALLOWED_ORIGINS : "*",
+      origin: CORS_ALLOWED_ORIGINS,
       methods: ["GET", "POST"],
     },
     path: "/ws",

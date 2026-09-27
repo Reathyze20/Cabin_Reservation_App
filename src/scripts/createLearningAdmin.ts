@@ -4,7 +4,7 @@
  *
  * Creates:
  * - Username: LEARNING_ADMIN_USERNAME from .env (default: admin)
- * - Password: LEARNING_ADMIN_PASSWORD from .env, or a random one printed once
+ * - Password: LEARNING_ADMIN_PASSWORD from .env (required, min 12 chars, never logged)
  * - Role: admin
  * - Auto-verified
  *
@@ -28,17 +28,13 @@ async function createLearningAdmin() {
     }
 
     const username = process.env.LEARNING_ADMIN_USERNAME || "admin";
-    const password = process.env.LEARNING_ADMIN_PASSWORD || crypto.randomBytes(12).toString("base64url");
-    if (password.length < 12) {
-        throw new Error("LEARNING_ADMIN_PASSWORD must be at least 12 characters long.");
+    const password = process.env.LEARNING_ADMIN_PASSWORD;
+    if (!password || password.length < 12) {
+        throw new Error("Set LEARNING_ADMIN_PASSWORD (min 12 characters) in .env before running create-learning-admin.");
     }
     const passwordHash = await hashPassword(password);
 
     console.log("🔧 Creating/resetting learning admin account...");
-    console.log(`   Username: ${username}`);
-    if (!process.env.LEARNING_ADMIN_PASSWORD) {
-        console.log(`   Password (generated, shown only now): ${password}`);
-    }
 
     // Ensure admin belongs to a cabin (required by requireCabin middleware)
     let cabin = await prisma.cabin.findFirst({
@@ -89,7 +85,7 @@ async function createLearningAdmin() {
     console.log("");
     console.log("🎯 Now you can:");
     console.log(`   - Login at http://localhost:5173/login`);
-    console.log(`   - Use Postman with username "${username}" and the password above`);
+    console.log("   - Use Postman with LEARNING_ADMIN_USERNAME / LEARNING_ADMIN_PASSWORD from .env");
     console.log(`   - Write Playwright tests with these credentials`);
 }
 

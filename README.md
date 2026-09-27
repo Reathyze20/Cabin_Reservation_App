@@ -108,7 +108,7 @@ npm run docker:logs      # zobrazí logy aplikace
    ```bash
    npm run create-learning-admin
    ```
-   Skript vypíše jednorázově vygenerované heslo (nebo použije `LEARNING_ADMIN_PASSWORD` z `.env`).
+   Předtím nastavte v `.env` vlastní `LEARNING_ADMIN_PASSWORD` (min. 12 znaků). Skript heslo nikam nevypisuje.
 
 3. **Otevři browser:**
    - Frontend: http://localhost:5173
@@ -116,7 +116,7 @@ npm run docker:logs      # zobrazí logy aplikace
 
 4. **Přihlaš se:**
    - Username: `admin`
-   - Password: heslo vypsané v kroku 2
+   - Password: hodnota `LEARNING_ADMIN_PASSWORD` z `.env`
 
 ## Učení a testování
 

@@ -34,7 +34,7 @@ async function reset() {
         console.log(`Created fallback cabin: ${cabin.name} (${cabin.id})`);
     }
 
-    console.log(`Setting new password for ${username}...`);
+    console.log("Setting new admin password...");
 
     const user = await prisma.user.upsert({
         where: { username },

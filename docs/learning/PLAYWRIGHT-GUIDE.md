@@ -62,7 +62,7 @@ npx playwright install
 
 ### Step 3: Create Your First Test
 
-> The examples read the admin password from `E2E_ADMIN_PASSWORD` — set it to the password printed by `npm run create-learning-admin`. Never hard-code passwords in tests.
+> The examples read the admin password from `E2E_ADMIN_PASSWORD` — set it to your `LEARNING_ADMIN_PASSWORD`. Never hard-code passwords in tests.
 
 Create a file `example.spec.ts`:
 
