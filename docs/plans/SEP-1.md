@@ -9,7 +9,7 @@ Navazuje na `docs/PRODUCT-PLAN.md` a `docs/SDLC.md`. Tento úkol má přednost p
 
 ## 1. Cíl
 
-Rodina dál bez přerušení používá kdynachatu.cz, zatímco na `main` probíhá přestavba na verzi pro víc rodin. Žádná změna z `main` se nesmí dostat do rodinné produkce omylem.
+Rodina dál bez přerušení používá chataceskestredohori.cz, zatímco na `main` probíhá přestavba na verzi pro víc rodin. Žádná změna z `main` se nesmí dostat do rodinné produkce omylem.
 
 ## 2. Cílový stav
 
@@ -18,7 +18,7 @@ Rodina dál bez přerušení používá kdynachatu.cz, zatímco na `main` probí
 | Větev | `rodina-stable` | `main` |
 | Verze / tagy | `v1.0-rodina`, pak `v1.0.1-rodina`… | `v0.x` (release-please) |
 | Prostředí | produkce | staging |
-| Doména | `kdynachatu.cz` | `staging.kdynachatu.cz` (nebo jiná subdoména) |
+| Doména | `chataceskestredohori.cz` | `staging.kdynachatu.cz` (produkčně později `kdynachatu.cz`) |
 | Databáze | stávající produkční DB | samostatná DB, jen fiktivní data |
 | Soubory (fotky) | stávající adresář | samostatný adresář |
 | Proces (pm2 / compose) | stávající | samostatný název, port |
@@ -96,7 +96,7 @@ Rodinná verze je veřejně dostupná, proto potřebuje opravy S-1 a S-2 hned.
 
 ### Fáze D – Ověření (den 5)
 
-- [ ] kdynachatu.cz funguje: přihlášení, kalendář, rezervace, chat, fotky (projde rodinný smoke test z `docs/SPRINT-0-SMOKE-TEST.md`),
+- [ ] chataceskestredohori.cz funguje: přihlášení, kalendář, rezervace, chat, fotky (projde rodinný smoke test z `docs/SPRINT-0-SMOKE-TEST.md`),
 - [ ] staging funguje a neobsahuje žádná skutečná rodinná data,
 - [ ] PR s cílem `main` nijak nezmění produkci,
 - [ ] pokus o přímý push do `rodina-stable` je odmítnut,
@@ -123,7 +123,7 @@ Spustit, až jsou hotové M-1 až M-6 (multi-tenancy) a verze na `main` je stabi
 
 - [ ] **E1 🤖 `[PLÁN]` Migrační plán.** Převod produkčních dat do nového schématu jako chata č. 1 (Třebenice) s rodinnými účty a rolemi. Skript musí být opakovatelný a mít kontrolu (počty rezervací, zpráv, fotek, uživatelů před/po).
 - [ ] **E2 👤🤖 Zkouška nanečisto.** Kopii produkčních dat obnovit **do samostatné, uzavřené** databáze (ne na veřejný staging), spustit migraci, porovnat počty a proklikat aplikaci. Opakovat, dokud neproběhne čistě. Kopii pak smazat.
-- [ ] **E3 👤 Přepnutí.** Oznámit rodině krátkou odstávku → záloha → migrace → nasazení verze z `main` na kdynachatu.cz → smoke test.
+- [ ] **E3 👤 Přepnutí.** Oznámit rodině krátkou odstávku → záloha → migrace → nasazení verze z `main` na chataceskestredohori.cz (a `kdynachatu.cz`) → smoke test.
 - [ ] **E4 Návrat zpět (když něco selže):** obnovit zálohu z E3 a znovu nasadit poslední tag `v1.0.x-rodina`. Postup si před přepnutím projít, aby byl hotový za 15 minut.
 - [ ] **E5 Úklid:** po 30 dnech bez problémů archivovat větev `rodina-stable` (tagy zůstanou) a odstranit ji z deploye a pravidel.
 

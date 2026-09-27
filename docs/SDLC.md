@@ -101,7 +101,7 @@ Cílová pyramida:
 
 ## 7. Větve, PR a GitHub nastavení
 
-`main` je vývoj pro víc rodin a do rodinné produkce se nenasazuje. Rodinná produkce (kdynachatu.cz) se nasazuje jen z `rodina-stable`, kam jdou jen opravy (viz [`plans/SEP-1.md`](plans/SEP-1.md)). Větve `feat/…`, `fix/…`, `chore/…`, `docs/…`, případně `claude/…` z cloud sessions. Merge squash.
+`main` je vývoj pro víc rodin a do rodinné produkce se nenasazuje. Rodinná produkce (chataceskestredohori.cz) se nasazuje jen z `rodina-stable`, kam jdou jen opravy (viz [`plans/SEP-1.md`](plans/SEP-1.md)). Větve `feat/…`, `fix/…`, `chore/…`, `docs/…`, případně `claude/…` z cloud sessions. Merge squash.
 
 **Jednorázové nastavení na GitHubu (ručně, ~30 minut)** – bez toho ostatní pravidla chrání jen dobrovolností agenta:
 
