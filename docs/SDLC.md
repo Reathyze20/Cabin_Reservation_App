@@ -33,7 +33,7 @@ Text v Markdownu je pro agenta jen doporučení. Skutečnou hranicí jsou GitHub
 | 4. Implementace | – | Větev, nejdřív failing testy z AC, pak kód, PR | Draft PR |
 | 5. Test | – | Spouští `npm run preflight:deploy` v session | ⚙️ CI `preflight` |
 | 6. Review | Mobilní checklist (§8), label `human-reviewed` u citlivých cest | Self-review diffu proti spec | ⚙️ CI `guardrails` |
-| 7. Release | Merguje do `main` | Conventional Commits | ⚙️ `deploy.yml` (preflight → deploy) |
+| 7. Release | Merguje do `main`; hotfix do rodinné produkce přes PR do `rodina-stable` | Conventional Commits | ⚙️ `deploy.yml` jen z `rodina-stable` (viz `plans/SEP-1.md`) |
 | 8. Monitoring | Reaguje na alerty | Analyzuje chybu, navrhne fix stejným cyklem | Incident issue (viz `OPERATIONS-RUNBOOK.md`) |
 
 **Zkratka pro drobnosti:** když jde diff popsat jednou větou (překlep, text, drobný bug), fáze 2–3 se přeskočí. Brány v CI platí vždy.
@@ -101,7 +101,7 @@ Cílová pyramida:
 
 ## 7. Větve, PR a GitHub nastavení
 
-`main` je vždy nasaditelný (push do `main` spouští produkční deploy). Větve `feat/…`, `fix/…`, `chore/…`, `docs/…`, případně `claude/…` z cloud sessions. Merge squash.
+`main` je vývoj pro víc rodin a do rodinné produkce se nenasazuje. Rodinná produkce (kdynachatu.cz) se nasazuje jen z `rodina-stable`, kam jdou jen opravy (viz [`plans/SEP-1.md`](plans/SEP-1.md)). Větve `feat/…`, `fix/…`, `chore/…`, `docs/…`, případně `claude/…` z cloud sessions. Merge squash.
 
 **Jednorázové nastavení na GitHubu (ručně, ~30 minut)** – bez toho ostatní pravidla chrání jen dobrovolností agenta:
 
