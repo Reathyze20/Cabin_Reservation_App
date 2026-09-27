@@ -2,20 +2,20 @@ name: CI
 
 on:
   pull_request:
-  push:
-    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
-  checks:
-    name: Typecheck, tests & build
+  preflight:
+    name: preflight
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - name: Checkout repository
@@ -37,10 +37,9 @@ jobs:
         run: npm ci
         working-directory: frontend-v2
 
-      - name: Frontend lint
+      - name: Lint frontend
         run: npm run lint
         working-directory: frontend-v2
 
-      # Same checks as the deploy preflight: Prisma generate, backend tsc, frontend tests, frontend build
-      - name: Preflight (typecheck, tests, build)
+      - name: Run preflight (prisma generate, typecheck, tests, build)
         run: npm run preflight:deploy

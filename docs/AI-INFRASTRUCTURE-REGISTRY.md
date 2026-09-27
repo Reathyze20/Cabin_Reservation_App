@@ -86,6 +86,21 @@ Pravidlo:
 | `src/scripts/reportAiGovernance.ts` | active | inventory and audit report for AI layer |
 | `.github/workflows/ai-governance.yml` | active | CI validation and report artifact for AI layer |
 
+### Claude Code and SDLC Guardrails
+
+| File | Status | Purpose |
+|---|---|---|
+| `CLAUDE.md` | active | short Claude Code instructions, points to `docs/SDLC.md` |
+| `.claude/settings.json` | active | deny rules + PreToolUse hook (single-repo cloud sessions too) |
+| `.claude/hooks/protect-paths.mjs` | active | blocks agent edits to `.env*`, `.github/`, `.claude/` config, existing migrations |
+| `docs/SDLC.md` | active | development process, DoR/DoD, migration policy, GitHub settings |
+| `docs/specs/_TEMPLATE.md` | active | feature spec template |
+| `docs/adr/_TEMPLATE.md` | active | architecture decision record template |
+| `.github/workflows/ci.yml` | active | required check `preflight` on every PR |
+| `.github/workflows/guardrails.yml` | active | required check `guardrails` (PR size, sensitive paths, migrations, focused tests) |
+| `.github/scripts/guardrails.mjs` | active | guardrails logic |
+| `.github/dependabot.yml` | active | weekly grouped dependency updates |
+
 ---
 
 ## Lifecycle Rules
